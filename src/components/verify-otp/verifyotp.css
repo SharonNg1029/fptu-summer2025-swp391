@@ -1,0 +1,304 @@
+/* Container chính */
+.verify-otp-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Card chính */
+.verify-otp-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px 32px;
+  border: none;
+}
+
+/* Header section */
+.verify-otp-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.verify-otp-icon {
+  font-size: 48px;
+  color: #1890ff;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.verify-otp-title {
+  margin-bottom: 8px !important;
+  color: #262626;
+  font-weight: 600;
+}
+
+.verify-otp-subtitle {
+  font-size: 16px;
+  color: #8c8c8c;
+  display: block;
+  margin-bottom: 0;
+}
+
+/* Form styles */
+.verify-otp-form {
+  margin-top: 24px;
+}
+
+.form-item-email .ant-form-item-label > label,
+.form-item-otp .ant-form-item-label > label,
+.form-item-password .ant-form-item-label > label {
+  font-weight: 600;
+  color: #262626;
+  font-size: 14px;
+}
+
+.form-item-email,
+.form-item-otp,
+.form-item-password {
+  margin-bottom: 20px;
+}
+
+/* Email input với Send OTP button */
+.form-item-email .ant-row {
+  width: 100%;
+}
+
+.form-item-email .ant-input {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.form-item-email .ant-input:focus,
+.form-item-email .ant-input-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Send OTP button */
+.form-item-email .ant-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 100px;
+  height: 40px;
+}
+
+/* OTP Section */
+.otp-section {
+  margin-top: 24px;
+}
+
+.otp-sent-message {
+  display: block;
+  text-align: center;
+  margin-bottom: 16px;
+  color: #52c41a;
+  font-size: 14px;
+}
+
+.otp-sent-message .ant-typography {
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: "Courier New", monospace;
+  color: #389e0d;
+}
+
+/* Timer container */
+.timer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  background-color: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 8px;
+}
+
+.timer-container .anticon {
+  color: #fa8c16;
+}
+
+.timer-container .ant-typography {
+  margin: 0;
+  color: #fa8c16;
+}
+
+/* OTP Input */
+.form-item-otp .ant-input {
+  text-align: center;
+  letter-spacing: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.form-item-otp .ant-input:focus,
+.form-item-otp .ant-input-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Password Section */
+.password-section {
+  margin-top: 24px;
+}
+
+.form-item-password .ant-input-affix-wrapper {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.form-item-password .ant-input-affix-wrapper:focus,
+.form-item-password .ant-input-affix-wrapper-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Buttons */
+.ant-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  height: 44px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff, #40a9ff);
+  border: none;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: linear-gradient(135deg, #40a9ff, #69c0ff);
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.ant-btn-default {
+  border: 1px solid #d9d9d9;
+  color: #595959;
+}
+
+.ant-btn-default:hover,
+.ant-btn-default:focus {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+.ant-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Instructions */
+.verify-otp-instructions {
+  margin-top: 32px;
+  padding: 20px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  border-left: 4px solid #1890ff;
+}
+
+.verify-otp-instructions .ant-typography {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* Divider */
+.ant-divider {
+  margin: 24px 0;
+  border-color: #f0f0f0;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .verify-otp-container {
+    padding: 16px;
+  }
+
+  .verify-otp-card {
+    padding: 24px 20px;
+  }
+
+  .verify-otp-icon {
+    font-size: 40px;
+  }
+
+  .verify-otp-title {
+    font-size: 20px;
+  }
+
+  .verify-otp-subtitle {
+    font-size: 14px;
+  }
+
+  .form-item-email .ant-btn {
+    min-width: 80px;
+    font-size: 14px;
+  }
+}
+
+/* Animation cho loading states */
+.ant-btn-loading {
+  position: relative;
+}
+
+.ant-btn-loading::before {
+  opacity: 0.4;
+}
+
+/* Smooth transitions */
+.otp-section,
+.password-section {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success states */
+.ant-input-affix-wrapper.success {
+  border-color: #52c41a;
+  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+}
+
+/* Error states */
+.ant-input-affix-wrapper.error,
+.ant-input.error {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+}
+
+/* Focus states enhancement */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  outline: none;
+}
