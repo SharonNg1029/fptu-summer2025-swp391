@@ -33,12 +33,12 @@ const HomeContent = () => {
       </div>
 
       {/* Khoảng trống tách biệt */}
-      <div className="h-10 bg-white"></div>
+      <div className="h-8 bg-white"></div>
 
       {/* Giới thiệu cơ sở - CONTAINER RA GIỮA HOÀN TOÀN */}
       <div className="py-20 bg-white w-full flex justify-center items-center">
         <div
-          className="bg-blue-50 rounded-3xl shadow-2xl border-2 border-blue-200"
+          className="bg-blue-50 rounded-3xl shadow-2xl border-2 border-blue-200 relative overflow-hidden"
           style={{
             backgroundColor: "#4077AA",
             width: "1200px",
@@ -47,7 +47,19 @@ const HomeContent = () => {
             margin: "0 auto",
           }}
         >
-          <div className="grid lg:grid-cols-2 gap-16 items-center h-full">
+          {/* ✅ CẬP NHẬT ẢNH GENE_TACHNEN.PNG */}
+          <div 
+            className="absolute inset-0 bg-no-repeat bg-contain bg-center"
+            style={{
+              backgroundImage: "url('/images/gene_tachnen.png')",
+              zIndex: 1,
+              opacity: 0.15, // Giảm opacity để tạo hiệu ứng nhẹ nhàng hơn với PNG
+              backgroundSize: "80% auto",
+            }}
+          ></div>
+
+          {/* ✅ CONTENT VẪN Ở TRÊN CÙNG */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center h-full relative z-10">
             <div className="text-center lg:text-left">
               <h2
                 className="text-3xl font-bold text-white mb-4"
@@ -131,10 +143,12 @@ const HomeContent = () => {
       <div className="h-10 bg-white"></div>
 
       {/* Quy trình xét nghiệm ADN */}
-      <div className="py-16 px-4 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="py-10 px-4 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="max-w-6xl mx-auto w-full">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
+            style={{ color: '#003469' }}
+            >
               DNA Testing Process
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">

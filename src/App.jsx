@@ -35,15 +35,15 @@ function App() {
           element: <HomeContent />,
         },
         {
-          path: "service",
+          path: "services",
           element: <ServicesOverview />,
         },
         {
-          path: "service/legal",
+          path: "services/legal",
           element: <LegalServices />,
         },
         {
-          path: "service/non-legal",
+          path: "services/non-legal",
           element: <NonLegalServices />,
         },
         {
