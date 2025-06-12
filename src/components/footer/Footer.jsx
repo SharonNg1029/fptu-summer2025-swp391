@@ -10,25 +10,19 @@ import {
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 
-// Đổi tên component footer của bạn thành HomeFooter cho khớp với file index.jsx
-const HomeFooter = () => {
+const Footer = () => {
   return (
-    // Container này giờ sẽ được thẻ cha (.home-footer) tự động căn giữa
-    // Nó chỉ cần quy định chiều rộng tối đa và padding bên trong
-    <div className="w-full max-w-[1600px]">
-
-      {/* Grid chứa các cột nội dung */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-8 text-left">
-        
-        {/* Cột 1: Logo + Mô tả */}
-        <div>
+    <footer className="bg-[#1f3a56] text-white py-10 px-5 pb-5 text-[15px] w-full box-border m-0 relative">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-8 max-w-[1600px] mx-auto p-0">
+        {/* Logo + Mô tả */}
+        <div className="text-left">
           <Link to="/">
             <img src="/images/logo.png" alt="Logo" className="h-[50px] mb-5" />
           </Link>
-          <p className="mt-[20px] mb-3 leading-[1.6] text-[16px]">
-            Genetix - Vietnam’s Leading Trusted DNA Testing Center
+          <p className="mt-[30px] mb-3 leading-[1.6] text-[17px]">
+          Genetix - Vietnam’s Leading Trusted DNA Testing Center
           </p>
-          <div className="flex gap-3 text-[24px] mt-[15px]">
+          <div className="flex gap-3 text-[30px] mt-[15px]">
             <FacebookFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
             <TwitterOutlined className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
             <InstagramOutlined className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
@@ -36,66 +30,84 @@ const HomeFooter = () => {
           </div>
         </div>
 
-        {/* Cột 2, 3, 4 ... (giữ nguyên code các cột của bạn) */}
-        {/* Cột 2: Liên kết nhanh */}
-        <div>
-          <h4 className="font-bold text-lg mb-4 border-b-2 border-[#3fa9f5] inline-block pb-1">
-            Quick Links
+        {/* Liên kết nhanh */}
+        <div className="text-left">
+          <h4 className="font-[1000] mb-2 border-b-2 border-[#3fa9f5] inline-block pb-1">
+          Quick Links
           </h4>
-          <ul className="list-none p-0 space-y-2">
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Home</li>
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">DNA Testing Services</li>
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Instructions</li>
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Pricing</li>
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Knowledge Blog</li>
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Contact</li>
+          <ul className="list-none p-0 mt-1">
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              Home
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            DNA Testing Services
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            Instructions
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            Pricing
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            Knowledge Blog
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            Contact
+            </li>
           </ul>
         </div>
 
-        {/* Cột 3: Dịch vụ */}
-        <div>
-          <h4 className="font-bold text-lg mb-4 border-b-2 border-[#3fa9f5] inline-block pb-1">
-            Our Services
+        {/* Dịch vụ */}
+        <div className="text-left">
+          <h4 className="font-[1000] mb-2 border-b-2 border-[#3fa9f5] inline-block pb-1">
+          Our Services
           </h4>
-          <ul className="list-none p-0 space-y-2">
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Civil DNA Testing</li>
-            <li className="hover:text-[#3fa9f5] transition-colors cursor-pointer">Legal DNA Testing</li>
+          <ul className="list-none p-0 mt-1">
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            Non-Lebal DNA Testing
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+            Legal DNA Testing
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+             
+            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              
+            </li>
           </ul>
         </div>
 
-        {/* Cột 4: Liên hệ */}
-        <div>
-          <h4 className="font-bold text-lg mb-4 border-b-2 border-[#3fa9f5] inline-block pb-1">
-            Contact Us
+        {/* Liên hệ */}
+        <div className="text-left">
+          <h4 className="font-[1000] mb-2 border-b-2 border-[#3fa9f5] inline-block pb-1">
+          Contact Us
           </h4>
-          <ul className="list-none p-0 space-y-3">
-            <li className="flex items-start gap-3">
-              <EnvironmentOutlined className="mt-1" />
-              <span>7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City, 700000</span>
+          <ul className="list-none p-0 mt-1">
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              <EnvironmentOutlined className="mt-2" />7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City, 700000
             </li>
-            <li className="flex items-center gap-3 hover:text-[#3fa9f5] transition-colors cursor-pointer">
-              <PhoneOutlined />
-              <span>Hotline: +84 901 452 366</span>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              <PhoneOutlined className="mt-2" /> Hotline: +84 901 452 366
             </li>
-            <li className="flex items-center gap-3 hover:text-[#3fa9f5] transition-colors cursor-pointer">
-              <MailOutlined />
-              <span>genetix.noreply@gmail.com</span>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              <MailOutlined className="mt-2" /> genetix.noreply@gmail.com
             </li>
-            <li className="flex items-start gap-3">
-              <ClockCircleOutlined className="mt-1" />
-              <span>Business Hours: 8:00 AM – 5:30 PM (Mon–Sat)</span>
-            </li>
+            <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
+              <ClockCircleOutlined className="mt-2" /> Business Hours: 8:00 AM – 5:30 PM (Mon–Sat)
+            </li>     
           </ul>
         </div>
       </div>
 
-      {/* Dòng Copyright */}
-      <div className="text-center mt-12 pt-8 border-t border-gray-700 text-[#ccc] text-[15px]">
-        © 2025 Genetix DNA Testing Center. All rights reserved.
+      <div className="text-center mt-8 text-[#ccc] text-[17px]">
+      © 2025 Genetix DNA Testing Center. All rights reserved.
       </div>
-      
-    </div>
+    </footer>
   );
 };
 
-export default HomeFooter;
+export default Footer;
