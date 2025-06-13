@@ -3,13 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import {
   UserOutlined,
   DashboardOutlined,
-  MedicineBoxOutlined,
-  FileTextOutlined,
-  InboxOutlined,
-  SafetyOutlined,
+  FormOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MessageOutlined,
+  HistoryOutlined, // Added for Staff Reporting
 } from "@ant-design/icons";
 import {
   Layout,
@@ -32,33 +31,21 @@ function getItem(label, key, icon, children) {
     key,
     icon,
     children,
-    label: children ? label : <Link to={`/dashboard/${key}`}>{label}</Link>,
+    label: children ? (
+      label
+    ) : (
+      <Link to={`/staff-dashboard/${key}`}>{label}</Link>
+    ),
   };
 }
 
 const items = [
   getItem("Dashboard", "overview", <DashboardOutlined />),
-  getItem("Account Management", "accounts", <UserOutlined />),
-  getItem("Services", "services", <MedicineBoxOutlined />, [
-    getItem(
-      <Link to="/dashboard/services/booking">Booking</Link>,
-      "services/booking",
-      <FileTextOutlined />
-    ),
-    getItem(
-      <Link to="/dashboard/services/service-management">
-        Service Management
-      </Link>,
-      "services/service-management",
-      <MedicineBoxOutlined />
-    ),
-  ]),
-  getItem("Blog Posts Management", "blog", <FileTextOutlined />),
-  getItem("Test Kit Inventory", "inventory", <InboxOutlined />),
-  getItem("System Logs", "logs", <SafetyOutlined />),
+  getItem("Order Processing", "order-processing", <FormOutlined />), // Combined page
+  getItem("Staff Reporting", "staff-reporting", <HistoryOutlined />), // Combined page
 ];
 
-const Dashboard = () => {
+const StaffDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const location = useLocation();
@@ -95,8 +82,6 @@ const Dashboard = () => {
     };
     fetchUserInfo();
   }, []);
-
-  // User dropdown menu items
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -181,7 +166,7 @@ const Dashboard = () => {
             {/* Profile Button */}
             <Button
               type="text"
-              onClick={() => navigate("/dashboard/profile")}
+              onClick={() => navigate("/staff-dashboard/profile")}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -215,7 +200,7 @@ const Dashboard = () => {
         <Content style={{ margin: "16px 16px 0", overflow: "initial" }}>
           <Breadcrumb style={{ marginBottom: 16 }}>
             <Breadcrumb.Item>
-              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/staff-dashboard">Dashboard</Link>
             </Breadcrumb.Item>
             {breadcrumbs.slice(1).map((breadcrumb, index) => (
               <Breadcrumb.Item key={index}>
@@ -264,4 +249,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default StaffDashboard;

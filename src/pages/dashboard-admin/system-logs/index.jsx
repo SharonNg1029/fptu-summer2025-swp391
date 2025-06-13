@@ -1,6 +1,6 @@
 // Description: Inventory Management Dashboard for Admins
-import React from "react"
-import { useState, useEffect } from "react"
+import React from "react";
+import { useState, useEffect } from "react";
 import {
   Tabs,
   Table,
@@ -20,7 +20,7 @@ import {
   Descriptions,
   Alert,
   message,
-} from "antd"
+} from "antd";
 import {
   SearchOutlined,
   EyeOutlined,
@@ -35,38 +35,41 @@ import {
   SafetyOutlined,
   BellOutlined,
   ClockCircleOutlined,
-} from "@ant-design/icons"
-import api from "../../../configs/axios"
+} from "@ant-design/icons";
+import api from "../../../configs/axios";
 
-const { Title, Text } = Typography
-const { Option } = Select
-const { RangePicker } = DatePicker
-const { TabPane } = Tabs
+const { Title, Text } = Typography;
+const { Option } = Select;
+const { RangePicker } = DatePicker;
+const { TabPane } = Tabs;
 
 const SystemLogs = () => {
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("activity")
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("activity");
 
   // Data states
-  const [activityLogs, setActivityLogs] = useState([])
-  const [securityLogs, setSecurityLogs] = useState([])
-  const [systemAlerts, setSystemAlerts] = useState([])
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [securityLogs, setSecurityLogs] = useState([]);
+  const [systemAlerts, setSystemAlerts] = useState([]);
 
   // Search and filter states
-  const [searchText, setSearchText] = useState("")
-  const [typeFilter, setTypeFilter] = useState("")
-  const [severityFilter, setSeverityFilter] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
-  const [userFilter, setUserFilter] = useState("")
-  const [dateRange, setDateRange] = useState(null)
+  const [searchText, setSearchText] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [userFilter, setUserFilter] = useState("");
+  const [dateRange, setDateRange] = useState(null);
 
   // Modal states
-  const [isActivityDetailModalVisible, setIsActivityDetailModalVisible] = useState(false)
-  const [isSecurityDetailModalVisible, setIsSecurityDetailModalVisible] = useState(false)
-  const [isAlertDetailModalVisible, setIsAlertDetailModalVisible] = useState(false)
-  const [selectedActivityLog, setSelectedActivityLog] = useState(null)
-  const [selectedSecurityLog, setSelectedSecurityLog] = useState(null)
-  const [selectedAlert, setSelectedAlert] = useState(null)
+  const [isActivityDetailModalVisible, setIsActivityDetailModalVisible] =
+    useState(false);
+  const [isSecurityDetailModalVisible, setIsSecurityDetailModalVisible] =
+    useState(false);
+  const [isAlertDetailModalVisible, setIsAlertDetailModalVisible] =
+    useState(false);
+  const [selectedActivityLog, setSelectedActivityLog] = useState(null);
+  const [selectedSecurityLog, setSelectedSecurityLog] = useState(null);
+  const [selectedAlert, setSelectedAlert] = useState(null);
 
   // Fetch activity logs
   const fetchActivityLogs = async () => {
@@ -79,16 +82,19 @@ const SystemLogs = () => {
           startDate: dateRange?.[0]?.format("YYYY-MM-DD"),
           endDate: dateRange?.[1]?.format("YYYY-MM-DD"),
         },
-      })
-      console.log("Activity logs response:", response)
+      });
+      console.log("Activity logs response:", response);
 
-      const logsData = response.data?.data || response.data || []
-      setActivityLogs(logsData)
+      const logsData = response.data?.data || response.data || [];
+      setActivityLogs(logsData);
     } catch (error) {
-      console.error("Error fetching activity logs:", error)
-      message.error("Failed to fetch activity logs: " + (error.response?.data?.message || error.message))
+      console.error("Error fetching activity logs:", error);
+      message.error(
+        "Failed to fetch activity logs: " +
+          (error.response?.data?.message || error.message)
+      );
     }
-  }
+  };
 
   // Fetch security logs
   const fetchSecurityLogs = async () => {
@@ -101,16 +107,19 @@ const SystemLogs = () => {
           startDate: dateRange?.[0]?.format("YYYY-MM-DD"),
           endDate: dateRange?.[1]?.format("YYYY-MM-DD"),
         },
-      })
-      console.log("Security logs response:", response)
+      });
+      console.log("Security logs response:", response);
 
-      const logsData = response.data?.data || response.data || []
-      setSecurityLogs(logsData)
+      const logsData = response.data?.data || response.data || [];
+      setSecurityLogs(logsData);
     } catch (error) {
-      console.error("Error fetching security logs:", error)
-      message.error("Failed to fetch security logs: " + (error.response?.data?.message || error.message))
+      console.error("Error fetching security logs:", error);
+      message.error(
+        "Failed to fetch security logs: " +
+          (error.response?.data?.message || error.message)
+      );
     }
-  }
+  };
 
   // Fetch system alerts
   const fetchSystemAlerts = async () => {
@@ -124,60 +133,70 @@ const SystemLogs = () => {
           startDate: dateRange?.[0]?.format("YYYY-MM-DD"),
           endDate: dateRange?.[1]?.format("YYYY-MM-DD"),
         },
-      })
-      console.log("System alerts response:", response)
+      });
+      console.log("System alerts response:", response);
 
-      const alertsData = response.data?.data || response.data || []
-      setSystemAlerts(alertsData)
+      const alertsData = response.data?.data || response.data || [];
+      setSystemAlerts(alertsData);
     } catch (error) {
-      console.error("Error fetching system alerts:", error)
-      message.error("Failed to fetch system alerts: " + (error.response?.data?.message || error.message))
+      console.error("Error fetching system alerts:", error);
+      message.error(
+        "Failed to fetch system alerts: " +
+          (error.response?.data?.message || error.message)
+      );
     }
-  }
+  };
 
   // Fetch all logs data
   const fetchAllLogs = async () => {
     try {
-      setLoading(true)
-      await Promise.all([fetchActivityLogs(), fetchSecurityLogs(), fetchSystemAlerts()])
+      setLoading(true);
+      await Promise.all([
+        fetchActivityLogs(),
+        fetchSecurityLogs(),
+        fetchSystemAlerts(),
+      ]);
     } catch (error) {
-      console.error("Error fetching logs:", error)
+      console.error("Error fetching logs:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchAllLogs()
-  }, [])
+    fetchAllLogs();
+  }, []);
 
   // Handle view details
   const handleViewActivityDetails = (record) => {
-    setSelectedActivityLog(record)
-    setIsActivityDetailModalVisible(true)
-  }
+    setSelectedActivityLog(record);
+    setIsActivityDetailModalVisible(true);
+  };
 
   const handleViewSecurityDetails = (record) => {
-    setSelectedSecurityLog(record)
-    setIsSecurityDetailModalVisible(true)
-  }
+    setSelectedSecurityLog(record);
+    setIsSecurityDetailModalVisible(true);
+  };
 
   const handleViewAlertDetails = (record) => {
-    setSelectedAlert(record)
-    setIsAlertDetailModalVisible(true)
-  }
+    setSelectedAlert(record);
+    setIsAlertDetailModalVisible(true);
+  };
 
   // Handle resolve alert
   const handleResolveAlert = async (id) => {
     try {
-      await api.put(`/admin/alerts/${id}/resolve`)
-      message.success("Alert marked as resolved")
-      fetchSystemAlerts() // Refresh alerts
+      await api.put(`/admin/alerts/${id}/resolve`);
+      message.success("Alert marked as resolved");
+      fetchSystemAlerts(); // Refresh alerts
     } catch (error) {
-      console.error("Error resolving alert:", error)
-      message.error("Failed to resolve alert: " + (error.response?.data?.message || error.message))
+      console.error("Error resolving alert:", error);
+      message.error(
+        "Failed to resolve alert: " +
+          (error.response?.data?.message || error.message)
+      );
     }
-  }
+  };
 
   // Filter functions
   const filterActivityLogs = () => {
@@ -186,21 +205,21 @@ const SystemLogs = () => {
         log.user?.toLowerCase().includes(searchText.toLowerCase()) ||
         log.action?.toLowerCase().includes(searchText.toLowerCase()) ||
         log.details?.toLowerCase().includes(searchText.toLowerCase()) ||
-        log.id?.toLowerCase().includes(searchText.toLowerCase())
+        log.id?.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesType = typeFilter === "" || log.type === typeFilter
-      const matchesUser = userFilter === "" || log.user === userFilter
+      const matchesType = typeFilter === "" || log.type === typeFilter;
+      const matchesUser = userFilter === "" || log.user === userFilter;
 
       const matchesDateRange =
         !dateRange ||
         !dateRange[0] ||
         !dateRange[1] ||
         (new Date(log.timestamp) >= dateRange[0].startOf("day").toDate() &&
-          new Date(log.timestamp) <= dateRange[1].endOf("day").toDate())
+          new Date(log.timestamp) <= dateRange[1].endOf("day").toDate());
 
-      return matchesSearch && matchesType && matchesUser && matchesDateRange
-    })
-  }
+      return matchesSearch && matchesType && matchesUser && matchesDateRange;
+    });
+  };
 
   const filterSecurityLogs = () => {
     return securityLogs.filter((log) => {
@@ -209,21 +228,24 @@ const SystemLogs = () => {
         log.action?.toLowerCase().includes(searchText.toLowerCase()) ||
         log.details?.toLowerCase().includes(searchText.toLowerCase()) ||
         log.id?.toLowerCase().includes(searchText.toLowerCase()) ||
-        log.ipAddress?.toLowerCase().includes(searchText.toLowerCase())
+        log.ipAddress?.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesSeverity = severityFilter === "" || log.severity === severityFilter
-      const matchesStatus = statusFilter === "" || log.status === statusFilter
+      const matchesSeverity =
+        severityFilter === "" || log.severity === severityFilter;
+      const matchesStatus = statusFilter === "" || log.status === statusFilter;
 
       const matchesDateRange =
         !dateRange ||
         !dateRange[0] ||
         !dateRange[1] ||
         (new Date(log.timestamp) >= dateRange[0].startOf("day").toDate() &&
-          new Date(log.timestamp) <= dateRange[1].endOf("day").toDate())
+          new Date(log.timestamp) <= dateRange[1].endOf("day").toDate());
 
-      return matchesSearch && matchesSeverity && matchesStatus && matchesDateRange
-    })
-  }
+      return (
+        matchesSearch && matchesSeverity && matchesStatus && matchesDateRange
+      );
+    });
+  };
 
   const filterSystemAlerts = () => {
     return systemAlerts.filter((alert) => {
@@ -231,25 +253,35 @@ const SystemLogs = () => {
         alert.title?.toLowerCase().includes(searchText.toLowerCase()) ||
         alert.message?.toLowerCase().includes(searchText.toLowerCase()) ||
         alert.id?.toLowerCase().includes(searchText.toLowerCase()) ||
-        alert.affectedSystem?.toLowerCase().includes(searchText.toLowerCase())
+        alert.affectedSystem?.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesType = typeFilter === "" || alert.type === typeFilter
-      const matchesSeverity = severityFilter === "" || alert.severity === severityFilter
-      const matchesStatus = statusFilter === "" || alert.status === statusFilter
+      const matchesType = typeFilter === "" || alert.type === typeFilter;
+      const matchesSeverity =
+        severityFilter === "" || alert.severity === severityFilter;
+      const matchesStatus =
+        statusFilter === "" || alert.status === statusFilter;
 
       const matchesDateRange =
         !dateRange ||
         !dateRange[0] ||
         !dateRange[1] ||
         (new Date(alert.timestamp) >= dateRange[0].startOf("day").toDate() &&
-          new Date(alert.timestamp) <= dateRange[1].endOf("day").toDate())
+          new Date(alert.timestamp) <= dateRange[1].endOf("day").toDate());
 
-      return matchesSearch && matchesType && matchesSeverity && matchesStatus && matchesDateRange
-    })
-  }
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesSeverity &&
+        matchesStatus &&
+        matchesDateRange
+      );
+    });
+  };
 
   // Get unique users for filter
-  const users = [...new Set(activityLogs.map((log) => log.user).filter(Boolean))]
+  const users = [
+    ...new Set(activityLogs.map((log) => log.user).filter(Boolean)),
+  ];
 
   // Calculate statistics
   const activityStats = {
@@ -257,21 +289,25 @@ const SystemLogs = () => {
     successful: activityLogs.filter((log) => log.status === "Success").length,
     failed: activityLogs.filter((log) => log.status === "Failed").length,
     uniqueUsers: users.length,
-  }
+  };
 
   const securityStats = {
     totalEvents: securityLogs.length,
-    highSeverity: securityLogs.filter((log) => log.severity === "High" || log.severity === "Critical").length,
+    highSeverity: securityLogs.filter(
+      (log) => log.severity === "High" || log.severity === "Critical"
+    ).length,
     blocked: securityLogs.filter((log) => log.status === "Blocked").length,
     critical: securityLogs.filter((log) => log.severity === "Critical").length,
-  }
+  };
 
   const alertStats = {
     totalAlerts: systemAlerts.length,
     active: systemAlerts.filter((alert) => alert.status === "Active").length,
-    critical: systemAlerts.filter((alert) => alert.severity === "Critical").length,
-    resolved: systemAlerts.filter((alert) => alert.status === "Resolved").length,
-  }
+    critical: systemAlerts.filter((alert) => alert.severity === "Critical")
+      .length,
+    resolved: systemAlerts.filter((alert) => alert.status === "Resolved")
+      .length,
+  };
 
   // Table columns
   const activityColumns = [
@@ -279,7 +315,8 @@ const SystemLogs = () => {
       title: "Timestamp",
       dataIndex: "timestamp",
       key: "timestamp",
-      render: (timestamp) => (timestamp ? new Date(timestamp).toLocaleString() : "N/A"),
+      render: (timestamp) =>
+        timestamp ? new Date(timestamp).toLocaleString() : "N/A",
       sorter: (a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0),
       width: 150,
     },
@@ -311,14 +348,14 @@ const SystemLogs = () => {
       dataIndex: "type",
       key: "type",
       render: (type) => {
-        let color = "blue"
-        if (type === "Authentication") color = "green"
-        if (type === "Account Management") color = "purple"
-        if (type === "Service Management") color = "orange"
-        if (type === "Inventory Management") color = "cyan"
-        if (type === "Test Management") color = "magenta"
-        if (type === "Content Management") color = "geekblue"
-        return <Tag color={color}>{type || "Unknown"}</Tag>
+        let color = "blue";
+        if (type === "Authentication") color = "green";
+        if (type === "Account Management") color = "purple";
+        if (type === "Service Management") color = "orange";
+        if (type === "Inventory Management") color = "cyan";
+        if (type === "Test Management") color = "magenta";
+        if (type === "Content Management") color = "geekblue";
+        return <Tag color={color}>{type || "Unknown"}</Tag>;
       },
       filters: [
         { text: "Authentication", value: "Authentication" },
@@ -336,13 +373,18 @@ const SystemLogs = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        const color = status === "Success" ? "green" : "red"
-        const icon = status === "Success" ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />
+        const color = status === "Success" ? "green" : "red";
+        const icon =
+          status === "Success" ? (
+            <CheckCircleOutlined />
+          ) : (
+            <ExclamationCircleOutlined />
+          );
         return (
           <Tag color={color} icon={icon}>
             {status || "Unknown"}
           </Tag>
-        )
+        );
       },
       filters: [
         { text: "Success", value: "Success" },
@@ -372,14 +414,15 @@ const SystemLogs = () => {
       ),
       width: 80,
     },
-  ]
+  ];
 
   const securityColumns = [
     {
       title: "Timestamp",
       dataIndex: "timestamp",
       key: "timestamp",
-      render: (timestamp) => (timestamp ? new Date(timestamp).toLocaleString() : "N/A"),
+      render: (timestamp) =>
+        timestamp ? new Date(timestamp).toLocaleString() : "N/A",
       sorter: (a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0),
       width: 150,
     },
@@ -406,26 +449,26 @@ const SystemLogs = () => {
       dataIndex: "severity",
       key: "severity",
       render: (severity) => {
-        let color = "blue"
-        let icon = <SafetyOutlined />
+        let color = "blue";
+        let icon = <SafetyOutlined />;
         if (severity === "Critical") {
-          color = "red"
-          icon = <ExclamationCircleOutlined />
+          color = "red";
+          icon = <ExclamationCircleOutlined />;
         } else if (severity === "High") {
-          color = "orange"
-          icon = <WarningOutlined />
+          color = "orange";
+          icon = <WarningOutlined />;
         } else if (severity === "Medium") {
-          color = "yellow"
-          icon = <WarningOutlined />
+          color = "yellow";
+          icon = <WarningOutlined />;
         } else if (severity === "Low") {
-          color = "green"
-          icon = <SafetyOutlined />
+          color = "green";
+          icon = <SafetyOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
             {severity || "Unknown"}
           </Tag>
-        )
+        );
       },
       filters: [
         { text: "Critical", value: "Critical" },
@@ -441,13 +484,13 @@ const SystemLogs = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let color = "blue"
-        if (status === "Blocked") color = "red"
-        if (status === "Success") color = "green"
-        if (status === "Monitoring") color = "orange"
-        if (status === "Locked") color = "purple"
-        if (status === "Mitigated") color = "cyan"
-        return <Tag color={color}>{status || "Unknown"}</Tag>
+        let color = "blue";
+        if (status === "Blocked") color = "red";
+        if (status === "Success") color = "green";
+        if (status === "Monitoring") color = "orange";
+        if (status === "Locked") color = "purple";
+        if (status === "Mitigated") color = "cyan";
+        return <Tag color={color}>{status || "Unknown"}</Tag>;
       },
       filters: [
         { text: "Blocked", value: "Blocked" },
@@ -486,7 +529,7 @@ const SystemLogs = () => {
       ),
       width: 80,
     },
-  ]
+  ];
 
   const alertColumns = [
     {
@@ -499,7 +542,8 @@ const SystemLogs = () => {
       title: "Timestamp",
       dataIndex: "timestamp",
       key: "timestamp",
-      render: (timestamp) => (timestamp ? new Date(timestamp).toLocaleString() : "N/A"),
+      render: (timestamp) =>
+        timestamp ? new Date(timestamp).toLocaleString() : "N/A",
       sorter: (a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0),
       width: 150,
     },
@@ -508,13 +552,13 @@ const SystemLogs = () => {
       dataIndex: "type",
       key: "type",
       render: (type) => {
-        let color = "blue"
-        if (type === "Security") color = "red"
-        if (type === "Inventory") color = "orange"
-        if (type === "System") color = "green"
-        if (type === "Performance") color = "purple"
-        if (type === "Application") color = "cyan"
-        return <Tag color={color}>{type || "Unknown"}</Tag>
+        let color = "blue";
+        if (type === "Security") color = "red";
+        if (type === "Inventory") color = "orange";
+        if (type === "System") color = "green";
+        if (type === "Performance") color = "purple";
+        if (type === "Application") color = "cyan";
+        return <Tag color={color}>{type || "Unknown"}</Tag>;
       },
       filters: [
         { text: "Security", value: "Security" },
@@ -544,26 +588,26 @@ const SystemLogs = () => {
       dataIndex: "severity",
       key: "severity",
       render: (severity) => {
-        let color = "blue"
-        let icon = <BellOutlined />
+        let color = "blue";
+        let icon = <BellOutlined />;
         if (severity === "Critical") {
-          color = "red"
-          icon = <ExclamationCircleOutlined />
+          color = "red";
+          icon = <ExclamationCircleOutlined />;
         } else if (severity === "High") {
-          color = "orange"
-          icon = <WarningOutlined />
+          color = "orange";
+          icon = <WarningOutlined />;
         } else if (severity === "Warning" || severity === "Medium") {
-          color = "yellow"
-          icon = <WarningOutlined />
+          color = "yellow";
+          icon = <WarningOutlined />;
         } else if (severity === "Info") {
-          color = "green"
-          icon = <CheckCircleOutlined />
+          color = "green";
+          icon = <CheckCircleOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
             {severity || "Unknown"}
           </Tag>
-        )
+        );
       },
       filters: [
         { text: "Critical", value: "Critical" },
@@ -580,26 +624,26 @@ const SystemLogs = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let color = "blue"
-        let icon = <ClockCircleOutlined />
+        let color = "blue";
+        let icon = <ClockCircleOutlined />;
         if (status === "Active") {
-          color = "red"
-          icon = <ExclamationCircleOutlined />
+          color = "red";
+          icon = <ExclamationCircleOutlined />;
         } else if (status === "Resolved") {
-          color = "green"
-          icon = <CheckCircleOutlined />
+          color = "green";
+          icon = <CheckCircleOutlined />;
         } else if (status === "Monitoring") {
-          color = "orange"
-          icon = <ClockCircleOutlined />
+          color = "orange";
+          icon = <ClockCircleOutlined />;
         } else if (status === "Investigating") {
-          color = "purple"
-          icon = <ClockCircleOutlined />
+          color = "purple";
+          icon = <ClockCircleOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
             {status || "Unknown"}
           </Tag>
-        )
+        );
       },
       filters: [
         { text: "Active", value: "Active" },
@@ -615,12 +659,12 @@ const SystemLogs = () => {
       dataIndex: "priority",
       key: "priority",
       render: (priority) => {
-        let color = "blue"
-        if (priority === "Critical") color = "red"
-        if (priority === "High") color = "orange"
-        if (priority === "Medium") color = "yellow"
-        if (priority === "Low") color = "green"
-        return <Tag color={color}>{priority || "Unknown"}</Tag>
+        let color = "blue";
+        if (priority === "Critical") color = "red";
+        if (priority === "High") color = "orange";
+        if (priority === "Medium") color = "yellow";
+        if (priority === "Low") color = "green";
+        return <Tag color={color}>{priority || "Unknown"}</Tag>;
       },
       width: 100,
     },
@@ -630,7 +674,12 @@ const SystemLogs = () => {
       render: (_, record) => (
         <Space>
           <Tooltip title="View Details">
-            <Button type="primary" icon={<EyeOutlined />} size="small" onClick={() => handleViewAlertDetails(record)} />
+            <Button
+              type="primary"
+              icon={<EyeOutlined />}
+              size="small"
+              onClick={() => handleViewAlertDetails(record)}
+            />
           </Tooltip>
           {record.status === "Active" && (
             <Tooltip title="Mark as Resolved">
@@ -646,15 +695,25 @@ const SystemLogs = () => {
       ),
       width: 120,
     },
-  ]
+  ];
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}>
         <Title level={2}>System Logs & Monitoring</Title>
         <Space>
           <Button icon={<DownloadOutlined />}>Export</Button>
-          <Button type="primary" icon={<ReloadOutlined />} onClick={fetchAllLogs} loading={loading}>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={fetchAllLogs}
+            loading={loading}>
             Refresh
           </Button>
         </Space>
@@ -684,7 +743,10 @@ const SystemLogs = () => {
           showIcon
           style={{ marginBottom: 16 }}
           action={
-            <Button size="small" danger onClick={() => setActiveTab("security")}>
+            <Button
+              size="small"
+              danger
+              onClick={() => setActiveTab("security")}>
               View Security Events
             </Button>
           }
@@ -700,8 +762,7 @@ const SystemLogs = () => {
               Activity Logs
             </span>
           }
-          key="activity"
-        >
+          key="activity">
           {/* Activity Statistics Cards */}
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             <Col xs={24} sm={12} lg={6}>
@@ -735,7 +796,11 @@ const SystemLogs = () => {
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
-                <Statistic title="Unique Users" value={activityStats.uniqueUsers} prefix={<UserOutlined />} />
+                <Statistic
+                  title="Unique Users"
+                  value={activityStats.uniqueUsers}
+                  prefix={<UserOutlined />}
+                />
               </Card>
             </Col>
           </Row>
@@ -758,12 +823,13 @@ const SystemLogs = () => {
                   value={typeFilter}
                   onChange={setTypeFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   <Option value="Authentication">Authentication</Option>
                   <Option value="Account Management">Account Management</Option>
                   <Option value="Service Management">Service Management</Option>
-                  <Option value="Inventory Management">Inventory Management</Option>
+                  <Option value="Inventory Management">
+                    Inventory Management
+                  </Option>
                   <Option value="Test Management">Test Management</Option>
                   <Option value="Content Management">Content Management</Option>
                 </Select>
@@ -774,8 +840,7 @@ const SystemLogs = () => {
                   value={userFilter}
                   onChange={setUserFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   {users.map((user) => (
                     <Option key={user} value={user}>
                       {user}
@@ -804,7 +869,8 @@ const SystemLogs = () => {
                 pageSize: 10,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} logs`,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} logs`,
               }}
               scroll={{ x: 1200 }}
             />
@@ -819,13 +885,16 @@ const SystemLogs = () => {
               Security Logs
             </span>
           }
-          key="security"
-        >
+          key="security">
           {/* Security Statistics Cards */}
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             <Col xs={24} sm={12} lg={6}>
               <Card>
-                <Statistic title="Total Events" value={securityStats.totalEvents} prefix={<LockOutlined />} />
+                <Statistic
+                  title="Total Events"
+                  value={securityStats.totalEvents}
+                  prefix={<LockOutlined />}
+                />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
@@ -878,8 +947,7 @@ const SystemLogs = () => {
                   value={severityFilter}
                   onChange={setSeverityFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   <Option value="Critical">Critical</Option>
                   <Option value="High">High</Option>
                   <Option value="Medium">Medium</Option>
@@ -892,8 +960,7 @@ const SystemLogs = () => {
                   value={statusFilter}
                   onChange={setStatusFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   <Option value="Blocked">Blocked</Option>
                   <Option value="Success">Success</Option>
                   <Option value="Monitoring">Monitoring</Option>
@@ -922,7 +989,8 @@ const SystemLogs = () => {
                 pageSize: 10,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} logs`,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} logs`,
               }}
               scroll={{ x: 1200 }}
             />
@@ -937,13 +1005,16 @@ const SystemLogs = () => {
               System Alerts
             </span>
           }
-          key="alerts"
-        >
+          key="alerts">
           {/* Alert Statistics Cards */}
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             <Col xs={24} sm={12} lg={6}>
               <Card>
-                <Statistic title="Total Alerts" value={alertStats.totalAlerts} prefix={<BellOutlined />} />
+                <Statistic
+                  title="Total Alerts"
+                  value={alertStats.totalAlerts}
+                  prefix={<BellOutlined />}
+                />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
@@ -996,8 +1067,7 @@ const SystemLogs = () => {
                   value={typeFilter}
                   onChange={setTypeFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   <Option value="Security">Security</Option>
                   <Option value="Inventory">Inventory</Option>
                   <Option value="System">System</Option>
@@ -1011,8 +1081,7 @@ const SystemLogs = () => {
                   value={severityFilter}
                   onChange={setSeverityFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   <Option value="Critical">Critical</Option>
                   <Option value="High">High</Option>
                   <Option value="Warning">Warning</Option>
@@ -1026,8 +1095,7 @@ const SystemLogs = () => {
                   value={statusFilter}
                   onChange={setStatusFilter}
                   style={{ width: "100%" }}
-                  allowClear
-                >
+                  allowClear>
                   <Option value="Active">Active</Option>
                   <Option value="Resolved">Resolved</Option>
                   <Option value="Monitoring">Monitoring</Option>
@@ -1055,7 +1123,8 @@ const SystemLogs = () => {
                 pageSize: 10,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} alerts`,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} alerts`,
               }}
               expandable={{
                 expandedRowRender: (record) => (
@@ -1065,7 +1134,8 @@ const SystemLogs = () => {
                     </p>
                     {record.recommendedAction && (
                       <p style={{ margin: "8px 0 0 0" }}>
-                        <Text strong>Recommended Action:</Text> {record.recommendedAction}
+                        <Text strong>Recommended Action:</Text>{" "}
+                        {record.recommendedAction}
                       </p>
                     )}
                   </div>
@@ -1082,61 +1152,84 @@ const SystemLogs = () => {
         title="Activity Log Details"
         open={isActivityDetailModalVisible}
         onCancel={() => {
-          setIsActivityDetailModalVisible(false)
-          setSelectedActivityLog(null)
+          setIsActivityDetailModalVisible(false);
+          setSelectedActivityLog(null);
         }}
         footer={[
           <Button
             key="close"
             onClick={() => {
-              setIsActivityDetailModalVisible(false)
-              setSelectedActivityLog(null)
-            }}
-          >
+              setIsActivityDetailModalVisible(false);
+              setSelectedActivityLog(null);
+            }}>
             Close
           </Button>,
         ]}
-        width={700}
-      >
+        width={700}>
         {selectedActivityLog && (
           <Descriptions title="Log Information" bordered column={2}>
-            <Descriptions.Item label="Log ID">{selectedActivityLog.id}</Descriptions.Item>
+            <Descriptions.Item label="Log ID">
+              {selectedActivityLog.id}
+            </Descriptions.Item>
             <Descriptions.Item label="Timestamp">
-              {selectedActivityLog.timestamp ? new Date(selectedActivityLog.timestamp).toLocaleString() : "N/A"}
+              {selectedActivityLog.timestamp
+                ? new Date(selectedActivityLog.timestamp).toLocaleString()
+                : "N/A"}
             </Descriptions.Item>
-            <Descriptions.Item label="User">{selectedActivityLog.user || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="User">
+              {selectedActivityLog.user || "N/A"}
+            </Descriptions.Item>
             <Descriptions.Item label="User Role">
-              <Tag color="blue">{selectedActivityLog.userRole || "Unknown"}</Tag>
+              <Tag color="blue">
+                {selectedActivityLog.userRole || "Unknown"}
+              </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Action">{selectedActivityLog.action || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="Action">
+              {selectedActivityLog.action || "N/A"}
+            </Descriptions.Item>
             <Descriptions.Item label="Type">
               <Tag color="purple">{selectedActivityLog.type || "Unknown"}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Status">
-              <Tag color={selectedActivityLog.status === "Success" ? "green" : "red"}>
+              <Tag
+                color={
+                  selectedActivityLog.status === "Success" ? "green" : "red"
+                }>
                 {selectedActivityLog.status || "Unknown"}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="IP Address">{selectedActivityLog.ipAddress || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="IP Address">
+              {selectedActivityLog.ipAddress || "N/A"}
+            </Descriptions.Item>
             <Descriptions.Item label="Details" span={2}>
               {selectedActivityLog.details || "No details available"}
             </Descriptions.Item>
 
             {/* Additional fields based on log type */}
             {selectedActivityLog.sessionId && (
-              <Descriptions.Item label="Session ID">{selectedActivityLog.sessionId}</Descriptions.Item>
+              <Descriptions.Item label="Session ID">
+                {selectedActivityLog.sessionId}
+              </Descriptions.Item>
             )}
             {selectedActivityLog.targetUser && (
-              <Descriptions.Item label="Target User">{selectedActivityLog.targetUser}</Descriptions.Item>
+              <Descriptions.Item label="Target User">
+                {selectedActivityLog.targetUser}
+              </Descriptions.Item>
             )}
             {selectedActivityLog.serviceId && (
-              <Descriptions.Item label="Service ID">{selectedActivityLog.serviceId}</Descriptions.Item>
+              <Descriptions.Item label="Service ID">
+                {selectedActivityLog.serviceId}
+              </Descriptions.Item>
             )}
             {selectedActivityLog.oldValue && (
-              <Descriptions.Item label="Old Value">{selectedActivityLog.oldValue}</Descriptions.Item>
+              <Descriptions.Item label="Old Value">
+                {selectedActivityLog.oldValue}
+              </Descriptions.Item>
             )}
             {selectedActivityLog.newValue && (
-              <Descriptions.Item label="New Value">{selectedActivityLog.newValue}</Descriptions.Item>
+              <Descriptions.Item label="New Value">
+                {selectedActivityLog.newValue}
+              </Descriptions.Item>
             )}
             {selectedActivityLog.userAgent && (
               <Descriptions.Item label="User Agent" span={2}>
@@ -1152,42 +1245,47 @@ const SystemLogs = () => {
         title="Security Log Details"
         open={isSecurityDetailModalVisible}
         onCancel={() => {
-          setIsSecurityDetailModalVisible(false)
-          setSelectedSecurityLog(null)
+          setIsSecurityDetailModalVisible(false);
+          setSelectedSecurityLog(null);
         }}
         footer={[
           <Button
             key="close"
             onClick={() => {
-              setIsSecurityDetailModalVisible(false)
-              setSelectedSecurityLog(null)
-            }}
-          >
+              setIsSecurityDetailModalVisible(false);
+              setSelectedSecurityLog(null);
+            }}>
             Close
           </Button>,
         ]}
-        width={700}
-      >
+        width={700}>
         {selectedSecurityLog && (
           <Descriptions title="Security Event Information" bordered column={2}>
-            <Descriptions.Item label="Event ID">{selectedSecurityLog.id}</Descriptions.Item>
-            <Descriptions.Item label="Timestamp">
-              {selectedSecurityLog.timestamp ? new Date(selectedSecurityLog.timestamp).toLocaleString() : "N/A"}
+            <Descriptions.Item label="Event ID">
+              {selectedSecurityLog.id}
             </Descriptions.Item>
-            <Descriptions.Item label="User">{selectedSecurityLog.user || "N/A"}</Descriptions.Item>
-            <Descriptions.Item label="Action">{selectedSecurityLog.action || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="Timestamp">
+              {selectedSecurityLog.timestamp
+                ? new Date(selectedSecurityLog.timestamp).toLocaleString()
+                : "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="User">
+              {selectedSecurityLog.user || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Action">
+              {selectedSecurityLog.action || "N/A"}
+            </Descriptions.Item>
             <Descriptions.Item label="Severity">
               <Tag
                 color={
                   selectedSecurityLog.severity === "Critical"
                     ? "red"
                     : selectedSecurityLog.severity === "High"
-                      ? "orange"
-                      : selectedSecurityLog.severity === "Medium"
-                        ? "yellow"
-                        : "green"
-                }
-              >
+                    ? "orange"
+                    : selectedSecurityLog.severity === "Medium"
+                    ? "yellow"
+                    : "green"
+                }>
                 {selectedSecurityLog.severity || "Unknown"}
               </Tag>
             </Descriptions.Item>
@@ -1197,30 +1295,39 @@ const SystemLogs = () => {
                   selectedSecurityLog.status === "Blocked"
                     ? "red"
                     : selectedSecurityLog.status === "Success"
-                      ? "green"
-                      : selectedSecurityLog.status === "Monitoring"
-                        ? "orange"
-                        : "blue"
-                }
-              >
+                    ? "green"
+                    : selectedSecurityLog.status === "Monitoring"
+                    ? "orange"
+                    : "blue"
+                }>
                 {selectedSecurityLog.status || "Unknown"}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="IP Address">{selectedSecurityLog.ipAddress || "N/A"}</Descriptions.Item>
-            <Descriptions.Item label="Location">{selectedSecurityLog.location || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="IP Address">
+              {selectedSecurityLog.ipAddress || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Location">
+              {selectedSecurityLog.location || "N/A"}
+            </Descriptions.Item>
             <Descriptions.Item label="Details" span={2}>
               {selectedSecurityLog.details || "No details available"}
             </Descriptions.Item>
 
             {/* Additional fields based on log type */}
             {selectedSecurityLog.threatType && (
-              <Descriptions.Item label="Threat Type">{selectedSecurityLog.threatType}</Descriptions.Item>
+              <Descriptions.Item label="Threat Type">
+                {selectedSecurityLog.threatType}
+              </Descriptions.Item>
             )}
             {selectedSecurityLog.attemptCount && (
-              <Descriptions.Item label="Attempt Count">{selectedSecurityLog.attemptCount}</Descriptions.Item>
+              <Descriptions.Item label="Attempt Count">
+                {selectedSecurityLog.attemptCount}
+              </Descriptions.Item>
             )}
             {selectedSecurityLog.riskScore && (
-              <Descriptions.Item label="Risk Score">{selectedSecurityLog.riskScore}</Descriptions.Item>
+              <Descriptions.Item label="Risk Score">
+                {selectedSecurityLog.riskScore}
+              </Descriptions.Item>
             )}
             {selectedSecurityLog.userAgent && (
               <Descriptions.Item label="User Agent" span={2}>
@@ -1236,8 +1343,8 @@ const SystemLogs = () => {
         title="System Alert Details"
         open={isAlertDetailModalVisible}
         onCancel={() => {
-          setIsAlertDetailModalVisible(false)
-          setSelectedAlert(null)
+          setIsAlertDetailModalVisible(false);
+          setSelectedAlert(null);
         }}
         footer={[
           <Button
@@ -1245,32 +1352,33 @@ const SystemLogs = () => {
             type="primary"
             onClick={() => {
               if (selectedAlert && selectedAlert.status === "Active") {
-                handleResolveAlert(selectedAlert.id)
+                handleResolveAlert(selectedAlert.id);
               }
-              setIsAlertDetailModalVisible(false)
-              setSelectedAlert(null)
+              setIsAlertDetailModalVisible(false);
+              setSelectedAlert(null);
             }}
-            disabled={selectedAlert?.status !== "Active"}
-          >
+            disabled={selectedAlert?.status !== "Active"}>
             Mark as Resolved
           </Button>,
           <Button
             key="close"
             onClick={() => {
-              setIsAlertDetailModalVisible(false)
-              setSelectedAlert(null)
-            }}
-          >
+              setIsAlertDetailModalVisible(false);
+              setSelectedAlert(null);
+            }}>
             Close
           </Button>,
         ]}
-        width={700}
-      >
+        width={700}>
         {selectedAlert && (
           <Descriptions title="Alert Information" bordered column={2}>
-            <Descriptions.Item label="Alert ID">{selectedAlert.id}</Descriptions.Item>
+            <Descriptions.Item label="Alert ID">
+              {selectedAlert.id}
+            </Descriptions.Item>
             <Descriptions.Item label="Timestamp">
-              {selectedAlert.timestamp ? new Date(selectedAlert.timestamp).toLocaleString() : "N/A"}
+              {selectedAlert.timestamp
+                ? new Date(selectedAlert.timestamp).toLocaleString()
+                : "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Type">
               <Tag color="blue">{selectedAlert.type || "Unknown"}</Tag>
@@ -1281,21 +1389,24 @@ const SystemLogs = () => {
                   selectedAlert.severity === "Critical"
                     ? "red"
                     : selectedAlert.severity === "High"
-                      ? "orange"
-                      : selectedAlert.severity === "Warning" || selectedAlert.severity === "Medium"
-                        ? "yellow"
-                        : "green"
-                }
-              >
+                    ? "orange"
+                    : selectedAlert.severity === "Warning" ||
+                      selectedAlert.severity === "Medium"
+                    ? "yellow"
+                    : "green"
+                }>
                 {selectedAlert.severity || "Unknown"}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Status">
               <Tag
                 color={
-                  selectedAlert.status === "Active" ? "red" : selectedAlert.status === "Resolved" ? "green" : "orange"
-                }
-              >
+                  selectedAlert.status === "Active"
+                    ? "red"
+                    : selectedAlert.status === "Resolved"
+                    ? "green"
+                    : "orange"
+                }>
                 {selectedAlert.status || "Unknown"}
               </Tag>
             </Descriptions.Item>
@@ -1305,30 +1416,39 @@ const SystemLogs = () => {
                   selectedAlert.priority === "Critical"
                     ? "red"
                     : selectedAlert.priority === "High"
-                      ? "orange"
-                      : selectedAlert.priority === "Medium"
-                        ? "yellow"
-                        : "green"
-                }
-              >
+                    ? "orange"
+                    : selectedAlert.priority === "Medium"
+                    ? "yellow"
+                    : "green"
+                }>
                 {selectedAlert.priority || "Unknown"}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Affected System">{selectedAlert.affectedSystem || "N/A"}</Descriptions.Item>
-            <Descriptions.Item label="Title">{selectedAlert.title || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="Affected System">
+              {selectedAlert.affectedSystem || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Title">
+              {selectedAlert.title || "N/A"}
+            </Descriptions.Item>
             <Descriptions.Item label="Message" span={2}>
               {selectedAlert.message || "No message available"}
             </Descriptions.Item>
 
             {/* Conditional fields based on alert type */}
             {selectedAlert.threshold && (
-              <Descriptions.Item label="Threshold">{selectedAlert.threshold}</Descriptions.Item>
+              <Descriptions.Item label="Threshold">
+                {selectedAlert.threshold}
+              </Descriptions.Item>
             )}
             {selectedAlert.currentValue && (
-              <Descriptions.Item label="Current Value">{selectedAlert.currentValue}</Descriptions.Item>
+              <Descriptions.Item label="Current Value">
+                {selectedAlert.currentValue}
+              </Descriptions.Item>
             )}
             {selectedAlert.ipAddress && (
-              <Descriptions.Item label="IP Address">{selectedAlert.ipAddress}</Descriptions.Item>
+              <Descriptions.Item label="IP Address">
+                {selectedAlert.ipAddress}
+              </Descriptions.Item>
             )}
             {selectedAlert.recommendedAction && (
               <Descriptions.Item label="Recommended Action" span={2}>
@@ -1341,7 +1461,7 @@ const SystemLogs = () => {
         )}
       </Modal>
     </div>
-  )
-}
+  );
+};
 
-export default SystemLogs
+export default SystemLogs;
