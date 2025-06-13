@@ -54,11 +54,10 @@ const items = [
     ),
   ]),
   getItem("Blog Posts Management", "blog", <FileTextOutlined />),
-  getItem("Test Kit Inventory", "inventory", <InboxOutlined />),
   getItem("System Logs", "logs", <SafetyOutlined />),
 ];
 
-const Dashboard = () => {
+const AdminDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const location = useLocation();
@@ -264,4 +263,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;
