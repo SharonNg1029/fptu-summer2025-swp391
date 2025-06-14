@@ -20,7 +20,7 @@ const Footer = () => {
             <img src="/images/logo.png" alt="Logo" className="h-[50px] mb-5" />
           </Link>
           <p className="mt-[30px] mb-3 leading-[1.6] text-[17px]">
-          Genetix - Vietnam’s Leading Trusted DNA Testing Center
+          Genetix - Vietnam's Leading Trusted DNA Testing Center
           </p>
           <div className="flex gap-3 text-[30px] mt-[15px]">
             <FacebookFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
@@ -37,22 +37,22 @@ const Footer = () => {
           </h4>
           <ul className="list-none p-0 mt-1">
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-              Home
+              <Link to="/" className="hover:text-[#3fa9f5] transition-colors">Home</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            DNA Testing Services
+              <Link to="/service" className="hover:text-[#3fa9f5] transition-colors">DNA Testing Services</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            Instructions
+              <Link to="/guide" className="hover:text-[#3fa9f5] transition-colors">Guide</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            Pricing
+              <Link to="/pricing" className="hover:text-[#3fa9f5] transition-colors">Pricing</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            Knowledge Blog
+              <Link to="/blog" className="hover:text-[#3fa9f5] transition-colors">Knowledge Blog</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            Contact
+              <a href="mailto:genetix.noreply@gmail.com" className="hover:text-[#3fa9f5] transition-colors">Contact</a>
             </li>
           </ul>
         </div>
@@ -64,10 +64,10 @@ const Footer = () => {
           </h4>
           <ul className="list-none p-0 mt-1">
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            Non-Lebal DNA Testing
+              <Link to="/service/non-legal" className="hover:text-[#3fa9f5] transition-colors">Non-Legal DNA Testing</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-            Legal DNA Testing
+              <Link to="/service/legal" className="hover:text-[#3fa9f5] transition-colors">Legal DNA Testing</Link>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
               
@@ -91,13 +91,18 @@ const Footer = () => {
               <EnvironmentOutlined className="mt-2" />7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City, 700000
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-              <PhoneOutlined className="mt-2" /> Hotline: +84 901 452 366
+              <PhoneOutlined className="mt-2" /> <a href="tel:+84901452366" className="hover:text-[#3fa9f5] transition-colors">Hotline: +84 901 452 366</a>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-              <MailOutlined className="mt-2" /> genetix.noreply@gmail.com
+              <MailOutlined className="mt-2" /> <a href="mailto:genetix.noreply@gmail.com" className="hover:text-[#3fa9f5] transition-colors">genetix.noreply@gmail.com</a>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-              <ClockCircleOutlined className="mt-2" /> Business Hours: 8:00 AM – 5:30 PM (Mon–Sat)
+              <ClockCircleOutlined className="mt-2" /> 
+              <div className="flex flex-col">
+                <span className="font-medium">Business Hours:</span>
+                <span className="text-sm opacity-90">Mon–Sat: 8:00 AM – 5:30 PM</span>
+                <span className="text-sm opacity-90">Sunday: 8:00 AM – 12:00 AM</span>
+              </div>
             </li>     
           </ul>
         </div>

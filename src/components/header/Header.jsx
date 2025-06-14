@@ -148,7 +148,7 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="w-1/3 hidden md:flex justify-center">
-            <div className="flex space-x-16">
+            <div className="flex space-x-16" style={{ marginRight: "150px" }}>
               {navItems.map((item) => {
                 // ✅ Contact button
                 if (item.isContact) {
@@ -353,7 +353,7 @@ const Header = () => {
               <div className="hidden md:flex items-center space-x-3">
                 <button
                   onClick={() => navigate("/login")}
-                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
+                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 cursor-pointer"
                   style={{
                     backgroundColor: "#223A66",
                     borderColor: "#223A66",
@@ -365,11 +365,11 @@ const Header = () => {
                     (e.target.style.backgroundColor = "#223A66")
                   }
                 >
-                  Login
+                  Sign In
                 </button>
                 <button
                   onClick={() => navigate("/register")}
-                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
+                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 cursor-pointer"
                   style={{
                     backgroundColor: "#223A66",
                     borderColor: "#223A66",
@@ -381,7 +381,7 @@ const Header = () => {
                     (e.target.style.backgroundColor = "#223A66")
                   }
                 >
-                  Register
+                  Sign Up
                 </button>
               </div>
             )}
