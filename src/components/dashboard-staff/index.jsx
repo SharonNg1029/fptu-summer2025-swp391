@@ -166,7 +166,7 @@ const StaffDashboard = () => {
             {/* Profile Button */}
             <Button
               type="text"
-              onClick={() => navigate("/staff-dashboard/profile")}
+              onClick={() => navigate("/profile")}
               style={{
                 display: "flex",
                 alignItems: "center",

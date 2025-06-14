@@ -1,6 +1,6 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
-import { Typography, Card, Row, Col, Statistic, Spin, message } from "antd";
+import { Typography, Card, Row, Col, Statistic, Spin } from "antd";
 import {
   CalendarOutlined,
   ContainerOutlined,
@@ -20,6 +20,8 @@ import {
   Cell,
 } from "recharts";
 import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title } = Typography;
 
@@ -70,7 +72,7 @@ const StaffOverviewPage = () => {
         ],
       });
     } catch (error) {
-      message.error("Failed to fetch staff overview data.");
+      toast.error("Failed to fetch staff overview data.");
       console.error("Error fetching staff overview data:", error);
     } finally {
       setLoading(false);
@@ -88,7 +90,7 @@ const StaffOverviewPage = () => {
       <Title level={2} style={{ marginBottom: 24 }}>
         Staff Dashboard Overview
       </Title>
-
+      <ToastContainer />
       {loading ? (
         <div style={{ textAlign: "center", padding: "50px" }}>
           <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />

@@ -177,7 +177,7 @@ const ManagerDashboard = () => {
             {/* Profile Button */}
             <Button
               type="text"
-              onClick={() => navigate("/manager-dashboard/profile")}
+              onClick={() => navigate("/profile")}
               style={{
                 display: "flex",
                 alignItems: "center",

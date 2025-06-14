@@ -18,8 +18,6 @@ import {
   Tooltip,
   Modal,
   Descriptions,
-  Alert,
-  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -37,6 +35,7 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
+import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -89,7 +88,7 @@ const SystemLogs = () => {
       setActivityLogs(logsData);
     } catch (error) {
       console.error("Error fetching activity logs:", error);
-      message.error(
+      toast.error(
         "Failed to fetch activity logs: " +
           (error.response?.data?.message || error.message)
       );
@@ -114,7 +113,7 @@ const SystemLogs = () => {
       setSecurityLogs(logsData);
     } catch (error) {
       console.error("Error fetching security logs:", error);
-      message.error(
+      toast.error(
         "Failed to fetch security logs: " +
           (error.response?.data?.message || error.message)
       );
@@ -140,7 +139,7 @@ const SystemLogs = () => {
       setSystemAlerts(alertsData);
     } catch (error) {
       console.error("Error fetching system alerts:", error);
-      message.error(
+      toast.error(
         "Failed to fetch system alerts: " +
           (error.response?.data?.message || error.message)
       );
@@ -187,11 +186,11 @@ const SystemLogs = () => {
   const handleResolveAlert = async (id) => {
     try {
       await api.put(`/admin/alerts/${id}/resolve`);
-      message.success("Alert marked as resolved");
+      toast.success("Alert marked as resolved");
       fetchSystemAlerts(); // Refresh alerts
     } catch (error) {
       console.error("Error resolving alert:", error);
-      message.error(
+      toast.error(
         "Failed to resolve alert: " +
           (error.response?.data?.message || error.message)
       );

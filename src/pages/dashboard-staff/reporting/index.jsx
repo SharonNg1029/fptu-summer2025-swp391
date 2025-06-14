@@ -10,7 +10,6 @@ import {
   Form,
   Select,
   DatePicker,
-  message,
   Card,
   Tag,
 } from "antd";
@@ -21,6 +20,8 @@ import {
 } from "@ant-design/icons";
 import moment from "moment";
 import api from "../../../configs/axios"; // Import axios instance
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -40,7 +41,7 @@ const StaffReporting = () => {
       const response = await api.get("/staff/reports"); // Example API endpoint for staff reports
       setWorkReports(response.data?.data || response.data || []);
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to fetch work reports: " +
           (error.response?.data?.message || error.message)
       );
@@ -68,12 +69,12 @@ const StaffReporting = () => {
       };
       await api.post("/staff/reports", payload); // Example API endpoint for submitting reports
 
-      message.success("Report submitted successfully!");
+      toast.success("Report submitted successfully!");
       form.resetFields();
       setActiveTab("workReports"); // Switch back to view reports
       fetchWorkReports(); // Refresh reports list
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to submit report: " +
           (error.response?.data?.message || error.message)
       );
@@ -233,6 +234,7 @@ const StaffReporting = () => {
           </Card>
         </TabPane>
       </Tabs>
+      <ToastContainer />
     </div>
   );
 };

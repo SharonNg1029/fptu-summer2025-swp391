@@ -11,7 +11,6 @@ import {
   Input,
   Select,
   Button,
-  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -22,6 +21,8 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -38,7 +39,7 @@ const TestingProcessMonitoringPage = () => {
       const response = await api.get("/manager/testing-process"); // Example API endpoint
       setTests(response.data?.data || response.data || []);
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to fetch testing process data: " +
           (error.response?.data?.message || error.message)
       );
@@ -95,17 +96,25 @@ const TestingProcessMonitoringPage = () => {
       render: (status) => {
         let color = "default";
         let icon = <ClockCircleOutlined />;
-        if (status === "In Progress") {
+        if (status === "Pending Payment") {
+          color = "orange";
+          icon = <ExclamationCircleOutlined />;
+        }
+        if (status === "Paid") {
           color = "blue";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Awaiting Sample") {
+          color = "purple";
+          icon = <LoadingOutlined />;
+        }
+        if (status === "In Progress") {
+          color = "cyan";
           icon = <LoadingOutlined />;
         }
         if (status === "Completed") {
           color = "green";
           icon = <CheckCircleOutlined />;
-        }
-        if (status === "Pending") {
-          color = "orange";
-          icon = <ExclamationCircleOutlined />;
         }
         return (
           <Tag icon={icon} color={color}>
@@ -114,7 +123,9 @@ const TestingProcessMonitoringPage = () => {
         );
       },
       filters: [
-        { text: "Pending", value: "Pending" },
+        { text: "Pending Payment", value: "Pending Payment" },
+        { text: "Paid", value: "Paid" },
+        { text: "Awaiting Sample", value: "Awaiting Sample" },
         { text: "In Progress", value: "In Progress" },
         { text: "Completed", value: "Completed" },
       ],
@@ -145,6 +156,7 @@ const TestingProcessMonitoringPage = () => {
         <Title level={2} style={{ margin: 0 }}>
           Testing Process Monitoring
         </Title>
+        <ToastContainer />
         <Space>
           <Button
             icon={<ReloadOutlined />}
@@ -174,7 +186,9 @@ const TestingProcessMonitoringPage = () => {
               style={{ width: "100%" }}
               allowClear>
               <Option value="">All Statuses</Option>
-              <Option value="Pending">Pending</Option>
+              <Option value="Pending Payment">Pending Payment</Option>
+              <Option value="Paid">Paid</Option>
+              <Option value="Awaiting Sample">Awaiting Sample</Option>
               <Option value="In Progress">In Progress</Option>
               <Option value="Completed">Completed</Option>
             </Select>

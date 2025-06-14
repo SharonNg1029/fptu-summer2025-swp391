@@ -13,7 +13,6 @@ import {
   Button,
   Modal,
   Form,
-  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -24,6 +23,8 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -45,7 +46,7 @@ const CustomerFeedbackPage = () => {
       const response = await api.get("/manager/feedback"); // Example API endpoint
       setFeedbackList(response.data?.data || response.data || []);
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to fetch customer feedback: " +
           (error.response?.data?.message || error.message)
       );
@@ -69,13 +70,13 @@ const CustomerFeedbackPage = () => {
     setLoading(true);
     try {
       await api.patch(`/manager/feedback/${editingFeedback.id}`, values); // Example API endpoint for updating feedback
-      message.success("Feedback updated successfully!");
+      toast.success("Feedback updated successfully!");
       setIsModalVisible(false);
       setEditingFeedback(null);
       form.resetFields();
       fetchFeedback();
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to update feedback: " +
           (error.response?.data?.message || error.message)
       );
@@ -290,6 +291,7 @@ const CustomerFeedbackPage = () => {
           </Form>
         )}
       </Modal>
+      <ToastContainer />
     </div>
   );
 };

@@ -13,7 +13,6 @@ import {
   Button,
   Modal,
   Form,
-  message,
   Popconfirm,
 } from "antd";
 import {
@@ -26,6 +25,8 @@ import {
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -47,7 +48,7 @@ const StaffReportsApprovalPage = () => {
       const response = await api.get("/manager/staff-reports"); // Example API endpoint
       setReports(response.data?.data || response.data || []);
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to fetch staff reports: " +
           (error.response?.data?.message || error.message)
       );
@@ -73,13 +74,13 @@ const StaffReportsApprovalPage = () => {
       await api.patch(`/manager/staff-reports/${reportId}/status`, {
         status: newStatus,
       }); // Example API endpoint
-      message.success(`Report ${newStatus.toLowerCase()} successfully!`);
+      toast.success(`Report ${newStatus.toLowerCase()} successfully!`);
       setIsModalVisible(false);
       setSelectedReport(null);
       form.resetFields();
       fetchReports();
     } catch (error) {
-      message.error(
+      toast.error(
         `Failed to ${newStatus.toLowerCase()} report: ` +
           (error.response?.data?.message || error.message)
       );
@@ -359,6 +360,7 @@ const StaffReportsApprovalPage = () => {
           </Form>
         )}
       </Modal>
+      <ToastContainer />
     </div>
   );
 };

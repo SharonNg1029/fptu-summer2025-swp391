@@ -1,6 +1,8 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { Card } from "antd";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import {
   Table,
@@ -14,7 +16,6 @@ import {
   Select,
   DatePicker,
   Upload,
-  message,
   Row,
   Col,
   Descriptions,
@@ -51,7 +52,7 @@ const OrderProcessing = () => {
       const response = await api.get("/staff/orders"); // Example API endpoint for staff orders
       setOrders(response.data?.data || response.data || []);
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to fetch orders: " +
           (error.response?.data?.message || error.message)
       );
@@ -89,13 +90,13 @@ const OrderProcessing = () => {
       };
       await api.patch(`/staff/orders/${editingOrder.id}`, payload); // Example API endpoint for updating order
 
-      message.success("Order updated successfully!");
+      toast.success("Order updated successfully!");
       setIsModalVisible(false);
       setEditingOrder(null);
       form.resetFields();
       fetchOrders(); // Refresh the list
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to update order: " +
           (error.response?.data?.message || error.message)
       );
@@ -368,6 +369,7 @@ const OrderProcessing = () => {
           </Form>
         )}
       </Modal>
+      <ToastContainer />
     </div>
   );
 };

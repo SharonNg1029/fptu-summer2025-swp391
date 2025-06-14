@@ -24,7 +24,6 @@ import {
   Tooltip,
   Descriptions,
   Divider,
-  message,
 } from "antd";
 import {
   InboxOutlined,
@@ -48,6 +47,8 @@ import {
   SwapOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -101,24 +102,30 @@ const Inventory = () => {
         (sum, kit) => sum + (kit.quantity || 0),
         0
       );
+      // Đếm tổng số kit sold từ tất cả các kit
+      const totalKitSold = inventoryData.reduce(
+        (sum, kit) => sum + (kit.isSelled || 0),
+        0
+      );
       const availableKits = inventoryData.filter(
-        (kit) => kit.isAvailable === 1
+        (kit) => kit.available === true
       ).length;
       const lowStockKits = inventoryData.filter(
-        (kit) => kit.isAvailable === 1 && (kit.quantity || 0) <= 10
+        (kit) => kit.available === true && (kit.quantity || 0) <= 10
       ).length;
       const outOfStockKits = inventoryData.filter(
-        (kit) => kit.isAvailable === 0 || (kit.quantity || 0) === 0
+        (kit) => kit.available === false || (kit.quantity || 0) === 0
       ).length;
 
       setInventoryStats({
         totalKits,
+        totalKitSold, // thêm trường này để hiển thị
         availableKits,
         lowStockKits,
         outOfStockKits,
       });
     } catch (error) {
-      message.error(
+      toast.error(
         "Failed to fetch inventory: " +
           (error.response?.data?.message || error.message)
       );
@@ -137,7 +144,7 @@ const Inventory = () => {
       setTransactions(transactionsData);
     } catch (error) {
       console.error("Error fetching transactions:", error);
-      message.error(
+      toast.error(
         "Failed to fetch transactions: " +
           (error.response?.data?.message || error.message)
       );
@@ -158,7 +165,7 @@ const Inventory = () => {
         notes: values.notes,
       });
 
-      message.success(`Added ${values.quantity} units to ${selectedKit.name}`);
+      toast.success(`Added ${values.quantity} units to ${selectedKit.name}`);
       setIsAddStockModalVisible(false);
       form.resetFields();
       setSelectedKit(null);
@@ -166,7 +173,7 @@ const Inventory = () => {
       fetchTransactions(); // Refresh transactions
     } catch (error) {
       console.error("Error adding stock:", error);
-      message.error(
+      toast.error(
         "Failed to add stock: " +
           (error.response?.data?.message || error.message)
       );
@@ -190,13 +197,13 @@ const Inventory = () => {
       };
 
       await api.post("/admin/inventory", kitData);
-      message.success("Inventory item added successfully!");
+      toast.success("Inventory item added successfully!");
       form.resetFields();
       fetchInventory(); // Refresh the list
       fetchTransactions(); // Refresh transactions
     } catch (error) {
       console.error("Error adding inventory item:", error);
-      message.error(
+      toast.error(
         "Failed to add inventory item: " +
           (error.response?.data?.message || error.message)
       );
@@ -213,9 +220,9 @@ const Inventory = () => {
       kit.id?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
       kit.supplier?.toLowerCase().includes(searchText.toLowerCase());
 
-    const matchesStatus = statusFilter === "" || kit.status === statusFilter;
+    const matchesName = statusFilter === "" || kit.name === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesName;
   });
 
   const filteredTransactions = transactions.filter((transaction) => {
@@ -254,18 +261,18 @@ const Inventory = () => {
     },
     {
       title: "Available",
-      dataIndex: "isAvailable",
-      key: "isAvailable",
-      render: (isAvailable) => (
-        <Tag color={isAvailable === 1 ? "green" : "red"}>
-          {isAvailable === 1 ? "Available" : "Unavailable"}
+      dataIndex: "available",
+      key: "available",
+      render: (available) => (
+        <Tag color={available ? "green" : "red"}>
+          {available ? "Available" : "Unavailable"}
         </Tag>
       ),
       filters: [
-        { text: "Available", value: 1 },
-        { text: "Unavailable", value: 0 },
+        { text: "Available", value: true },
+        { text: "Unavailable", value: false },
       ],
-      onFilter: (value, record) => record.isAvailable === value,
+      onFilter: (value, record) => record.available === value,
     },
     {
       title: "Quantity",
@@ -275,24 +282,12 @@ const Inventory = () => {
       sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
     },
     {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="View Details">
-            <Button
-              type="default"
-              icon={<EyeOutlined />}
-              size="small"
-              onClick={() => {
-                setSelectedKit(record);
-                setIsDetailModalVisible(true);
-              }}
-            />
-          </Tooltip>
-        </Space>
-      ),
+      title: "Kit Sold",
+      dataIndex: "isSelled",
+      key: "isSelled",
+      render: (isSelled) => <span>{isSelled || 0}</span>,
     },
+    // Actions column removed
   ];
 
   // Kit Transactions columns (đã chỉnh sửa cho hợp lý)
@@ -326,29 +321,8 @@ const Inventory = () => {
           {isSelled === 1 ? "Sold" : "Not Sold"}
         </Tag>
       ),
-      filters: [
-        { text: "Sold", value: 1 },
-        { text: "Not Sold", value: 0 },
-      ],
-      onFilter: (value, record) => record.isSelled === value,
     },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Tooltip title="View Details">
-          <Button
-            type="primary"
-            icon={<EyeOutlined />}
-            size="small"
-            onClick={() => {
-              setSelectedTransaction(record);
-              setIsTransactionDetailModalVisible(true);
-            }}
-          />
-        </Tooltip>
-      ),
-    },
+    // Actions column removed
   ];
 
   // Calculate transaction stats
@@ -363,6 +337,12 @@ const Inventory = () => {
       0
     ),
   };
+
+  // Derived: Low stock kit names
+  const lowStockKitNames = inventory
+    .filter((kit) => kit.available === true && (kit.quantity || 0) <= 10)
+    .map((kit) => kit.name)
+    .filter(Boolean);
 
   return (
     <div>
@@ -433,7 +413,7 @@ const Inventory = () => {
           key="overview">
           {/* Stats Cards */}
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
                   title="Total Kits"
@@ -443,34 +423,27 @@ const Inventory = () => {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
                   title="Kit Sold"
-                  value={inventory.length}
+                  value={inventoryStats.totalKitSold}
                   prefix={<BarChartOutlined />}
                   valueStyle={{ color: "#722ed1" }}
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
                   title="Low Stock Items"
-                  value={inventoryStats.lowStockKits}
+                  value={
+                    lowStockKitNames.length > 0
+                      ? lowStockKitNames.join(", ")
+                      : "None"
+                  }
                   prefix={<WarningOutlined />}
                   valueStyle={{ color: "#faad14" }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Total Inventory Value"
-                  value={inventoryStats.totalValue}
-                  prefix="$"
-                  precision={2}
-                  valueStyle={{ color: "#52c41a" }}
                 />
               </Card>
             </Col>
@@ -490,14 +463,13 @@ const Inventory = () => {
               </Col>
               <Col xs={24} sm={6} lg={4}>
                 <Select
-                  placeholder="Filter by status"
+                  placeholder="Filter by kit name"
                   value={statusFilter}
                   onChange={setStatusFilter}
                   style={{ width: "100%" }}
                   allowClear>
-                  <Option value="In Stock">In Stock</Option>
-                  <Option value="Low Stock">Low Stock</Option>
-                  <Option value="Out of Stock">Out of Stock</Option>
+                  <Option value="PowerPlex Fusion">PowerPlex Fusion</Option>
+                  <Option value="Global Filer">Global Filer</Option>
                 </Select>
               </Col>
             </Row>
@@ -578,22 +550,14 @@ const Inventory = () => {
               form={form}
               layout="vertical"
               onFinish={handleSingleSubmit}
-              initialValues={{ quantity: 1, isAvailable: 1 }}>
+              initialValues={{ quantity: 1 }}>
               <Form.Item
                 name="name"
                 label="Kit Name"
-                rules={[{ required: true, message: "Please enter kit name" }]}>
-                <Input placeholder="e.g., Paternity Test Kit" />
-              </Form.Item>
-              <Form.Item
-                name="isAvailable"
-                label="Available"
-                rules={[
-                  { required: true, message: "Please select availability" },
-                ]}>
-                <Select>
-                  <Option value={1}>Available</Option>
-                  <Option value={0}>Unavailable</Option>
+                rules={[{ required: true, message: "Please select kit name" }]}>
+                <Select placeholder="Select kit name">
+                  <Option value="PowerPlex Fusion">PowerPlex Fusion</Option>
+                  <Option value="Global Filer">Global Filer</Option>
                 </Select>
               </Form.Item>
               <Form.Item
@@ -646,7 +610,7 @@ const Inventory = () => {
 
           {/* Transaction Statistics Cards */}
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
                   title="Total Transactions"
@@ -655,7 +619,7 @@ const Inventory = () => {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
                   title="Stock In"
@@ -665,24 +629,13 @@ const Inventory = () => {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
                   title="Stock Out"
                   value={transactionStats.stockOut}
                   prefix={<ArrowDownOutlined />}
                   valueStyle={{ color: "#ff4d4f" }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Total Value"
-                  value={transactionStats.totalValue}
-                  prefix="$"
-                  precision={2}
-                  valueStyle={{ color: "#1890ff" }}
                 />
               </Card>
             </Col>
@@ -1022,6 +975,8 @@ const Inventory = () => {
           </Descriptions>
         )}
       </Modal>
+
+      <ToastContainer />
     </div>
   );
 };

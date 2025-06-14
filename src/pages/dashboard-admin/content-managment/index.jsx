@@ -9,7 +9,6 @@ import {
   Tag,
   Modal,
   Form,
-  message,
   Tooltip,
   Popconfirm,
   Card,
@@ -35,6 +34,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
+import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -64,7 +64,7 @@ const ContentManagement = () => {
       setBlogs(blogsData);
     } catch (error) {
       console.error("Error fetching blogs:", error);
-      message.error(
+      toast.error(
         "Failed to fetch blogs: " +
           (error.response?.data?.message || error.message)
       );
@@ -102,11 +102,11 @@ const ContentManagement = () => {
   const handleDelete = async (id) => {
     try {
       await api.delete(`/admin/blogs/${id}`);
-      message.success("Blog post deleted successfully");
+      toast.success("Blog post deleted successfully");
       fetchBlogs(); // Refresh the list
     } catch (error) {
       console.error("Error deleting blog:", error);
-      message.error(
+      toast.error(
         "Failed to delete blog: " +
           (error.response?.data?.message || error.message)
       );
@@ -129,11 +129,11 @@ const ContentManagement = () => {
       if (editingBlog) {
         // Update existing blog
         await api.put(`/admin/blogs/${editingBlog.id}`, blogData);
-        message.success("Blog post updated successfully");
+        toast.success("Blog post updated successfully");
       } else {
         // Create new blog
         await api.post("/admin/blogs", blogData);
-        message.success("Blog post created successfully");
+        toast.success("Blog post created successfully");
       }
 
       setIsModalVisible(false);
@@ -142,7 +142,7 @@ const ContentManagement = () => {
       fetchBlogs(); // Refresh the list
     } catch (error) {
       console.error("Error saving blog:", error);
-      message.error(
+      toast.error(
         "Failed to save blog: " +
           (error.response?.data?.message || error.message)
       );

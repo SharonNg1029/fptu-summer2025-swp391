@@ -41,7 +41,7 @@ const items = [
   getItem("Account Management", "accounts", <UserOutlined />),
   getItem("Services", "services", <MedicineBoxOutlined />, [
     getItem(
-      <Link to="/dashboard/services/booking">Booking</Link>,
+      <Link to="/dashboard/services/booking">Tracking Booking</Link>,
       "services/booking",
       <FileTextOutlined />
     ),

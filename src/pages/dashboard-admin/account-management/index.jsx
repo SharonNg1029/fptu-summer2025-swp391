@@ -82,6 +82,9 @@ const AccountManagement = () => {
   // Ant Design form instance
   const [form] = Form.useForm();
 
+  // Pagination state for Table
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+
   /**
    * Check if a customer account has active orders
    * This prevents deletion of accounts with pending orders
@@ -160,7 +163,24 @@ const AccountManagement = () => {
       const response = await api.get("/admin/account");
       console.log("Accounts response:", response);
 
-      const accountsData = response.data?.data || response.data || [];
+      // Map API fields to UI fields
+      const accountsData = (response.data?.data || response.data || []).map(
+        (acc) => ({
+          id: acc.accountID,
+          username: acc.username,
+          email: acc.email,
+          phone: acc.phone,
+          // Lấy role từ authorities nếu có, fallback về acc.role nếu không có
+          role:
+            acc.authorities && acc.authorities.length > 0
+              ? acc.authorities[0].authority
+              : acc.role,
+          status: acc.enabled ? "ACTIVE" : "INACTIVE",
+          createdAt: acc.createAt,
+          // Các trường khác nếu cần
+          ...acc,
+        })
+      );
       setAccounts(accountsData);
 
       // Fetch related data
@@ -239,6 +259,7 @@ const AccountManagement = () => {
       phone: record.phone,
       role: record.role,
       status: record.status === "ACTIVE",
+      // Không set password khi edit
     });
     setIsModalVisible(true);
   };
@@ -358,7 +379,7 @@ const AccountManagement = () => {
           email: values.email?.trim(),
           phone: values.phone?.trim(),
           role: values.role,
-          enable: values.status,
+          enabled: values.status, // Sửa lại đúng tên trường backend
         };
 
         // Include password only if provided
@@ -434,11 +455,14 @@ const AccountManagement = () => {
     total: accounts.length,
     active: accounts.filter((acc) => acc.status === "ACTIVE").length,
     inactive: accounts.filter((acc) => acc.status === "INACTIVE").length,
-    customers: accounts.filter((acc) => acc.role === "CUSTOMER").length,
-    customersWithActiveOrders: accountsWithActiveOrders.size,
+    // Sửa lại customers và staff lấy từ API nếu có, fallback local
+    customers:
+      customerStats.totalCustomers ||
+      accounts.filter((acc) => acc.role === "CUSTOMER").length,
     staff: accounts.filter((acc) =>
       ["STAFF", "MANAGER", "ADMIN"].includes(acc.role)
     ).length,
+    customersWithActiveOrders: accountsWithActiveOrders.size,
     // Use API data if available, fallback to local calculation
     totalCustomersFromAPI:
       customerStats.totalCustomers ||
@@ -461,18 +485,6 @@ const AccountManagement = () => {
       key: "id",
       sorter: (a, b) => a.id - b.id,
       width: 70,
-    },
-    {
-      title: "Full Name",
-      dataIndex: "fullName",
-      key: "fullName",
-      render: (text) => (
-        <Space>
-          <UserOutlined />
-          {text || "N/A"}
-        </Space>
-      ),
-      sorter: (a, b) => (a.fullName || "").localeCompare(b.fullName || ""),
     },
     {
       title: "Username",
@@ -824,11 +836,18 @@ const AccountManagement = () => {
           dataSource={filteredAccounts}
           rowKey="id"
           pagination={{
-            pageSize: 10,
+            ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} accounts`,
+            pageSizeOptions: [10, 20, 50, 100],
+          }}
+          onChange={(paginationConfig) => {
+            setPagination({
+              current: paginationConfig.current,
+              pageSize: paginationConfig.pageSize,
+            });
           }}
           scroll={{ x: 1200 }}
         />
@@ -856,13 +875,17 @@ const AccountManagement = () => {
               <Form.Item
                 name="fullName"
                 label="Full Name"
-                rules={[
-                  { required: true, message: "Please enter full name" },
-                  {
-                    min: 2,
-                    message: "Full name must be at least 2 characters",
-                  },
-                ]}>
+                rules={
+                  editingAccount
+                    ? []
+                    : [
+                        { required: true, message: "Please enter full name" },
+                        {
+                          min: 2,
+                          message: "Full name must be at least 2 characters",
+                        },
+                      ]
+                }>
                 <Input
                   prefix={<UserOutlined />}
                   placeholder="Enter full name"
@@ -906,7 +929,8 @@ const AccountManagement = () => {
               }}>
               <Text strong>Editing Account: </Text>
               <Text>
-                {editingAccount.username} ({editingAccount.fullName})
+                {editingAccount.username}
+                {editingAccount.fullName ? ` (${editingAccount.fullName})` : ""}
               </Text>
             </div>
           )}
@@ -999,14 +1023,20 @@ const AccountManagement = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                name="status"
-                label="Account Status"
-                valuePropName="checked">
-                <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-              </Form.Item>
-            </Col>
+            {/* Only show status toggle when editing an account */}
+            {editingAccount && (
+              <Col span={12}>
+                <Form.Item
+                  name="status"
+                  label="Account Status"
+                  valuePropName="checked">
+                  <Switch
+                    checkedChildren="Active"
+                    unCheckedChildren="Inactive"
+                  />
+                </Form.Item>
+              </Col>
+            )}
           </Row>
 
           {/* Form Actions */}

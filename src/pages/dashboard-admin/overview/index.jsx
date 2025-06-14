@@ -11,7 +11,6 @@ import {
   Button,
   DatePicker,
   Divider,
-  message,
 } from "antd";
 import {
   UserOutlined,
@@ -22,6 +21,7 @@ import {
 } from "@ant-design/icons";
 import { Line, Column, Pie } from "@ant-design/plots";
 import api from "../../../configs/axios";
+import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -30,10 +30,10 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState([null, null]);
   const [stats, setStats] = useState({
-    totalUsers: 0,
+    totalCustomer: 0,
     completedTests: 0,
     revenue: 0,
-    kitsSold: 0,
+    kitsSold: 0, // Đã có sẵn
   });
   const [revenueData, setRevenueData] = useState([]);
   const [kitSalesData, setKitSalesData] = useState([]);
@@ -52,10 +52,10 @@ const Overview = () => {
       });
       console.log("Total customers response:", response);
 
-      const customerData = response.data?.data || response.data || {};
+      const customerData = response.data || {};
       setStats((prev) => ({
         ...prev,
-        totalCustomers: customerData.totalCustomers || customerData.count || 0,
+        totalCustomer: customerData.totalCustomer || 0,
       }));
     } catch (error) {
       console.error("Error fetching total customers:", error);
@@ -66,15 +66,19 @@ const Overview = () => {
   // Fetch completed tests count
   const fetchCompletedTests = async () => {
     try {
-      const response = await api.get("/admin/dashboard/completed-tests", {
+      const response = await api.get("/booking/bookings", {
         params: getDateParams(),
       });
       console.log("Completed tests response:", response);
 
-      const testsData = response.data?.data || response.data || {};
+      // Đếm số lượng booking có status là 'Completed'
+      const bookings = response.data?.data || response.data || [];
+      const completedCount = Array.isArray(bookings)
+        ? bookings.filter((b) => b.status === "Completed").length
+        : 0;
       setStats((prev) => ({
         ...prev,
-        completedTests: testsData.completedTests || testsData.count || 0,
+        completedTests: completedCount,
       }));
     } catch (error) {
       console.error("Error fetching completed tests:", error);
@@ -104,15 +108,20 @@ const Overview = () => {
   // Fetch kits sold count
   const fetchKitsSold = async () => {
     try {
-      const response = await api.get("/admin/dashboard/kits-sold", {
+      // Lấy danh sách kit từ API
+      const response = await api.get("/admin/kitInventory/available", {
         params: getDateParams(),
       });
       console.log("Kits sold response:", response);
 
-      const kitsData = response.data?.data || response.data || {};
+      // Tổng hợp số lượng kit sold từ tất cả các kit (cộng dồn isSelled)
+      const kitsData = response.data?.data || response.data || [];
+      const totalKitSold = Array.isArray(kitsData)
+        ? kitsData.reduce((sum, kit) => sum + (kit.isSelled || 0), 0)
+        : 0;
       setStats((prev) => ({
         ...prev,
-        kitsSold: kitsData.kitsSold || kitsData.count || 0,
+        kitsSold: totalKitSold,
       }));
     } catch (error) {
       console.error("Error fetching kits sold:", error);
@@ -198,7 +207,7 @@ const Overview = () => {
       ]);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      message.error(
+      toast.error(
         "Failed to fetch dashboard data: " +
           (error.response?.data?.message || error.message)
       );
@@ -275,29 +284,27 @@ const Overview = () => {
     ],
   };
 
-  // Table columns
+  // Table columns cho Recent Bookings
   const columns = [
     {
       title: "Booking ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "bookingID",
+      key: "bookingID",
     },
     {
-      title: "Customer",
-      dataIndex: "customer",
-      key: "customer",
-      render: (customer) => customer || "N/A",
+      title: "Customer ID",
+      dataIndex: "customerID",
+      key: "customerID",
     },
     {
-      title: "Service",
-      dataIndex: "service",
-      key: "service",
-      render: (service) => service || "N/A",
+      title: "Service Type",
+      dataIndex: "bookingType",
+      key: "bookingType",
     },
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
+      title: "Request Date",
+      dataIndex: "request_date",
+      key: "request_date",
       render: (date) => (date ? new Date(date).toLocaleDateString() : "N/A"),
     },
     {
@@ -311,15 +318,6 @@ const Overview = () => {
         if (status === "Cancelled") color = "red";
         return <Tag color={color}>{status || "Unknown"}</Tag>;
       },
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: () => (
-        <Button type="link" size="small">
-          View Details
-        </Button>
-      ),
     },
   ];
 
@@ -353,8 +351,8 @@ const Overview = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card loading={loading}>
             <Statistic
-              title="Total Users"
-              value={stats.totalUsers}
+              title="Total Customers"
+              value={stats.totalCustomer}
               prefix={<UserOutlined />}
               valueStyle={{ color: "#1890ff" }}
               suffix={<Tag color="blue">+12%</Tag>}

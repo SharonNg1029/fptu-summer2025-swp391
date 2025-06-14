@@ -1,6 +1,6 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
-import { Typography, Card, Row, Col, Statistic, Spin, message } from "antd";
+import { Typography, Card, Row, Col, Statistic, Spin } from "antd";
 import {
   DashboardOutlined,
   UserOutlined,
@@ -21,6 +21,8 @@ import {
   Area,
 } from "recharts";
 import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Title } = Typography;
 
@@ -38,28 +40,30 @@ const ManagerOverviewPage = () => {
   const fetchManagerOverviewData = useCallback(async () => {
     setLoading(true);
     try {
-      // Replace with actual API calls
-      const [
-        testsRes,
-        feedbackRes,
-        reportsRes,
-        customersRes,
-        trendRes,
-        categoriesRes,
-      ] = await Promise.all([
-        api.get("/manager/dashboard/tests-performed"), // Example API for tests
-        api.get("/manager/dashboard/pending-feedback"), // Example API for feedback
-        api.get("/manager/dashboard/staff-reports-pending"), // Example API for reports
-        api.get("/manager/dashboard/total-customers"), // Example API for total customers
-        api.get("/manager/dashboard/testing-process-trend"), // Example API for testing trend
-        api.get("/manager/dashboard/feedback-categories"), // Example API for feedback categories
-      ]);
+      // Fetch total tests performed (count all bookings)
+      const testsRes = await api.get("/booking/bookings");
+      const bookings = testsRes.data?.data || testsRes.data || [];
+      const totalTestsPerformed = Array.isArray(bookings) ? bookings.length : 0;
+
+      // Fetch total customers (reuse admin logic)
+      const customersRes = await api.get("/admin/dashboard/customers");
+      const customerData = customersRes.data || {};
+      const totalCustomers = customerData.totalCustomer || 0;
+
+      // Other API calls remain unchanged
+      const [feedbackRes, reportsRes, trendRes, categoriesRes] =
+        await Promise.all([
+          api.get("/manager/dashboard/pending-feedback"),
+          api.get("/manager/dashboard/staff-reports-pending"),
+          api.get("/manager/dashboard/testing-process-trend"),
+          api.get("/manager/dashboard/feedback-categories"),
+        ]);
 
       setOverviewData({
-        totalTestsPerformed: testsRes.data?.count || 0,
+        totalTestsPerformed,
         pendingFeedback: feedbackRes.data?.count || 0,
         staffReportsPending: reportsRes.data?.count || 0,
-        totalCustomers: customersRes.data?.count || 0,
+        totalCustomers,
         testingProcessTrend: trendRes.data || [
           { name: "Jan", tests: 4000 },
           { name: "Feb", tests: 3000 },
@@ -77,7 +81,7 @@ const ManagerOverviewPage = () => {
         ],
       });
     } catch (error) {
-      message.error("Failed to fetch manager overview data.");
+      toast.error("Failed to fetch manager overview data.");
       console.error("Error fetching manager overview data:", error);
     } finally {
       setLoading(false);
@@ -93,7 +97,7 @@ const ManagerOverviewPage = () => {
       <Title level={2} style={{ marginBottom: 24 }}>
         Manager Dashboard Overview
       </Title>
-
+      <ToastContainer />
       {loading ? (
         <div style={{ textAlign: "center", padding: "50px" }}>
           <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
