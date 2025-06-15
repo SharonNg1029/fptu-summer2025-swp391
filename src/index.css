@@ -3,7 +3,7 @@
 
 .home-footer {
   color: #fff;
-  background-color: #1e3855;
+  background: linear-gradient(135deg, #002F5E 0%, #004494 50%, #1677FF 100%);
   height: auto;
   line-height: 1.5;
   display: flex;

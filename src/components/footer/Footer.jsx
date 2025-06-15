@@ -12,7 +12,12 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#1f3a56] text-white py-10 px-5 pb-5 text-[15px] w-full box-border m-0 relative">
+    <footer 
+      className="text-white py-10 px-5 pb-5 text-[15px] w-full box-border m-0 relative"
+      style={{
+        background: "linear-gradient(135deg, #002F5E 0%, #004494 50%, #1677FF 100%)"
+      }}
+    >
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-8 max-w-[1600px] mx-auto p-0">
         {/* Logo + Mô tả */}
         <div className="text-left">
