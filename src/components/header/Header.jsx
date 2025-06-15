@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { FiMenu, FiX, FiSun, FiMoon } from "react-icons/fi";
-import { FaUserCircle } from "react-icons/fa";
+import { FiMenu, FiX, FiSun, FiMoon, FiLogOut } from "react-icons/fi";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../redux/features/userSlice";
+import { logout, selectUserFullName } from "../../redux/features/userSlice";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,7 +13,13 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.user);
+  
+  const userState = useSelector((state) => state.user);
+  const user = userState?.currentUser;
+  const isAuthenticated = userState?.isAuthenticated;
+
+  // ✅ SỬ DỤNG SELECTOR
+  const userDisplayName = useSelector(selectUserFullName);
 
   const navItems = [
     { id: 1, label: "Home", href: "/" },
@@ -38,18 +43,31 @@ const Header = () => {
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    setShowDropdown(false);
+  const handleLogout = async () => {
+    try {
+      dispatch(logout());
+      setShowDropdown(false);
+      setTimeout(() => {
+        navigate("/");
+      }, 100);
+    } catch (error) {
+      console.error("Logout error:", error);
+      window.location.href = "/";
+    }
   };
 
-  // ✅ Improved Services dropdown handlers với delay
+  const handleNavClick = (e, href) => {
+    e.preventDefault();
+    navigate(href);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
+  };
+
   let hoverTimeout;
 
   const handleServicesMouseEnter = () => {
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-    }
+    if (hoverTimeout) clearTimeout(hoverTimeout);
     setShowServicesDropdown(true);
   };
 
@@ -62,57 +80,64 @@ const Header = () => {
   const handleServicesClick = (e, href) => {
     e.preventDefault();
     setShowServicesDropdown(false);
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-    }
+    if (hoverTimeout) clearTimeout(hoverTimeout);
     navigate(href);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
   };
 
   const handleContactClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("🔥 CONTACT CLICKED!");
 
     const scrollToContact = () => {
       const contactElement = document.getElementById("contact");
-      console.log("🎯 Contact element:", contactElement);
-
       if (contactElement) {
         const headerHeight = 80;
         const elementPosition = contactElement.offsetTop;
         const offsetPosition = elementPosition - headerHeight;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
-        console.log("✅ Scrolled!");
-      } else {
-        console.warn("❌ No contact element!");
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       }
     };
 
     if (location.pathname !== "/") {
-      console.log("🔄 Navigating to home...");
       navigate("/");
       setTimeout(scrollToContact, 300);
     } else {
-      console.log("🏠 On home, scrolling...");
       scrollToContact();
     }
   };
 
   useEffect(() => {
     return () => {
-      if (hoverTimeout) {
-        clearTimeout(hoverTimeout);
-      }
+      if (hoverTimeout) clearTimeout(hoverTimeout);
     };
   }, []);
 
   useEffect(() => {
     document.body.className = isDarkMode ? "dark" : "light";
   }, [isDarkMode]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location.pathname]);
+
+  const getButtonStyles = () => ({
+    fontSize: "1.125rem",
+    fontWeight: "500",
+    textTransform: "capitalize",
+    whiteSpace: "nowrap",
+    cursor: "pointer",
+    background: "none",
+    border: "none",
+    padding: "8px 12px",
+    margin: "0 8px",
+    outline: "none",
+    color: isDarkMode ? "#ffffff" : "#1f2937",
+    transition: "color 0.2s ease-in-out",
+    borderRadius: "4px",
+  });
 
   return (
     <header
@@ -129,14 +154,9 @@ const Header = () => {
               alt="Logo"
               className="h-12 w-auto cursor-pointer"
               onClick={() => {
-                console.log("🏠 Logo clicked - Going home!");
                 navigate("/");
-                // ✅ SCROLL TO TOP WHEN GOING HOME
                 setTimeout(() => {
-                  window.scrollTo({
-                    top: 0,
-                    behavior: "smooth",
-                  });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }, 100);
               }}
               onError={(e) => {
@@ -148,53 +168,22 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="w-1/3 hidden md:flex justify-center">
-            <div className="flex space-x-16" style={{ marginRight: "150px" }}>
+            <div className="flex items-center" style={{marginRight: "8px", gap: "35px"}}>
               {navItems.map((item) => {
-                // ✅ Contact button
                 if (item.isContact) {
                   return (
                     <button
                       key={item.id}
                       onClick={handleContactClick}
-                      onMouseDown={(e) => {
-                        console.log("🖱️ Contact mouse down!");
-                        handleContactClick(e);
-                      }}
-                      className="contact-btn"
-                      style={{
-                        background: "none !important",
-                        border: "none !important",
-                        padding: "0 !important",
-                        margin: "0 !important",
-                        fontSize: "1.125rem",
-                        fontWeight: "500",
-                        color: isDarkMode ? "#ffffff" : "#1f2937",
-                        textTransform: "capitalize",
-                        whiteSpace: "nowrap",
-                        cursor: "pointer !important",
-                        pointerEvents: "auto !important",
-                        outline: "none !important",
-                        textDecoration: "none !important",
-                        display: "inline-block",
-                        position: "relative",
-                        zIndex: "999",
-                        transition: "color 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.color = "#3b82f6";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.color = isDarkMode
-                          ? "#ffffff"
-                          : "#1f2937";
-                      }}
+                      style={getButtonStyles()}
+                      onMouseEnter={(e) => e.target.style.color = "#3b82f6"}
+                      onMouseLeave={(e) => e.target.style.color = isDarkMode ? "#ffffff" : "#1f2937"}
                     >
                       {item.label}
                     </button>
                   );
                 }
 
-                // ✅ Services với triangle pointer + border
                 if (item.hasDropdown) {
                   return (
                     <div
@@ -202,57 +191,47 @@ const Header = () => {
                       className="relative services-dropdown"
                       onMouseEnter={handleServicesMouseEnter}
                       onMouseLeave={handleServicesMouseLeave}
+                      style={{ margin: "0 8px" }}
                     >
                       <button
                         onClick={(e) => handleServicesClick(e, item.href)}
-                        className="text-lg font-medium hover:text-blue-500 transition-colors duration-200 capitalize whitespace-nowrap cursor-pointer"
+                        style={{ ...getButtonStyles(), margin: "0" }}
+                        onMouseEnter={(e) => e.target.style.color = "#3b82f6"}
+                        onMouseLeave={(e) => e.target.style.color = isDarkMode ? "#ffffff" : "#1f2937"}
                       >
                         {item.label}
                       </button>
 
-                      {/* ✅ Services Dropdown với Triangle Pointer + Border */}
                       {showServicesDropdown && (
                         <div
                           className="absolute top-full left-0 pt-2 w-64 z-50"
                           onMouseEnter={handleServicesMouseEnter}
                           onMouseLeave={handleServicesMouseLeave}
                         >
-                          {/* ✅ Triangle Pointer với Border */}
                           <div className="relative">
-                            {/* Outer triangle (border) */}
                             <div
                               className="absolute left-4 -top-2 w-0 h-0"
                               style={{
                                 borderLeft: "9px solid transparent",
                                 borderRight: "9px solid transparent",
-                                borderBottom: `9px solid ${
-                                  isDarkMode ? "#6b7280" : "#d1d5db"
-                                }`, // Border color
+                                borderBottom: `9px solid ${isDarkMode ? "#6b7280" : "#d1d5db"}`,
                                 zIndex: 1,
                               }}
-                            ></div>
-
-                            {/* Inner triangle (background) */}
+                            />
                             <div
                               className="absolute left-4 -top-1 w-0 h-0"
                               style={{
                                 borderLeft: "8px solid transparent",
                                 borderRight: "8px solid transparent",
-                                borderBottom: `8px solid ${
-                                  isDarkMode ? "#374151" : "#ffffff"
-                                }`, // Background color
+                                borderBottom: `8px solid ${isDarkMode ? "#374151" : "#ffffff"}`,
                                 zIndex: 2,
-                                marginLeft: "1px", // Center alignment
+                                marginLeft: "1px",
                               }}
-                            ></div>
-
-                            {/* ✅ Dropdown content với border */}
+                            />
                             <div
                               className="rounded-md shadow-lg py-2 bg-white dark:bg-gray-800"
                               style={{
-                                border: `2px solid ${
-                                  isDarkMode ? "#6b7280" : "#d1d5db"
-                                }`, // ✅ Main border
+                                border: `2px solid ${isDarkMode ? "#6b7280" : "#d1d5db"}`,
                               }}
                             >
                               {item.dropdownItems.map((dropdownItem) => (
@@ -262,19 +241,13 @@ const Header = () => {
                                   className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                                   onClick={() => {
                                     setShowServicesDropdown(false);
-                                    if (hoverTimeout) {
-                                      clearTimeout(hoverTimeout);
-                                    }
+                                    if (hoverTimeout) clearTimeout(hoverTimeout);
+                                    setTimeout(() => {
+                                      window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }, 100);
                                   }}
                                 >
-                                  <div className="font-medium">
-                                    {dropdownItem.label}
-                                  </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {dropdownItem.id === 31
-                                      ? "For peace of mind and personal knowledge"
-                                      : "Court admissible with chain of custody"}
-                                  </div>
+                                  <div className="font-medium">{dropdownItem.label}</div>
                                 </Link>
                               ))}
                             </div>
@@ -285,15 +258,16 @@ const Header = () => {
                   );
                 }
 
-                // ✅ Regular nav items
                 return (
-                  <Link
+                  <button
                     key={item.id}
-                    to={item.href}
-                    className="text-lg font-medium hover:text-blue-500 transition-colors duration-200 capitalize whitespace-nowrap"
+                    onClick={(e) => handleNavClick(e, item.href)}
+                    style={getButtonStyles()}
+                    onMouseEnter={(e) => e.target.style.color = "#3b82f6"}
+                    onMouseLeave={(e) => e.target.style.color = isDarkMode ? "#ffffff" : "#1f2937"}
                   >
                     {item.label}
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -301,50 +275,66 @@ const Header = () => {
 
           {/* Buttons */}
           <div className="w-1/3 flex items-center justify-end space-x-4">
-            {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-              aria-label={
-                isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
-              }
+              aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
             </button>
 
-            {/* User Authenticated */}
-            {user ? (
+            {user && isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={toggleDropdown}
                   className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity duration-200"
                 >
                   <img
-                    src="https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"
-                    alt={user?.fullName || "User Avatar"}
+                    src={user?.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"}
+                    alt={userDisplayName}
                     className="h-12 w-12 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src =
-                        "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
+                      e.target.src = "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
                     }}
                   />
                 </button>
 
                 {showDropdown && (
                   <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+                    <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                      <div className="font-medium text-gray-700 dark:text-gray-200">
+                        {userDisplayName}
+                      </div>
+                      {user?.email && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {user.email}
+                        </div>
+                      )}
+                    </div>
+                    
                     <Link
                       to="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                      onClick={() => setShowDropdown(false)}
+                      onClick={() => {
+                        setShowDropdown(false);
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }, 100);
+                      }}
                     >
                       Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                     >
-                      Logout
+                      <FiLogOut 
+                        size={16} 
+                        className="mr-2 text-red-500" 
+                        style={{ marginRight: "8px" }}
+                      />
+                      <span>Logout</span>
                     </button>
                   </div>
                 )}
@@ -352,34 +342,30 @@ const Header = () => {
             ) : (
               <div className="hidden md:flex items-center space-x-3">
                 <button
-                  onClick={() => navigate("/login")}
-                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 cursor-pointer"
-                  style={{
-                    backgroundColor: "#223A66",
-                    borderColor: "#223A66",
+                  onClick={() => {
+                    navigate("/login");
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
                   }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#1a2e52")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor = "#223A66")
-                  }
+                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
+                  style={{ backgroundColor: "#023670", borderColor: "#023670" }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = "#01294d"}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = "#023670"}
                 >
                   Sign In
                 </button>
                 <button
-                  onClick={() => navigate("/register")}
-                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 cursor-pointer"
-                  style={{
-                    backgroundColor: "#223A66",
-                    borderColor: "#223A66",
+                  onClick={() => {
+                    navigate("/register");
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
                   }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#1a2e52")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor = "#223A66")
-                  }
+                  className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
+                  style={{ backgroundColor: "#023670", borderColor: "#023670" }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = "#01294d"}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = "#023670"}
                 >
                   Sign Up
                 </button>
@@ -396,14 +382,9 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div
-          className={`md:hidden transition-all duration-300 ${
-            isOpen ? "block" : "hidden"
-          }`}
-        >
+        <div className={`md:hidden transition-all duration-300 ${isOpen ? "block" : "hidden"}`}>
           <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50 dark:bg-gray-800 rounded-lg mt-2">
             {navItems.map((item) => {
-              // ✅ Mobile Contact
               if (item.isContact) {
                 return (
                   <button
@@ -412,121 +393,136 @@ const Header = () => {
                       handleContactClick(e);
                       setIsOpen(false);
                     }}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      width: "100%",
-                      textAlign: "left",
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize bg-transparent border-none cursor-pointer"
                   >
                     {item.label}
                   </button>
                 );
               }
 
-              // ✅ Mobile Services
               if (item.hasDropdown) {
                 return (
                   <div key={item.id}>
-                    <Link
-                      to={item.href}
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
-                      onClick={() => setIsOpen(false)}
+                    <button
+                      onClick={() => {
+                        navigate(item.href);
+                        setIsOpen(false);
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }, 100);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize bg-transparent border-none cursor-pointer"
                     >
                       {item.label}
-                    </Link>
-
+                    </button>
                     {item.dropdownItems.map((dropdownItem) => (
-                      <Link
+                      <button
                         key={dropdownItem.id}
-                        to={dropdownItem.href}
-                        className="block pl-6 pr-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => {
+                          navigate(dropdownItem.href);
+                          setIsOpen(false);
+                          setTimeout(() => {
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }, 100);
+                        }}
+                        className="block w-full text-left pl-6 pr-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 bg-transparent border-none cursor-pointer"
                       >
                         {dropdownItem.label}
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 );
               }
 
               return (
-                <Link
+                <button
                   key={item.id}
-                  to={item.href}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    navigate(item.href);
+                    setIsOpen(false);
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize bg-transparent border-none cursor-pointer"
                 >
                   {item.label}
-                </Link>
+                </button>
               );
             })}
 
-            {/* Auth buttons */}
-            {!user && (
-              <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                <button
-                  onClick={() => {
-                    navigate("/login");
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 text-base font-medium text-white rounded-md transition-colors duration-200"
-                  style={{ backgroundColor: "#223A66" }}
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => {
-                    navigate("/register");
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 text-base font-medium text-white rounded-md transition-colors duration-200"
-                  style={{ backgroundColor: "#223A66" }}
-                >
-                  Register
-                </button>
-              </div>
-            )}
-
-            {user && (
+            {user && isAuthenticated ? (
               <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
-                <Link
-                  to="/profile"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                  onClick={() => setIsOpen(false)}
+                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="font-medium text-gray-700 dark:text-gray-200">
+                    {userDisplayName}
+                  </div>
+                  {user?.email && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {user.email}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    navigate("/profile");
+                    setIsOpen(false);
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 bg-transparent border-none cursor-pointer"
                 >
                   Profile
-                </Link>
+                </button>
                 <button
                   onClick={() => {
                     handleLogout();
                     setIsOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 bg-transparent border-none cursor-pointer"
                 >
-                  Logout
+                  <FiLogOut 
+                    size={16} 
+                    className="mr-2 text-red-500" 
+                    style={{ marginRight: "8px" }}
+                  />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                <button
+                  onClick={() => {
+                    navigate("/login");
+                    setIsOpen(false);
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="w-full px-3 py-2 text-base font-medium text-white rounded-md transition-colors duration-200"
+                  style={{ backgroundColor: "#023670" }}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/register");
+                    setIsOpen(false);
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="w-full px-3 py-2 text-base font-medium text-white rounded-md transition-colors duration-200"
+                  style={{ backgroundColor: "#023670" }}
+                >
+                  Sign Up
                 </button>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* ✅ CSS Styles */}
-      <style jsx>{`
-        .contact-btn {
-          background: none !important;
-          border: none !important;
-          cursor: pointer !important;
-          pointer-events: auto !important;
-          outline: none !important;
-        }
-        .contact-btn:hover {
-          color: #3b82f6 !important;
-        }
-      `}</style>
     </header>
   );
 };
