@@ -181,7 +181,7 @@ const AdminDashboard = () => {
             {/* Profile Button */}
             <Button
               type="text"
-              onClick={() => navigate("/dashboard/profile")}
+              onClick={() => navigate("/profile")}
               style={{
                 display: "flex",
                 alignItems: "center",

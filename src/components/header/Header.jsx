@@ -13,13 +13,17 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  
+
   const userState = useSelector((state) => state.user);
   const user = userState?.currentUser;
   const isAuthenticated = userState?.isAuthenticated;
-  
+
   // ✅ Tạo userDisplayName trực tiếp từ user object
-  const userDisplayName = user?.fullName || user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User';
+  const userDisplayName =
+    user?.fullName ||
+    user?.name ||
+    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+    "User";
 
   const navItems = [
     { id: 1, label: "Home", href: "/" },
@@ -87,7 +91,7 @@ const Header = () => {
   // ✅ SIMPLIFIED: Active page detection
   const isActivePage = (href) => {
     const currentPath = location.pathname;
-    
+
     if (href === "/") return currentPath === "/";
     if (href === "/services") return currentPath.startsWith("/services");
     return currentPath === href;
@@ -110,7 +114,7 @@ const Header = () => {
   // ✅ ENHANCED: Link styles
   const getLinkStyles = (href) => {
     const isActive = isActivePage(href);
-    
+
     return {
       fontSize: "1.125rem",
       fontWeight: "500",
@@ -119,7 +123,7 @@ const Header = () => {
       textDecoration: "none",
       padding: "8px 12px",
       margin: "0 8px",
-      color: isActive ? "#023670" : (isDarkMode ? "#ffffff" : "#1f2937"),
+      color: isActive ? "#023670" : isDarkMode ? "#ffffff" : "#1f2937",
       transition: "color 0.2s ease-in-out",
       borderRadius: "4px",
       backgroundColor: isActive ? "#e0f2fe" : "transparent",
@@ -142,8 +146,7 @@ const Header = () => {
       <header
         className={`fixed w-full top-0 z-50 transition-all duration-300 shadow-md ${
           isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-        }`}
-      >
+        }`}>
         <div className="px-4">
           <div className="flex items-center h-16">
             {/* Logo */}
@@ -163,7 +166,9 @@ const Header = () => {
 
             {/* Navigation */}
             <nav className="w-1/3 hidden md:flex justify-center">
-              <div className="flex items-center" style={{marginRight: "8px", gap: "35px"}}>
+              <div
+                className="flex items-center"
+                style={{ marginRight: "8px", gap: "35px" }}>
                 {navItems.map((item) => {
                   if (item.hasDropdown) {
                     const isActive = isActivePage(item.href);
@@ -173,8 +178,7 @@ const Header = () => {
                         className="relative services-dropdown"
                         onMouseEnter={handleServicesMouseEnter}
                         onMouseLeave={handleServicesMouseLeave}
-                        style={{ margin: "0 8px" }}
-                      >
+                        style={{ margin: "0 8px" }}>
                         {/* ✅ CHANGED: Button to Link for Services */}
                         <Link
                           to={item.href}
@@ -187,11 +191,12 @@ const Header = () => {
                             }
                           }}
                           onMouseLeave={(e) => {
-                            e.target.style.color = isActive 
-                              ? "#023670" 
-                              : (isDarkMode ? "#ffffff" : "#1f2937");
-                          }}
-                        >
+                            e.target.style.color = isActive
+                              ? "#023670"
+                              : isDarkMode
+                              ? "#ffffff"
+                              : "#1f2937";
+                          }}>
                           {item.label}
                         </Link>
 
@@ -199,15 +204,16 @@ const Header = () => {
                           <div
                             className="absolute top-full left-0 pt-2 w-64 z-50"
                             onMouseEnter={handleServicesMouseEnter}
-                            onMouseLeave={handleServicesMouseLeave}
-                          >
+                            onMouseLeave={handleServicesMouseLeave}>
                             <div className="relative">
                               <div
                                 className="absolute left-4 -top-2 w-0 h-0"
                                 style={{
                                   borderLeft: "9px solid transparent",
                                   borderRight: "9px solid transparent",
-                                  borderBottom: `9px solid ${isDarkMode ? "#6b7280" : "#d1d5db"}`,
+                                  borderBottom: `9px solid ${
+                                    isDarkMode ? "#6b7280" : "#d1d5db"
+                                  }`,
                                   zIndex: 1,
                                 }}
                               />
@@ -216,7 +222,9 @@ const Header = () => {
                                 style={{
                                   borderLeft: "8px solid transparent",
                                   borderRight: "8px solid transparent",
-                                  borderBottom: `8px solid ${isDarkMode ? "#374151" : "#ffffff"}`,
+                                  borderBottom: `8px solid ${
+                                    isDarkMode ? "#374151" : "#ffffff"
+                                  }`,
                                   zIndex: 2,
                                   marginLeft: "1px",
                                 }}
@@ -224,11 +232,13 @@ const Header = () => {
                               <div
                                 className="rounded-md shadow-lg py-2 bg-white dark:bg-gray-800"
                                 style={{
-                                  border: `2px solid ${isDarkMode ? "#6b7280" : "#d1d5db"}`,
-                                }}
-                              >
+                                  border: `2px solid ${
+                                    isDarkMode ? "#6b7280" : "#d1d5db"
+                                  }`,
+                                }}>
                                 {item.dropdownItems.map((dropdownItem) => {
-                                  const isDropdownActive = location.pathname === dropdownItem.href;
+                                  const isDropdownActive =
+                                    location.pathname === dropdownItem.href;
                                   return (
                                     <Link
                                       key={dropdownItem.id}
@@ -241,11 +251,13 @@ const Header = () => {
                                       style={{ textDecoration: "none" }}
                                       onClick={() => {
                                         setShowServicesDropdown(false);
-                                        if (hoverTimeout) clearTimeout(hoverTimeout);
+                                        if (hoverTimeout)
+                                          clearTimeout(hoverTimeout);
                                         handleLinkClick();
-                                      }}
-                                    >
-                                      <div className="font-medium">{dropdownItem.label}</div>
+                                      }}>
+                                      <div className="font-medium">
+                                        {dropdownItem.label}
+                                      </div>
                                     </Link>
                                   );
                                 })}
@@ -273,11 +285,12 @@ const Header = () => {
                       }}
                       onMouseLeave={(e) => {
                         const isActive = isActivePage(item.href);
-                        e.target.style.color = isActive 
-                          ? "#023670" 
-                          : (isDarkMode ? "#ffffff" : "#1f2937");
-                      }}
-                    >
+                        e.target.style.color = isActive
+                          ? "#023670"
+                          : isDarkMode
+                          ? "#ffffff"
+                          : "#1f2937";
+                      }}>
                       {item.label}
                     </Link>
                   );
@@ -290,8 +303,9 @@ const Header = () => {
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              >
+                aria-label={
+                  isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
+                }>
                 {isDarkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
               </button>
 
@@ -299,15 +313,18 @@ const Header = () => {
                 <div className="relative">
                   <button
                     onClick={toggleDropdown}
-                    className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity duration-200"
-                  >
+                    className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity duration-200">
                     <img
-                      src={user?.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"}
+                      src={
+                        user?.avatar ||
+                        "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"
+                      }
                       alt={userDisplayName}
                       className="h-12 w-12 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
+                        e.target.src =
+                          "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
                       }}
                     />
                   </button>
@@ -324,7 +341,7 @@ const Header = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <Link
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -332,17 +349,15 @@ const Header = () => {
                         onClick={() => {
                           setShowDropdown(false);
                           handleLinkClick();
-                        }}
-                      >
+                        }}>
                         Profile
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                      >
-                        <FiLogOut 
-                          size={16} 
-                          className="mr-2 text-red-500" 
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                        <FiLogOut
+                          size={16}
+                          className="mr-2 text-red-500"
                           style={{ marginRight: "8px" }}
                         />
                         <span>Logout</span>
@@ -357,28 +372,34 @@ const Header = () => {
                     to="/login"
                     onClick={handleLinkClick}
                     className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
-                    style={{ 
-                      backgroundColor: "#023670", 
+                    style={{
+                      backgroundColor: "#023670",
                       borderColor: "#023670",
-                      textDecoration: "none"
+                      textDecoration: "none",
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = "#01294d"}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = "#023670"}
-                  >
+                    onMouseEnter={(e) =>
+                      (e.target.style.backgroundColor = "#01294d")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.backgroundColor = "#023670")
+                    }>
                     Sign In
                   </Link>
                   <Link
                     to="/register"
                     onClick={handleLinkClick}
                     className="px-4 py-2 text-lg font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
-                    style={{ 
-                      backgroundColor: "#023670", 
+                    style={{
+                      backgroundColor: "#023670",
                       borderColor: "#023670",
-                      textDecoration: "none"
+                      textDecoration: "none",
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = "#01294d"}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = "#023670"}
-                  >
+                    onMouseEnter={(e) =>
+                      (e.target.style.backgroundColor = "#01294d")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.backgroundColor = "#023670")
+                    }>
                     Sign Up
                   </Link>
                 </div>
@@ -386,15 +407,17 @@ const Header = () => {
 
               <button
                 onClick={toggleMenu}
-                className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-              >
+                className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
                 {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
               </button>
             </div>
           </div>
 
           {/* Mobile Menu */}
-          <div className={`md:hidden transition-all duration-300 ${isOpen ? "block" : "hidden"}`}>
+          <div
+            className={`md:hidden transition-all duration-300 ${
+              isOpen ? "block" : "hidden"
+            }`}>
             <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50 dark:bg-gray-800 rounded-lg mt-2">
               {navItems.map((item) => {
                 if (item.hasDropdown) {
@@ -410,9 +433,8 @@ const Header = () => {
                         className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
                         style={{
                           ...getMobileLinkStyles(item.href),
-                          textDecoration: "none"
-                        }}
-                      >
+                          textDecoration: "none",
+                        }}>
                         {item.label}
                       </Link>
                       {item.dropdownItems.map((dropdownItem) => (
@@ -426,9 +448,8 @@ const Header = () => {
                           className="block w-full text-left pl-6 pr-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
                           style={{
                             ...getMobileLinkStyles(dropdownItem.href),
-                            textDecoration: "none"
-                          }}
-                        >
+                            textDecoration: "none",
+                          }}>
                           {dropdownItem.label}
                         </Link>
                       ))}
@@ -448,9 +469,8 @@ const Header = () => {
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
                     style={{
                       ...getMobileLinkStyles(item.href),
-                      textDecoration: "none"
-                    }}
-                  >
+                      textDecoration: "none",
+                    }}>
                     {item.label}
                   </Link>
                 );
@@ -475,17 +495,15 @@ const Header = () => {
                       handleLinkClick();
                     }}
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                    style={{ textDecoration: "none" }}
-                  >
+                    style={{ textDecoration: "none" }}>
                     Profile
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                  >
-                    <FiLogOut 
-                      size={16} 
-                      className="mr-2 text-red-500" 
+                    className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+                    <FiLogOut
+                      size={16}
+                      className="mr-2 text-red-500"
                       style={{ marginRight: "8px" }}
                     />
                     <span>Logout</span>
@@ -500,11 +518,10 @@ const Header = () => {
                       handleLinkClick();
                     }}
                     className="w-full px-3 py-2 text-base font-medium text-white rounded-md transition-colors duration-200 block text-center"
-                    style={{ 
+                    style={{
                       backgroundColor: "#023670",
-                      textDecoration: "none"
-                    }}
-                  >
+                      textDecoration: "none",
+                    }}>
                     Sign In
                   </Link>
                   <Link
@@ -514,11 +531,10 @@ const Header = () => {
                       handleLinkClick();
                     }}
                     className="w-full px-3 py-2 text-base font-medium text-white rounded-md transition-colors duration-200 block text-center"
-                    style={{ 
+                    style={{
                       backgroundColor: "#023670",
-                      textDecoration: "none"
-                    }}
-                  >
+                      textDecoration: "none",
+                    }}>
                     Sign Up
                   </Link>
                 </div>

@@ -277,11 +277,6 @@ const Overview = () => {
                 fontSize: 28,
                 fontWeight: 700,
               }}
-              suffix={
-                <Tag color="blue" style={{ fontSize: 14, marginLeft: 8 }}>
-                  +12%
-                </Tag>
-              }
             />
           </Card>
         </Col>
@@ -313,11 +308,6 @@ const Overview = () => {
                 fontSize: 28,
                 fontWeight: 700,
               }}
-              suffix={
-                <Tag color="green" style={{ fontSize: 14, marginLeft: 8 }}>
-                  +8%
-                </Tag>
-              }
             />
           </Card>
         </Col>
@@ -347,11 +337,6 @@ const Overview = () => {
                 fontSize: 28,
                 fontWeight: 700,
               }}
-              suffix={
-                <Tag color="purple" style={{ fontSize: 14, marginLeft: 8 }}>
-                  +5%
-                </Tag>
-              }
             />
           </Card>
         </Col>

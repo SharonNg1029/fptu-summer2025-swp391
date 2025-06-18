@@ -28,9 +28,12 @@ import {
   BarChartOutlined,
   ReloadOutlined,
   PlusOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 import { toast } from "react-toastify";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -169,6 +172,48 @@ const ServiceManagement = () => {
     },
   ];
 
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF();
+      if (typeof autoTable !== "function") {
+        toast.error(
+          "Export PDF failed: autoTable is not a function. Please check your import or install jspdf-autotable."
+        );
+        return;
+      }
+      // Lấy dữ liệu từ filteredServices
+      const tableColumn = [
+        "Service ID",
+        "Service Type",
+        "Service Name",
+        "Price",
+        "Estimated Time",
+      ];
+      const tableRows = filteredServices.map((service) => [
+        service.serviceID,
+        service.name,
+        service.type,
+        service.cost != null
+          ? service.cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) +
+            " ₫"
+          : "0 ₫",
+        service.estimatedTime || "N/A",
+      ]);
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        styles: { font: "helvetica", fontSize: 10 },
+        headStyles: { fillColor: [22, 160, 133] },
+        margin: { top: 20 },
+      });
+      doc.save("service-management.pdf");
+      toast.success("PDF exported successfully!");
+    } catch (err) {
+      toast.error("PDF export failed: " + (err?.message || err));
+      console.error("Export PDF error:", err);
+    }
+  };
+
   return (
     <div>
       <Title level={2}>Service Management</Title>
@@ -256,6 +301,14 @@ const ServiceManagement = () => {
               }}
               size="large">
               Refresh
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExportPDF}
+              type="default"
+              style={{ marginLeft: 8, borderRadius: 6 }}
+              size="large">
+              Export PDF
             </Button>
           </Col>
         </Row>

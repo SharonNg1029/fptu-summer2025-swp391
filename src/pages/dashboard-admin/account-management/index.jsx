@@ -19,6 +19,8 @@ import {
   Statistic,
 } from "antd";
 import toast from "react-hot-toast";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -36,6 +38,7 @@ import {
   TeamOutlined,
   UserAddOutlined,
   ReloadOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 
@@ -184,13 +187,7 @@ const AccountManagement = () => {
       await fetchCustomerStats();
     } catch (error) {
       console.error("Error fetching accounts:", error);
-      let errorMessage = "Failed to fetch accounts";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      toast.error(errorMessage);
+      toast.error("Failed to fetch accounts");
     } finally {
       setLoading(false);
     }
@@ -369,10 +366,17 @@ const AccountManagement = () => {
         if (
           res.data?.message &&
           (res.data.message.toLowerCase().includes("phone") ||
-            res.data.message.toLowerCase().includes("exist")) // phòng trường hợp message là "Phone already exists"
+            res.data.message.toLowerCase().includes("exist") ||
+            res.data.message.toLowerCase().includes("email"))
         ) {
-          toast.error("Số điện thoại đã tồn tại trong hệ thống!");
-          return; // Dừng luôn, không đóng modal, không reset form
+          if (res.data.message.toLowerCase().includes("phone")) {
+            toast.error("Phone number already exists in the system!");
+          } else if (res.data.message.toLowerCase().includes("email")) {
+            toast.error("Email already exists in the system!");
+          } else {
+            toast.error(res.data.message);
+          }
+          return; // Stop, do not close modal, do not reset form
         }
 
         toast.success("Account updated successfully");
@@ -381,12 +385,106 @@ const AccountManagement = () => {
         setEditingAccount(null);
         await refreshAllData();
       } else {
-        // ... phần tạo mới giữ nguyên
+        // CREATE NEW ACCOUNT
+        const accountData = {
+          fullname: values.fullName?.trim(),
+          username: values.username?.trim(),
+          email: values.email?.trim(),
+          phone: values.phone?.trim(),
+          role: (values.role || "").toUpperCase(), // Luôn gửi role in hoa
+          password: values.password?.trim(),
+        };
+        try {
+          const res = await api.post("/admin/register", accountData);
+          // Nếu backend trả về status 2xx thì luôn báo thành công
+          if (res.status && res.status >= 200 && res.status < 300) {
+            toast.success("Account created successfully");
+            setIsModalVisible(false);
+            form.resetFields();
+            setEditingAccount(null);
+            await refreshAllData();
+            return;
+          }
+          // Nếu có message lỗi đặc biệt
+          if (
+            res.data?.message &&
+            (res.data.message.toLowerCase().includes("phone") ||
+              res.data.message.toLowerCase().includes("exist") ||
+              res.data.message.toLowerCase().includes("email") ||
+              res.data.message.toLowerCase().includes("username") ||
+              res.data.message.toLowerCase().includes("vai trò") ||
+              res.data.message.toLowerCase().includes("invalid role"))
+          ) {
+            if (res.data.message.toLowerCase().includes("phone")) {
+              toast.error("Phone number already exists in the system!");
+            } else if (res.data.message.toLowerCase().includes("email")) {
+              toast.error("Email already exists in the system!");
+            } else if (res.data.message.toLowerCase().includes("username")) {
+              toast.error("Username already exists in the system!");
+            } else if (
+              res.data.message.toLowerCase().includes("vai trò") ||
+              res.data.message.toLowerCase().includes("invalid role")
+            ) {
+              toast.error(
+                "Invalid role. Please contact the administrator or check backend role validation."
+              );
+            } else {
+              toast.error(res.data.message);
+            }
+            return;
+          }
+          // Nếu không có message lỗi đặc biệt nhưng status không thành công
+          toast.error(res.data?.message || "Failed to create account");
+        } catch (e) {
+          let errorMessage = "Failed to create account";
+          if (typeof e.response?.data === "string") {
+            errorMessage = e.response.data;
+          } else if (e.response?.data?.message) {
+            errorMessage = e.response.data.message;
+          } else if (e.response?.data?.data) {
+            errorMessage = e.response.data.data;
+          } else if (e.message) {
+            errorMessage = e.message;
+          }
+          const lowerMsg = String(errorMessage).toLowerCase();
+          if (
+            (lowerMsg.includes("unique") && lowerMsg.includes("email")) ||
+            (lowerMsg.includes("duplicate") && lowerMsg.includes("email")) ||
+            (lowerMsg.includes("email") && lowerMsg.includes("constraint"))
+          ) {
+            toast.error("Email already exists in the system!");
+          } else if (
+            (lowerMsg.includes("unique") && lowerMsg.includes("phone")) ||
+            (lowerMsg.includes("duplicate") && lowerMsg.includes("phone")) ||
+            (lowerMsg.includes("phone") && lowerMsg.includes("constraint"))
+          ) {
+            toast.error("Phone number already exists in the system!");
+          } else if (
+            (lowerMsg.includes("unique") && lowerMsg.includes("username")) ||
+            (lowerMsg.includes("duplicate") && lowerMsg.includes("username")) ||
+            (lowerMsg.includes("username") && lowerMsg.includes("constraint"))
+          ) {
+            toast.error("Username already exists in the system!");
+          } else if (
+            lowerMsg.includes("vai trò") ||
+            lowerMsg.includes("invalid role")
+          ) {
+            toast.error(
+              "Invalid role. Please contact the administrator or check backend role validation."
+            );
+          } else if (e.response && e.response.status === 400) {
+            toast.error(
+              "Account may have been created, but the server returned an error. Please check the account list."
+            );
+          } else {
+            toast.error(errorMessage);
+          }
+        }
       }
     } catch (e) {
       console.error("[handleFormSubmit] error:", e, e?.response);
 
-      let errorMessage = "Đã xảy ra lỗi";
+      let errorMessage = "Failed";
       // Nếu là string, lấy trực tiếp
       if (typeof e.response?.data === "string") {
         errorMessage = e.response.data;
@@ -404,7 +502,23 @@ const AccountManagement = () => {
         errorMessage = e.message;
       }
 
-      toast.error(errorMessage);
+      // Kiểm tra lỗi unique email (SQL/constraint)
+      const lowerMsg = String(errorMessage).toLowerCase();
+      if (
+        (lowerMsg.includes("unique") && lowerMsg.includes("email")) ||
+        (lowerMsg.includes("duplicate") && lowerMsg.includes("email")) ||
+        (lowerMsg.includes("email") && lowerMsg.includes("constraint"))
+      ) {
+        toast.error("Email already exists in the system!");
+      } else if (
+        (lowerMsg.includes("unique") && lowerMsg.includes("phone")) ||
+        (lowerMsg.includes("duplicate") && lowerMsg.includes("phone")) ||
+        (lowerMsg.includes("phone") && lowerMsg.includes("constraint"))
+      ) {
+        toast.error("Phone number already exists in the system!");
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
   /**
@@ -622,6 +736,49 @@ const AccountManagement = () => {
     },
   ];
 
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF();
+      if (typeof autoTable !== "function") {
+        toast.error(
+          "Export PDF failed: autoTable is not a function. Please check your import or install jspdf-autotable."
+        );
+        return;
+      }
+      // Lấy dữ liệu từ filteredAccounts
+      const tableColumn = [
+        "ID",
+        "Username",
+        "Email",
+        "Phone",
+        "Role",
+        "Status",
+        "Created At",
+      ];
+      const tableRows = filteredAccounts.map((acc) => [
+        acc.id,
+        acc.username,
+        acc.email,
+        acc.phone,
+        acc.role,
+        acc.status,
+        acc.createdAt ? new Date(acc.createdAt).toLocaleDateString() : "N/A",
+      ]);
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        styles: { font: "helvetica", fontSize: 10 },
+        headStyles: { fillColor: [22, 160, 133] },
+        margin: { top: 20 },
+      });
+      doc.save("account-management.pdf");
+      toast.success("PDF exported successfully!");
+    } catch (err) {
+      toast.error("PDF export failed: " + (err?.message || err));
+      console.error("Export PDF error:", err);
+    }
+  };
+
   return (
     <div style={{ padding: "0 24px" }}>
       {/* Header Section */}
@@ -654,6 +811,13 @@ const AccountManagement = () => {
               setIsModalVisible(true);
             }}>
             Create New Account
+          </Button>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportPDF}
+            size="large"
+            type="default">
+            Export PDF
           </Button>
         </Space>
       </div>
@@ -978,7 +1142,7 @@ const AccountManagement = () => {
                   <Option value="ADMIN">Admin</Option>
                   <Option value="MANAGER">Manager</Option>
                   <Option value="STAFF">Staff</Option>
-                  <Option value="CUSTOMER">Customer</Option>
+                  {editingAccount && <Option value="CUSTOMER">Customer</Option>}
                 </Select>
               </Form.Item>
             </Col>
