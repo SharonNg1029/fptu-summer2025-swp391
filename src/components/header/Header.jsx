@@ -97,7 +97,7 @@ const Header = () => {
     return () => {
       if (hoverTimeout) clearTimeout(hoverTimeout);
     };
-  }, []);
+  }, []); // hoverTimeout không cần đưa vào dependency vì không phải state/prop
 
   useEffect(() => {
     document.body.className = isDarkMode ? "dark" : "light";
@@ -480,11 +480,8 @@ const Header = () => {
                     Profile
                   </Link>
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsOpen(false);
-                    }}
-                    className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 bg-transparent border-none cursor-pointer"
+                    onClick={handleLogout}
+                    className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
                   >
                     <FiLogOut 
                       size={16} 
