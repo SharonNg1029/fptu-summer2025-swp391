@@ -18,7 +18,6 @@ import Pricing from "./pages/home-page/pricing";
 import Blog from "./pages/home-page/blog";
 import VerifyPage from "./components/verify-otp/VerifyPage";
 import AccountManagement from "./pages/dashboard-admin/account-management";
-import ContentManagement from "./pages/dashboard-admin/content-managment";
 import Inventory from "./pages/dashboard-manager/inventory";
 import SystemLogs from "./pages/dashboard-admin/system-logs";
 import Booking from "./pages/dashboard-admin/services/Booking";
@@ -30,7 +29,31 @@ import ManagerOverviewPage from "./pages/dashboard-manager/overview";
 import CustomerFeedbackPage from "./pages/dashboard-manager/customer-feedback";
 import StaffReportsApprovalPage from "./pages/dashboard-manager/staff-reports-approval";
 import TestingProcessMonitoringPage from "./pages/dashboard-manager/testing-process-monitoring"; // New import
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ScrollToTopButton from "./components/hooks/useScrollToTop"; // Sửa import thành component chính xác
+import React from "react";
+import { Toaster } from "react-hot-toast";
 
+// ScrollToTop component cho router
+const ScrollToTop = () => {
+  // Thêm hook để scroll to top khi chuyển trang
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  return null;
+};
+
+// Root Layout component
+const RootLayout = () => {
+  return (
+    <>
+      <ScrollToTop />
+      <ScrollToTopButton /> {/* Thêm nút ScrollToTop vào đây */}
+      <Outlet />
+    </>
+  );
+};
 function App() {
   const router = createBrowserRouter([
     {
@@ -98,14 +121,6 @@ function App() {
           element: <AccountManagement />,
         },
         {
-          path: "blog",
-          element: <ContentManagement />,
-        },
-        {
-          path: "inventory",
-          element: <Inventory />,
-        },
-        {
           path: "logs",
           element: <SystemLogs />,
         },
@@ -150,6 +165,7 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <RouterProvider router={router} />
+        <Toaster position="top-right" reverseOrder={false} />
       </PersistGate>
     </Provider>
   );

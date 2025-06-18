@@ -53,7 +53,6 @@ const items = [
       <MedicineBoxOutlined />
     ),
   ]),
-  getItem("Blog Posts Management", "blog", <FileTextOutlined />),
   getItem("System Logs", "logs", <SafetyOutlined />),
 ];
 
@@ -88,7 +87,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        await axiosInstance.get("/user/profile"); // endpoint ví dụ
+        await axiosInstance.get("/profile"); // endpoint ví dụ
         // Xử lý dữ liệu user nếu cần
       } catch (error) {
         console.error("Fail to get user info:", error);
@@ -202,9 +201,14 @@ const AdminDashboard = () => {
               type="text"
               danger
               icon={<LogoutOutlined />}
-              onClick={() => {
-                if (typeof LogOut.performLogout === "function") {
-                  LogOut.performLogout();
+              onClick={async () => {
+                try {
+                  await axiosInstance.post("/auth/logout");
+                  if (typeof LogOut.performLogout === "function") {
+                    LogOut.performLogout();
+                  }
+                } catch (error) {
+                  console.error("Logout API error:", error);
                 }
               }}
               style={{ height: 40 }}>
