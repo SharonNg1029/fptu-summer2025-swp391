@@ -53,7 +53,7 @@ const HomeContent = () => {
     <div>
       {/* Background Image Section với chữ */}
       <div
-        className="relative w-full h-[500px] bg-no-repeat bg-cover bg-center flex items-center justify-center"
+        className="relative w-full h-[798px] bg-no-repeat bg-cover bg-center flex items-center justify-center"
         style={{
           backgroundImage: "url('/images/body-background.jpg')",
         }}>
