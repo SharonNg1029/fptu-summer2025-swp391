@@ -2,9 +2,9 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import HomePage from "./pages/home-page";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
-import DashboardAdmin from "./components/dashboard-admin"; // Updated import
-import StaffDashboard from "./components/dashboard-staff"; // New import
-import ManagerDashboard from "./components/dashboard-manager"; // New import
+import DashboardAdmin from "./components/dashboard-admin";
+import StaffDashboard from "./components/dashboard-staff";
+import ManagerDashboard from "./components/dashboard-manager";
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider } from "react-redux";
 import { persistor, store } from "./app/store";
@@ -23,37 +23,19 @@ import SystemLogs from "./pages/dashboard-admin/system-logs";
 import Booking from "./pages/dashboard-admin/services/Booking";
 import ServiceManagementPage from "./pages/dashboard-admin/services/ServiceManagement";
 import StaffOverviewPage from "./pages/dashboard-staff/overview";
-import OrderProcessingPage from "./pages/dashboard-staff/order-processing"; // Combined page
-import StaffReportingPage from "./pages/dashboard-staff/reporting"; // Combined page
+import OrderProcessingPage from "./pages/dashboard-staff/order-processing";
+import StaffReportingPage from "./pages/dashboard-staff/reporting";
 import ManagerOverviewPage from "./pages/dashboard-manager/overview";
 import CustomerFeedbackPage from "./pages/dashboard-manager/customer-feedback";
 import StaffReportsApprovalPage from "./pages/dashboard-manager/staff-reports-approval";
-import TestingProcessMonitoringPage from "./pages/dashboard-manager/testing-process-monitoring"; // New import
+import TestingProcessMonitoringPage from "./pages/dashboard-manager/testing-process-monitoring";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import ScrollToTopButton from "./components/hooks/useScrollToTop"; // Sửa import thành component chính xác
+import ScrollToTopButton from "./components/hooks/useScrollToTop";
 import React from "react";
 import { Toaster } from "react-hot-toast";
+import Contact from "./pages/home-page/contact";
 
-// ScrollToTop component cho router
-const ScrollToTop = () => {
-  // Thêm hook để scroll to top khi chuyển trang
-  React.useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-  return null;
-};
-
-// Root Layout component
-const RootLayout = () => {
-  return (
-    <>
-      <ScrollToTop />
-      <ScrollToTopButton /> {/* Thêm nút ScrollToTop vào đây */}
-      <Outlet />
-    </>
-  );
-};
 function App() {
   const router = createBrowserRouter([
     {
@@ -61,7 +43,7 @@ function App() {
       element: <HomePage />,
       children: [
         {
-          index: true, // Route mặc định cho "/"
+          index: true,
           element: <HomeContent />,
         },
         {
@@ -88,9 +70,12 @@ function App() {
           path: "blog",
           element: <Blog />,
         },
+        {
+          path: "contact",
+          element: <Contact />,
+        },
       ],
     },
-    // Các route độc lập không cần Header/Footer
     {
       path: "/login",
       element: <LoginPage />,
@@ -100,10 +85,10 @@ function App() {
       element: <RegisterPage />,
     },
     {
-      path: "/dashboard", // Admin Dashboard
+      path: "/dashboard",
       element: <DashboardAdmin />,
       children: [
-        { index: true, element: <OverviewPage /> }, // Trang Overview mặc định
+        { index: true, element: <OverviewPage /> },
         {
           path: "overview",
           element: <OverviewPage />,
@@ -127,18 +112,17 @@ function App() {
       ],
     },
     {
-      path: "/staff-dashboard", // Staff Dashboard
+      path: "/staff-dashboard",
       element: <StaffDashboard />,
       children: [
         { index: true, element: <StaffOverviewPage /> },
         { path: "overview", element: <StaffOverviewPage /> },
-        { path: "order-processing", element: <OrderProcessingPage /> }, // Combined
-        { path: "staff-reporting", element: <StaffReportingPage /> }, // Combined
-        // { path: "customer-contact", element: <CustomerContactPage /> }, // Still separate
+        { path: "order-processing", element: <OrderProcessingPage /> },
+        { path: "staff-reporting", element: <StaffReportingPage /> },
       ],
     },
     {
-      path: "/manager-dashboard", // Manager Dashboard
+      path: "/manager-dashboard",
       element: <ManagerDashboard />,
       children: [
         { index: true, element: <ManagerOverviewPage /> },
@@ -164,6 +148,7 @@ function App() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
+        <ScrollToTopButton />
         <RouterProvider router={router} />
         <Toaster position="top-right" reverseOrder={false} />
       </PersistGate>
