@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 const ServicesOverview = () => {
+  const [selectedKit, setSelectedKit] = useState(null);
+
   const services = [
     {
       id: 1,
@@ -53,19 +55,67 @@ const ServicesOverview = () => {
     },
   ];
 
+  const testingKits = [
+    {
+      id: 1,
+      name: "PowerPlex Fusion",
+      shortName: "PowerPlex® Fusion 6C System",
+      image: "/images/powerPlex.jpg",
+      manufacturer: "Promega Corporation, USA",
+      purpose: "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
+      kitType: "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 27 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
+      approval: "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
+      loci: "27 loci"
+    },
+    {
+      id: 2,
+      name: "Global Filer (Mỹ)",
+      shortName: "GlobalFiler™ PCR Amplification Kit",
+      image: "/images/GlobalFiler.jpg",
+      manufacturer: "Thermo Fisher Scientific, USA",
+      purpose: "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
+      kitType: "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 24 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
+      approval: "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
+      loci: "24 loci"
+    }
+  ];
+
+  const openModal = (kit) => {
+    setSelectedKit(kit);
+  };
+
+  const closeModal = () => {
+    setSelectedKit(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* Hero Section */}
       <div
-        className="relative text-white py-20 mt-10"
+        className="relative text-white h-[600px] mt-10 flex items-center justify-center"
         style={{ 
-          background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+          backgroundImage: "url('https://drugtesters.net/wp-content/uploads/2024/12/MDT-1-768x432.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
         }}
       >
-        <div className="absolute inset-0 bg-black opacity-10"></div>
-        <div className="relative max-w-7xl mx-auto px-6 py-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">DNA Testing</h1>
-          <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div className="relative max-w-7xl mx-auto px-6 text-center">
+          <h1 
+            className="text-5xl font-bold mb-6"
+            style={{
+              textShadow: "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000"
+            }}
+          >
+            DNA Testing
+          </h1>
+          <p 
+            className="text-base mb-8 max-w-3xl mx-auto leading-relaxed font-medium"
+            style={{
+              textShadow: "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080"
+            }}
+          >
             DNA testing analyzes genetic information from chromosomes to determine biological relationships between individuals. This advanced scientific method provides accurate lineage determination through comprehensive genetic analysis, making it the most reliable approach for establishing family connections.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4">
@@ -100,7 +150,7 @@ const ServicesOverview = () => {
                 <div className="p-6 flex flex-col flex-grow">
                   <div className="flex-grow">
                     <h3 
-                      className="text-xl font-bold mb-3"
+                      className="text-2xl font-bold mb-3"
                       style={{ 
                         background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
                         WebkitBackgroundClip: "text",
@@ -219,8 +269,181 @@ const ServicesOverview = () => {
         </div>
       </div>
 
+      {/* Testing Kits Section */}
+      <div className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Professional Testing Kits
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              State-of-the-art DNA analysis kits used in our laboratory for precise and reliable results
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+            {testingKits.map((kit) => (
+              <div
+                key={kit.id}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group"
+              >
+                {/* Kit Image */}
+                <div className="h-64 bg-gray-100 overflow-hidden">
+                  <img
+                    src={kit.image}
+                    alt={kit.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div 
+                    className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                  >
+                    <div className="text-center text-white">
+                      <svg
+                        className="w-16 h-16 mx-auto mb-2"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M13.96,12.29L11.21,15.83L9.25,13.47L6.5,17H17.5L13.96,12.29Z" />
+                      </svg>
+                      <p className="text-sm font-medium">DNA Testing Kit</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kit Information */}
+                <div className="p-6 text-center">
+                  <h3 className="text-2xl font-bold mb-4 text-black">
+                    {kit.name}
+                  </h3>
+
+                  <button
+                    onClick={() => openModal(kit)}
+                    className="inline-flex items-center justify-center px-6 py-3 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                  >
+                    View Details
+                    <svg
+                      className="ml-2 w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
+      {selectedKit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-black">
+                {selectedKit.shortName}
+              </h2>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Kit Image */}
+              <div className="flex justify-center">
+                <div className="w-64 h-64 bg-gray-100 rounded-lg overflow-hidden">
+                  <img
+                    src={selectedKit.image}
+                    alt={selectedKit.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div 
+                    className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                  >
+                    <div className="text-center text-white">
+                      <svg
+                        className="w-16 h-16 mx-auto mb-2"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M13.96,12.29L11.21,15.83L9.25,13.47L6.5,17H17.5L13.96,12.29Z" />
+                      </svg>
+                      <p className="text-sm font-medium">DNA Testing Kit</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kit Details */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Manufacturer</h3>
+                  <p className="text-gray-700">{selectedKit.manufacturer}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Purpose</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedKit.purpose}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Kit Type</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedKit.kitType}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Approval</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedKit.approval}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end p-6 border-t border-gray-200">
+              <button
+                onClick={closeModal}
+                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Commitment Section */}
-      <div className="py-16 bg-white">
+      <div className="py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
