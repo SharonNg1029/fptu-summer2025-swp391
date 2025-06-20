@@ -6,7 +6,8 @@ const ServicesOverview = () => {
     {
       id: 1,
       title: "Non-Legal DNA Testing",
-      subtitle: "As a form of DNA testing, it is used to determine the blood relationship between individuals and serve personal and family purposes.",
+      subtitle:
+        "As a form of DNA testing, it is used to determine the blood relationship between individuals and serve personal and family purposes.",
       description:
         "Non-Legal DNA Testing is used to determine the biological relationship between individuals, such as parent-child or grandparent-grandchild relationships. At GENTIS International Testing Center, we ensure accuracy and confidentiality.",
       price: "Starting from 3,500,000 VND",
@@ -29,23 +30,27 @@ const ServicesOverview = () => {
     {
       id: 1,
       name: "Nail",
-      image: "https://gentis.vn/wp-content/uploads/2021/01/ban-da-biet-quy-trinh-xet-nghiem-adn-chua-1.jpg",
+      image:
+        "https://gentis.vn/wp-content/uploads/2021/01/ban-da-biet-quy-trinh-xet-nghiem-adn-chua-1.jpg",
     },
     {
       id: 2,
       name: "Hair roots",
-      image: "https://medlatec.vn/media/13792/content/20200917_xet-nghiem-adn-bang-toc-01.jpg",
+      image:
+        "https://medlatec.vn/media/13792/content/20200917_xet-nghiem-adn-bang-toc-01.jpg",
     },
     {
       id: 3,
       name: "Oral mucosa",
-      image: "https://gentis.com.vn/public/media/tin-tuc/2022/t5/xet-nghiem-adn-bang-niem-mac-mieng.jpg",
+      image:
+        "https://gentis.com.vn/public/media/tin-tuc/2022/t5/xet-nghiem-adn-bang-niem-mac-mieng.jpg",
     },
     {
       id: 4,
       name: "Blood sample",
-      image: "https://gentis.vn/wp-content/uploads/2021/05/Cach-lay-mau-xet-nghiem-ADn-tai-nha-641x400.jpg",
-    }
+      image:
+        "https://gentis.vn/wp-content/uploads/2021/05/Cach-lay-mau-xet-nghiem-ADn-tai-nha-641x400.jpg",
+    },
   ];
 
   return (
@@ -53,15 +58,15 @@ const ServicesOverview = () => {
       {/* Hero Section */}
       <div
         className="relative text-white py-20 mt-10"
-        style={{ backgroundColor: "#003469" }}
+        style={{ 
+          background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+        }}
       >
         <div className="absolute inset-0 bg-black opacity-10"></div>
         <div className="relative max-w-7xl mx-auto px-6 py-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">
-            DNA Testing
-          </h1>
+          <h1 className="text-5xl font-bold mb-6">DNA Testing</h1>
           <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
-            DNA testing is a test that analyzes DNA information on 23 pairs of chromosomes of two or more human individuals to determine a genetic relationship from which to determine a lineage relationship. This is the current exact method of determination.
+            DNA testing analyzes genetic information from chromosomes to determine biological relationships between individuals. This advanced scientific method provides accurate lineage determination through comprehensive genetic analysis, making it the most reliable approach for establishing family connections.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
@@ -94,13 +99,25 @@ const ServicesOverview = () => {
               >
                 <div className="p-6 flex flex-col flex-grow">
                   <div className="flex-grow">
-                    <h3 className="text-xl font-bold text-blue-600 mb-3">
+                    <h3 
+                      className="text-xl font-bold mb-3"
+                      style={{ 
+                        background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text"
+                      }}
+                    >
                       {service.title}
                     </h3>
-                    
-                    {/* ✅ THÊM THANH NGANG NGĂN CÁCH */}
-                    <div className="w-16 h-0.5 bg-gradient-to-r from-blue-500 to-blue-300 mb-3"></div>
-                    
+
+                    <div 
+                      className="w-16 h-0.5 mb-3"
+                      style={{ 
+                        background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                      }}
+                    ></div>
+
                     <div className="min-h-[3rem] mb-3">
                       <p className="text-sm font-medium text-gray-700 italic leading-relaxed">
                         {service.subtitle}
@@ -126,7 +143,16 @@ const ServicesOverview = () => {
                 <div className="px-6 pb-6 mt-auto">
                   <Link
                     to={service.link}
-                    className="inline-flex items-center justify-center w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center justify-center w-full px-4 py-3 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = "linear-gradient(135deg, #012c5e 0%, #1d4ed8 100%)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = "linear-gradient(135deg, #023670 0%, #2563eb 100%)";
+                    }}
                   >
                     View Details
                     <svg
@@ -171,8 +197,8 @@ const ServicesOverview = () => {
                     alt={sample.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
                     }}
                   />
                   <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden">
@@ -186,11 +212,97 @@ const ServicesOverview = () => {
                   {sample.name}
                 </h3>
 
-                <p className="text-sm text-gray-600">
-                  {sample.description}
-                </p>
+                <p className="text-sm text-gray-600">{sample.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Commitment Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              DNA Testing Service Quality Guarantee at Genetix
+            </h2>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                1. Absolute Analytical Accuracy
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Genetix employs state-of-the-art DNA analytical technologies,
+                ensuring accuracy rates of up to 99.9999% for inclusion of
+                biological relationships and 100% for exclusion. All testing
+                procedures strictly adhere to international quality standards,
+                delivering the most reliable and conclusive results.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                2. Absolute Confidentiality and Data Protection
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                We are committed to maintaining complete confidentiality of all
+                personal information and test results. All data is stored and
+                managed through advanced security systems with strict access
+                controls, ensuring information is only released to authorized
+                personnel and designated recipients.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                3. Rapid Turnaround Time
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Understanding the critical importance of timely results for
+                important decisions, Genetix guarantees result delivery within
+                3-7 business days (depending on test type). For urgent cases,
+                expedited processing services are available upon request to
+                provide faster turnaround times.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                4. Comprehensive Post-Testing Support
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Following result delivery, our team of genetic counselors and
+                laboratory specialists remains available for consultation,
+                interpretation assistance, and ongoing support to help clients
+                understand the significance of their test results. Additionally,
+                we provide legal support services when results are required for
+                administrative or legal proceedings.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                5. Expert Laboratory Personnel
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Our laboratory is staffed by highly trained molecular
+                biologists, genetic analysts, and certified laboratory
+                technicians with extensive experience in DNA analysis. Genetix's
+                commitment to excellence ensures complete confidence in every
+                service we provide.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-gray-700 leading-relaxed">
+                With these commitments, Genetix continuously strives to deliver
+                the highest quality DNA testing services with uncompromising
+                standards of accuracy, reliability, and professionalism, meeting
+                all client needs with excellence.
+              </p>
+            </div>
           </div>
         </div>
       </div>
