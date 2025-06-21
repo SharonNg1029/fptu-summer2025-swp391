@@ -4,6 +4,14 @@ import { Link } from "react-router-dom";
 const ServicesOverview = () => {
   const [selectedKit, setSelectedKit] = useState(null);
 
+  // Helper function to format price to VND
+  const formatToVND = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
   const services = [
     {
       id: 1,
@@ -11,8 +19,8 @@ const ServicesOverview = () => {
       subtitle:
         "As a form of DNA testing, it is used to determine the blood relationship between individuals and serve personal and family purposes.",
       description:
-        "Non-Legal DNA Testing is used to determine the biological relationship between individuals, such as parent-child or grandparent-grandchild relationships. At GENTIS International Testing Center, we ensure accuracy and confidentiality.",
-      price: "Starting from 3,500,000 VND",
+        "Non-Legal DNA Testing is used to determine the biological relationship between individuals. At GENTIS International Testing Center, we ensure accuracy and confidentiality.",
+      price: formatToVND(2500000),
       turnaround: "2-7 working days",
       link: "/services/non-legal",
     },
@@ -21,8 +29,8 @@ const ServicesOverview = () => {
       title: "Legal DNA Testing",
       subtitle: "As a legally binding and administrative form of DNA testing",
       description:
-        "Legal DNA Testing is conducted under strict procedures, and the results are legally valid to resolve issues related to inheritance, divorce, and child custody.",
-      price: "Starting from 4,500,000 VND",
+        "Legal DNA testing is conducted through a rigorous process, and the results hold legal validity for resolving matters related to inheritance, birth registration, and sponsorship-immigration-citizenship applications.",
+      price: formatToVND(3500000),
       turnaround: "3-7 working days",
       link: "/services/legal",
     },
@@ -31,19 +39,19 @@ const ServicesOverview = () => {
   const sampleTypes = [
     {
       id: 1,
-      name: "Nail",
+      name: "Nail clipping sample",
       image:
         "https://gentis.vn/wp-content/uploads/2021/01/ban-da-biet-quy-trinh-xet-nghiem-adn-chua-1.jpg",
     },
     {
       id: 2,
-      name: "Hair roots",
+      name: "Hair sample with root follicles",
       image:
         "https://medlatec.vn/media/13792/content/20200917_xet-nghiem-adn-bang-toc-01.jpg",
     },
     {
       id: 3,
-      name: "Oral mucosa",
+      name: "Buccal swab sample (saliva)",
       image:
         "https://gentis.com.vn/public/media/tin-tuc/2022/t5/xet-nghiem-adn-bang-niem-mac-mieng.jpg",
     },
@@ -108,7 +116,7 @@ const ServicesOverview = () => {
               textShadow: "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000"
             }}
           >
-            DNA Testing
+            DNA Testing Service
           </h1>
           <p 
             className="text-base mb-8 max-w-3xl mx-auto leading-relaxed font-medium"
@@ -182,7 +190,7 @@ const ServicesOverview = () => {
 
                   <div className="mt-auto">
                     <div className="text-lg font-bold text-gray-900">
-                      {service.price}
+                      Starting from {service.price}
                     </div>
                     <div className="text-sm text-gray-600 mb-2">
                       {service.turnaround}
@@ -485,7 +493,7 @@ const ServicesOverview = () => {
               <p className="text-gray-700 leading-relaxed">
                 Understanding the critical importance of timely results for
                 important decisions, Genetix guarantees result delivery within
-                3-7 business days (depending on test type). For urgent cases,
+                2-7 business days (depending on test type). For urgent cases,
                 expedited processing services are available upon request to
                 provide faster turnaround times.
               </p>
