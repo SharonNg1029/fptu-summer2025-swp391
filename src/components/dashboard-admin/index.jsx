@@ -23,6 +23,8 @@ import {
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import LogOut from "../authen-form/LogOut";
 import axiosInstance from "../../configs/axios";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -197,23 +199,21 @@ const AdminDashboard = () => {
             </Button>
 
             {/* Logout Button */}
-            <Button
-              type="text"
-              danger
-              icon={<LogoutOutlined />}
-              onClick={async () => {
-                try {
-                  await axiosInstance.post("/auth/logout");
-                  if (typeof LogOut.performLogout === "function") {
-                    LogOut.performLogout();
-                  }
-                } catch (error) {
-                  console.error("Logout API error:", error);
-                }
+            <LogOut
+              buttonType="text"
+              buttonText="Logout"
+              showIcon={true}
+              showConfirmation={true}
+              style={{ height: 40 }}
+              onLogoutSuccess={() => {
+                // Callback khi logout thành công (tùy chọn)
+                console.log("Logout completed successfully");
               }}
-              style={{ height: 40 }}>
-              Logout
-            </Button>
+              onLogoutError={(error) => {
+                // Callback khi logout lỗi (tùy chọn)
+                console.log("Logout error:", error);
+              }}
+            />
           </div>
         </Header>
 
@@ -245,18 +245,6 @@ const AdminDashboard = () => {
         </Footer>
       </Layout>
 
-      {/* Hidden LogOut component for confirmation modal */}
-      <LogOut
-        trigger="function"
-        showConfirmation={true}
-        onLogoutSuccess={() => {
-          console.log("Logout successful");
-        }}
-        onLogoutError={(error) => {
-          console.error("Logout error:", error);
-        }}
-      />
-
       {/* Enhanced CSS for search dropdown and interactions */}
       <style global>{`
         @media (max-width: 768px) {
@@ -265,6 +253,8 @@ const AdminDashboard = () => {
           }
         }
       `}</style>
+
+      <ToastContainer />
     </Layout>
   );
 };
