@@ -27,7 +27,6 @@ import OrderProcessingPage from "./pages/dashboard-staff/order-processing"; // C
 import StaffReportingPage from "./pages/dashboard-staff/reporting"; // Combined page
 import ManagerOverviewPage from "./pages/dashboard-manager/overview";
 import CustomerFeedbackPage from "./pages/dashboard-manager/customer-feedback";
-import StaffReportsApprovalPage from "./pages/dashboard-manager/staff-reports-approval";
 import TestingProcessMonitoringPage from "./pages/dashboard-manager/testing-process-monitoring"; // New import
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -149,10 +148,6 @@ function App() {
         },
         { path: "customer-feedback", element: <CustomerFeedbackPage /> },
         { path: "inventory", element: <Inventory /> },
-        {
-          path: "staff-reports-approval",
-          element: <StaffReportsApprovalPage />,
-        },
       ],
     },
     {

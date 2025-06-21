@@ -49,6 +49,8 @@ import {
 import api from "../../../configs/axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -59,7 +61,7 @@ const { TabPane } = Tabs;
 
 const Inventory = () => {
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("inventory");
 
   // Inventory data
   const [inventory, setInventory] = useState([]);
@@ -72,10 +74,7 @@ const Inventory = () => {
   });
 
   // Search and filter states
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [dateRange, setDateRange] = useState(null);
 
   // Modal states
   const [isAddStockModalVisible, setIsAddStockModalVisible] = useState(false);
@@ -87,6 +86,88 @@ const Inventory = () => {
 
   // Form states
   const [form] = Form.useForm();
+
+  // Table columns (đặt ở đầu, không lặp lại)
+  const inventoryColumns = [
+    {
+      title: "Kit ID",
+      dataIndex: "kitID",
+      key: "kitID",
+      sorter: (a, b) =>
+        (a.kitID || "").toString().localeCompare((b.kitID || "").toString()),
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      sorter: (a, b) => (a.name || "").localeCompare(b.name || ""),
+    },
+    {
+      title: "Available",
+      dataIndex: "available",
+      key: "available",
+      render: (available) => (
+        <Tag color={available ? "green" : "red"}>
+          {available ? "Available" : "Unavailable"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Quantity",
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (quantity) => quantity || 0,
+      sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
+    },
+    {
+      title: "Kit Sold",
+      dataIndex: "isSelled",
+      key: "isSelled",
+      render: (isSelled) => <span>{isSelled || 0}</span>,
+    },
+  ];
+
+  const transactionColumns = [
+    {
+      title: "Transaction ID",
+      dataIndex: "transactionID",
+      key: "transactionID",
+      sorter: (a, b) =>
+        (Number(a.transactionID) || 0) - (Number(b.transactionID) || 0),
+    },
+    {
+      title: "Kit ID",
+      dataIndex: "kitID",
+      key: "kitID",
+      sorter: (a, b) =>
+        (a.kitID || "").toString().localeCompare((b.kitID || "").toString()),
+    },
+    {
+      title: "Received",
+      dataIndex: "received",
+      key: "received",
+      render: (received) => (
+        <Tag color={received ? "green" : "red"}>
+          {received ? "Received" : "Unreceived"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+    },
+  ];
+
+  // Transaction stats
+  const transactionStats = {
+    totalTransactions: transactions.length,
+    kitReceived: transactions.filter((t) => t.received === true).length,
+    kitUnreceived: transactions.filter((t) => t.received === false).length,
+  };
+
+  // Low stock threshold
+  const LOW_STOCK_THRESHOLD = 20;
 
   // Fetch inventory data
   const fetchInventory = async () => {
@@ -111,8 +192,9 @@ const Inventory = () => {
         (kit) => kit.available === true
       ).length;
       const lowStockKits = inventoryData.filter(
-        (kit) => kit.available === true && (kit.quantity || 0) <= 10
-      ).length;
+        (kit) =>
+          kit.available === true && (kit.quantity || 0) < LOW_STOCK_THRESHOLD
+      );
       const outOfStockKits = inventoryData.filter(
         (kit) => kit.available === false || (kit.quantity || 0) === 0
       ).length;
@@ -121,7 +203,7 @@ const Inventory = () => {
         totalKits,
         totalKitSold, // thêm trường này để hiển thị
         availableKits,
-        lowStockKits,
+        lowStockKits: lowStockKits.length,
         outOfStockKits,
       });
     } catch (error) {
@@ -137,10 +219,18 @@ const Inventory = () => {
   // Fetch transactions data
   const fetchTransactions = async () => {
     try {
-      const response = await api.get("/admin/inventory/transactions");
+      const response = await api.get("/manager/kit-transaction");
       console.log("Transactions response:", response);
 
-      const transactionsData = response.data?.data || response.data || [];
+      // Chuẩn hóa dữ liệu theo mẫu API mới
+      const transactionsData = (response.data?.data || response.data || []).map(
+        (item) => ({
+          transactionID: item.transactionID,
+          kitID: item.kitID,
+          received: item.received,
+          bookingID: item.bookingID,
+        })
+      );
       setTransactions(transactionsData);
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -184,20 +274,17 @@ const Inventory = () => {
   const handleSingleSubmit = async (values) => {
     try {
       setLoading(true);
+      // Lấy đúng kitID và name từ form
+      const kitID = values.kitID;
       const kitData = {
         name: values.name,
-        isAvailable: values.isAvailable,
         quantity: values.quantity,
-        unitPrice: values.unitPrice,
-        location: values.location,
-        supplier: values.supplier,
-        expiryDate: values.expiryDate?.format("YYYY-MM-DD") || null,
-        batchNumber: values.batchNumber,
-        notes: values.notes,
+        isSelled: values.isSelled || 0,
+        available: values.available !== undefined ? values.available : true,
+        kitID: kitID,
       };
-
-      await api.post("/admin/inventory", kitData);
-      toast.success("Inventory item added successfully!");
+      await api.patch(`/manager/kit/${kitID}`, kitData);
+      toast.success("Inventory item updated successfully!");
       form.resetFields();
       fetchInventory(); // Refresh the list
       fetchTransactions(); // Refresh transactions
@@ -212,137 +299,90 @@ const Inventory = () => {
     }
   };
 
-  // Filter functions
-  const filteredInventory = inventory.filter((kit) => {
-    const matchesSearch =
-      kit.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      kit.code?.toLowerCase().includes(searchText.toLowerCase()) ||
-      kit.id?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
-      kit.supplier?.toLowerCase().includes(searchText.toLowerCase());
-
-    const matchesName = statusFilter === "" || kit.name === statusFilter;
-
-    return matchesSearch && matchesName;
+  const filteredInventory = inventory;
+  const filteredTransactions = transactions.filter((t) => {
+    if (typeFilter === "received") return t.received === true;
+    if (typeFilter === "not-received") return t.received === false;
+    return true;
   });
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch =
-      transaction.kitCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-      transaction.kitName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      transaction.id?.toLowerCase().includes(searchText.toLowerCase()) ||
-      transaction.performedBy?.toLowerCase().includes(searchText.toLowerCase());
+  // Derived: Low stock kit names & items
+  const lowStockKits = inventory.filter(
+    (kit) => kit.available === true && (kit.quantity || 0) < LOW_STOCK_THRESHOLD
+  );
+  const lowStockKitNames = lowStockKits
+    .map((kit) => kit.kitID || kit.id || kit.name)
+    .filter(Boolean);
 
-    const matchesType = typeFilter === "" || transaction.type === typeFilter;
-
-    const matchesDateRange =
-      !dateRange ||
-      !dateRange[0] ||
-      !dateRange[1] ||
-      (new Date(transaction.date) >= dateRange[0].startOf("day").toDate() &&
-        new Date(transaction.date) <= dateRange[1].endOf("day").toDate());
-
-    return matchesSearch && matchesType && matchesDateRange;
-  });
-
-  // Table columns
-  const inventoryColumns = [
-    {
-      title: "Kit ID",
-      dataIndex: "kitID",
-      key: "kitID",
-      sorter: (a, b) =>
-        (a.kitID || "").toString().localeCompare((b.kitID || "").toString()),
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      sorter: (a, b) => (a.name || "").localeCompare(b.name || ""),
-    },
-    {
-      title: "Available",
-      dataIndex: "available",
-      key: "available",
-      render: (available) => (
-        <Tag color={available ? "green" : "red"}>
-          {available ? "Available" : "Unavailable"}
-        </Tag>
-      ),
-      filters: [
-        { text: "Available", value: true },
-        { text: "Unavailable", value: false },
-      ],
-      onFilter: (value, record) => record.available === value,
-    },
-    {
-      title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
-      render: (quantity) => quantity || 0,
-      sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
-    },
-    {
-      title: "Kit Sold",
-      dataIndex: "isSelled",
-      key: "isSelled",
-      render: (isSelled) => <span>{isSelled || 0}</span>,
-    },
-    // Actions column removed
-  ];
-
-  // Kit Transactions columns (đã chỉnh sửa cho hợp lý)
-  const transactionColumns = [
-    {
-      title: "Transaction ID",
-      dataIndex: "transactionID",
-      key: "transactionID",
-      sorter: (a, b) =>
-        (a.transactionID || "").localeCompare(b.transactionID || ""),
-    },
-    {
-      title: "Booking ID",
-      dataIndex: "bookingID",
-      key: "bookingID",
-      sorter: (a, b) => (a.bookingID || "").localeCompare(b.bookingID || ""),
-    },
-    {
-      title: "Kit ID",
-      dataIndex: "kitID",
-      key: "kitID",
-      sorter: (a, b) =>
-        (a.kitID || "").toString().localeCompare((b.kitID || "").toString()),
-    },
-    {
-      title: "Kit Sold",
-      dataIndex: "isSelled",
-      key: "isSelled",
-      render: (isSelled) => (
-        <Tag color={isSelled === 1 ? "green" : "red"}>
-          {isSelled === 1 ? "Sold" : "Not Sold"}
-        </Tag>
-      ),
-    },
-    // Actions column removed
-  ];
-
-  // Calculate transaction stats
-  const transactionStats = {
-    totalTransactions: transactions.length,
-    stockIn: transactions.filter((t) => t.type === "Stock In").length,
-    stockOut: transactions.filter((t) => t.type === "Stock Out").length,
-    transfers: transactions.filter((t) => t.type === "Transfer").length,
-    adjustments: transactions.filter((t) => t.type === "Adjustment").length,
-    totalValue: transactions.reduce(
-      (sum, t) => sum + Math.abs(t.totalValue || 0),
-      0
-    ),
+  // Export PDF for Inventory
+  const handleExportInventoryPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Test Kit Inventory List", 14, 16);
+    autoTable(doc, {
+      head: [["Kit ID", "Name", "Available", "Quantity", "Kit Sold"]],
+      body: inventory.map((kit) => [
+        kit.kitID || kit.id || "",
+        kit.name || "",
+        kit.available ? "Available" : "Unavailable",
+        kit.quantity || 0,
+        kit.isSelled || 0,
+      ]),
+      startY: 22,
+    });
+    doc.save("inventory-list.pdf");
   };
 
-  // Derived: Low stock kit names
-  const lowStockKitNames = inventory
-    .filter((kit) => kit.available === true && (kit.quantity || 0) <= 10)
-    .map((kit) => kit.name)
-    .filter(Boolean);
+  // Export PDF for Transactions
+  const handleExportTransactionsPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Kit Transactions List", 14, 16);
+    autoTable(doc, {
+      head: [["Transaction ID", "Kit ID", "Received", "Booking ID"]],
+      body: transactions.map((t) => [
+        t.transactionID,
+        t.kitID,
+        t.received ? "Received" : "Unreceived",
+        t.bookingID,
+      ]),
+      startY: 22,
+    });
+    doc.save("kit-transactions-list.pdf");
+  };
+
+  // Export both Inventory and Transactions
+  const handleExportAllPDF = () => {
+    const doc = new jsPDF();
+    // Inventory Section
+    doc.text("Test Kit Inventory List", 14, 16);
+    autoTable(doc, {
+      head: [["Kit ID", "Name", "Available", "Quantity", "Kit Sold"]],
+      body: inventory.map((kit) => [
+        kit.kitID || kit.id || "",
+        kit.name || "",
+        kit.available ? "Available" : "Unavailable",
+        kit.quantity || 0,
+        kit.isSelled || 0,
+      ]),
+      startY: 22,
+    });
+    // Transactions Section
+    let nextY = doc.lastAutoTable.finalY + 10;
+    doc.text("Kit Transactions List", 14, nextY);
+    autoTable(doc, {
+      head: [["Transaction ID", "Kit ID", "Received", "Booking ID"]],
+      body: transactions.map((t) => [
+        t.transactionID,
+        t.kitID,
+        t.received ? "Received" : "Unreceived",
+        t.bookingID,
+      ]),
+      startY: nextY + 6,
+    });
+    doc.save("inventory-and-kit-transactions.pdf");
+  };
+
+  // Low stock detail modal
+  const [isLowStockModalVisible, setIsLowStockModalVisible] = useState(false);
 
   return (
     <div>
@@ -355,8 +395,9 @@ const Inventory = () => {
         }}>
         <Title level={2}>Test Kit Inventory Management</Title>
         <Space>
-          <Button icon={<FileExcelOutlined />}>Export</Button>
-          <Button icon={<PrinterOutlined />}>Print</Button>
+          <Button icon={<DownloadOutlined />} onClick={handleExportAllPDF}>
+            Export
+          </Button>
           <Button
             type="primary"
             icon={<ReloadOutlined />}
@@ -378,11 +419,6 @@ const Inventory = () => {
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
-          action={
-            <Button size="small" type="primary">
-              View Details
-            </Button>
-          }
         />
       )}
 
@@ -393,11 +429,6 @@ const Inventory = () => {
           type="error"
           showIcon
           style={{ marginBottom: 16 }}
-          action={
-            <Button size="small" danger>
-              View Details
-            </Button>
-          }
         />
       )}
 
@@ -406,11 +437,34 @@ const Inventory = () => {
         <TabPane
           tab={
             <span>
-              <InboxOutlined />
-              Stock Overview
+              <HistoryOutlined />
+              Kit Transactions
             </span>
           }
-          key="overview">
+          key="inventory">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3}>Kit Inventory</Title>
+            <Space>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportInventoryPDF}>
+                Export Inventory
+              </Button>
+              <Button
+                type="primary"
+                icon={<ReloadOutlined />}
+                onClick={fetchInventory}
+                loading={loading}>
+                Refresh
+              </Button>
+            </Space>
+          </div>
           {/* Stats Cards */}
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             <Col xs={24} sm={12} lg={8}>
@@ -419,7 +473,6 @@ const Inventory = () => {
                   title="Total Kits"
                   value={inventoryStats.totalKits}
                   prefix={<InboxOutlined />}
-                  valueStyle={{ color: "#1890ff" }}
                 />
               </Card>
             </Col>
@@ -449,32 +502,6 @@ const Inventory = () => {
             </Col>
           </Row>
 
-          {/* Filters */}
-          <Card style={{ marginBottom: 16 }}>
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={12} lg={8}>
-                <Input
-                  placeholder="Search by name, code, ID..."
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  allowClear
-                />
-              </Col>
-              <Col xs={24} sm={6} lg={4}>
-                <Select
-                  placeholder="Filter by kit name"
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                  style={{ width: "100%" }}
-                  allowClear>
-                  <Option value="PowerPlex Fusion">PowerPlex Fusion</Option>
-                  <Option value="Global Filer">Global Filer</Option>
-                </Select>
-              </Col>
-            </Row>
-          </Card>
-
           {/* Inventory Table */}
           <Card>
             <Table
@@ -482,13 +509,7 @@ const Inventory = () => {
               columns={inventoryColumns}
               dataSource={filteredInventory}
               rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} items`,
-              }}
+              pagination={false} // Loại bỏ phân trang
               expandable={{
                 expandedRowRender: (record) => (
                   <div>
@@ -545,20 +566,37 @@ const Inventory = () => {
           </div>
 
           {/* Single Item Form */}
-          <Card title="Add Single Inventory Item">
+          <Card title="Add Inventory Item">
             <Form
               form={form}
               layout="vertical"
               onFinish={handleSingleSubmit}
               initialValues={{ quantity: 1 }}>
               <Form.Item
+                name="kitID"
+                label="Kit ID"
+                rules={[{ required: true, message: "Please select Kit ID" }]}>
+                <Select
+                  placeholder="Select Kit ID"
+                  onChange={(value) => {
+                    form.setFieldsValue({
+                      name:
+                        value === "K001"
+                          ? "PowerPlex Fusion"
+                          : value === "K002"
+                          ? "Global Filer"
+                          : "",
+                    });
+                  }}>
+                  <Option value="K001">K001</Option>
+                  <Option value="K002">K002</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item
                 name="name"
                 label="Kit Name"
-                rules={[{ required: true, message: "Please select kit name" }]}>
-                <Select placeholder="Select kit name">
-                  <Option value="PowerPlex Fusion">PowerPlex Fusion</Option>
-                  <Option value="Global Filer">Global Filer</Option>
-                </Select>
+                rules={[{ required: true, message: "Kit Name is required" }]}>
+                <Input disabled placeholder="Kit Name will be auto-filled" />
               </Form.Item>
               <Form.Item
                 name="quantity"
@@ -597,7 +635,11 @@ const Inventory = () => {
             }}>
             <Title level={3}>Kit Transactions</Title>
             <Space>
-              <Button icon={<DownloadOutlined />}>Export</Button>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportTransactionsPDF}>
+                Export Transactions
+              </Button>
               <Button
                 type="primary"
                 icon={<ReloadOutlined />}
@@ -622,8 +664,8 @@ const Inventory = () => {
             <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
-                  title="Stock In"
-                  value={transactionStats.stockIn}
+                  title="Kit Received"
+                  value={transactionStats.kitReceived}
                   prefix={<ArrowUpOutlined />}
                   valueStyle={{ color: "#52c41a" }}
                 />
@@ -632,8 +674,8 @@ const Inventory = () => {
             <Col xs={24} sm={12} lg={8}>
               <Card>
                 <Statistic
-                  title="Stock Out"
-                  value={transactionStats.stockOut}
+                  title="Kit Unreceived"
+                  value={transactionStats.kitUnreceived}
                   prefix={<ArrowDownOutlined />}
                   valueStyle={{ color: "#ff4d4f" }}
                 />
@@ -641,48 +683,30 @@ const Inventory = () => {
             </Col>
           </Row>
 
-          {/* Transaction Filters */}
+          {/* Filter by Received/Not Received */}
           <Card style={{ marginBottom: 16 }}>
             <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={8}>
-                <Input
-                  placeholder="Search transactions..."
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  allowClear
-                />
-              </Col>
               <Col xs={24} sm={6}>
                 <Select
-                  placeholder="Filter by type"
+                  placeholder="Filter by status"
                   value={typeFilter}
                   onChange={setTypeFilter}
                   style={{ width: "100%" }}
                   allowClear>
-                  <Option value="Stock In">Stock In</Option>
-                  <Option value="Stock Out">Stock Out</Option>
-                  <Option value="Transfer">Transfer</Option>
-                  <Option value="Adjustment">Adjustment</Option>
+                  <Option value="received">Received</Option>
+                  <Option value="not-received">Not Received</Option>
                 </Select>
-              </Col>
-              <Col xs={24} sm={10}>
-                <RangePicker
-                  style={{ width: "100%" }}
-                  onChange={(dates) => setDateRange(dates)}
-                  placeholder={["Start Date", "End Date"]}
-                />
               </Col>
             </Row>
           </Card>
 
-          {/* Transactions Table */}
+          {/* Table */}
           <Card>
             <Table
               loading={loading}
               columns={transactionColumns}
               dataSource={filteredTransactions}
-              rowKey="id"
+              rowKey="transactionID"
               pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
@@ -974,6 +998,21 @@ const Inventory = () => {
             )}
           </Descriptions>
         )}
+      </Modal>
+
+      {/* Low Stock Kit Details Modal */}
+      <Modal
+        title="Low Stock Kit Details"
+        open={isLowStockModalVisible}
+        onCancel={() => setIsLowStockModalVisible(false)}
+        footer={null}
+        width={600}>
+        <Table
+          dataSource={lowStockKits}
+          columns={inventoryColumns}
+          rowKey={(kit) => kit.kitID || kit.id}
+          pagination={false}
+        />
       </Modal>
 
       <ToastContainer />

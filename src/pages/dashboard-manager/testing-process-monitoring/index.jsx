@@ -36,8 +36,20 @@ const TestingProcessMonitoringPage = () => {
   const fetchTests = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get("/manager/testing-process"); // Example API endpoint
-      setTests(response.data?.data || response.data || []);
+      const response = await api.get("/manager/booking-assigned");
+      // Chuẩn hóa dữ liệu theo mẫu API mới
+      const data = response.data?.data || response.data || [];
+      setTests(
+        data.map((item) => ({
+          assignedID: item.assignedID,
+          bookingID: item.bookingID,
+          customerName: item.customerName,
+          staffName: item.staffName,
+          lastUpdate: item.lastUpdate,
+          serviceType: item.serviceType,
+          status: item.status,
+        }))
+      );
     } catch (error) {
       toast.error(
         "Failed to fetch testing process data: " +
@@ -68,9 +80,9 @@ const TestingProcessMonitoringPage = () => {
   const columns = [
     {
       title: "Test ID",
-      dataIndex: "testId",
-      key: "testId",
-      sorter: (a, b) => (a.testId || "").localeCompare(b.testId || ""),
+      dataIndex: "assignedID",
+      key: "assignedID",
+      sorter: (a, b) => (a.assignedID || "").localeCompare(b.assignedID || ""),
     },
     {
       title: "Customer Name",
@@ -80,14 +92,14 @@ const TestingProcessMonitoringPage = () => {
         (a.customerName || "").localeCompare(b.customerName || ""),
     },
     {
+      title: "Assigned Staff",
+      dataIndex: "staffName",
+      key: "staffName",
+    },
+    {
       title: "Service Type",
       dataIndex: "serviceType",
       key: "serviceType",
-    },
-    {
-      title: "Assigned Staff",
-      dataIndex: "assignedStaff",
-      key: "assignedStaff",
     },
     {
       title: "Status",
@@ -96,11 +108,11 @@ const TestingProcessMonitoringPage = () => {
       render: (status) => {
         let color = "default";
         let icon = <ClockCircleOutlined />;
-        if (status === "Pending Payment") {
-          color = "orange";
-          icon = <ExclamationCircleOutlined />;
+        if (status === "Waiting confirmed") {
+          color = "gold";
+          icon = <ClockCircleOutlined />;
         }
-        if (status === "Paid") {
+        if (status === "Booking confirmed") {
           color = "blue";
           icon = <CheckCircleOutlined />;
         }
@@ -112,9 +124,21 @@ const TestingProcessMonitoringPage = () => {
           color = "cyan";
           icon = <LoadingOutlined />;
         }
+        if (status === "Ready") {
+          color = "lime";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Pending Payment") {
+          color = "orange";
+          icon = <ExclamationCircleOutlined />;
+        }
         if (status === "Completed") {
           color = "green";
           icon = <CheckCircleOutlined />;
+        }
+        if (status === "Cancel") {
+          color = "red";
+          icon = <ExclamationCircleOutlined />;
         }
         return (
           <Tag icon={icon} color={color}>
@@ -123,16 +147,19 @@ const TestingProcessMonitoringPage = () => {
         );
       },
       filters: [
-        { text: "Pending Payment", value: "Pending Payment" },
-        { text: "Paid", value: "Paid" },
+        { text: "Waiting confirmed", value: "Waiting confirmed" },
+        { text: "Booking confirmed", value: "Booking confirmed" },
         { text: "Awaiting Sample", value: "Awaiting Sample" },
         { text: "In Progress", value: "In Progress" },
+        { text: "Ready", value: "Ready" },
+        { text: "Pending Payment", value: "Pending Payment" },
         { text: "Completed", value: "Completed" },
+        { text: "Cancel", value: "Cancel" },
       ],
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: "Last Update",
+      title: "Last Update Status",
       dataIndex: "lastUpdate",
       key: "lastUpdate",
       render: (date) => (date ? new Date(date).toLocaleString() : "N/A"),
@@ -186,11 +213,14 @@ const TestingProcessMonitoringPage = () => {
               style={{ width: "100%" }}
               allowClear>
               <Option value="">All Statuses</Option>
-              <Option value="Pending Payment">Pending Payment</Option>
-              <Option value="Paid">Paid</Option>
+              <Option value="Waiting confirmed">Waiting confirmed</Option>
+              <Option value="Booking confirmed">Booking confirmed</Option>
               <Option value="Awaiting Sample">Awaiting Sample</Option>
               <Option value="In Progress">In Progress</Option>
+              <Option value="Ready">Ready</Option>
+              <Option value="Pending Payment">Pending Payment</Option>
               <Option value="Completed">Completed</Option>
+              <Option value="Cancel">Cancel</Option>
             </Select>
           </Col>
         </Row>
