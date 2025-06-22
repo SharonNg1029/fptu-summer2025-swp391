@@ -48,7 +48,8 @@ const ServiceModal = ({ isOpen, onClose, children }) => {
     
     if (isOpen) {
       document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden'; // Khóa scroll
+      // KHÔNG khóa scroll để có thể nhìn thấy nội dung phía sau
+      // document.body.style.overflow = 'hidden'; 
     }
     
     return () => {
@@ -61,9 +62,9 @@ const ServiceModal = ({ isOpen, onClose, children }) => {
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-      {/* Nền mờ */}
+      {/* Nền mờ mạnh hơn giống hình */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="absolute inset-0 backdrop-blur-md bg-white/20"
         onClick={onClose}
       ></div>
       
@@ -390,7 +391,7 @@ const LegalServices = () => {
         {selectedService && (
           <div className="bg-white relative">
             
-            {/* Header modal - sticky */}
+            {/* Header modal - sticky - KHÔNG THAY ĐỔI */}
             <div className={`sticky top-0 z-10 transition-all duration-300 ${
               isScrolled
                 ? 'shadow-2xl backdrop-blur-md bg-gradient-to-br from-[#004494]/95 to-[#1677FF]/95' 
