@@ -1,10 +1,12 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
 import { Typography, Card, Row, Col, Statistic, Spin } from "antd";
 import {
   CalendarOutlined,
   ContainerOutlined,
   LoadingOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import {
   BarChart,
@@ -30,54 +32,99 @@ const StaffOverviewPage = () => {
   const [overviewData, setOverviewData] = useState({
     totalAppointments: 0,
     pendingAppointments: 0,
-    samplesCollectedToday: 0,
-    ordersInProgress: 0,
+    appointmentsToday: 0,
+    totalAppointmentFinished: 0,
     orderStatusDistribution: [], // For pie chart
     dailyTasks: [], // For bar chart
   });
 
+  // Lấy staffID từ Redux store
+  const currentUser = useSelector((state) => state.user?.currentUser);
+  const staffID =
+    currentUser?.id || currentUser?.staffId || currentUser?.userId;
   const fetchStaffOverviewData = useCallback(async () => {
+    if (!staffID) {
+      toast.error("Staff ID not found. Please log in again.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Replace with actual API calls
-      const [
-        appointmentsRes,
-        samplesRes,
-        ordersRes,
-        statusDistRes,
-        dailyTasksRes,
-      ] = await Promise.all([
-        api.get("/staff/dashboard/appointments-summary"), // Example API for appointments
-        api.get("/staff/dashboard/samples-today"), // Example API for samples
-        api.get("/staff/dashboard/orders-in-progress"), // Example API for orders
-        api.get("/staff/dashboard/order-status-distribution"), // Example API for order status distribution
-        api.get("/staff/dashboard/daily-tasks"), // Example API for daily tasks
-      ]);
+      // Gọi API để lấy assignments của staff
+      const response = await api.get(`/staff/my-assignment/${staffID}`);
+      const assignments = response.data || [];
 
+      // Tính toán các thống kê từ dữ liệu assignments
+      const totalAppointments = assignments.length;
+
+      // Đếm appointments có status là "Awaiting Sample" cho Pending Appointments
+      const pendingAppointments = assignments.filter(
+        (assignment) => assignment.status === "Awaiting Sample"
+      ).length; // Đếm appointments có trong ngày hiện tại
+      const today = new Date().toDateString();
+      const appointmentsToday = assignments.filter((assignment) => {
+        if (assignment.appointmentDate) {
+          const appointmentDate = new Date(
+            assignment.appointmentDate
+          ).toDateString();
+          return appointmentDate === today;
+        }
+        return false;
+      }).length;
+
+      // Tạo distribution data cho pie chart
+      const statusCounts = {};
+      assignments.forEach((assignment) => {
+        const status = assignment.status || "Unknown";
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+
+      const orderStatusDistribution = Object.entries(statusCounts).map(
+        ([name, value]) => ({ name, value })
+      ); // Tạo daily tasks data cho bar chart
+      const dailyTasks = [
+        { name: "Total Assignments", count: totalAppointments },
+        { name: "Pending Samples", count: pendingAppointments },
+        { name: "Appointments Today", count: appointmentsToday },
+        {
+          name: "Finished",
+          count: assignments.filter((a) => a.status === "Completed").length,
+        },
+      ];
       setOverviewData({
-        totalAppointments: appointmentsRes.data?.total || 0,
-        pendingAppointments: appointmentsRes.data?.pending || 0,
-        samplesCollectedToday: samplesRes.data?.count || 0,
-        ordersInProgress: ordersRes.data?.count || 0,
-        orderStatusDistribution: statusDistRes.data || [
-          { name: "Pending", value: 5 },
-          { name: "Sample Collected", value: 10 },
-          { name: "Testing", value: 8 },
-          { name: "Completed", value: 15 },
-        ],
-        dailyTasks: dailyTasksRes.data || [
-          { name: "Appointments", count: 7 },
-          { name: "Collections", count: 5 },
-          { name: "Results", count: 3 },
-        ],
+        totalAppointments,
+        pendingAppointments,
+        appointmentsToday,
+        totalAppointmentFinished: assignments.filter(
+          (a) => a.status === "Completed"
+        ).length,
+        orderStatusDistribution:
+          orderStatusDistribution.length > 0
+            ? orderStatusDistribution
+            : [{ name: "No Data", value: 1 }],
+        dailyTasks,
       });
     } catch (error) {
-      toast.error("Failed to fetch staff overview data.");
-      console.error("Error fetching staff overview data:", error);
+      toast.error("Failed to fetch staff assignment data.");
+      console.error("Error fetching staff assignment data:", error); // Set default data in case of error
+      setOverviewData({
+        totalAppointments: 0,
+        pendingAppointments: 0,
+        appointmentsToday: 0,
+        totalAppointmentFinished: 0,
+        orderStatusDistribution: [{ name: "No Data", value: 1 }],
+        dailyTasks: [
+          { name: "Total Assignments", count: 0 },
+          { name: "Pending Samples", count: 0 },
+          { name: "Appointments Today", count: 0 },
+          { name: "Finished", count: 0 },
+        ],
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [staffID]);
 
   useEffect(() => {
     fetchStaffOverviewData();
@@ -117,24 +164,24 @@ const StaffOverviewPage = () => {
                   valueStyle={{ color: "#faad14" }}
                 />
               </Card>
-            </Col>
+            </Col>{" "}
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Samples Collected Today"
-                  value={overviewData.samplesCollectedToday}
-                  prefix={<ContainerOutlined />}
-                  valueStyle={{ color: "#52c41a" }}
+                  title="Appointments Today"
+                  value={overviewData.appointmentsToday}
+                  prefix={<CalendarOutlined />}
+                  valueStyle={{ color: "#1890ff" }}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="Orders In Progress"
-                  value={overviewData.ordersInProgress}
-                  prefix={<LoadingOutlined />}
-                  valueStyle={{ color: "#1890ff" }}
+                  title="Total Appointment Finished"
+                  value={overviewData.totalAppointmentFinished}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: "#52c41a" }}
                 />
               </Card>
             </Col>
