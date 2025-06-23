@@ -57,7 +57,7 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
 
 4. **Cấu hình endpoint API:**  
  
-   Sửa địa chỉ của const api trong `src/configs/axios.js` nếu muốn trỏ sang api khác.
+   Thay đổi địa chỉ của const api trong `src/configs/axios.js` nếu muốn trỏ sang api khác.
 
 5. **Chạy ứng dụng:**
    ```bash
