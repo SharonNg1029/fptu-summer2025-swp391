@@ -1,6 +1,6 @@
 # Genetix DNA Testing Platform
 
-Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ khách hàng đăng ký, quản lý, và theo dõi quá trình xét nghiệm DNA phục vụ các mục đích dân sự, hành chính và pháp lý.
+Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ khách hàng đăng ký, quản lý, và theo dõi quá trình xét nghiệm DNA phục vụ các mục đích dân sự và hành chính.
 
 ---
 
@@ -11,8 +11,8 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
 
 - **Đặt lịch xét nghiệm DNA:**  
   - Xét nghiệm dân sự (không pháp lý) cho mục đích cá nhân, gia đình.
-  - Xét nghiệm hành chính, pháp lý (hợp lệ cho giấy tờ, nhập cư, tòa án).
-  - Theo dõi trạng thái từng đơn hàng: Đang chờ thanh toán → Đã thanh toán → Chờ lấy mẫu → Đang xét nghiệm → Hoàn thành.
+  - Xét nghiệm hành chính (hợp lệ cho giấy tờ, nhập cư, tòa án).
+  - Theo dõi trạng thái từng đơn hàng: Waiting Confirmed → Booking Confirmed → Awaiting Sample → In Progress → Ready → Pending Payment → Completed hoặc Cancel.
 
 - **Thanh toán QR đa nền tảng:**  
   Tích hợp QR code thanh toán qua Momo, VNPay, banking app.
@@ -31,7 +31,7 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
 ## 🛠️ Công nghệ sử dụng
 
 - **Frontend:** ReactJS, Redux Toolkit, Ant Design, Tailwind CSS, React Router, React Toastify, React Hot Toast, Lucide React, React Icons.
-- **Backend:** (API endpoint mẫu, chưa kèm source backend)
+- **Backend:** repository này chưa bao gồm source code Back-end.
 - **Authentication:** Google OAuth, xác thực JWT, xác minh OTP qua email.
 - **Quản lý state:** Redux + Redux Persist.
 - **Build Tool:** Vite.
@@ -55,7 +55,7 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
    ```
 
 4. **Cấu hình endpoint API:**  
-   Sửa `src/configs/axios.js` nếu muốn trỏ sang backend khác.
+   Sửa địa chỉ của const api trong `src/configs/axios.js` nếu muốn trỏ sang api khác.
 
 5. **Chạy ứng dụng:**
    ```bash
@@ -83,18 +83,18 @@ src/
 ## 💡 Một số tài khoản mẫu
 
 - **Admin:**  
-  - user: `admin` / pass: `admin123`
+  - user: `ngannguye` / pass: `ngannguyen`
 
-- **Khách hàng:**  
-  - user: `customer01` / pass: `customer123`
+- **Manager:**  
+  - user: `quan` / pass: `ngogiathanh`
+ 
+- **Staff:**  
+  - user: `nganle` / pass: `nganle`
 
-> Bạn có thể đăng ký tài khoản mới hoặc thử đăng nhập Google.
+- **Customer:**  
+  - user: `xuanloc` / pass: `xuanloc`
 
----
-
-## 📷 Screenshot
-
-![image1](https://user-images.githubusercontent.com/your_screenshot.png)
+> Bạn có thể đăng ký tài khoản mới hoặc thử đăng ký/đăng nhập với Google.
 
 ---
 
