@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import {
   UserOutlined,
   DashboardOutlined,
-  MedicineBoxOutlined,
-  FileTextOutlined,
+  EyeOutlined,
+  MessageOutlined,
   InboxOutlined,
-  SafetyOutlined,
+  FileDoneOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -23,6 +23,8 @@ import {
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import LogOut from "../authen-form/LogOut";
 import axiosInstance from "../../configs/axios";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -32,33 +34,26 @@ function getItem(label, key, icon, children) {
     key,
     icon,
     children,
-    label: children ? label : <Link to={`/dashboard/${key}`}>{label}</Link>,
+    label: children ? (
+      label
+    ) : (
+      <Link to={`/manager-dashboard/${key}`}>{label}</Link>
+    ),
   };
 }
 
 const items = [
   getItem("Dashboard", "overview", <DashboardOutlined />),
-  getItem("Account Management", "accounts", <UserOutlined />),
-  getItem("Services", "services", <MedicineBoxOutlined />, [
-    getItem(
-      <Link to="/dashboard/services/booking">Booking</Link>,
-      "services/booking",
-      <FileTextOutlined />
-    ),
-    getItem(
-      <Link to="/dashboard/services/service-management">
-        Service Management
-      </Link>,
-      "services/service-management",
-      <MedicineBoxOutlined />
-    ),
-  ]),
-  getItem("Blog Posts Management", "blog", <FileTextOutlined />),
+  getItem(
+    "Testing Process Monitoring",
+    "testing-process-monitoring",
+    <EyeOutlined />
+  ),
+  getItem("Customer Feedback", "customer-feedback", <MessageOutlined />),
   getItem("Test Kit Inventory", "inventory", <InboxOutlined />),
-  getItem("System Logs", "logs", <SafetyOutlined />),
 ];
 
-const Dashboard = () => {
+const ManagerDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const location = useLocation();
@@ -75,7 +70,9 @@ const Dashboard = () => {
     const breadcrumbItems = pathSnippets.map((snippet, index) => {
       const url = `/${pathSnippets.slice(0, index + 1).join("/")}`;
       return {
-        title: snippet.charAt(0).toUpperCase() + snippet.slice(1),
+        title: snippet
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase()),
         path: url,
       };
     });
@@ -95,8 +92,6 @@ const Dashboard = () => {
     };
     fetchUserInfo();
   }, []);
-
-  // User dropdown menu items
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -181,7 +176,7 @@ const Dashboard = () => {
             {/* Profile Button */}
             <Button
               type="text"
-              onClick={() => navigate("/dashboard/profile")}
+              onClick={() => navigate("/profile")}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -197,25 +192,28 @@ const Dashboard = () => {
             </Button>
 
             {/* Logout Button */}
-            <Button
-              type="text"
-              danger
-              icon={<LogoutOutlined />}
-              onClick={() => {
-                if (typeof LogOut.performLogout === "function") {
-                  LogOut.performLogout();
-                }
+            <LogOut
+              buttonType="default"
+              buttonText="Logout"
+              showIcon={true}
+              showConfirmation={true}
+              style={{ height: 40 }}
+              onLogoutSuccess={() => {
+                // Callback khi logout thành công (tùy chọn)
+                console.log("Logout completed successfully");
               }}
-              style={{ height: 40 }}>
-              Logout
-            </Button>
+              onLogoutError={(error) => {
+                // Callback khi logout lỗi (tùy chọn)
+                console.log("Logout error:", error);
+              }}
+            />
           </div>
         </Header>
 
         <Content style={{ margin: "16px 16px 0", overflow: "initial" }}>
           <Breadcrumb style={{ marginBottom: 16 }}>
             <Breadcrumb.Item>
-              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/manager-dashboard">Dashboard</Link>
             </Breadcrumb.Item>
             {breadcrumbs.slice(1).map((breadcrumb, index) => (
               <Breadcrumb.Item key={index}>
@@ -240,18 +238,6 @@ const Dashboard = () => {
         </Footer>
       </Layout>
 
-      {/* Hidden LogOut component for confirmation modal */}
-      <LogOut
-        trigger="function"
-        showConfirmation={true}
-        onLogoutSuccess={() => {
-          console.log("Logout successful");
-        }}
-        onLogoutError={(error) => {
-          console.error("Logout error:", error);
-        }}
-      />
-
       {/* Enhanced CSS for search dropdown and interactions */}
       <style jsx global>{`
         @media (max-width: 768px) {
@@ -264,4 +250,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default ManagerDashboard;

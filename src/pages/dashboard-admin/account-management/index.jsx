@@ -17,9 +17,10 @@ import {
   Row,
   Col,
   Statistic,
-  Descriptions,
 } from "antd";
 import toast from "react-hot-toast";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -37,6 +38,7 @@ import {
   TeamOutlined,
   UserAddOutlined,
   ReloadOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 
@@ -66,9 +68,7 @@ const AccountManagement = () => {
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isRecordModalVisible, setIsRecordModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [deletingAccounts, setDeletingAccounts] = useState(new Set());
   const [accountsWithActiveOrders, setAccountsWithActiveOrders] = useState(
     new Set()
@@ -81,6 +81,9 @@ const AccountManagement = () => {
 
   // Ant Design form instance
   const [form] = Form.useForm();
+
+  // Pagination state for Table
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   /**
    * Check if a customer account has active orders
@@ -158,20 +161,33 @@ const AccountManagement = () => {
     try {
       setLoading(true);
       const response = await api.get("/admin/account");
-      console.log("Accounts response:", response);
-
-      const accountsData = response.data?.data || response.data || [];
+      console.log("Accounts API raw response:", response);
+      // Map API fields to UI fields
+      const accountsData = (response.data?.data || response.data || []).map(
+        (acc) => ({
+          id: acc.accountID,
+          username: acc.username,
+          email: acc.email,
+          phone: acc.phone,
+          // Lấy role từ authorities nếu có, fallback về acc.role nếu không có
+          role:
+            acc.authorities && acc.authorities.length > 0
+              ? acc.authorities[0].authority
+              : acc.role,
+          status: acc.enabled ? "ACTIVE" : "INACTIVE",
+          createdAt: acc.createAt,
+          // Các trường khác nếu cần
+          ...acc,
+        })
+      );
+      console.log("Mapped accountsData:", accountsData);
       setAccounts(accountsData);
-
       // Fetch related data
       await fetchActiveOrdersStatus(accountsData);
       await fetchCustomerStats();
     } catch (error) {
       console.error("Error fetching accounts:", error);
-      toast.error(
-        "Failed to fetch accounts: " +
-          (error.response?.data?.message || error.message)
-      );
+      toast.error("Failed to fetch accounts");
     } finally {
       setLoading(false);
     }
@@ -187,9 +203,11 @@ const AccountManagement = () => {
    * Implements business rules for account deletion
    */
   const canDeleteAccount = (account) => {
-    // Cannot delete if it's the last admin
-    if (account.role === "ADMIN") {
-      const adminCount = accounts.filter((acc) => acc.role === "ADMIN").length;
+    // Cannot delete if it's the last admin (ignore case)
+    if (account.role && account.role.toUpperCase() === "ADMIN") {
+      const adminCount = accounts.filter(
+        (acc) => acc.role && acc.role.toUpperCase() === "ADMIN"
+      ).length;
       if (adminCount <= 1) {
         return {
           canDelete: false,
@@ -239,6 +257,7 @@ const AccountManagement = () => {
       phone: record.phone,
       role: record.role,
       status: record.status === "ACTIVE",
+      // Không set password khi edit
     });
     setIsModalVisible(true);
   };
@@ -296,21 +315,18 @@ const AccountManagement = () => {
       await refreshAllData();
     } catch (error) {
       console.error("Error deleting account:", error);
-
-      // Enhanced error handling with specific messages
       let errorMessage = "Failed to delete account";
-      if (error.response?.status === 403) {
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 403) {
         errorMessage = "You don't have permission to delete this account";
       } else if (error.response?.status === 404) {
         errorMessage = "Account not found or already deleted";
       } else if (error.response?.status === 409) {
         errorMessage = "Cannot delete account: Account has associated data";
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = `Failed to delete account: ${error.message}`;
       }
-
       toast.error(errorMessage);
     } finally {
       // Remove from deletion tracking
@@ -323,90 +339,188 @@ const AccountManagement = () => {
   };
 
   /**
-   * Handle account status toggle (Active/Inactive)
-   * Updates account status via API
-   */
-  const handleStatusToggle = async (id, currentStatus) => {
-    try {
-      const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-      await api.put(`/admin/account/${id}/status`, { status: newStatus });
-      toast.success(
-        `Account ${
-          newStatus === "ACTIVE" ? "activated" : "deactivated"
-        } successfully`
-      );
-      refreshAllData();
-    } catch (error) {
-      console.error("Error updating account status:", error);
-      toast.error(
-        "Failed to update account status: " +
-          (error.response?.data?.message || error.message)
-      );
-    }
-  };
-
-  /**
    * Handle form submission for create/update operations
    * Uses Ant Design form validation and API calls
    */
   const handleFormSubmit = async (values) => {
     try {
       if (editingAccount) {
-        // Update existing account
         const accountData = {
           fullName: values.fullName?.trim(),
           email: values.email?.trim(),
           phone: values.phone?.trim(),
           role: values.role,
-          enable: values.status,
+          enabled: values.status,
         };
-
-        // Include password only if provided
         if (values.password && values.password.trim()) {
           accountData.password = values.password.trim();
         }
 
-        await api.patch(`/admin/account/${editingAccount.id}`, accountData);
+        // GỌI API
+        const res = await api.patch(
+          `/admin/account/${editingAccount.id}`,
+          accountData
+        );
+
+        // NẾU BACKEND TRẢ VỀ 200 NHƯNG BÁO LỖI TRONG BODY
+        if (
+          res.data?.message &&
+          (res.data.message.toLowerCase().includes("phone") ||
+            res.data.message.toLowerCase().includes("exist") ||
+            res.data.message.toLowerCase().includes("email"))
+        ) {
+          if (res.data.message.toLowerCase().includes("phone")) {
+            toast.error("Phone number already exists in the system!");
+          } else if (res.data.message.toLowerCase().includes("email")) {
+            toast.error("Email already exists in the system!");
+          } else {
+            toast.error(res.data.message);
+          }
+          return; // Stop, do not close modal, do not reset form
+        }
+
         toast.success("Account updated successfully");
+        setIsModalVisible(false);
+        form.resetFields();
+        setEditingAccount(null);
+        await refreshAllData();
       } else {
-        // Create new account with all required fields
+        // CREATE NEW ACCOUNT
         const accountData = {
+          fullname: values.fullName?.trim(),
           username: values.username?.trim(),
-          password: values.password?.trim(),
           email: values.email?.trim(),
           phone: values.phone?.trim(),
-          role: values.role,
-          fullname: values.fullName?.trim(), // Note: API expects 'fullname' not 'fullName'
+          role: (values.role || "").toUpperCase(), // Luôn gửi role in hoa
+          password: values.password?.trim(),
         };
+        try {
+          const res = await api.post("/admin/register", accountData);
+          // Nếu backend trả về status 2xx thì luôn báo thành công
+          if (res.status && res.status >= 200 && res.status < 300) {
+            toast.success("Account created successfully");
+            setIsModalVisible(false);
+            form.resetFields();
+            setEditingAccount(null);
+            await refreshAllData();
+            return;
+          }
+          // Nếu có message lỗi đặc biệt
+          if (
+            res.data?.message &&
+            (res.data.message.toLowerCase().includes("phone") ||
+              res.data.message.toLowerCase().includes("exist") ||
+              res.data.message.toLowerCase().includes("email") ||
+              res.data.message.toLowerCase().includes("username") ||
+              res.data.message.toLowerCase().includes("vai trò") ||
+              res.data.message.toLowerCase().includes("invalid role"))
+          ) {
+            if (res.data.message.toLowerCase().includes("phone")) {
+              toast.error("Phone number already exists in the system!");
+            } else if (res.data.message.toLowerCase().includes("email")) {
+              toast.error("Email already exists in the system!");
+            } else if (res.data.message.toLowerCase().includes("username")) {
+              toast.error("Username already exists in the system!");
+            } else if (
+              res.data.message.toLowerCase().includes("vai trò") ||
+              res.data.message.toLowerCase().includes("invalid role")
+            ) {
+              toast.error(
+                "Invalid role. Please contact the administrator or check backend role validation."
+              );
+            } else {
+              toast.error(res.data.message);
+            }
+            return;
+          }
+          // Nếu không có message lỗi đặc biệt nhưng status không thành công
+          toast.error(res.data?.message || "Failed to create account");
+        } catch (e) {
+          let errorMessage = "Failed to create account";
+          if (typeof e.response?.data === "string") {
+            errorMessage = e.response.data;
+          } else if (e.response?.data?.message) {
+            errorMessage = e.response.data.message;
+          } else if (e.response?.data?.data) {
+            errorMessage = e.response.data.data;
+          } else if (e.message) {
+            errorMessage = e.message;
+          }
+          const lowerMsg = String(errorMessage).toLowerCase();
+          if (
+            (lowerMsg.includes("unique") && lowerMsg.includes("email")) ||
+            (lowerMsg.includes("duplicate") && lowerMsg.includes("email")) ||
+            (lowerMsg.includes("email") && lowerMsg.includes("constraint"))
+          ) {
+            toast.error("Email already exists in the system!");
+          } else if (
+            (lowerMsg.includes("unique") && lowerMsg.includes("phone")) ||
+            (lowerMsg.includes("duplicate") && lowerMsg.includes("phone")) ||
+            (lowerMsg.includes("phone") && lowerMsg.includes("constraint"))
+          ) {
+            toast.error("Phone number already exists in the system!");
+          } else if (
+            (lowerMsg.includes("unique") && lowerMsg.includes("username")) ||
+            (lowerMsg.includes("duplicate") && lowerMsg.includes("username")) ||
+            (lowerMsg.includes("username") && lowerMsg.includes("constraint"))
+          ) {
+            toast.error("Username already exists in the system!");
+          } else if (
+            lowerMsg.includes("vai trò") ||
+            lowerMsg.includes("invalid role")
+          ) {
+            toast.error(
+              "Invalid role. Please contact the administrator or check backend role validation."
+            );
+          } else if (e.response && e.response.status === 400) {
+            toast.error(
+              "Account may have been created, but the server returned an error. Please check the account list."
+            );
+          } else {
+            toast.error(errorMessage);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[handleFormSubmit] error:", e, e?.response);
 
-        await api.post("/admin/register", accountData);
-        toast.success("Account created successfully");
+      let errorMessage = "Failed";
+      // Nếu là string, lấy trực tiếp
+      if (typeof e.response?.data === "string") {
+        errorMessage = e.response.data;
+      }
+      // Nếu có trường message
+      else if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      }
+      // Nếu có trường data (object)
+      else if (e.response?.data?.data) {
+        errorMessage = e.response.data.data;
+      }
+      // fallback
+      else if (e.message) {
+        errorMessage = e.message;
       }
 
-      // Close modal and reset form
-      setIsModalVisible(false);
-      form.resetFields();
-      setEditingAccount(null);
-
-      // Refresh data
-      await refreshAllData();
-    } catch (error) {
-      console.error("Error saving account:", error);
-
-      // Enhanced error messages
-      let errorMessage = "Failed to save account";
-      if (error.response?.status === 409) {
-        errorMessage = "Account with this email or username already exists";
-      } else if (error.response?.status === 400) {
-        errorMessage = "Invalid account data provided";
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      // Kiểm tra lỗi unique email (SQL/constraint)
+      const lowerMsg = String(errorMessage).toLowerCase();
+      if (
+        (lowerMsg.includes("unique") && lowerMsg.includes("email")) ||
+        (lowerMsg.includes("duplicate") && lowerMsg.includes("email")) ||
+        (lowerMsg.includes("email") && lowerMsg.includes("constraint"))
+      ) {
+        toast.error("Email already exists in the system!");
+      } else if (
+        (lowerMsg.includes("unique") && lowerMsg.includes("phone")) ||
+        (lowerMsg.includes("duplicate") && lowerMsg.includes("phone")) ||
+        (lowerMsg.includes("phone") && lowerMsg.includes("constraint"))
+      ) {
+        toast.error("Phone number already exists in the system!");
+      } else {
+        toast.error(errorMessage);
       }
-
-      toast.error(errorMessage);
     }
   };
-
   /**
    * Filter accounts based on search criteria
    * Supports searching by multiple fields and filtering by role/status
@@ -423,8 +537,14 @@ const AccountManagement = () => {
     const matchesStatus =
       statusFilter === "" || account.status === statusFilter;
 
-    return matchesSearch && matchesRole && matchesStatus;
+    const result = matchesSearch && matchesRole && matchesStatus;
+    if (!result) {
+      // Log chi tiết filter nếu cần debug
+      // console.log('Filtered out:', account, {matchesSearch, matchesRole, matchesStatus});
+    }
+    return result;
   });
+  console.log("Filtered accounts for table:", filteredAccounts);
 
   /**
    * Calculate statistics for dashboard cards
@@ -434,11 +554,14 @@ const AccountManagement = () => {
     total: accounts.length,
     active: accounts.filter((acc) => acc.status === "ACTIVE").length,
     inactive: accounts.filter((acc) => acc.status === "INACTIVE").length,
-    customers: accounts.filter((acc) => acc.role === "CUSTOMER").length,
-    customersWithActiveOrders: accountsWithActiveOrders.size,
+    // Sửa lại customers và staff lấy từ API nếu có, fallback local
+    customers:
+      customerStats.totalCustomers ||
+      accounts.filter((acc) => acc.role === "CUSTOMER").length,
     staff: accounts.filter((acc) =>
       ["STAFF", "MANAGER", "ADMIN"].includes(acc.role)
     ).length,
+    customersWithActiveOrders: accountsWithActiveOrders.size,
     // Use API data if available, fallback to local calculation
     totalCustomersFromAPI:
       customerStats.totalCustomers ||
@@ -461,18 +584,6 @@ const AccountManagement = () => {
       key: "id",
       sorter: (a, b) => a.id - b.id,
       width: 70,
-    },
-    {
-      title: "Full Name",
-      dataIndex: "fullName",
-      key: "fullName",
-      render: (text) => (
-        <Space>
-          <UserOutlined />
-          {text || "N/A"}
-        </Space>
-      ),
-      sorter: (a, b) => (a.fullName || "").localeCompare(b.fullName || ""),
     },
     {
       title: "Username",
@@ -507,13 +618,19 @@ const AccountManagement = () => {
       dataIndex: "role",
       key: "role",
       render: (role) => {
+        const roleUpper = role ? role.toUpperCase() : "";
         const colors = {
           ADMIN: "red",
           MANAGER: "purple",
           STAFF: "green",
           CUSTOMER: "blue",
         };
-        return <Tag color={colors[role] || "blue"}>{role}</Tag>;
+        // Hiển thị đúng màu theo role (không phân biệt hoa thường)
+        return (
+          <Tag color={colors[roleUpper] || "blue"}>
+            {roleUpper.charAt(0) + roleUpper.slice(1).toLowerCase()}
+          </Tag>
+        );
       },
     },
     {
@@ -559,38 +676,6 @@ const AccountManagement = () => {
               onClick={() => handleEdit(record)}
             />
           </Tooltip>
-
-          {/* Status Toggle Button */}
-          <Tooltip
-            title={record.status === "ACTIVE" ? "Deactivate" : "Activate"}>
-            <Button
-              type={record.status === "ACTIVE" ? "default" : "primary"}
-              icon={
-                record.status === "ACTIVE" ? (
-                  <LockOutlined />
-                ) : (
-                  <UnlockOutlined />
-                )
-              }
-              size="small"
-              onClick={() => handleStatusToggle(record.id, record.status)}
-            />
-          </Tooltip>
-
-          {/* Customer Records Button */}
-          {record.role === "CUSTOMER" && (
-            <Tooltip title="View Records">
-              <Button
-                type="default"
-                icon={<HistoryOutlined />}
-                size="small"
-                onClick={() => {
-                  setSelectedUser(record);
-                  setIsRecordModalVisible(true);
-                }}
-              />
-            </Tooltip>
-          )}
 
           {/* Delete Button with Confirmation */}
           <Popconfirm
@@ -651,6 +736,49 @@ const AccountManagement = () => {
     },
   ];
 
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF();
+      if (typeof autoTable !== "function") {
+        toast.error(
+          "Export PDF failed: autoTable is not a function. Please check your import or install jspdf-autotable."
+        );
+        return;
+      }
+      // Lấy dữ liệu từ filteredAccounts
+      const tableColumn = [
+        "ID",
+        "Username",
+        "Email",
+        "Phone",
+        "Role",
+        "Status",
+        "Created At",
+      ];
+      const tableRows = filteredAccounts.map((acc) => [
+        acc.id,
+        acc.username,
+        acc.email,
+        acc.phone,
+        acc.role,
+        acc.status,
+        acc.createdAt ? new Date(acc.createdAt).toLocaleDateString() : "N/A",
+      ]);
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        styles: { font: "helvetica", fontSize: 10 },
+        headStyles: { fillColor: [22, 160, 133] },
+        margin: { top: 20 },
+      });
+      doc.save("account-management.pdf");
+      toast.success("PDF exported successfully!");
+    } catch (err) {
+      toast.error("PDF export failed: " + (err?.message || err));
+      console.error("Export PDF error:", err);
+    }
+  };
+
   return (
     <div style={{ padding: "0 24px" }}>
       {/* Header Section */}
@@ -683,6 +811,13 @@ const AccountManagement = () => {
               setIsModalVisible(true);
             }}>
             Create New Account
+          </Button>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportPDF}
+            size="large"
+            type="default">
+            Export PDF
           </Button>
         </Space>
       </div>
@@ -824,11 +959,18 @@ const AccountManagement = () => {
           dataSource={filteredAccounts}
           rowKey="id"
           pagination={{
-            pageSize: 10,
+            ...pagination,
             showSizeChanger: true,
+            pageSizeOptions: [10, 20, 50, 100],
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} accounts`,
+          }}
+          onChange={(paginationConfig) => {
+            setPagination({
+              current: paginationConfig.current,
+              pageSize: paginationConfig.pageSize,
+            });
           }}
           scroll={{ x: 1200 }}
         />
@@ -856,13 +998,17 @@ const AccountManagement = () => {
               <Form.Item
                 name="fullName"
                 label="Full Name"
-                rules={[
-                  { required: true, message: "Please enter full name" },
-                  {
-                    min: 2,
-                    message: "Full name must be at least 2 characters",
-                  },
-                ]}>
+                rules={
+                  editingAccount
+                    ? []
+                    : [
+                        { required: true, message: "Please enter full name" },
+                        {
+                          min: 2,
+                          message: "Full name must be at least 2 characters",
+                        },
+                      ]
+                }>
                 <Input
                   prefix={<UserOutlined />}
                   placeholder="Enter full name"
@@ -906,7 +1052,8 @@ const AccountManagement = () => {
               }}>
               <Text strong>Editing Account: </Text>
               <Text>
-                {editingAccount.username} ({editingAccount.fullName})
+                {editingAccount.username}
+                {editingAccount.fullName ? ` (${editingAccount.fullName})` : ""}
               </Text>
             </div>
           )}
@@ -995,18 +1142,24 @@ const AccountManagement = () => {
                   <Option value="ADMIN">Admin</Option>
                   <Option value="MANAGER">Manager</Option>
                   <Option value="STAFF">Staff</Option>
-                  <Option value="CUSTOMER">Customer</Option>
+                  {editingAccount && <Option value="CUSTOMER">Customer</Option>}
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                name="status"
-                label="Account Status"
-                valuePropName="checked">
-                <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-              </Form.Item>
-            </Col>
+            {/* Only show status toggle when editing an account */}
+            {editingAccount && (
+              <Col span={12}>
+                <Form.Item
+                  name="status"
+                  label="Account Status"
+                  valuePropName="checked">
+                  <Switch
+                    checkedChildren="Active"
+                    unCheckedChildren="Inactive"
+                  />
+                </Form.Item>
+              </Col>
+            )}
           </Row>
 
           {/* Form Actions */}
@@ -1027,57 +1180,6 @@ const AccountManagement = () => {
             </Space>
           </Form.Item>
         </Form>
-      </Modal>
-
-      {/* Customer Record Details Modal */}
-      <Modal
-        title="Customer Record Details"
-        open={isRecordModalVisible}
-        onCancel={() => {
-          setIsRecordModalVisible(false);
-          setSelectedUser(null);
-        }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setIsRecordModalVisible(false);
-              setSelectedUser(null);
-            }}>
-            Close
-          </Button>,
-        ]}
-        width={800}>
-        {selectedUser && (
-          <Descriptions title="Customer Information" bordered column={2}>
-            <Descriptions.Item label="Customer ID">
-              CUST{selectedUser.id.toString().padStart(3, "0")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Full Name">
-              {selectedUser.fullName || "N/A"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Email">
-              {selectedUser.email}
-            </Descriptions.Item>
-            <Descriptions.Item label="Phone">
-              {selectedUser.phone || "N/A"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Total Tests">
-              {selectedUser.totalTests || 0}
-            </Descriptions.Item>
-            <Descriptions.Item label="Total Spent">
-              ${(selectedUser.totalSpent || 0).toFixed(2)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Last Login">
-              {selectedUser.lastLogin || "Never"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Account Created">
-              {selectedUser.createdAt
-                ? new Date(selectedUser.createdAt).toLocaleDateString()
-                : "N/A"}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
       </Modal>
     </div>
   );

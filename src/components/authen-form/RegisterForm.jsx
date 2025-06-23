@@ -100,7 +100,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
       <div className="otp-verification-subtitle">
         We've sent a 6-digit verification code to your email.
         <br />
-        {/* ẨN EMAIL - chỉ hiển thị thông báo chung */}
+{/* ẨN EMAIL - chỉ hiển thị thông báo chung */}
         <span style={{ color: "#1890ff", fontWeight: "bold" }}>
           Please check your inbox and enter the code below.
         </span>
@@ -198,8 +198,8 @@ function RegisterForm() {
   // Google Success Handler
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await api.post("/auth/google-register", {
-        credential: credentialResponse.credential,
+      const response = await api.post("/auth/google", {
+credential: credentialResponse.credential,
       });
       const { role } = response.data;
       toast.success("Google registration successful!");
@@ -260,6 +260,9 @@ function RegisterForm() {
   };
 
   const onFinish = async (values) => {
+    if (values.dob && values.dob.format) {
+    values.dob = values.dob.format("YYYY-MM-DD");
+  }
     console.log("Success:", values);
     try {
       await api.post("auth/register", values);
@@ -301,7 +304,7 @@ function RegisterForm() {
             ? "This email is already registered. Please use a different email address."
             : errorMessage.toLowerCase().includes("username")
             ? "This username is already taken. Please choose a different username."
-            : errorMessage
+: errorMessage
           : errorMessage;
 
       toast.error(finalErrorMessage);
@@ -353,7 +356,7 @@ function RegisterForm() {
               <div className="form-col">
                 <Form.Item
                   label="Full Name"
-                  name="fullName"
+                  name="fullname"
                   className="form-field"
                   rules={[{ required: true, message: "Required" }]}
                 >
@@ -397,7 +400,7 @@ function RegisterForm() {
                   label="Phone"
                   name="phone"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+rules={[{ required: true, message: "Required" }]}
                 >
                   <Input placeholder="Enter your phone number" />
                 </Form.Item>
@@ -486,5 +489,4 @@ function RegisterForm() {
     </ConfigProvider>
   );
 }
-
 export default RegisterForm;

@@ -1,0 +1,249 @@
+import React from "react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Typography,
+  Table,
+  Card,
+  Row,
+  Col,
+  Tag,
+  Space,
+  Input,
+  Select,
+  Button,
+} from "antd";
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
+import api from "../../../configs/axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const { Title } = Typography;
+const { Option } = Select;
+
+const TestingProcessMonitoringPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [tests, setTests] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const fetchTests = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/manager/booking-assigned");
+      // Chuẩn hóa dữ liệu theo mẫu API mới
+      const data = response.data?.data || response.data || [];
+      setTests(
+        data.map((item) => ({
+          assignedID: item.assignedID,
+          bookingID: item.bookingID,
+          customerName: item.customerName,
+          staffName: item.staffName,
+          lastUpdate: item.lastUpdate,
+          serviceType: item.serviceType,
+          status: item.status,
+        }))
+      );
+    } catch (error) {
+      toast.error(
+        "Failed to fetch testing process data: " +
+          (error.response?.data?.message || error.message)
+      );
+      console.error("Error fetching testing process data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTests();
+  }, [fetchTests]);
+
+  const filteredTests = tests.filter((test) => {
+    const matchesSearch =
+      test.testId?.toLowerCase().includes(searchText.toLowerCase()) ||
+      test.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      test.serviceType?.toLowerCase().includes(searchText.toLowerCase()) ||
+      test.assignedStaff?.toLowerCase().includes(searchText.toLowerCase());
+
+    const matchesStatus = statusFilter === "" || test.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const columns = [
+    {
+      title: "Test ID",
+      dataIndex: "assignedID",
+      key: "assignedID",
+      sorter: (a, b) => (a.assignedID || "").localeCompare(b.assignedID || ""),
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      sorter: (a, b) =>
+        (a.customerName || "").localeCompare(b.customerName || ""),
+    },
+    {
+      title: "Assigned Staff",
+      dataIndex: "staffName",
+      key: "staffName",
+    },
+    {
+      title: "Service Type",
+      dataIndex: "serviceType",
+      key: "serviceType",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => {
+        let color = "default";
+        let icon = <ClockCircleOutlined />;
+        if (status === "Waiting confirmed") {
+          color = "gold";
+          icon = <ClockCircleOutlined />;
+        }
+        if (status === "Booking confirmed") {
+          color = "blue";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Awaiting Sample") {
+          color = "purple";
+          icon = <LoadingOutlined />;
+        }
+        if (status === "In Progress") {
+          color = "cyan";
+          icon = <LoadingOutlined />;
+        }
+        if (status === "Ready") {
+          color = "lime";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Pending Payment") {
+          color = "orange";
+          icon = <ExclamationCircleOutlined />;
+        }
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Cancel") {
+          color = "red";
+          icon = <ExclamationCircleOutlined />;
+        }
+        return (
+          <Tag icon={icon} color={color}>
+            {status}
+          </Tag>
+        );
+      },
+      filters: [
+        { text: "Waiting confirmed", value: "Waiting confirmed" },
+        { text: "Booking confirmed", value: "Booking confirmed" },
+        { text: "Awaiting Sample", value: "Awaiting Sample" },
+        { text: "In Progress", value: "In Progress" },
+        { text: "Ready", value: "Ready" },
+        { text: "Pending Payment", value: "Pending Payment" },
+        { text: "Completed", value: "Completed" },
+        { text: "Cancel", value: "Cancel" },
+      ],
+      onFilter: (value, record) => record.status === value,
+    },
+    {
+      title: "Last Update Status",
+      dataIndex: "lastUpdate",
+      key: "lastUpdate",
+      render: (date) => (date ? new Date(date).toLocaleString() : "N/A"),
+      sorter: (a, b) =>
+        new Date(a.lastUpdate || "1970-01-01") -
+        new Date(b.lastUpdate || "1970-01-01"),
+    },
+  ];
+
+  return (
+    <div style={{ padding: "0 24px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+          flexWrap: "wrap",
+          gap: 16,
+        }}>
+        <Title level={2} style={{ margin: 0 }}>
+          Testing Process Monitoring
+        </Title>
+        <ToastContainer />
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchTests}
+            loading={loading}>
+            Refresh
+          </Button>
+        </Space>
+      </div>
+
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} lg={10}>
+            <Input
+              placeholder="Search by Test ID, Customer, Staff..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={6} lg={7}>
+            <Select
+              placeholder="Filter by status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              style={{ width: "100%" }}
+              allowClear>
+              <Option value="">All Statuses</Option>
+              <Option value="Waiting confirmed">Waiting confirmed</Option>
+              <Option value="Booking confirmed">Booking confirmed</Option>
+              <Option value="Awaiting Sample">Awaiting Sample</Option>
+              <Option value="In Progress">In Progress</Option>
+              <Option value="Ready">Ready</Option>
+              <Option value="Pending Payment">Pending Payment</Option>
+              <Option value="Completed">Completed</Option>
+              <Option value="Cancel">Cancel</Option>
+            </Select>
+          </Col>
+        </Row>
+      </Card>
+
+      <Card>
+        <Table
+          loading={loading}
+          columns={columns}
+          dataSource={filteredTests}
+          rowKey="testId"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} of ${total} tests`,
+          }}
+          scroll={{ x: 1000 }}
+        />
+      </Card>
+    </div>
+  );
+};
+
+export default TestingProcessMonitoringPage;

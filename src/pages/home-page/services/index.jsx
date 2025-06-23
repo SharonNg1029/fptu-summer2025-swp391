@@ -1,160 +1,132 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { 
-  FaBalanceScale, 
-  FaHeart, 
-  FaShieldAlt, 
-  FaClock, 
-  FaUserCheck, 
-  FaFileAlt, 
-  FaChevronDown, 
-  FaChevronUp, 
-  FaBaby,
-  FaUsers
-} from "react-icons/fa";
-import { MdScience, MdVerified, MdPregnantWoman } from "react-icons/md";
-import { BiDna } from "react-icons/bi";
 
 const ServicesOverview = () => {
-  const [expandedService, setExpandedService] = useState(null);
+  const [selectedKit, setSelectedKit] = useState(null);
+
+  // Helper function to format price to VND
+  const formatToVND = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
 
   const services = [
     {
       id: 1,
-      title: "Legal DNA Testing",
-      subtitle: "Court Admissible & Legally Binding",
-      description: "Legal DNA testing is conducted with strict chain of custody procedures, making results admissible in court proceedings, immigration cases, and official documentation. All samples are collected by certified professionals or witnessed collectors.",
-      whatIsIt: "Legal DNA testing follows stringent protocols required by courts and government agencies. The entire process is documented, witnessed, and maintains a clear chain of custody from sample collection to result reporting.",
-      features: [
-        "Chain of custody documentation",
-        "Court admissible results", 
-        "Professional sample collection",
-        "Witnessed collection process",
-        "Legal authentication",
-        "Government approved procedures"
-      ],
-      testTypes: [
-        {
-          category: "Paternity/Maternity Testing",
-          tests: ["Father - Child", "Mother - Child"],
-          icon: <FaUsers className="text-blue-600" />
-        },
-        {
-          category: "Grandparent Testing", 
-          tests: ["Grandfather - Grandson", "Grandmother - Grandchild"],
-          icon: <FaUserCheck className="text-blue-600" />
-        },
-        {
-          category: "Avuncular Testing",
-          tests: ["Uncle - Nephew", "Aunt - Niece"],
-          icon: <BiDna className="text-blue-600" />
-        },
-        {
-          category: "Sibling Testing",
-          tests: ["Full Siblings", "Half Siblings"],
-          icon: <FaUsers className="text-blue-600" />
-        },
-        {
-          category: "Prenatal Testing",
-          tests: ["Invasive Prenatal Testing (Amniocentesis, CVS)"],
-          icon: <FaBaby className="text-blue-600" />
-        },
-        {
-          category: "Identity Testing",
-          tests: ["Personal DNA Card Testing", "Biological Identity Card"],
-          icon: <FaFileAlt className="text-blue-600" />
-        }
-      ],
-      icon: <FaBalanceScale className="text-4xl text-blue-600" />,
-      price: "Starting from $299",
-      turnaround: "5-7 business days",
-      link: "/services/legal",
-      bgGradient: "from-blue-50 to-blue-100",
-      borderColor: "border-blue-200",
-      buttonColor: "bg-blue-600 hover:bg-blue-700"
+      title: "Non-Legal DNA Testing",
+      subtitle:
+        "As a form of DNA testing, it is used to determine the blood relationship between individuals and serve personal and family purposes.",
+      description:
+        "Non-Legal DNA Testing is used to determine the biological relationship between individuals. At GENTIS International Testing Center, we ensure accuracy and confidentiality.",
+      price: formatToVND(2500000),
+      turnaround: "2-7 working days",
+      link: "/services/non-legal",
     },
     {
       id: 2,
-      title: "Non-Legal DNA Testing",
-      subtitle: "Personal Knowledge & Peace of Mind",
-      description: "Non-legal DNA testing is designed for personal curiosity and peace of mind. While highly accurate, these results cannot be used in court proceedings or official documentation. Samples can be collected at home using our easy-to-use collection kits.",
-      whatIsIt: "Non-legal DNA testing provides the same scientific accuracy as legal testing but without the strict chain of custody requirements. It's perfect for personal knowledge, family planning, or satisfying curiosity about biological relationships.",
-      features: [
-        "Complete privacy & confidentiality",
-        "Easy home collection kit",
-        "Fast results delivery", 
-        "No legal documentation required",
-        "Anonymous testing available",
-        "Same scientific accuracy"
-      ],
-      testTypes: [
-        {
-          category: "Paternity/Maternity Testing",
-          tests: ["Father - Child", "Mother - Child"],
-          icon: <FaUsers className="text-green-600" />
-        },
-        {
-          category: "Grandparent Testing",
-          tests: ["Grandfather - Grandchild", "Grandmother - Grandchild"],
-          icon: <FaUserCheck className="text-green-600" />
-        },
-        {
-          category: "Sibling Testing", 
-          tests: ["Full Siblings", "Half Siblings", "Step Siblings"],
-          description: "Determine relationships between siblings including full, half, or step-sibling connections",
-          icon: <FaUsers className="text-green-600" />
-        },
-        {
-          category: "Extended Family Testing",
-          tests: ["Uncle - Nephew", "Aunt - Niece", "Cousin Testing"],
-          description: "Determine relationships with extended family members including uncles, aunts, and cousins",
-          icon: <BiDna className="text-green-600" />
-        },
-        {
-          category: "Prenatal Testing",
-          tests: ["Non-Invasive Prenatal Testing (NIPT)"],
-          description: "Safe prenatal testing using mother's blood sample, no risk to baby",
-          icon: <FaBaby className="text-green-600" />
-        }
-      ],
-      icon: <FaHeart className="text-4xl text-green-600" />,
-      price: "Starting from $199", 
-      turnaround: "3-5 business days",
-      link: "/services/non-legal",
-      bgGradient: "from-green-50 to-green-100",
-      borderColor: "border-green-200",
-      buttonColor: "bg-green-600 hover:bg-green-700"
+      title: "Legal DNA Testing",
+      subtitle: "As a legally binding and administrative form of DNA testing",
+      description:
+        "Legal DNA testing is conducted through a rigorous process, and the results hold legal validity for resolving matters related to inheritance, birth registration, and sponsorship-immigration-citizenship applications.",
+      price: formatToVND(3500000),
+      turnaround: "3-7 working days",
+      link: "/services/legal",
+    },
+  ];
+
+  const sampleTypes = [
+    {
+      id: 1,
+      name: "Nail clipping sample",
+      image:
+        "https://gentis.vn/wp-content/uploads/2021/01/ban-da-biet-quy-trinh-xet-nghiem-adn-chua-1.jpg",
+    },
+    {
+      id: 2,
+      name: "Hair sample with root follicles",
+      image:
+        "https://medlatec.vn/media/13792/content/20200917_xet-nghiem-adn-bang-toc-01.jpg",
+    },
+    {
+      id: 3,
+      name: "Buccal swab sample (saliva)",
+      image:
+        "https://gentis.com.vn/public/media/tin-tuc/2022/t5/xet-nghiem-adn-bang-niem-mac-mieng.jpg",
+    },
+    {
+      id: 4,
+      name: "Blood sample",
+      image:
+        "https://gentis.vn/wp-content/uploads/2021/05/Cach-lay-mau-xet-nghiem-ADn-tai-nha-641x400.jpg",
+    },
+  ];
+
+  const testingKits = [
+    {
+      id: 1,
+      name: "PowerPlex Fusion",
+      shortName: "PowerPlex® Fusion 6C System",
+      image: "/images/powerPlex.jpg",
+      manufacturer: "Promega Corporation, USA",
+      purpose: "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
+      kitType: "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 27 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
+      approval: "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
+      loci: "27 loci"
+    },
+    {
+      id: 2,
+      name: "Global Filer (Mỹ)",
+      shortName: "GlobalFiler™ PCR Amplification Kit",
+      image: "/images/GlobalFiler.jpg",
+      manufacturer: "Thermo Fisher Scientific, USA",
+      purpose: "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
+      kitType: "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 24 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
+      approval: "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
+      loci: "24 loci"
     }
   ];
 
-  const toggleExpanded = (serviceId) => {
-    setExpandedService(expandedService === serviceId ? null : serviceId);
+  const openModal = (kit) => {
+    setSelectedKit(kit);
   };
 
-  const comparisonData = [
-    { feature: "Court Admissible", legal: "✓ Yes", nonLegal: "✗ No" },
-    { feature: "Chain of Custody", legal: "✓ Required", nonLegal: "✗ Not Required" },
-    { feature: "Sample Collection", legal: "Professional/Witnessed", nonLegal: "Home Collection" },
-    { feature: "Privacy Level", legal: "Standard", nonLegal: "Maximum" },
-    { feature: "Turnaround Time", legal: "5-7 Days", nonLegal: "3-5 Days" },
-    { feature: "Cost", legal: "Higher", nonLegal: "Lower" },
-    { feature: "Accuracy", legal: "99.9%", nonLegal: "99.9%" }
-  ];
+  const closeModal = () => {
+    setSelectedKit(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* Hero Section */}
-      <div className="relative text-white py-20" style={{ backgroundColor: '#003469' }}>
-        <div className="absolute inset-0 bg-black opacity-10"></div>
+      <div
+        className="relative text-white h-[600px] mt-10 flex items-center justify-center"
+        style={{ 
+          backgroundImage: "url('https://drugtesters.net/wp-content/uploads/2024/12/MDT-1-768x432.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
+        <div className="absolute inset-0 bg-black opacity-60"></div>
         <div className="relative max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold mb-6">
-            Professional DNA Testing Services
+          <h1 
+            className="text-5xl font-bold mb-6"
+            style={{
+              textShadow: "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000"
+            }}
+          >
+            DNA Testing Service
           </h1>
-          <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
-            Choose between Legal and Non-Legal DNA testing based on your specific needs. 
-            Both offer the same scientific accuracy with different documentation requirements.
+          <p 
+            className="text-base mb-8 max-w-3xl mx-auto leading-relaxed font-medium"
+            style={{
+              textShadow: "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080"
+            }}
+          >
+            DNA testing analyzes genetic information from chromosomes to determine biological relationships between individuals. This advanced scientific method provides accurate lineage determination through comprehensive genetic analysis, making it the most reliable approach for establishing family connections.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center items-center gap-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
               <span className="font-semibold">✓ 99.9% Accuracy</span>
             </div>
@@ -173,110 +145,86 @@ const ServicesOverview = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Our DNA Testing Services
+              Types of DNA Testing Services
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Understanding the difference between Legal and Non-Legal DNA testing
-            </p>
           </div>
 
-          <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto items-stretch">
             {services.map((service) => (
               <div
                 key={service.id}
-                className={`bg-gradient-to-br ${service.bgGradient} rounded-2xl ${service.borderColor} border-2 shadow-lg hover:shadow-2xl transition-all duration-300`}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 flex flex-col h-full"
               >
-                <div className="p-8">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      {service.icon}
-                      <div>
-                        <h3 className="text-3xl font-bold text-gray-900">
-                          {service.title}
-                        </h3>
-                        <p className="text-lg font-medium text-gray-600">
-                          {service.subtitle}
-                        </p>
-                      </div>
+                <div className="p-6 flex flex-col flex-grow">
+                  <div className="flex-grow">
+                    <h3 
+                      className="text-2xl font-bold mb-3"
+                      style={{ 
+                        background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text"
+                      }}
+                    >
+                      {service.title}
+                    </h3>
+
+                    <div 
+                      className="w-16 h-0.5 mb-3"
+                      style={{ 
+                        background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                      }}
+                    ></div>
+
+                    <div className="min-h-[3rem] mb-3">
+                      <p className="text-sm font-medium text-gray-700 italic leading-relaxed">
+                        {service.subtitle}
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {service.price}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {service.turnaround}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white/50 rounded-lg p-6 mb-6">
-                    <h4 className="font-bold text-gray-900 mb-3 text-lg">What is {service.title}?</h4>
-                    <p className="text-gray-700 leading-relaxed">
-                      {service.whatIsIt}
-                    </p>
-                  </div>
-
-                  <p className="text-gray-700 mb-6 leading-relaxed text-lg">
-                    {service.description}
-                  </p>
-
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3 text-lg">Key Features:</h4>
-                      <ul className="space-y-2">
-                        {service.features.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-current rounded-full text-green-600"></div>
-                            <span className="text-gray-700">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="min-h-[4.5rem] mb-4">
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        {service.description}
+                      </p>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => toggleExpanded(service.id)}
-                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium mb-6"
-                  >
-                    <span>View Available Test Types</span>
-                    {expandedService === service.id ? <FaChevronUp /> : <FaChevronDown />}
-                  </button>
-
-                  {expandedService === service.id && (
-                    <div className="bg-white rounded-lg p-6 mb-6 border-l-4 border-blue-500">
-                      <h4 className="font-bold text-gray-900 mb-6 text-xl">Available Test Types:</h4>
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {service.testTypes.map((testType, index) => (
-                          <div key={index} className="bg-gray-50 rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              {testType.icon}
-                              <h5 className="font-semibold text-gray-900">{testType.category}</h5>
-                            </div>
-                            <ul className="space-y-1">
-                              {testType.tests.map((test, testIndex) => (
-                                <li key={testIndex} className="text-sm text-gray-700">
-                                  • {test}
-                                </li>
-                              ))}
-                            </ul>
-                            {testType.description && (
-                              <p className="text-xs text-gray-600 mt-2 italic">
-                                {testType.description}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                  <div className="mt-auto">
+                    <div className="text-lg font-bold text-gray-900">
+                      Starting from {service.price}
                     </div>
-                  )}
+                    <div className="text-sm text-gray-600 mb-2">
+                      {service.turnaround}
+                    </div>
+                  </div>
+                </div>
 
+                <div className="px-6 pb-6 mt-auto">
                   <Link
                     to={service.link}
-                    className={`inline-flex items-center justify-center w-full px-6 py-4 ${service.buttonColor} text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-200`}
+                    className="inline-flex items-center justify-center w-full px-4 py-3 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = "linear-gradient(135deg, #012c5e 0%, #1d4ed8 100%)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = "linear-gradient(135deg, #023670 0%, #2563eb 100%)";
+                    }}
                   >
-                    Learn More & Order {service.title}
-                    <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    View Details
+                    <svg
+                      className="ml-2 w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
                     </svg>
                   </Link>
                 </div>
@@ -286,66 +234,306 @@ const ServicesOverview = () => {
         </div>
       </div>
 
-      {/* Comparison Table */}
-      <div className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
+      {/* Sample Types Section */}
+      <div className="py-20 bg-blue-50">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Legal vs Non-Legal Testing Comparison
+              Sample Types for Testing
             </h2>
-            <p className="text-xl text-gray-600">
-              Understanding the key differences between our testing options
-            </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead style={{ background: 'linear-gradient(to right, #003469, #10b981)' }} className="text-white">
-                  <tr>
-                    <th className="px-6 py-4 text-left font-semibold">Feature</th>
-                    <th className="px-6 py-4 text-center font-semibold">Legal Testing</th>
-                    <th className="px-6 py-4 text-center font-semibold">Non-Legal Testing</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonData.map((row, index) => (
-                    <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                      <td className="px-6 py-4 font-medium text-gray-900">{row.feature}</td>
-                      <td className="px-6 py-4 text-center">{row.legal}</td>
-                      <td className="px-6 py-4 text-center">{row.nonLegal}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            {sampleTypes.map((sample) => (
+              <div
+                key={sample.id}
+                className="text-center group hover:transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <img
+                    src={sample.image}
+                    alt={sample.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden">
+                    <span className="text-white text-xl font-bold">
+                      {sample.name[0]}
+                    </span>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {sample.name}
+                </h3>
+
+                <p className="text-sm text-gray-600">{sample.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-20 text-white" style={{ background: 'linear-gradient(to right, #003469, #10b981)' }}>
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-6">
-            Ready to Get Started?
-          </h2>
-          <p className="text-xl mb-8 leading-relaxed">
-            Choose the testing service that best fits your needs and get accurate, reliable results.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/services/legal"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white font-semibold rounded-xl hover:bg-gray-100 transition-colors duration-200"
-              style={{ color: '#003469' }}
-            >
-              Order Legal Test
-            </Link>
-            <Link
-              to="/services/non-legal"
-              className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-xl hover:bg-white transition-all duration-200 hover:text-blue-900"
-            >
-              Order Non-Legal Test
-            </Link>
+      {/* Testing Kits Section */}
+      <div className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Professional Testing Kits
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              State-of-the-art DNA analysis kits used in our laboratory for precise and reliable results
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+            {testingKits.map((kit) => (
+              <div
+                key={kit.id}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group"
+              >
+                {/* Kit Image */}
+                <div className="h-64 bg-gray-100 overflow-hidden">
+                  <img
+                    src={kit.image}
+                    alt={kit.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div 
+                    className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                  >
+                    <div className="text-center text-white">
+                      <svg
+                        className="w-16 h-16 mx-auto mb-2"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M13.96,12.29L11.21,15.83L9.25,13.47L6.5,17H17.5L13.96,12.29Z" />
+                      </svg>
+                      <p className="text-sm font-medium">DNA Testing Kit</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kit Information */}
+                <div className="p-6 text-center">
+                  <h3 className="text-2xl font-bold mb-4 text-black">
+                    {kit.name}
+                  </h3>
+
+                  <button
+                    onClick={() => openModal(kit)}
+                    className="inline-flex items-center justify-center px-6 py-3 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                  >
+                    View Details
+                    <svg
+                      className="ml-2 w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
+      {selectedKit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-black">
+                {selectedKit.shortName}
+              </h2>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Kit Image */}
+              <div className="flex justify-center">
+                <div className="w-64 h-64 bg-gray-100 rounded-lg overflow-hidden">
+                  <img
+                    src={selectedKit.image}
+                    alt={selectedKit.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div 
+                    className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden"
+                    style={{ 
+                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    }}
+                  >
+                    <div className="text-center text-white">
+                      <svg
+                        className="w-16 h-16 mx-auto mb-2"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M13.96,12.29L11.21,15.83L9.25,13.47L6.5,17H17.5L13.96,12.29Z" />
+                      </svg>
+                      <p className="text-sm font-medium">DNA Testing Kit</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kit Details */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Manufacturer</h3>
+                  <p className="text-gray-700">{selectedKit.manufacturer}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Purpose</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedKit.purpose}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Kit Type</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedKit.kitType}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Approval</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedKit.approval}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end p-6 border-t border-gray-200">
+              <button
+                onClick={closeModal}
+                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Commitment Section */}
+      <div className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              DNA Testing Service Quality Guarantee at Genetix
+            </h2>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                1. Absolute Analytical Accuracy
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Genetix employs state-of-the-art DNA analytical technologies,
+                ensuring accuracy rates of up to 99.9999% for inclusion of
+                biological relationships and 100% for exclusion. All testing
+                procedures strictly adhere to international quality standards,
+                delivering the most reliable and conclusive results.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                2. Absolute Confidentiality and Data Protection
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                We are committed to maintaining complete confidentiality of all
+                personal information and test results. All data is stored and
+                managed through advanced security systems with strict access
+                controls, ensuring information is only released to authorized
+                personnel and designated recipients.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                3. Rapid Turnaround Time
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Understanding the critical importance of timely results for
+                important decisions, Genetix guarantees result delivery within
+                2-7 business days (depending on test type). For urgent cases,
+                expedited processing services are available upon request to
+                provide faster turnaround times.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                4. Comprehensive Post-Testing Support
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Following result delivery, our team of genetic counselors and
+                laboratory specialists remains available for consultation,
+                interpretation assistance, and ongoing support to help clients
+                understand the significance of their test results. Additionally,
+                we provide legal support services when results are required for
+                administrative or legal proceedings.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                5. Expert Laboratory Personnel
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Our laboratory is staffed by highly trained molecular
+                biologists, genetic analysts, and certified laboratory
+                technicians with extensive experience in DNA analysis. Genetix's
+                commitment to excellence ensures complete confidence in every
+                service we provide.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-gray-700 leading-relaxed">
+                With these commitments, Genetix continuously strives to deliver
+                the highest quality DNA testing services with uncompromising
+                standards of accuracy, reliability, and professionalism, meeting
+                all client needs with excellence.
+              </p>
+            </div>
           </div>
         </div>
       </div>

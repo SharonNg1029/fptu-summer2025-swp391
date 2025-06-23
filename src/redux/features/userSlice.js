@@ -60,4 +60,12 @@ export const selectIsAuthenticated = (state) => state.user?.isAuthenticated || f
 export const selectUserRole = (state) => state.user?.userRole
 export const selectLoginTime = (state) => state.user?.loginTime
 
+// ✅ THÊM MỚI: Selector cho fullName
+export const selectUserFullName = (state) => {
+  const user = state.user?.currentUser;
+  if (!user) return "User";
+  
+  return user.fullName || user.username || "loclnx";
+}
+
 export default userSlice.reducer

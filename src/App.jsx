@@ -1,9 +1,10 @@
-import React from "react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import HomePage from "./pages/home-page";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
-import Dashboard from "./components/dashboard";
+import DashboardAdmin from "./components/dashboard-admin"; // Updated import
+import StaffDashboard from "./components/dashboard-staff"; // New import
+import ManagerDashboard from "./components/dashboard-manager"; // New import
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider } from "react-redux";
 import { persistor, store } from "./app/store";
@@ -16,19 +17,30 @@ import Guide from "./pages/home-page/guide";
 import Pricing from "./pages/home-page/pricing";
 import Blog from "./pages/home-page/blog";
 import VerifyPage from "./components/verify-otp/VerifyPage";
-import ServiceManagement from "./pages/dashboard-admin/service-management";
 import AccountManagement from "./pages/dashboard-admin/account-management";
-import ContentManagement from "./pages/dashboard-admin/content-managment";
-import Inventory from "./pages/dashboard-admin/inventory";
+import Inventory from "./pages/dashboard-manager/inventory";
 import SystemLogs from "./pages/dashboard-admin/system-logs";
 import Booking from "./pages/dashboard-admin/services/Booking";
 import ServiceManagementPage from "./pages/dashboard-admin/services/ServiceManagement";
+import StaffOverviewPage from "./pages/dashboard-staff/overview";
+import OrderProcessingPage from "./pages/dashboard-staff/order-processing"; // Combined page
+import StaffReportingPage from "./pages/dashboard-staff/reporting"; // Combined page
+import ManagerOverviewPage from "./pages/dashboard-manager/overview";
+import CustomerFeedbackPage from "./pages/dashboard-manager/customer-feedback";
+import TestingProcessMonitoringPage from "./pages/dashboard-manager/testing-process-monitoring"; // New import
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ScrollToTopButton from "./components/hooks/useScrollToTop"; // Sửa import thành component chính xác
+import React from "react";
+import { Toaster } from "react-hot-toast";
+import Contact from "./pages/home-page/contact";
+import ProfilePage from "./pages/profile";
 
 function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <HomePage />, // Layout với Header, Outlet, Footer
+      element: <HomePage />,
       children: [
         {
           index: true, // Route mặc định cho "/"
@@ -58,6 +70,10 @@ function App() {
           path: "blog",
           element: <Blog />,
         },
+        {
+          path: "contact",
+          element: <Contact />,
+        },
       ],
     },
     // Các route độc lập không cần Header/Footer
@@ -70,9 +86,14 @@ function App() {
       element: <RegisterPage />,
     },
     {
-      path: "/dashboard",
-      element: <Dashboard />,
+      path: "/profile",
+      element: <ProfilePage />,
+    },
+    {
+      path: "/dashboard", // Admin Dashboard
+      element: <DashboardAdmin />,
       children: [
+        { index: true, element: <OverviewPage /> }, // Trang Overview mặc định
         {
           path: "overview",
           element: <OverviewPage />,
@@ -90,17 +111,34 @@ function App() {
           element: <AccountManagement />,
         },
         {
-          path: "blog", // Blog Post Management
-          element: <ContentManagement />,
-        },
-        {
-          path: "inventory", // Test Kit Inventory
-          element: <Inventory />,
-        },
-        {
-          path: "logs", // System Logs
+          path: "logs",
           element: <SystemLogs />,
         },
+      ],
+    },
+    {
+      path: "/staff-dashboard", // Staff Dashboard
+      element: <StaffDashboard />,
+      children: [
+        { index: true, element: <StaffOverviewPage /> },
+        { path: "overview", element: <StaffOverviewPage /> },
+        { path: "order-processing", element: <OrderProcessingPage /> }, // Combined
+        { path: "staff-reporting", element: <StaffReportingPage /> }, // Combined
+        // { path: "customer-contact", element: <CustomerContactPage /> }, // Still separate
+      ],
+    },
+    {
+      path: "/manager-dashboard", // Manager Dashboard
+      element: <ManagerDashboard />,
+      children: [
+        { index: true, element: <ManagerOverviewPage /> },
+        { path: "overview", element: <ManagerOverviewPage /> },
+        {
+          path: "testing-process-monitoring",
+          element: <TestingProcessMonitoringPage />,
+        },
+        { path: "customer-feedback", element: <CustomerFeedbackPage /> },
+        { path: "inventory", element: <Inventory /> },
       ],
     },
     {
@@ -111,9 +149,10 @@ function App() {
 
   return (
     <Provider store={store}>
-      {/* Wrap the RouterProvider with Provider to make the store available to all components */}
       <PersistGate loading={null} persistor={persistor}>
+        <ScrollToTopButton />
         <RouterProvider router={router} />
+        <Toaster position="top-right" reverseOrder={false} />
       </PersistGate>
     </Provider>
   );

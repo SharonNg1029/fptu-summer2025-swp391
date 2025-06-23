@@ -11,17 +11,15 @@ import {
   Button,
   DatePicker,
   Divider,
-  message,
 } from "antd";
 import {
   UserOutlined,
   MedicineBoxOutlined,
-  DollarOutlined,
   CheckCircleOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
-import { Line, Column, Pie } from "@ant-design/plots";
 import api from "../../../configs/axios";
+import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -30,14 +28,11 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState([null, null]);
   const [stats, setStats] = useState({
-    totalUsers: 0,
+    totalCustomer: 0,
     completedTests: 0,
     revenue: 0,
-    kitsSold: 0,
+    kitsSold: 0, // Đã có sẵn
   });
-  const [revenueData, setRevenueData] = useState([]);
-  const [kitSalesData, setKitSalesData] = useState([]);
-  const [serviceDistribution, setServiceDistribution] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]); // Helper function to get date params
   const getDateParams = () => ({
     startDate: dateRange[0]?.format("YYYY-MM-DD"),
@@ -52,13 +47,22 @@ const Overview = () => {
       });
       console.log("Total customers response:", response);
 
-      const customerData = response.data?.data || response.data || {};
+      const customerData = response.data || {};
       setStats((prev) => ({
         ...prev,
-        totalCustomers: customerData.totalCustomers || customerData.count || 0,
+        totalCustomer: customerData.totalCustomer || 0,
       }));
     } catch (error) {
       console.error("Error fetching total customers:", error);
+      let errorMessage = "Error fetching total customers";
+      if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -66,37 +70,31 @@ const Overview = () => {
   // Fetch completed tests count
   const fetchCompletedTests = async () => {
     try {
-      const response = await api.get("/admin/dashboard/completed-tests", {
+      const response = await api.get("/booking/bookings", {
         params: getDateParams(),
       });
       console.log("Completed tests response:", response);
 
-      const testsData = response.data?.data || response.data || {};
+      // Đếm số lượng booking có status là 'Completed'
+      const bookings = response.data?.data || response.data || [];
+      const completedCount = Array.isArray(bookings)
+        ? bookings.filter((b) => b.status === "Completed").length
+        : 0;
       setStats((prev) => ({
         ...prev,
-        completedTests: testsData.completedTests || testsData.count || 0,
+        completedTests: completedCount,
       }));
     } catch (error) {
       console.error("Error fetching completed tests:", error);
-      throw error;
-    }
-  };
-
-  // Fetch revenue data
-  const fetchRevenue = async () => {
-    try {
-      const response = await api.get("/admin/dashboard/revenue", {
-        params: getDateParams(),
-      });
-      console.log("Revenue response:", response);
-
-      const revenueData = response.data?.data || response.data || {};
-      setStats((prev) => ({
-        ...prev,
-        revenue: revenueData.revenue || revenueData.total || 0,
-      }));
-    } catch (error) {
-      console.error("Error fetching revenue:", error);
+      let errorMessage = "Error fetching completed tests";
+      if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -104,64 +102,32 @@ const Overview = () => {
   // Fetch kits sold count
   const fetchKitsSold = async () => {
     try {
-      const response = await api.get("/admin/dashboard/kits-sold", {
+      // Lấy danh sách kit từ API
+      const response = await api.get("/admin/kitInventory/available", {
         params: getDateParams(),
       });
       console.log("Kits sold response:", response);
 
-      const kitsData = response.data?.data || response.data || {};
+      // Tổng hợp số lượng kit sold từ tất cả các kit (cộng dồn isSelled)
+      const kitsData = response.data?.data || response.data || [];
+      const totalKitSold = Array.isArray(kitsData)
+        ? kitsData.reduce((sum, kit) => sum + (kit.isSelled || 0), 0)
+        : 0;
       setStats((prev) => ({
         ...prev,
-        kitsSold: kitsData.kitsSold || kitsData.count || 0,
+        kitsSold: totalKitSold,
       }));
     } catch (error) {
       console.error("Error fetching kits sold:", error);
-      throw error;
-    }
-  };
-
-  // Fetch revenue chart data
-  const fetchRevenueData = async () => {
-    try {
-      const response = await api.get("/admin/dashboard/revenue-chart", {
-        params: getDateParams(),
-      });
-      console.log("Revenue chart response:", response);
-
-      const revenueChartData = response.data?.data || response.data || [];
-      setRevenueData(revenueChartData);
-    } catch (error) {
-      console.error("Error fetching revenue data:", error);
-      throw error;
-    }
-  };
-
-  // Fetch kit sales chart data
-  const fetchKitSalesData = async () => {
-    try {
-      const response = await api.get("/admin/dashboard/kit-sales-chart", {
-        params: getDateParams(),
-      });
-      console.log("Kit sales chart response:", response);
-
-      const kitSalesChartData = response.data?.data || response.data || [];
-      setKitSalesData(kitSalesChartData);
-    } catch (error) {
-      console.error("Error fetching kit sales data:", error);
-      throw error;
-    }
-  };
-
-  // Fetch service distribution data
-  const fetchServiceDistribution = async () => {
-    try {
-      const response = await api.get("/admin/dashboard/service-distribution");
-      console.log("Service distribution response:", response);
-
-      const serviceDistData = response.data?.data || response.data || [];
-      setServiceDistribution(serviceDistData);
-    } catch (error) {
-      console.error("Error fetching service distribution:", error);
+      let errorMessage = "Error fetching kits sold";
+      if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -178,6 +144,15 @@ const Overview = () => {
       setRecentBookings(bookingsData);
     } catch (error) {
       console.error("Error fetching recent bookings:", error);
+      let errorMessage = "Error fetching recent bookings";
+      if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
       throw error;
     }
   }; // Main function to fetch all dashboard data
@@ -189,19 +164,20 @@ const Overview = () => {
       await Promise.all([
         fetchTotalCustomers(),
         fetchCompletedTests(),
-        fetchRevenue(),
         fetchKitsSold(),
-        fetchRevenueData(),
-        fetchKitSalesData(),
-        fetchServiceDistribution(),
         fetchRecentBookings(),
       ]);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      message.error(
-        "Failed to fetch dashboard data: " +
-          (error.response?.data?.message || error.message)
-      );
+      let errorMessage = "Failed to fetch dashboard data";
+      if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -211,93 +187,27 @@ const Overview = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Revenue chart config
-  const revenueConfig = {
-    data: revenueData,
-    xField: "month",
-    yField: "revenue",
-    point: {
-      size: 5,
-      shape: "diamond",
-    },
-    label: {
-      style: {
-        fill: "#aaa",
-      },
-    },
-    smooth: true,
-    lineStyle: {
-      stroke: "#1890ff",
-      lineWidth: 3,
-    },
-    areaStyle: {
-      fill: "l(270) 0:#ffffff 0.5:#1890ff 1:#1890ff",
-      fillOpacity: 0.2,
-    },
-  };
-
-  // Kit sales chart config
-  const kitSalesConfig = {
-    data: kitSalesData,
-    xField: "week",
-    yField: "sales",
-    columnWidthRatio: 0.6,
-    color: "#1890ff",
-    label: {
-      position: "top",
-      style: {
-        fill: "#1890ff",
-        opacity: 0.6,
-      },
-    },
-    xAxis: {
-      label: {
-        autoHide: true,
-        autoRotate: false,
-      },
-    },
-  };
-
-  // Service distribution chart config
-  const serviceDistributionConfig = {
-    data: serviceDistribution,
-    angleField: "value",
-    colorField: "type",
-    radius: 0.8,
-    label: {
-      type: "outer",
-      content: "{name}: {percentage}",
-    },
-    interactions: [
-      {
-        type: "element-active",
-      },
-    ],
-  };
-
-  // Table columns
+  // Table columns cho Recent Bookings
   const columns = [
     {
       title: "Booking ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "bookingID",
+      key: "bookingID",
     },
     {
-      title: "Customer",
-      dataIndex: "customer",
-      key: "customer",
-      render: (customer) => customer || "N/A",
+      title: "Customer ID",
+      dataIndex: "customerID",
+      key: "customerID",
     },
     {
-      title: "Service",
-      dataIndex: "service",
-      key: "service",
-      render: (service) => service || "N/A",
+      title: "Service Type",
+      dataIndex: "bookingType",
+      key: "bookingType",
     },
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
+      title: "Request Date",
+      dataIndex: "request_date",
+      key: "request_date",
       render: (date) => (date ? new Date(date).toLocaleDateString() : "N/A"),
     },
     {
@@ -311,15 +221,6 @@ const Overview = () => {
         if (status === "Cancelled") color = "red";
         return <Tag color={color}>{status || "Unknown"}</Tag>;
       },
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: () => (
-        <Button type="link" size="small">
-          View Details
-        </Button>
-      ),
     },
   ];
 
@@ -349,48 +250,93 @@ const Overview = () => {
       </div>
 
       {/* Stats Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
+      <Row gutter={[24, 24]} justify="center" style={{ marginBottom: 32 }}>
+        <Col xs={24} sm={12} md={8}>
+          <Card
+            loading={loading}
+            style={{
+              borderRadius: 16,
+              minHeight: 120,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 2px 12px #e6f7ff",
+            }}>
             <Statistic
-              title="Total Users"
-              value={stats.totalUsers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: "#1890ff" }}
-              suffix={<Tag color="blue">+12%</Tag>}
+              title={
+                <span style={{ fontWeight: 600, fontSize: 18 }}>
+                  Total Customers
+                </span>
+              }
+              value={stats.totalCustomer}
+              prefix={
+                <UserOutlined style={{ color: "#1890ff", fontSize: 24 }} />
+              }
+              valueStyle={{
+                color: "#1890ff",
+                fontSize: 28,
+                fontWeight: 700,
+              }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
+        <Col xs={24} sm={12} md={8}>
+          <Card
+            loading={loading}
+            style={{
+              borderRadius: 16,
+              minHeight: 120,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 2px 12px #f6ffed",
+            }}>
             <Statistic
-              title="Completed Tests"
+              title={
+                <span style={{ fontWeight: 600, fontSize: 18 }}>
+                  Completed Tests
+                </span>
+              }
               value={stats.completedTests}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#52c41a" }}
-              suffix={<Tag color="green">+8%</Tag>}
+              prefix={
+                <CheckCircleOutlined
+                  style={{ color: "#52c41a", fontSize: 24 }}
+                />
+              }
+              valueStyle={{
+                color: "#52c41a",
+                fontSize: 28,
+                fontWeight: 700,
+              }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
+        <Col xs={24} sm={12} md={8}>
+          <Card
+            loading={loading}
+            style={{
+              borderRadius: 16,
+              minHeight: 120,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 2px 12px #fff0f6",
+            }}>
             <Statistic
-              title="Revenue"
-              value={stats.revenue}
-              prefix={<DollarOutlined />}
-              valueStyle={{ color: "#faad14" }}
-              suffix={<Tag color="orange">+15%</Tag>}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card loading={loading}>
-            <Statistic
-              title="Kits Sold"
+              title={
+                <span style={{ fontWeight: 600, fontSize: 18 }}>Kits Sold</span>
+              }
               value={stats.kitsSold}
-              prefix={<MedicineBoxOutlined />}
-              valueStyle={{ color: "#eb2f96" }}
-              suffix={<Tag color="purple">+5%</Tag>}
+              prefix={
+                <MedicineBoxOutlined
+                  style={{ color: "#eb2f96", fontSize: 24 }}
+                />
+              }
+              valueStyle={{
+                color: "#eb2f96",
+                fontSize: 28,
+                fontWeight: 700,
+              }}
             />
           </Card>
         </Col>
@@ -398,86 +344,31 @@ const Overview = () => {
 
       <Divider />
 
-      {/* Charts */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
+      {/* Recent Bookings Only */}
+      <Row gutter={[16, 16]} justify="center">
+        <Col xs={24} md={16}>
           <Card
-            title="Monthly Revenue"
+            title={
+              <span style={{ fontWeight: 600, fontSize: 18 }}>
+                Recent Bookings
+              </span>
+            }
             loading={loading}
-            extra={<Button type="link">View Details</Button>}>
-            {revenueData.length > 0 ? (
-              <Line {...revenueConfig} height={300} />
-            ) : (
-              <div
-                style={{
-                  height: 300,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                <Text type="secondary">No revenue data available</Text>
-              </div>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card
-            title="Weekly Kit Sales"
-            loading={loading}
-            extra={<Button type="link">View Details</Button>}>
-            {kitSalesData.length > 0 ? (
-              <Column {...kitSalesConfig} height={300} />
-            ) : (
-              <div
-                style={{
-                  height: 300,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                <Text type="secondary">No kit sales data available</Text>
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={24} lg={12}>
-          <Card
-            title="Service Distribution"
-            loading={loading}
-            extra={<Button type="link">View Details</Button>}>
-            {serviceDistribution.length > 0 ? (
-              <Pie {...serviceDistributionConfig} height={300} />
-            ) : (
-              <div
-                style={{
-                  height: 300,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                <Text type="secondary">
-                  No service distribution data available
-                </Text>
-              </div>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card
-            title="Recent Bookings"
-            loading={loading}
-            extra={<Button type="link">View All</Button>}>
+            extra={<Button type="link">View All</Button>}
+            style={{
+              borderRadius: 16,
+              minHeight: 400,
+              boxShadow: "0 2px 12px #f0f5ff",
+            }}>
             <Table
               dataSource={recentBookings}
               columns={columns}
               pagination={false}
-              size="small"
+              size="middle"
               locale={{
                 emptyText: "No recent bookings available",
               }}
+              style={{ minHeight: 300 }}
             />
           </Card>
         </Col>
