@@ -124,6 +124,7 @@ function LoginForm() {
         avatar: userData.avatar || "",
         phone: userData.phone || "",
         isEmailVerified: userData.enabled || userData.isEmailVerified || false,
+        staffID: userData.staffId || userData.staffID || "",
         lastLogin: new Date().toISOString(),
         loginMethod: "normal",
         createdAt:
@@ -216,13 +217,13 @@ function LoginForm() {
           initialValues={{ remember: false }}
           onFinish={handleNormalLogin}
           onFinishFailed={handleNormalLoginError}
-          autoComplete="off"
-        >
+          autoComplete="off">
           <Form.Item
             label="Username"
             name="username"
-            rules={[{ required: true, message: "Please input your username!" }]}
-          >
+            rules={[
+              { required: true, message: "Please input your username!" },
+            ]}>
             <Input
               placeholder="Enter your username"
               prefix={<UserOutlined />}
@@ -232,8 +233,9 @@ function LoginForm() {
           <Form.Item
             label="Password"
             name="password"
-            rules={[{ required: true, message: "Please input your password!" }]}
-          >
+            rules={[
+              { required: true, message: "Please input your password!" },
+            ]}>
             <Input.Password
               placeholder="Enter your password"
               prefix={<LockOutlined />}
@@ -246,8 +248,7 @@ function LoginForm() {
               type="link"
               className="forgot-password-link"
               style={{ padding: 0 }}
-              onClick={() => navigate("/verify")}
-            >
+              onClick={() => navigate("/verify")}>
               Forgotten password?
             </Button>
           </div>

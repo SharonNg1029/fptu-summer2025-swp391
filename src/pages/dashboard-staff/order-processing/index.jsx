@@ -40,11 +40,13 @@ const OrderProcessing = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-
   // Lấy staffID từ Redux store
   const currentUser = useSelector((state) => state.user?.currentUser);
   const staffID =
-    currentUser?.id || currentUser?.staffId || currentUser?.userId;
+    currentUser?.staff?.staffID ||
+    currentUser?.staffId ||
+    currentUser?.id ||
+    currentUser?.userId;
 
   const [form] = Form.useForm();
   const fetchOrders = useCallback(async () => {
@@ -53,25 +55,33 @@ const OrderProcessing = () => {
       setLoading(false);
       return;
     }
-
     setLoading(true);
     try {
       const response = await api.get(`/staff/my-assignment/${staffID}`);
-      setOrders(response.data || []);
+      if (Array.isArray(response.data)) {
+        setOrders(response.data);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        setOrders(response.data.data);
+      } else {
+        setOrders([]);
+        if (response.data && response.data.length === 0) {
+          toast.info("No assignments found for this staff member.");
+        }
+      }
     } catch (error) {
       toast.error(
         "Failed to fetch assignments: " +
           (error.response?.data?.message || error.message)
       );
-      console.error("Error fetching assignments:", error);
+      setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   }, [staffID]);
-
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
   const handleEdit = (record) => {
     setEditingOrder(record);
     form.setFieldsValue({
