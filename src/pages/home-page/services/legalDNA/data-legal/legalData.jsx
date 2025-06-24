@@ -8,26 +8,6 @@ import {
   FaMailBulk,
 } from "react-icons/fa";
 
-// ===== MAPPING LINKS TO NON-LEGAL SERVICES =====
-export const immigrationTestLinks = {
-  paternity: {
-    serviceID: "SNL001",
-    route: "/services/non-legal"  // Chuyển về trang có sẵn
-  },
-  maternity: {
-    serviceID: "SNL002", 
-    route: "/services/non-legal"  // Chuyển về trang có sẵn
-  },
-  sibling: {
-    serviceID: "SNL004",
-    route: "/services/non-legal"  // Chuyển về trang có sẵn
-  },
-  grandparent: {
-    serviceID: "SNL005",
-    route: "/services/non-legal"  // Chuyển về trang có sẵn
-  }
-};
-
 // ===== DỮ LIỆU DỊCH VỤ LEGAL DNA TESTING =====
 export const legalServicesData = [
   {
@@ -103,36 +83,15 @@ As per the United States Citizenship and Immigration Services (USCIS), based on 
 
 **The types of DNA tests commonly required for immigration purposes include:**
 
-IMMIGRATION_LINKS_PLACEHOLDER
+• Paternity DNA testing (father-child)
+• Maternity DNA testing (mother-child)
+• Sibling DNA testing (between siblings)
+• Grandparent DNA testing (grandparent-grandchild)
 
 If the DNA test results conclude that there is NO biological relationship between the individuals involved, the embassy or consulate has grounds to reject the application. Conversely, if the DNA test results confirm a biological relationship between the tested individuals (the sponsor and the sponsored person), this serves as a basis for further review and processing of the application.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ***Internationally recognized results accepted by immigration authorities with >99.999999% accuracy***`,
-    // Metadata cho links
-    hasImmigrationLinks: true,
-    immigrationLinks: [
-      {
-        text: "Paternity DNA testing (father-child)",
-        serviceID: immigrationTestLinks.paternity.serviceID,    // SNL001
-        route: immigrationTestLinks.paternity.route
-      },
-      {
-        text: "Maternity DNA testing (mother-child)",
-        serviceID: immigrationTestLinks.maternity.serviceID,    // SNL002
-        route: immigrationTestLinks.maternity.route
-      },
-      {
-        text: "Sibling DNA testing (between siblings)",
-        serviceID: immigrationTestLinks.sibling.serviceID,      // SNL004
-        route: immigrationTestLinks.sibling.route
-      },
-      {
-        text: "Grandparent DNA testing (grandparent-grandchild)",
-        serviceID: immigrationTestLinks.grandparent.serviceID,  // SNL005
-        route: immigrationTestLinks.grandparent.route
-      }
-    ]
   },
   {
     id: 3,
