@@ -6,6 +6,8 @@ import {
   FaClock,
   FaBolt,
   FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 
 // Import data từ file riêng để dễ quản lý
@@ -29,6 +31,30 @@ const CustomButton = ({ children, onClick, className = "", disabled = false }) =
   );
 };
 
+// ===== COMPONENT CON: SCROLL NAVIGATION BUTTON =====
+const ScrollButton = ({ direction, onClick, disabled }) => {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`
+        absolute top-1/2 -translate-y-1/2 z-10 
+        w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200
+        flex items-center justify-center
+        transition-all duration-200 hover:scale-110 hover:shadow-xl
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'}
+        ${direction === 'left' ? '-left-6' : '-right-6'}
+      `}
+    >
+      {direction === 'left' ? (
+        <FaChevronLeft className="text-blue-600 text-lg" />
+      ) : (
+        <FaChevronRight className="text-blue-600 text-lg" />
+      )}
+    </button>
+  );
+};
+
 // ===== COMPONENT CON: CARD =====
 const ServiceCard = ({ children, className = "" }) => {
   return (
@@ -38,7 +64,7 @@ const ServiceCard = ({ children, className = "" }) => {
   );
 };
 
-// ===== COMPONENT CON: MODAL =====
+// ===== COMPONENT CON: MODAL - COPY TỪ LEGAL =====
 const ServiceModal = ({ isOpen, onClose, children }) => {
   // Đóng modal khi nhấn ESC
   useEffect(() => {
@@ -48,7 +74,8 @@ const ServiceModal = ({ isOpen, onClose, children }) => {
     
     if (isOpen) {
       document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden'; // Khóa scroll
+      // KHÔNG khóa scroll để có thể nhìn thấy nội dung phía sau
+      // document.body.style.overflow = 'hidden'; 
     }
     
     return () => {
@@ -61,9 +88,9 @@ const ServiceModal = ({ isOpen, onClose, children }) => {
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-      {/* Nền mờ */}
+      {/* Nền mờ trong suốt với backdrop blur - COPY TỪ LEGAL */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="absolute inset-0 backdrop-blur-md bg-white/20"
         onClick={onClose}
       ></div>
       
@@ -72,7 +99,7 @@ const ServiceModal = ({ isOpen, onClose, children }) => {
         className="relative bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-hidden z-[1001] w-full max-w-4xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Nút đóng */}
+        {/* Nút đóng - COPY TỪ LEGAL */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 z-[1003] text-white hover:text-gray-200 bg-black/20 backdrop-blur-sm rounded-full p-2 hover:bg-black/30 transition-all duration-200 cursor-pointer"
@@ -101,7 +128,10 @@ const NonLegalServices = () => {
   const [selectedService, setSelectedService] = useState(null); // Dịch vụ được chọn
   const [modalVisible, setModalVisible] = useState(false); // Hiển thị modal
   const [isScrolled, setIsScrolled] = useState(false); // Theo dõi scroll trong modal
+  const [canScrollLeft, setCanScrollLeft] = useState(false); // Có thể scroll trái
+  const [canScrollRight, setCanScrollRight] = useState(true); // Có thể scroll phải
   const modalContentRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   // ===== HÀM TIỆN ÍCH =====
   // Chuyển đổi số thành tiền Việt Nam
@@ -126,6 +156,38 @@ const NonLegalServices = () => {
     });
   };
 
+  // ===== XỬ LÝ SCROLL =====
+  // Kiểm tra trạng thái scroll
+  const checkScrollState = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  };
+
+  // Scroll sang trái
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      const cardWidth = 320 + 24; // width + gap
+      scrollContainerRef.current.scrollBy({
+        left: -cardWidth,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Scroll sang phải
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      const cardWidth = 320 + 24; // width + gap
+      scrollContainerRef.current.scrollBy({
+        left: cardWidth,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // ===== XỬ LÝ SCROLL TRONG MODAL =====
   useEffect(() => {
     const handleScroll = () => {
@@ -142,6 +204,21 @@ const NonLegalServices = () => {
     }
   }, [modalVisible]);
 
+  // Theo dõi scroll state của container
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      checkScrollState();
+      scrollContainer.addEventListener('scroll', checkScrollState);
+      window.addEventListener('resize', checkScrollState);
+
+      return () => {
+        scrollContainer.removeEventListener('scroll', checkScrollState);
+        window.removeEventListener('resize', checkScrollState);
+      };
+    }
+  }, []);
+
   // ===== XỬ LÝ SỰ KIỆN =====
   // Mở modal chi tiết dịch vụ
   const openServiceModal = (service) => {
@@ -157,11 +234,11 @@ const NonLegalServices = () => {
     setIsScrolled(false);
   };
 
-  // ===== XỬ LÝ BOOKING - CHỈ LƯU 2 THÔNG TIN CẦN THIẾT =====
+  // ===== XỬ LÝ BOOKING - CHỈ LƯU VÀO SESSION STORAGE =====
   const handleBookService = (service, isExpressService = false) => {
     // 🎯 CHỈ LƯU 2 THỨ THÔI - SERVICEID VÀ EXPRESSSERVICE
     const bookingData = {
-      serviceID: service.serviceID,        // String: "SNL001", "SNL002", "SNL003"
+      serviceID: service.serviceID,        // String: "SNL001", "SNL002", "SNL003", "SNL004", "SNL005"
       expressService: isExpressService     // Boolean: true/false
     };
 
@@ -170,22 +247,6 @@ const NonLegalServices = () => {
     
     // Log để debug
     console.log('🎯 Data được lưu vào sessionStorage:', bookingData);
-    
-    // Hiển thị thông báo xác nhận
-    const serviceTypeText = isExpressService ? '⚡ Express Service' : '📅 Standard Service';
-    const totalPrice = isExpressService ? service.basePrice + service.expressPrice : service.basePrice;
-    
-    const alertMessage = `✅ Đã chọn dịch vụ thành công!
-    
-📋 Thông tin booking:
-• Service: ${service.name}
-• Type: ${serviceTypeText}
-• Express Service: ${isExpressService ? 'YES' : 'NO'}
-• Total Price: ${formatToVND(totalPrice)}
-
-🔄 Đang chuyển hướng đến trang booking...`;
-    
-    alert(alertMessage);
     
     // 🚀 CHUYỂN HƯỚNG ĐẾN TRANG BOOKING (BỎ COMMENT DÒNG NÀY ĐỂ SỬ DỤNG)
     // window.location.href = '/booking';
@@ -247,99 +308,130 @@ const NonLegalServices = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         
-        {/* ===== DANH SÁCH DỊCH VỤ ===== */}
+        {/* ===== DANH SÁCH DỊCH VỤ - HORIZONTAL SCROLL VỚI NAVIGATION ===== */}
         <div className="mb-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {nonLegalServicesData.map((service) => (
-              <div
-                key={service.id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100 overflow-hidden"
-              >
-                
-                {/* Header dịch vụ với hình nền */}
-                <div 
-                  className="p-6 text-white h-[180px] flex flex-col relative"
-                  style={{
-                    backgroundImage: `url('${service.backgroundImage}')`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat"
-                  }}
-                >
-                  {/* Lớp phủ gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#002F5E]/10 via-[#004494]/40 to-[#1677FF]/40"></div>
-                  
-                  {/* Nội dung header */}
-                  <div className="relative z-10 flex flex-col h-full">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        {service.icon}
-                        <ServiceTag>{service.type}</ServiceTag>
-                      </div>
-                      {/* ĐÃ XÓA HIỂN THỊ SERVICE ID */}
-                    </div>
+          {/* Container với scroll ngang và navigation buttons */}
+          <div className="relative">
+            {/* Nút scroll trái */}
+            <ScrollButton 
+              direction="left" 
+              onClick={scrollLeft} 
+              disabled={!canScrollLeft}
+            />
+            
+            {/* Nút scroll phải */}
+            <ScrollButton 
+              direction="right" 
+              onClick={scrollRight} 
+              disabled={!canScrollRight}
+            />
+            
+            {/* Container scroll */}
+            <div 
+              ref={scrollContainerRef}
+              className="overflow-x-auto pb-4 scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none', // Firefox
+                msOverflowStyle: 'none', // Internet Explorer and Edge
+              }}
+            >
+              <div className="flex gap-6 min-w-max px-8">
+                {nonLegalServicesData.map((service) => (
+                  <div
+                    key={service.id}
+                    className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100 overflow-hidden"
+                  >
                     
-                    {/* Tên dịch vụ */}
-                    <div className="h-[80px] flex items-start">
-                      <h3 
-                        className="text-lg font-bold leading-tight"
-                        style={{
-                          textShadow: "2px 2px 4px rgba(0,0,0,0.9), 1px 1px 2px rgba(0,0,0,0.9)"
-                        }}
-                      >
-                        {service.name}
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Thông tin dịch vụ */}
-                <div className="p-6">
-                  <div className="mb-6">
-                    
-                    {/* Thời gian xử lý */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <FaClock className="text-blue-500" />
-                      <span className="text-gray-600">
-                        Processing Time: {service.processingTime}
-                      </span>
-                    </div>
-
-                    {/* Bảng giá */}
-                    <div className="space-y-3">
-                      {/* Giá tiêu chuẩn */}
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Standard Price:</span>
-                        <span className="text-2xl font-bold text-blue-900">
-                          {formatToVND(service.basePrice)}
-                        </span>
+                    {/* Header dịch vụ với hình nền */}
+                    <div 
+                      className="p-6 text-white h-[180px] flex flex-col relative"
+                      style={{
+                        backgroundImage: `url('${service.backgroundImage}')`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat"
+                      }}
+                    >
+                      {/* Lớp phủ gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#002F5E]/10 via-[#004494]/40 to-[#1677FF]/40"></div>
+                      
+                      {/* Nội dung header */}
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            {service.icon}
+                            <ServiceTag>{service.type}</ServiceTag>
+                          </div>
+                        </div>
+                        
+                        {/* Tên dịch vụ */}
+                        <div className="h-[80px] flex items-start">
+                          <h3 
+                            className="text-lg font-bold leading-tight"
+                            style={{
+                              textShadow: "2px 2px 4px rgba(0,0,0,0.9), 1px 1px 2px rgba(0,0,0,0.9)"
+                            }}
+                          >
+                            {service.name}
+                          </h3>
+                        </div>
                       </div>
+                    </div>
 
-                      {/* Giá nhanh */}
-                      <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                        <div className="flex items-center gap-2">
-                          <FaBolt className="text-orange-500" />
-                          <span className="font-medium text-orange-700">
-                            Express Service:
+                    {/* Thông tin dịch vụ */}
+                    <div className="p-6">
+                      <div className="mb-6">
+                        
+                        {/* Thời gian xử lý */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaClock className="text-blue-500" />
+                          <span className="text-gray-600">
+                            Processing Time: {service.processingTime}
                           </span>
                         </div>
-                        <span className="text-lg font-bold text-orange-700">
-                          +{formatToVND(service.expressPrice)}
-                        </span>
+
+                        {/* Bảng giá */}
+                        <div className="space-y-3">
+                          {/* Giá tiêu chuẩn */}
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">Standard Price:</span>
+                            <span className="text-2xl font-bold text-blue-900">
+                              {formatToVND(service.basePrice)}
+                            </span>
+                          </div>
+
+                          {/* Giá nhanh */}
+                          <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                            <div className="flex items-center gap-2">
+                              <FaBolt className="text-orange-500" />
+                              <span className="font-medium text-orange-700">
+                                Express Service:
+                              </span>
+                            </div>
+                            <span className="text-lg font-bold text-orange-700">
+                              +{formatToVND(service.expressPrice)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Nút xem chi tiết */}
+                      <CustomButton
+                        onClick={() => openServiceModal(service)}
+                        className="bg-gradient-to-br from-sky-500 via-blue-600 to-blue-700 hover:from-sky-600 hover:via-blue-700 hover:to-blue-800"
+                      >
+                        View Details & Order
+                      </CustomButton>
                     </div>
                   </div>
-
-                  {/* Nút xem chi tiết */}
-                  <CustomButton
-                    onClick={() => openServiceModal(service)}
-                    className="bg-gradient-to-br from-[#002F5E] via-[#004494] to-[#1677FF] hover:from-[#001F4A] hover:via-[#003478] hover:to-[#0F6FFF]"
-                  >
-                    View Details & Order
-                  </CustomButton>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
+          </div>
+          
+          {/* Hướng dẫn scroll cho mobile */}
+          <div className="text-center mt-4 text-gray-500 text-sm md:hidden">
+            ← Vuốt ngang để xem thêm dịch vụ →
           </div>
         </div>
 
@@ -395,25 +487,25 @@ const NonLegalServices = () => {
           
           {/* Thông tin liên hệ */}
           <div className="flex flex-col md:flex-row justify-center items-center gap-16 mt-8">
-            {/* Hotline - CLICK-TO-CALL */}
+            {/* Hotline - CLICK-TO-CALL - BỎ GẠCH CHÂN */}
             <div className="flex flex-col items-center">
               <FaPhone className="text-3xl mb-2" />
               <div className="font-semibold">Hotline</div>
               <a 
                 href="tel:+84901452366" 
-                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer hover:underline"
+                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer no-underline"
               >
                 +84 901 452 366
               </a>
             </div>
             
-            {/* Email */}
+            {/* Email - BỎ GẠCH CHÂN */}
             <div className="flex flex-col items-center">
               <FaEnvelope className="text-3xl mb-2" />
               <div className="font-semibold">Email Support</div>
               <a
                 href="mailto:genetixcontactsp@gmail.com"
-                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer hover:underline"
+                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer no-underline"
               >
                 genetixcontactsp@gmail.com
               </a>
@@ -439,7 +531,6 @@ const NonLegalServices = () => {
                   <h3 className="text-xl font-bold text-white">
                     {selectedService.name}
                   </h3>
-                  {/* ĐÃ XÓA HIỂN THỊ SERVICE ID TRONG MODAL */}
                 </div>
                 <div className="ml-8">
                   <ServiceTag>{selectedService.type}</ServiceTag>
@@ -534,6 +625,13 @@ const NonLegalServices = () => {
           </div>
         )}
       </ServiceModal>
+
+      {/* CSS để ẩn scrollbar */}
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
