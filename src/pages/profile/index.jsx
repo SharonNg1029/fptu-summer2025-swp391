@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import api from "../../configs/axios";
 import { updateUser } from "../../redux/features/userSlice";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
@@ -72,8 +73,8 @@ const ProfilePage = () => {
   }
   if (!userID && currentUser) {
     setTimeout(() => {
-      alert(
-        "Can not find User ID in your account. Please sign in again or contact support.\nCheck console for details."
+      toast.error(
+        "Can not find User ID in your account. Please sign in again or contact support. Check console for details."
       );
     }, 100);
     console.warn("Can not find valid userID for role:", userRole, currentUser);
@@ -130,6 +131,7 @@ const ProfilePage = () => {
       } catch (err) {
         console.error("Error fetching user profile:", err);
         setError("Failed to load profile data");
+        toast.error("Failed to load profile data");
       } finally {
         setLoading(false);
       }
@@ -168,12 +170,14 @@ const ProfilePage = () => {
       dispatch(updateUser(updatedProfile));
       setIsEditing(false);
       setSuccess(true);
+      toast.success("Profile updated successfully!");
 
       // Hide success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       console.error("Error updating profile:", err);
       setError("Failed to update profile");
+      toast.error("Failed to update profile");
     } finally {
       setSaving(false);
     }
