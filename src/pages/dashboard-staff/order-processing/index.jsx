@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
 import { Card } from "antd";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,27 +15,23 @@ import {
   Modal,
   Form,
   Select,
-  DatePicker,
-  Upload,
   Row,
   Col,
   Descriptions,
 } from "antd";
 import {
   EditOutlined,
-  UploadOutlined,
   SearchOutlined,
   ReloadOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ContainerOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import api from "../../../configs/axios"; // Import axios instance
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
-const { TextArea } = Input;
 
 const OrderProcessing = () => {
   const [loading, setLoading] = useState(true);
@@ -43,25 +40,40 @@ const OrderProcessing = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  // Lấy staffID từ Redux store
+  const currentUser = useSelector((state) => state.user?.currentUser);
+  const staffID = currentUser?.staff?.staffID || currentUser?.staffID;
 
   const [form] = Form.useForm();
-
   const fetchOrders = useCallback(async () => {
+    if (!staffID) {
+      toast.error("Staff ID not found. Please log in again.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const response = await api.get("/staff/orders"); // Example API endpoint for staff orders
-      setOrders(response.data?.data || response.data || []);
+      const response = await api.get(`/staff/my-assignment/${staffID}`);
+      if (Array.isArray(response.data)) {
+        setOrders(response.data);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        setOrders(response.data.data);
+      } else {
+        setOrders([]);
+        if (response.data && response.data.length === 0) {
+          toast.info("No assignments found for this staff member.");
+        }
+      }
     } catch (error) {
       toast.error(
-        "Failed to fetch orders: " +
+        "Failed to fetch assignments: " +
           (error.response?.data?.message || error.message)
       );
-      console.error("Error fetching orders:", error);
+      setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
-  }, []);
-
+  }, [staffID]);
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
@@ -69,61 +81,124 @@ const OrderProcessing = () => {
   const handleEdit = (record) => {
     setEditingOrder(record);
     form.setFieldsValue({
-      ...record,
-      sampleCollectionDate: record.sampleCollectionDate
-        ? moment(record.sampleCollectionDate)
-        : null,
-      sampleCollected: record.sampleCollected,
+      status: record.status,
     });
     setIsModalVisible(true);
   };
-
   const handleUpdateOrder = async (values) => {
     setLoading(true);
     try {
       const payload = {
-        ...values,
-        sampleCollectionDate: values.sampleCollectionDate
-          ? values.sampleCollectionDate.toISOString()
-          : null,
-        status: values.progress === "Completed" ? "Completed" : values.status, // Auto-update status if progress is completed
+        status: values.status,
       };
-      await api.patch(`/staff/orders/${editingOrder.id}`, payload); // Example API endpoint for updating order
+      await api.patch(
+        `/staff/updateBooking/${editingOrder.bookingID}`,
+        payload
+      );
 
-      toast.success("Order updated successfully!");
+      toast.success("Booking status updated successfully!");
       setIsModalVisible(false);
       setEditingOrder(null);
       form.resetFields();
       fetchOrders(); // Refresh the list
     } catch (error) {
       toast.error(
-        "Failed to update order: " +
+        "Failed to update booking status: " +
           (error.response?.data?.message || error.message)
       );
-      console.error("Error updating order:", error);
+      console.error("Error updating booking status:", error);
     } finally {
       setLoading(false);
     }
   };
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF();
 
+      // Add title
+      doc.setFontSize(18);
+      doc.text("Assignment Processing Report", 14, 22);
+
+      // Add date
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${moment().format("DD/MM/YYYY HH:mm")}`, 14, 32); // Prepare table data
+      const tableColumns = [
+        "Booking ID",
+        "Customer Name",
+        "Service",
+        "Kit",
+        "Status",
+        "Appointment Date",
+        "Appointment Time",
+      ];
+
+      const tableRows = filteredOrders.map((order) => [
+        order.bookingID || "N/A",
+        order.customerName || "N/A",
+        order.service || "N/A",
+        order.kitID === "K001"
+          ? "PowerPlex Fusion"
+          : order.kitID === "K002"
+          ? "Global Filer"
+          : order.kitID || "N/A",
+        order.status || "N/A",
+        order.date ? moment(order.date).format("DD/MM/YYYY") : "Not scheduled",
+        order.timeRange || "Not scheduled",
+      ]);
+
+      // Generate PDF table using autoTable
+      autoTable(doc, {
+        head: [tableColumns],
+        body: tableRows,
+        startY: 40,
+        styles: {
+          fontSize: 8,
+          cellPadding: 2,
+        },
+        headStyles: {
+          fillColor: [66, 139, 202],
+          textColor: 255,
+          fontSize: 9,
+          fontStyle: "bold",
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        margin: { top: 40, left: 14, right: 14 },
+      });
+
+      // Save the PDF
+      const fileName = `assignment-report-${moment().format(
+        "YYYY-MM-DD-HHmm"
+      )}.pdf`;
+      doc.save(fileName);
+
+      toast.success("PDF exported successfully!");
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Failed to export PDF: " + error.message);
+    }
+  };
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id?.toLowerCase().includes(searchText.toLowerCase()) ||
+      order.bookingID
+        ?.toString()
+        .toLowerCase()
+        .includes(searchText.toLowerCase()) ||
       order.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
       order.service?.toLowerCase().includes(searchText.toLowerCase()) ||
-      order.progress?.toLowerCase().includes(searchText.toLowerCase());
+      order.kitID?.toLowerCase().includes(searchText.toLowerCase());
 
     const matchesStatus = statusFilter === "" || order.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
-
   const columns = [
     {
-      title: "Order ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      sorter: (a, b) => (a.bookingID || "").localeCompare(b.bookingID || ""),
     },
     {
       title: "Customer Name",
@@ -138,45 +213,64 @@ const OrderProcessing = () => {
       key: "service",
     },
     {
+      title: "Kit",
+      dataIndex: "kitID",
+      key: "kitID",
+      render: (kitID) => {
+        if (kitID === "K001") return "PowerPlex Fusion";
+        if (kitID === "K002") return "Global Filer";
+        return kitID || "N/A";
+      },
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status) => {
         let color = "default";
-        if (status === "Pending") color = "orange";
-        if (status === "Sample Collected") color = "blue";
-        if (status === "Testing") color = "purple";
+        if (status === "Waiting confirmed") color = "orange";
+        if (status === "Booking confirmed") color = "blue";
+        if (status === "Awaiting Sample") color = "cyan";
+        if (status === "In Progress") color = "purple";
+        if (status === "Ready") color = "geekblue";
+        if (status === "Pending Payment") color = "gold";
         if (status === "Completed") color = "green";
+        if (status === "Cancel") color = "red";
         return <Tag color={color}>{status?.toUpperCase()}</Tag>;
       },
       filters: [
-        { text: "Pending", value: "Pending" },
-        { text: "Sample Collected", value: "Sample Collected" },
-        { text: "Testing", value: "Testing" },
+        { text: "Waiting confirmed", value: "Waiting confirmed" },
+        { text: "Booking confirmed", value: "Booking confirmed" },
+        { text: "Awaiting Sample", value: "Awaiting Sample" },
+        { text: "In Progress", value: "In Progress" },
+        { text: "Ready", value: "Ready" },
+        { text: "Pending Payment", value: "Pending Payment" },
         { text: "Completed", value: "Completed" },
+        { text: "Cancel", value: "Cancel" },
       ],
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: "Progress",
-      dataIndex: "progress",
-      key: "progress",
-      render: (progress) => {
-        let icon = <ClockCircleOutlined />;
-        let color = "blue";
-        if (progress === "Sample Collected") {
-          icon = <ContainerOutlined />;
-          color = "geekblue";
-        }
-        if (progress === "Completed") {
-          icon = <CheckCircleOutlined />;
-          color = "green";
-        }
-        return (
-          <Tag icon={icon} color={color}>
-            {progress}
-          </Tag>
-        );
+      title: "Appointment Date",
+      dataIndex: "date",
+      key: "date",
+      render: (date) => {
+        if (!date) return "Not scheduled";
+        return moment(date).format("DD/MM/YYYY");
+      },
+      sorter: (a, b) => {
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return moment(a.date).unix() - moment(b.date).unix();
+      },
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "timeRange",
+      key: "timeRange",
+      render: (timeRange) => {
+        return timeRange || "Not scheduled";
       },
     },
     {
@@ -204,24 +298,32 @@ const OrderProcessing = () => {
           flexWrap: "wrap",
           gap: 16,
         }}>
+        {" "}
         <Title level={2} style={{ margin: 0 }}>
-          Order Processing
-        </Title>
+          Assignment Processing
+        </Title>{" "}
         <Space>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportPDF}
+            type="default">
+            Export PDF
+          </Button>
           <Button
             icon={<ReloadOutlined />}
             onClick={fetchOrders}
-            loading={loading}>
+            loading={loading}
+            type="primary">
             Refresh
           </Button>
         </Space>
       </div>
-
       <Card style={{ marginBottom: 16 }}>
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} lg={10}>
+            {" "}
             <Input
-              placeholder="Search by Order ID, Customer, Service..."
+              placeholder="Search by Booking ID, Customer, Service, Kit..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -229,6 +331,7 @@ const OrderProcessing = () => {
             />
           </Col>
           <Col xs={24} sm={6} lg={7}>
+            {" "}
             <Select
               placeholder="Filter by status"
               value={statusFilter}
@@ -236,34 +339,37 @@ const OrderProcessing = () => {
               style={{ width: "100%" }}
               allowClear>
               <Option value="">All Statuses</Option>
-              <Option value="Pending">Pending</Option>
-              <Option value="Sample Collected">Sample Collected</Option>
-              <Option value="Testing">Testing</Option>
+              <Option value="Waiting confirmed">Waiting confirmed</Option>
+              <Option value="Booking confirmed">Booking confirmed</Option>
+              <Option value="Awaiting Sample">Awaiting Sample</Option>
+              <Option value="In Progress">In Progress</Option>
+              <Option value="Ready">Ready</Option>
+              <Option value="Pending Payment">Pending Payment</Option>
               <Option value="Completed">Completed</Option>
+              <Option value="Cancel">Cancel</Option>
             </Select>
           </Col>
         </Row>
       </Card>
-
       <Card>
+        {" "}
         <Table
           loading={loading}
           columns={columns}
           dataSource={filteredOrders}
-          rowKey="id"
+          rowKey="bookingID"
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} of ${total} orders`,
+              `${range[0]}-${range[1]} of ${total} assignments`,
           }}
           scroll={{ x: 1000 }}
         />
-      </Card>
-
+      </Card>{" "}
       <Modal
-        title="Edit Order Details"
+        title="Update Booking Status"
         open={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
@@ -272,6 +378,7 @@ const OrderProcessing = () => {
         }}
         footer={null}
         width={700}>
+        {" "}
         {editingOrder && (
           <Form form={form} layout="vertical" onFinish={handleUpdateOrder}>
             <Descriptions
@@ -279,8 +386,8 @@ const OrderProcessing = () => {
               column={2}
               size="small"
               style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="Order ID">
-                {editingOrder.id}
+              <Descriptions.Item label="Booking ID">
+                {editingOrder.bookingID}
               </Descriptions.Item>
               <Descriptions.Item label="Customer Name">
                 {editingOrder.customerName}
@@ -288,73 +395,52 @@ const OrderProcessing = () => {
               <Descriptions.Item label="Service" span={2}>
                 {editingOrder.service}
               </Descriptions.Item>
+              <Descriptions.Item label="Current Status" span={2}>
+                <Tag
+                  color={
+                    editingOrder.status === "Waiting confirmed"
+                      ? "orange"
+                      : editingOrder.status === "Booking confirmed"
+                      ? "blue"
+                      : editingOrder.status === "Awaiting Sample"
+                      ? "cyan"
+                      : editingOrder.status === "In Progress"
+                      ? "purple"
+                      : editingOrder.status === "Ready"
+                      ? "geekblue"
+                      : editingOrder.status === "Pending Payment"
+                      ? "gold"
+                      : editingOrder.status === "Completed"
+                      ? "green"
+                      : editingOrder.status === "Cancel"
+                      ? "red"
+                      : "default"
+                  }>
+                  {editingOrder.status?.toUpperCase()}
+                </Tag>
+              </Descriptions.Item>
             </Descriptions>
 
             <Form.Item
-              name="progress"
-              label="Order Progress"
-              rules={[
-                { required: true, message: "Please select order progress" },
-              ]}>
-              <Select placeholder="Select current progress">
-                <Option value="Appointment Scheduled">
-                  Appointment Scheduled
-                </Option>
-                <Option value="Sample Received">Sample Received</Option>
-                <Option value="In Lab">In Lab</Option>
-                <Option value="Testing">Testing</Option>
+              name="status"
+              label="New Status"
+              rules={[{ required: true, message: "Please select new status" }]}>
+              <Select placeholder="Select new status">
+                <Option value="Waiting confirmed">Waiting Confirmed</Option>
+                <Option value="Booking confirmed">Booking Confirmed</Option>
+                <Option value="Awaiting Sample">Awaiting Sample</Option>
+                <Option value="In Progress">In Progress</Option>
+                <Option value="Ready">Ready</Option>
+                <Option value="Pending Payment">Pending Payment</Option>
                 <Option value="Completed">Completed</Option>
+                <Option value="Cancel">Cancel</Option>
               </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="sampleCollected"
-              label="Sample Collected"
-              valuePropName="checked">
-              <Select>
-                <Option value={true}>Yes</Option>
-                <Option value={false}>No</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="sampleCollectionDate"
-              label="Sample Collection Date">
-              <DatePicker
-                showTime
-                format="YYYY-MM-DD HH:mm:ss"
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-
-            <Form.Item name="testResult" label="Test Result">
-              <TextArea
-                rows={4}
-                placeholder="Enter test results or upload a file"
-              />
-            </Form.Item>
-
-            {/* Optional: File Upload for Test Results */}
-            <Form.Item name="resultFile" label="Upload Test Result File">
-              <Upload
-                name="file"
-                action="/upload.do" // Replace with your actual upload endpoint
-                listType="text"
-                maxCount={1}
-                beforeUpload={() => false} // Prevent auto-upload
-              >
-                <Button icon={<UploadOutlined />}>Click to Upload</Button>
-              </Upload>
-            </Form.Item>
-
-            <Form.Item name="notes" label="Notes">
-              <TextArea rows={3} placeholder="Add any relevant notes" />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
               <Space>
                 <Button type="primary" htmlType="submit" loading={loading}>
-                  Update Order
+                  Update Status
                 </Button>
                 <Button
                   onClick={() => {

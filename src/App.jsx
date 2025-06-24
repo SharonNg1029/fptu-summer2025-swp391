@@ -34,7 +34,7 @@ import ScrollToTopButton from "./components/hooks/useScrollToTop"; // Sửa impo
 import React from "react";
 import { Toaster } from "react-hot-toast";
 import Contact from "./pages/home-page/contact";
-
+import ProfilePage from "./pages/profile";
 
 function App() {
   const router = createBrowserRouter([
@@ -84,6 +84,10 @@ function App() {
     {
       path: "/register",
       element: <RegisterPage />,
+    },
+    {
+      path: "/profile",
+      element: <ProfilePage />,
     },
     {
       path: "/dashboard", // Admin Dashboard
