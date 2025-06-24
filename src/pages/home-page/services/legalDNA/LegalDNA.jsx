@@ -113,16 +113,40 @@ const LegalServices = () => {
     }).format(price);
   };
 
-  // Xử lý text markdown đơn giản
+  // Xử lý text markdown với hỗ trợ links
   const renderMarkdownText = (text) => {
-    const parts = text.split(/(\*\*\*.*?\*\*\*|\*\*.*?\*\*)/g);
+    // Tách text thành các phần bao gồm links, bold text, và text thường
+    const parts = text.split(/(\[.*?\]\(.*?\)|\*\*\*.*?\*\*\*|\*\*.*?\*\*)/g);
     
     return parts.map((part, index) => {
+      // Xử lý markdown links [text](url)
+      const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (linkMatch) {
+        const [, linkText, url] = linkMatch;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline font-medium transition-colors duration-200"
+          >
+            {linkText}
+          </a>
+        );
+      }
+      
+      // Xử lý bold italic text (***text***)
       if (part.startsWith('***') && part.endsWith('***')) {
         return <strong key={index}><em>{part.slice(3, -3)}</em></strong>;
-      } else if (part.startsWith('**') && part.endsWith('**')) {
+      }
+      
+      // Xử lý bold text (**text**)
+      if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={index}>{part.slice(2, -2)}</strong>;
       }
+      
+      // Text thường
       return part;
     });
   };
