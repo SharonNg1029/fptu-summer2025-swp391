@@ -113,13 +113,76 @@ const LegalServices = () => {
     }).format(price);
   };
 
-  // Xử lý text markdown với hỗ trợ links
-  const renderMarkdownText = (text) => {
-    // Tách text thành các phần bao gồm links, bold text, và text thường
+  // ===== XỬ LÝ IMMIGRATION LINKS =====
+  // Xử lý click vào các link DNA test trong phần Immigration
+  const handleImmigrationLinkClick = (serviceID, route) => {
+    // Lưu thông tin service được chọn vào sessionStorage
+    const bookingData = {
+      serviceID: serviceID,        // "SNL001", "SNL002", "SNL004", "SNL005"
+      expressService: false        // Mặc định false cho immigration links
+    };
+
+    // Lưu vào sessionStorage để trang đích có thể đọc
+    sessionStorage.setItem('selectedService', JSON.stringify(bookingData));
+    console.log('🔗 Immigration link clicked - Data saved:', bookingData);
+    console.log('🚀 Redirecting to:', route);
+    
+    // 🚀 CHUYỂN HƯỚNG ĐẾN TRANG DỊCH VỤ CỤ THỂ
+    window.location.href = route;
+    
+    // Đóng modal sau khi click (optional vì sẽ chuyển trang)
+    closeServiceModal();
+  };
+
+  // ===== XỬ LÝ MARKDOWN VÀ IMMIGRATION LINKS =====
+  // Xử lý text markdown với hỗ trợ links và immigration links
+  const renderMarkdownText = (text, service = null) => {
+    // Kiểm tra nếu service có immigration links và text chứa placeholder
+    if (service && service.hasImmigrationLinks && text.includes('IMMIGRATION_LINKS_PLACEHOLDER')) {
+      // Tách text thành phần trước và sau placeholder
+      const beforePlaceholder = text.split('IMMIGRATION_LINKS_PLACEHOLDER')[0];
+      const afterPlaceholder = text.split('IMMIGRATION_LINKS_PLACEHOLDER')[1];
+
+      return (
+        <div>
+          {/* Phần text trước placeholder */}
+          <div className="mb-4">
+            {renderMarkdownBasic(beforePlaceholder)}
+          </div>
+          
+          {/* Immigration links - TẠI ĐÂY LÀ PHẦN QUAN TRỌNG */}
+          <ul className="mb-4 space-y-2 ml-4">
+            {service.immigrationLinks.map((link, index) => (
+              <li key={index}>
+                • <button
+                    onClick={() => handleImmigrationLinkClick(link.serviceID, link.route)}
+                    className="text-blue-600 hover:text-blue-800 underline font-medium transition-colors duration-200 cursor-pointer bg-transparent border-none p-0 hover:bg-blue-50 rounded px-1"
+                  >
+                    {link.text}
+                  </button>
+              </li>
+            ))}
+          </ul>
+          
+          {/* Phần text sau placeholder */}
+          <div>
+            {renderMarkdownBasic(afterPlaceholder)}
+          </div>
+        </div>
+      );
+    }
+
+    // Xử lý markdown bình thường cho các services khác
+    return renderMarkdownBasic(text);
+  };
+
+  // Hàm xử lý markdown cơ bản (bold, italic, links thường)
+  const renderMarkdownBasic = (text) => {
+    // Tách text thành các phần theo regex pattern
     const parts = text.split(/(\[.*?\]\(.*?\)|\*\*\*.*?\*\*\*|\*\*.*?\*\*)/g);
     
     return parts.map((part, index) => {
-      // Xử lý markdown links [text](url)
+      // Xử lý markdown links [text](url) - link ra website ngoài
       const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
       if (linkMatch) {
         const [, linkText, url] = linkMatch;
@@ -147,7 +210,7 @@ const LegalServices = () => {
       }
       
       // Text thường
-      return part;
+      return <span key={index}>{part}</span>;
     });
   };
 
@@ -180,6 +243,26 @@ const LegalServices = () => {
     setModalVisible(false);
     setSelectedService(null);
     setIsScrolled(false);
+  };
+
+  // ===== XỬ LÝ BOOKING - CHỈ LƯU VÀO SESSION STORAGE =====
+  const handleBookService = (service, isExpressService = false) => {
+    // 🎯 CHỈ LƯU 2 THỨ THÔI - SERVICEID VÀ EXPRESSSERVICE
+    const bookingData = {
+      serviceID: service.serviceID,        // String: "SL001", "SL002", "SL003"
+      expressService: isExpressService     // Boolean: true/false
+    };
+
+    // 🎯 LƯU VÀO SESSIONSTORAGE ĐỂ CHUYỂN SANG TRANG BOOKING
+    sessionStorage.setItem('selectedService', JSON.stringify(bookingData));
+    
+    // Log để debug
+    console.log('🎯 Legal service booking - Data saved:', bookingData);
+    
+    // 🚀 CHUYỂN HƯỚNG ĐẾN TRANG BOOKING (BỎ COMMENT DÒNG NÀY ĐỂ SỬ DỤNG)
+    // window.location.href = '/booking';
+    // Hoặc nếu dùng React Router:
+    // navigate('/booking');
   };
 
   // ===== RENDER COMPONENT =====
@@ -389,7 +472,7 @@ const LegalServices = () => {
               <div className="font-semibold">Hotline</div>
               <a 
                 href="tel:+84901452366" 
-                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer hover:underline"
+                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer no-underline"
               >
                 +84 901 452 366
               </a>
@@ -401,7 +484,7 @@ const LegalServices = () => {
               <div className="font-semibold">Email Support</div>
               <a
                 href="mailto:genetixcontactsp@gmail.com"
-                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer hover:underline"
+                className="text-lg text-white hover:text-blue-200 transition-colors cursor-pointer no-underline"
               >
                 genetixcontactsp@gmail.com
               </a>
@@ -415,7 +498,7 @@ const LegalServices = () => {
         {selectedService && (
           <div className="bg-white relative">
             
-            {/* Header modal - sticky - KHÔNG THAY ĐỔI */}
+            {/* Header modal - sticky */}
             <div className={`sticky top-0 z-10 transition-all duration-300 ${
               isScrolled
                 ? 'shadow-2xl backdrop-blur-md bg-gradient-to-br from-[#004494]/95 to-[#1677FF]/95' 
@@ -442,9 +525,9 @@ const LegalServices = () => {
               ref={modalContentRef}
               className="p-6 bg-white max-h-[65vh] overflow-y-auto"
             >
-              {/* Mô tả chi tiết */}
+              {/* Mô tả chi tiết - ĐÂY LÀ NƠI HIỂN THỊ IMMIGRATION LINKS */}
               <div className="text-gray-700 text-base mb-6 whitespace-pre-line">
-                {renderMarkdownText(selectedService.description)}
+                {renderMarkdownText(selectedService.description, selectedService)}
               </div>
 
               {/* Thông tin bổ sung */}
@@ -502,12 +585,18 @@ const LegalServices = () => {
                 </div>
               </div>
 
-              {/* Nút đặt dịch vụ */}
+              {/* NÚT ĐẶT DỊCH VỤ - LƯU VÀO SESSION STORAGE */}
               <div className="flex gap-4">
-                <CustomButton className="flex-1 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800">
+                <CustomButton 
+                  onClick={() => handleBookService(selectedService, false)}
+                  className="flex-1 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800"
+                >
                   Book Standard Service
                 </CustomButton>
-                <CustomButton className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
+                <CustomButton 
+                  onClick={() => handleBookService(selectedService, true)}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                >
                   Book Express Service
                 </CustomButton>
               </div>
