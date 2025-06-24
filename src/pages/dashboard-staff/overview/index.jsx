@@ -40,8 +40,7 @@ const StaffOverviewPage = () => {
 
   // Lấy staffID từ Redux store
   const currentUser = useSelector((state) => state.user?.currentUser);
-  const staffID =
-    currentUser?.id || currentUser?.staffId || currentUser?.userId;
+  const staffID = currentUser?.staff?.staffID || currentUser?.staffID;
   const fetchStaffOverviewData = useCallback(async () => {
     if (!staffID) {
       toast.error("Staff ID not found. Please log in again.");

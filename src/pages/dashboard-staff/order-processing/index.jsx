@@ -42,11 +42,7 @@ const OrderProcessing = () => {
   const [statusFilter, setStatusFilter] = useState("");
   // Lấy staffID từ Redux store
   const currentUser = useSelector((state) => state.user?.currentUser);
-  const staffID =
-    currentUser?.staff?.staffID ||
-    currentUser?.staffId ||
-    currentUser?.id ||
-    currentUser?.userId;
+  const staffID = currentUser?.staff?.staffID || currentUser?.staffID;
 
   const [form] = Form.useForm();
   const fetchOrders = useCallback(async () => {
