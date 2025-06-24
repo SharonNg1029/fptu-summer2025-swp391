@@ -15,34 +15,117 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import { selectCurrentUser, updateUser } from "../../redux/features/userSlice";
 import api from "../../configs/axios";
+import { updateUser } from "../../redux/features/userSlice";
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
-  const currentUser = useSelector(selectCurrentUser);
+  const currentUser = useSelector((state) => state.user?.currentUser);
+  // Lấy userID phù hợp theo role, bổ sung fallback và log chi tiết
+  let userID = null;
+  let userRole = null;
+  if (currentUser) {
+    console.log("[ProfilePage] currentUser:", currentUser);
+    userRole =
+      currentUser.role ||
+      currentUser?.customer?.role ||
+      currentUser?.staff?.role ||
+      currentUser?.manager?.role ||
+      currentUser?.admin?.role;
+    if (userRole === "customer") {
+      userID =
+        currentUser?.customer?.customerID ||
+        currentUser?.customerID ||
+        currentUser?.customer?.customerId ||
+        currentUser?.customerId;
+    } else if (userRole === "staff") {
+      userID =
+        currentUser?.staff?.staffID ||
+        currentUser?.staffID ||
+        currentUser?.staff?.staffId ||
+        currentUser?.staffId;
+    } else if (userRole === "manager") {
+      userID =
+        currentUser?.manager?.managerID ||
+        currentUser?.managerID ||
+        currentUser?.manager?.managerId ||
+        currentUser?.managerId;
+    } else if (userRole === "admin") {
+      userID =
+        currentUser?.admin?.adminID ||
+        currentUser?.adminID ||
+        currentUser?.admin?.adminId ||
+        currentUser?.adminId;
+    }
+    // Fallback: lấy bất kỳ ID nào có thể nếu role không xác định
+    if (!userID) {
+      userID =
+        currentUser?.customerID ||
+        currentUser?.customerId ||
+        currentUser?.staffID ||
+        currentUser?.staffId ||
+        currentUser?.managerID ||
+        currentUser?.managerId ||
+        currentUser?.adminID ||
+        currentUser?.adminId;
+    }
+  }
+  if (!userID && currentUser) {
+    setTimeout(() => {
+      alert(
+        "Can not find User ID in your account. Please sign in again or contact support.\nCheck console for details."
+      );
+    }, 100);
+    console.warn("Can not find valid userID for role:", userRole, currentUser);
+  }
   const [userProfile, setUserProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [editForm, setEditForm] = useState({});
+  const [editForm, setEditForm] = useState({
+    fullName: "",
+    dob: "",
+    email: "",
+    phone: "",
+    address: "",
+    gender: "",
+  });
 
   // Fetch user profile data
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!currentUser?.id) {
+      if (!userID) {
         setError("User ID not found");
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
-        const response = await api.get(`/customer/${currentUser.id}`);
-        setUserProfile(response.data);
-        setEditForm(response.data);
+        // Đường dẫn API tùy theo role
+        let apiPath = "/customer/my-info/" + userID;
+        if (userRole === "staff") apiPath = "/staff/my-info/" + userID;
+        if (userRole === "manager") apiPath = "/manager/my-info/" + userID;
+        if (userRole === "admin") apiPath = "/admin/my-info/" + userID;
+        const response = await api.get(apiPath);
+        console.log("API Response:", response.data); // Debug log
+        let profile;
+        if (Array.isArray(response.data)) {
+          profile = response.data[0];
+        } else {
+          profile = response.data.data || response.data;
+        }
+        console.log("Processed profile:", profile); // Debug log
+        setUserProfile(profile);
+        setEditForm({
+          fullName: profile.fullName || "",
+          dob: profile.dob || "",
+          email: profile.email || "",
+          phone: profile.phone || "",
+          address: profile.address || "",
+          gender: profile.gender || "",
+        });
         setError(null);
       } catch (err) {
         console.error("Error fetching user profile:", err);
@@ -53,7 +136,7 @@ const ProfilePage = () => {
     };
 
     fetchUserProfile();
-  }, [currentUser?.id]);
+  }, [userID, userRole]);
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
@@ -65,16 +148,24 @@ const ProfilePage = () => {
 
   // Handle save profile
   const handleSaveProfile = async () => {
-    if (!currentUser?.id) return;
+    if (!userID) return;
 
     try {
       setSaving(true);
       setError(null);
 
-      const response = await api.patch(`/customer/${currentUser.id}`, editForm);
+      const response = await api.patch(`/customer/${userID}`, editForm);
 
-      setUserProfile(response.data);
-      dispatch(updateUser(response.data));
+      // Xử lý response tương tự như fetch
+      let updatedProfile;
+      if (Array.isArray(response.data)) {
+        updatedProfile = response.data[0];
+      } else {
+        updatedProfile = response.data.data || response.data;
+      }
+
+      setUserProfile(updatedProfile);
+      dispatch(updateUser(updatedProfile));
       setIsEditing(false);
       setSuccess(true);
 
@@ -90,7 +181,14 @@ const ProfilePage = () => {
 
   // Handle cancel edit
   const handleCancelEdit = () => {
-    setEditForm(userProfile);
+    setEditForm({
+      fullName: userProfile?.fullName || "",
+      dob: userProfile?.dob || "",
+      email: userProfile?.email || "",
+      phone: userProfile?.phone || "",
+      address: userProfile?.address || "",
+      gender: userProfile?.gender || "",
+    });
     setIsEditing(false);
     setError(null);
   };
@@ -192,7 +290,9 @@ const ProfilePage = () => {
                         <span>
                           Member since{" "}
                           {new Date(
-                            userProfile?.createdAt || Date.now()
+                            userProfile?.createdAt ||
+                              userProfile?.createAt ||
+                              Date.now()
                           ).getFullYear()}
                         </span>
                       </div>
@@ -260,17 +360,17 @@ const ProfilePage = () => {
                     )}
                   </div>
 
-                  {/* Username */}
+                  {/* Date of Birth */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Username
+                      Date of Birth
                     </label>
                     {isEditing ? (
                       <input
-                        type="text"
-                        value={editForm.username || ""}
+                        type="date"
+                        value={editForm.dob || ""}
                         onChange={(e) =>
-                          handleInputChange("username", e.target.value)
+                          handleInputChange("dob", e.target.value)
                         }
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent"
                         onFocus={(e) => {
@@ -282,11 +382,11 @@ const ProfilePage = () => {
                           e.target.style.borderColor = "#e5e7eb";
                           e.target.style.boxShadow = "none";
                         }}
-                        placeholder="Enter your username"
+                        placeholder="Enter your date of birth"
                       />
                     ) : (
                       <div className="px-4 py-3 bg-gray-50 rounded-xl text-gray-800">
-                        {userProfile?.username || "Not provided"}
+                        {userProfile?.dob || "Not provided"}
                       </div>
                     )}
                   </div>
@@ -357,6 +457,42 @@ const ProfilePage = () => {
                           style={{ color: "#0b5dc8" }}
                         />
                         <span>{userProfile?.phone || "Not provided"}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Gender */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Gender
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={editForm.gender || ""}
+                        onChange={(e) =>
+                          handleInputChange("gender", Number(e.target.value))
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent"
+                        onFocus={(e) => {
+                          e.target.style.borderColor = "#0b5dc8";
+                          e.target.style.boxShadow =
+                            "0 0 0 3px rgba(11, 93, 200, 0.1)";
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = "#e5e7eb";
+                          e.target.style.boxShadow = "none";
+                        }}>
+                        <option value="">Select gender</option>
+                        <option value={1}>Male</option>
+                        <option value={2}>Female</option>
+                      </select>
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 rounded-xl text-gray-800">
+                        {userProfile?.gender === 1
+                          ? "Male"
+                          : userProfile?.gender === 2
+                          ? "Female"
+                          : "Not provided"}
                       </div>
                     )}
                   </div>
@@ -467,7 +603,9 @@ const ProfilePage = () => {
                       <Calendar className="h-4 w-4" />
                       <span>
                         {new Date(
-                          userProfile?.createdAt || Date.now()
+                          userProfile?.createdAt ||
+                            userProfile?.createAt ||
+                            Date.now()
                         ).toLocaleDateString()}
                       </span>
                     </span>
@@ -500,7 +638,7 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideIn {
           from {
             transform: translateX(100%);

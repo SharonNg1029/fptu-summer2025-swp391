@@ -121,10 +121,15 @@ function LoginForm() {
         fullName:
           userData.fullName || userData.fullname || userData.username || "loc",
         role: userData.role || "Customer",
+        customerID: userData.customerId || userData.customerID || "",
+        staffID: userData.staffId || userData.staffID || "",
+        managerID: userData.managerId || userData.managerID || "",
+        adminID: userData.adminId || userData.adminID || "",
+        token:
+          userData.token || userData.accessToken || `mock_token_${Date.now()}`,
         avatar: userData.avatar || "",
         phone: userData.phone || "",
         isEmailVerified: userData.enabled || userData.isEmailVerified || false,
-        staffID: userData.staffId || userData.staffID || "",
         lastLogin: new Date().toISOString(),
         loginMethod: "normal",
         createdAt:
