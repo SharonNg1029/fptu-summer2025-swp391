@@ -99,14 +99,16 @@ const Footer = () => {
               <PhoneOutlined className="mt-2" /> <a href="tel:+84901452366" className="hover:text-[#3fa9f5] transition-colors">Hotline: +84 901 452 366</a>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
-              <MailOutlined className="mt-2" /> <a href="mailto:genetix.noreply@gmail.com" className="hover:text-[#3fa9f5] transition-colors">genetix.noreply@gmail.com</a>
+              <MailOutlined className="mt-2" /> <a href="https://mail.google.com/mail/?view=cm&to=genetixcontactsp@gmail.com&su=Liên%20hệ%20hỗ%20trợ" target="_blank" rel="noopener noreferrer" className="hover:text-[#3fa9f5] transition-colors">genetixcontactsp@gmail.com</a>
             </li>
             <li className="mb-[6px] flex items-start gap-2 cursor-pointer leading-[2] hover:text-[#3fa9f5] transition-colors">
               <ClockCircleOutlined className="mt-2" /> 
               <div className="flex flex-col">
                 <span className="font-medium">Business Hours:</span>
-                <span className="text-sm opacity-90">Mon–Sat: 8:00 AM – 5:30 PM</span>
-                <span className="text-sm opacity-90">Sunday: 8:00 AM – 12:00 AM</span>
+                <div className="text-sm opacity-90">
+                  <div>Monday–Saturday: 8:00 – 12:00 to 13:00 – 17:00</div>
+                </div>
+                <span className="text-sm opacity-90">Sunday: 8:00 – 12:00 open morning only</span>
               </div>
             </li>     
           </ul>
