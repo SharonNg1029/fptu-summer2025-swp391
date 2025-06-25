@@ -64,120 +64,131 @@ const ManagerOverviewPage = () => {
     weeklyProgress: [],
     staffEfficiency: [],
   });
+  const [kitTransactions, setKitTransactions] = useState([]);
+  const [assignedBookings, setAssignedBookings] = useState([]);
 
   // Generate comprehensive chart data based on current stats and bookings
   const generateChartData = useCallback(() => {
     // Performance metrics over time
+    const completed = overviewData.totalTestsPerformed || 0;
+    const pending = overviewData.staffReportsPending || 0;
+    const total = completed + pending;
     const performanceMetrics = [
       {
         period: "Week 1",
-        performed: Math.floor(overviewData.totalTestsPerformed * 0.2),
-        pending: Math.floor(overviewData.staffReportsPending * 0.3),
-        efficiency: 75,
+        performed: Math.floor(completed * 0.2),
+        pending: Math.floor(pending * 0.3),
+        efficiency: total ? Math.round((completed / total) * 100) : 0,
       },
       {
         period: "Week 2",
-        performed: Math.floor(overviewData.totalTestsPerformed * 0.25),
-        pending: Math.floor(overviewData.staffReportsPending * 0.25),
-        efficiency: 82,
+        performed: Math.floor(completed * 0.25),
+        pending: Math.floor(pending * 0.25),
+        efficiency: total ? Math.round((completed / total) * 100) : 0,
       },
       {
         period: "Week 3",
-        performed: Math.floor(overviewData.totalTestsPerformed * 0.3),
-        pending: Math.floor(overviewData.staffReportsPending * 0.2),
-        efficiency: 88,
+        performed: Math.floor(completed * 0.3),
+        pending: Math.floor(pending * 0.2),
+        efficiency: total ? Math.round((completed / total) * 100) : 0,
       },
       {
         period: "Week 4",
-        performed: Math.floor(overviewData.totalTestsPerformed * 0.25),
-        pending: Math.floor(overviewData.staffReportsPending * 0.25),
-        efficiency: 85,
+        performed: Math.floor(completed * 0.25),
+        pending: Math.floor(pending * 0.25),
+        efficiency: total ? Math.round((completed / total) * 100) : 0,
       },
     ];
 
-    // Test status distribution
-    const testStatusDistribution = [
-      {
-        name: "Completed",
-        value: overviewData.totalTestsPerformed,
-        color: "#52c41a",
-        percentage:
-          Math.round(
-            (overviewData.totalTestsPerformed /
-              (overviewData.totalTestsPerformed +
-                overviewData.staffReportsPending)) *
-              100
-          ) || 0,
-      },
-      {
-        name: "Pending",
-        value: overviewData.staffReportsPending,
-        color: "#faad14",
-        percentage:
-          Math.round(
-            (overviewData.staffReportsPending /
-              (overviewData.totalTestsPerformed +
-                overviewData.staffReportsPending)) *
-              100
-          ) || 0,
-      },
+    // Test status distribution: hiển thị toàn bộ status
+    const statusCountMap = {};
+    assignedBookings.forEach((b) => {
+      if (!statusCountMap[b.status]) {
+        statusCountMap[b.status] = 0;
+      }
+      statusCountMap[b.status] += 1;
+    });
+    const statusColors = [
+      "#52c41a",
+      "#faad14",
+      "#ff4d4f",
+      "#1890ff",
+      "#722ed1",
+      "#13c2c2",
+      "#eb2f96",
+      "#b37feb",
+      "#fa8c16",
+      "#a0d911",
     ];
-
-    // Staff workload distribution
-    const staffWorkload = Array.from(
-      { length: Math.min(overviewData.totalCustomers, 6) },
-      (_, i) => ({
-        staff: `Staff ${i + 1}`,
-        assigned: Math.floor(Math.random() * 15) + 5,
-        completed: Math.floor(Math.random() * 12) + 3,
-        efficiency: Math.floor(Math.random() * 30) + 70,
+    const testStatusDistribution = Object.entries(statusCountMap).map(
+      ([status, value], idx) => ({
+        name: status,
+        value,
+        color: statusColors[idx % statusColors.length],
+        percentage: total ? Math.round((value / total) * 100) : 0,
       })
     );
 
-    // Weekly progress trends
+    // Staff workload distribution thực tế
+    const staffWorkloadMap = {};
+    assignedBookings.forEach((b) => {
+      if (!staffWorkloadMap[b.staffName]) {
+        staffWorkloadMap[b.staffName] = {
+          staff: b.staffName,
+          assigned: 0,
+          completed: 0,
+        };
+      }
+      staffWorkloadMap[b.staffName].assigned += 1;
+      if (b.status === "Completed")
+        staffWorkloadMap[b.staffName].completed += 1;
+    });
+    const staffWorkload = Object.values(staffWorkloadMap).map((s) => ({
+      ...s,
+      efficiency: s.assigned ? Math.round((s.completed / s.assigned) * 100) : 0,
+    }));
+
+    // Weekly progress trends (chia đều cho 4 tuần)
     const weeklyProgress = [
       {
         week: "W1",
-        testsCompleted: Math.floor(overviewData.totalTestsPerformed * 0.15),
-        target: Math.floor(overviewData.totalTestsPerformed * 0.2),
+        testsCompleted: Math.floor(completed * 0.15),
+        target: Math.floor(completed * 0.2),
       },
       {
         week: "W2",
-        testsCompleted: Math.floor(overviewData.totalTestsPerformed * 0.22),
-        target: Math.floor(overviewData.totalTestsPerformed * 0.25),
+        testsCompleted: Math.floor(completed * 0.22),
+        target: Math.floor(completed * 0.25),
       },
       {
         week: "W3",
-        testsCompleted: Math.floor(overviewData.totalTestsPerformed * 0.28),
-        target: Math.floor(overviewData.totalTestsPerformed * 0.25),
+        testsCompleted: Math.floor(completed * 0.28),
+        target: Math.floor(completed * 0.25),
       },
       {
         week: "W4",
-        testsCompleted: Math.floor(overviewData.totalTestsPerformed * 0.35),
-        target: Math.floor(overviewData.totalTestsPerformed * 0.3),
+        testsCompleted: Math.floor(completed * 0.35),
+        target: Math.floor(completed * 0.3),
       },
     ];
 
     // Staff efficiency radial chart
     const staffEfficiency = [
-      { name: "Overall Efficiency", value: 85, fill: "#1890ff" },
+      {
+        name: "Overall Efficiency",
+        value: total ? Math.round((completed / total) * 100) : 0,
+        fill: "#1890ff",
+      },
       {
         name: "Completion Rate",
-        value:
-          Math.round(
-            (overviewData.totalTestsPerformed /
-              (overviewData.totalTestsPerformed +
-                overviewData.staffReportsPending)) *
-              100
-          ) || 0,
+        value: total ? Math.round((completed / total) * 100) : 0,
         fill: "#52c41a",
       },
       {
         name: "Staff Utilization",
-        value: Math.min(
-          Math.round((overviewData.totalCustomers / 10) * 100),
-          100
-        ),
+        value: overviewData.totalCustomers
+          ? Math.min(Math.round((overviewData.totalCustomers / 10) * 100), 100)
+          : 0,
         fill: "#722ed1",
       },
     ];
@@ -189,47 +200,48 @@ const ManagerOverviewPage = () => {
       weeklyProgress,
       staffEfficiency,
     });
-  }, [overviewData]);
+  }, [overviewData, assignedBookings]);
 
   const fetchManagerOverviewData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch all bookings
-      const testsRes = await api.get("/booking/bookings");
-      const bookings = testsRes.data?.data || testsRes.data || [];
-      setBookingsData(bookings);
+      // Gọi song song 2 API mới
+      const [kitRes, assignedRes] = await Promise.all([
+        api.get("/manager/kit-transaction"),
+        api.get("/manager/booking-assigned"),
+      ]);
+      const kitList = kitRes.data?.data || kitRes.data || [];
+      const assignedList = assignedRes.data?.data || assignedRes.data || [];
+      setKitTransactions(kitList);
+      setAssignedBookings(assignedList);
 
-      // 1. Total Tests Performed: count bookings with status "Completed"
-      const totalTestsPerformed = Array.isArray(bookings)
-        ? bookings.filter((b) => b.status === "Completed").length
-        : 0;
-
-      // 3. Total Tests Unperformed: count bookings with status !== "Completed" and !== "Cancel"
-      const totalTestsUnperformed = Array.isArray(bookings)
-        ? bookings.filter(
-            (b) => b.status !== "Completed" && b.status !== "Cancel"
-          ).length
-        : 0;
-
-      // 4. Staff Available: count staff with role === "STAFF" and status === true
-      const staffRes = await api.get("/admin/account");
-      const staffList = staffRes.data?.data || staffRes.data || [];
-      setStaffData(staffList);
-
-      const staffAvailable = Array.isArray(staffList)
-        ? staffList.filter(
-            (s) =>
-              (s.role === "STAFF" ||
-                (s.authorities && s.authorities[0]?.authority === "STAFF")) &&
-              (s.enabled === true || s.status === "ACTIVE")
-          ).length
-        : 0;
+      // Tổng số kit đã nhận
+      const kitsReceived = kitList.filter((k) => k.received === true).length;
+      // Tổng số booking đã assign
+      const totalAssigned = assignedList.length;
+      // Tổng số booking completed
+      const totalCompleted = assignedList.filter(
+        (b) => b.status === "Completed"
+      ).length;
+      // Tổng số booking pending
+      const totalPending = assignedList.filter(
+        (b) => b.status !== "Completed"
+      ).length;
+      // Số staff unique
+      const staffNames = Array.from(
+        new Set(assignedList.map((b) => b.staffName))
+      );
+      const staffAvailable = staffNames.length;
 
       setOverviewData({
-        totalTestsPerformed,
-        staffReportsPending: totalTestsUnperformed,
+        totalTestsPerformed: totalCompleted,
+        staffReportsPending: totalPending,
         totalCustomers: staffAvailable,
+        kitsReceived,
+        totalAssigned,
       });
+      setBookingsData(assignedList);
+      setStaffData(staffNames);
     } catch (error) {
       toast.error("Failed to fetch manager overview data.");
       console.error("Error fetching manager overview data:", error);
@@ -510,12 +522,7 @@ const ManagerOverviewPage = () => {
                   <BarChart data={chartData.staffWorkload} layout="horizontal">
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis type="number" tick={{ fontSize: 12 }} />
-                    <YAxis
-                      dataKey="staff"
-                      type="category"
-                      tick={{ fontSize: 12 }}
-                      width={60}
-                    />
+                    <YAxis hide={true} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "#fff",
@@ -530,12 +537,22 @@ const ManagerOverviewPage = () => {
                       fill="#1890ff"
                       name="Assigned"
                       radius={[0, 4, 4, 0]}
+                      label={{
+                        position: "right",
+                        fill: "#1890ff",
+                        fontSize: 12,
+                      }}
                     />
                     <Bar
                       dataKey="completed"
                       fill="#52c41a"
                       name="Completed"
                       radius={[0, 4, 4, 0]}
+                      label={{
+                        position: "right",
+                        fill: "#52c41a",
+                        fontSize: 12,
+                      }}
                     />
                   </BarChart>
                 </ResponsiveContainer>

@@ -53,6 +53,7 @@ const Overview = () => {
     kitsSold: 0,
   });
   const [recentBookings, setRecentBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
   const [chartData, setChartData] = useState({
     monthlyStats: [],
     statusDistribution: [],
@@ -61,53 +62,55 @@ const Overview = () => {
 
   // Generate chart data based on current stats and bookings
   const generateChartData = useCallback(() => {
-    // Monthly stats simulation based on current data
-    const monthlyStats = [
-      {
-        month: "Jan",
-        customers: Math.floor(stats.totalCustomer * 0.15),
-        tests: Math.floor(stats.completedTests * 0.12),
-        kits: Math.floor(stats.kitsSold * 0.18),
-      },
-      {
-        month: "Feb",
-        customers: Math.floor(stats.totalCustomer * 0.18),
-        tests: Math.floor(stats.completedTests * 0.16),
-        kits: Math.floor(stats.kitsSold * 0.14),
-      },
-      {
-        month: "Mar",
-        customers: Math.floor(stats.totalCustomer * 0.22),
-        tests: Math.floor(stats.completedTests * 0.2),
-        kits: Math.floor(stats.kitsSold * 0.16),
-      },
-      {
-        month: "Apr",
-        customers: Math.floor(stats.totalCustomer * 0.16),
-        tests: Math.floor(stats.completedTests * 0.18),
-        kits: Math.floor(stats.kitsSold * 0.2),
-      },
-      {
-        month: "May",
-        customers: Math.floor(stats.totalCustomer * 0.19),
-        tests: Math.floor(stats.completedTests * 0.22),
-        kits: Math.floor(stats.kitsSold * 0.18),
-      },
-      {
-        month: "Jun",
-        customers: Math.floor(stats.totalCustomer * 0.1),
-        tests: Math.floor(stats.completedTests * 0.12),
-        kits: Math.floor(stats.kitsSold * 0.14),
-      },
-    ];
+    // Group bookings by month and week for real chart data
+    const bookings = allBookings;
+    // Helper: get month label (e.g. 'Jan') from date string
+    const getMonthLabel = (dateStr) => {
+      const d = new Date(dateStr);
+      return d.toLocaleString("default", { month: "short" });
+    };
+    // Helper: get year-month key (e.g. '2025-06')
+    const getYearMonth = (dateStr) => {
+      const d = new Date(dateStr);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    };
+    // Helper: get week number in year
+    const getWeekNumber = (dateStr) => {
+      const d = new Date(dateStr);
+      const firstDay = new Date(d.getFullYear(), 0, 1);
+      const pastDays = (d - firstDay) / 86400000;
+      return Math.ceil((pastDays + firstDay.getDay() + 1) / 7);
+    };
 
-    // Status distribution based on recent bookings
-    const statusCounts = recentBookings.reduce((acc, booking) => {
+    // Monthly stats: group by year-month
+    const monthlyMap = {};
+    bookings.forEach((b) => {
+      if (!b.request_date) return;
+      const ym = getYearMonth(b.request_date);
+      if (!monthlyMap[ym]) {
+        monthlyMap[ym] = {
+          tests: 0,
+          revenue: 0,
+          month: getMonthLabel(b.request_date),
+        };
+      }
+      monthlyMap[ym].tests += 1;
+      monthlyMap[ym].revenue += Number(b.totalCost || 0);
+    });
+    // Sort by year-month ascending, limit to 6 months (latest)
+    const sortedMonths = Object.keys(monthlyMap).sort().slice(-6);
+    const monthlyStats = sortedMonths.map((ym) => ({
+      month: monthlyMap[ym].month,
+      tests: monthlyMap[ym].tests,
+      revenue: Math.round(monthlyMap[ym].revenue),
+    }));
+
+    // Status distribution based on ALL bookings
+    const statusCounts = bookings.reduce((acc, booking) => {
       const status = booking.status || "Unknown";
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
-
     const statusDistribution = Object.entries(statusCounts).map(
       ([status, count]) => ({
         name: status,
@@ -123,36 +126,34 @@ const Overview = () => {
       })
     );
 
-    // Weekly trends simulation
-    const weeklyTrends = [
-      {
-        week: "Week 1",
-        bookings: Math.floor(recentBookings.length * 0.2),
-        revenue: Math.floor(stats.revenue * 0.15),
-      },
-      {
-        week: "Week 2",
-        bookings: Math.floor(recentBookings.length * 0.3),
-        revenue: Math.floor(stats.revenue * 0.25),
-      },
-      {
-        week: "Week 3",
-        bookings: Math.floor(recentBookings.length * 0.25),
-        revenue: Math.floor(stats.revenue * 0.3),
-      },
-      {
-        week: "Week 4",
-        bookings: Math.floor(recentBookings.length * 0.25),
-        revenue: Math.floor(stats.revenue * 0.3),
-      },
-    ];
+    // Weekly trends: group by week number in current year
+    const weekMap = {};
+    bookings.forEach((b) => {
+      if (!b.request_date) return;
+      const d = new Date(b.request_date);
+      const year = d.getFullYear();
+      const week = getWeekNumber(b.request_date);
+      const key = `${year}-W${week}`;
+      if (!weekMap[key]) {
+        weekMap[key] = { week: `W${week}`, bookings: 0, revenue: 0 };
+      }
+      weekMap[key].bookings += 1;
+      weekMap[key].revenue += Number(b.totalCost || 0);
+    });
+    // Sort by week key ascending, limit to 4 weeks (latest)
+    const sortedWeeks = Object.keys(weekMap).sort().slice(-4);
+    const weeklyTrends = sortedWeeks.map((key) => ({
+      week: weekMap[key].week,
+      bookings: weekMap[key].bookings,
+      revenue: Math.round(weekMap[key].revenue),
+    }));
 
     setChartData({
       monthlyStats,
       statusDistribution,
       weeklyTrends,
     });
-  }, [stats, recentBookings]);
+  }, [allBookings]);
 
   // Main function to fetch all dashboard data
   const fetchDashboardData = useCallback(async () => {
@@ -165,11 +166,16 @@ const Overview = () => {
     const fetchRecentBookings = async () => {
       try {
         const response = await api.get("/booking/bookings", {
-          params: { limit: 5 },
+          params: { limit: 5, sort: "desc", sortBy: "request_date" },
         });
         console.log("Recent bookings response:", response);
 
-        const bookingsData = response.data?.data || response.data || [];
+        let bookingsData = response.data?.data || response.data || [];
+        // Ensure only 5 most recent bookings are shown, sorted by request_date descending
+        bookingsData = bookingsData
+          .slice() // clone array
+          .sort((a, b) => new Date(b.request_date) - new Date(a.request_date))
+          .slice(0, 5);
         setRecentBookings(bookingsData);
       } catch (error) {
         console.error("Error fetching recent bookings:", error);
@@ -273,6 +279,59 @@ const Overview = () => {
       }
     };
 
+    const fetchRevenue = async () => {
+      try {
+        const response = await api.get("/booking/bookings", {
+          params: { limit: 10000 },
+        });
+        const bookings = response.data?.data || response.data || [];
+        // Lấy revenue của tháng hiện tại
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-based
+        const currentMonthRevenue = bookings.reduce((sum, b) => {
+          if (!b.request_date) return sum;
+          const d = new Date(b.request_date);
+          if (
+            d.getFullYear() === currentYear &&
+            d.getMonth() === currentMonth
+          ) {
+            return sum + Number(b.totalCost || 0);
+          }
+          return sum;
+        }, 0);
+        setStats((prev) => ({
+          ...prev,
+          revenue: Math.round(currentMonthRevenue),
+        }));
+      } catch (error) {
+        toast.error(error);
+        setStats((prev) => ({ ...prev, revenue: 0 }));
+      }
+    };
+
+    const fetchAllBookings = async () => {
+      try {
+        const response = await api.get("/booking/bookings", {
+          params: { limit: 10000 }, // get all bookings (or as many as possible)
+        });
+        setAllBookings(response.data?.data || response.data || []);
+        // For backward compatibility with generateChartData
+        window.__ALL_BOOKINGS__ = response.data?.data || response.data || [];
+      } catch (error) {
+        let errorMessage = "Error fetching all bookings";
+        if (error.response?.data?.data) {
+          errorMessage = error.response.data.data;
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        toast.error(errorMessage);
+        setAllBookings([]);
+      }
+    };
+
     try {
       setLoading(true);
       await Promise.all([
@@ -280,6 +339,8 @@ const Overview = () => {
         fetchCompletedTests(),
         fetchKitsSold(),
         fetchRecentBookings(),
+        fetchAllBookings(),
+        fetchRevenue(),
       ]);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -338,10 +399,22 @@ const Overview = () => {
       key: "status",
       render: (status) => {
         let color = "blue";
+        let style = {};
         if (status === "Completed") color = "green";
         if (status === "Pending") color = "orange";
-        if (status === "Cancelled") color = "red";
-        return <Tag color={color}>{status || "Unknown"}</Tag>;
+        if (status === "Cancelled" || status === "Cancel") {
+          color = "red";
+          style = {
+            border: "1px solid #ff4d4f",
+            borderRadius: 4,
+            padding: "0 8px",
+          };
+        }
+        return (
+          <Tag color={color} style={style}>
+            {status || "Unknown"}
+          </Tag>
+        );
       },
     },
   ];
@@ -403,6 +476,9 @@ const Overview = () => {
                 fontWeight: 700,
               }}
             />
+            <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
+              Unique customers this period
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
@@ -435,6 +511,13 @@ const Overview = () => {
                 fontWeight: 700,
               }}
             />
+            <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
+              Completion Rate:{" "}
+              {stats.totalCustomer > 0
+                ? Math.round((stats.completedTests / stats.totalCustomer) * 100)
+                : 0}
+              %
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
@@ -467,6 +550,9 @@ const Overview = () => {
                 fontWeight: 700,
               }}
             />
+            <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
+              Kits sold this period
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
@@ -487,14 +573,22 @@ const Overview = () => {
                   Revenue
                 </span>
               }
-              value={stats.revenue}
-              prefix="$"
+              value={
+                stats.revenue >= 1000000
+                  ? `$${(stats.revenue / 1000000).toFixed(1)}M`
+                  : stats.revenue >= 1000
+                  ? `$${(stats.revenue / 1000).toFixed(1)}K`
+                  : `$${stats.revenue}`
+              }
               valueStyle={{
                 color: "#faad14",
                 fontSize: 28,
                 fontWeight: 700,
               }}
             />
+            <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
+              Revenue for current month
+            </div>
           </Card>
         </Col>
       </Row>
@@ -539,21 +633,15 @@ const Overview = () => {
                 />
                 <Legend />
                 <Bar
-                  dataKey="customers"
-                  fill="#1890ff"
-                  name="Customers"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
                   dataKey="tests"
                   fill="#52c41a"
                   name="Tests"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
-                  dataKey="kits"
-                  fill="#eb2f96"
-                  name="Kits"
+                  dataKey="revenue"
+                  fill="#faad14"
+                  name="Revenue"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
