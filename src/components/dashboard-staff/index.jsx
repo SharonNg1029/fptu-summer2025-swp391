@@ -43,8 +43,8 @@ function getItem(label, key, icon, children) {
 
 const items = [
   getItem("Dashboard", "overview", <DashboardOutlined />),
-  getItem("Order Processing", "order-processing", <FormOutlined />), // Combined page
-  getItem("Staff Reporting", "staff-reporting", <HistoryOutlined />), // Combined page
+  getItem("Assigned Progress", "order-processing", <FormOutlined />), // Combined page
+  getItem("Reporting Today", "staff-reporting", <HistoryOutlined />), // Combined page
 ];
 
 const StaffDashboard = () => {

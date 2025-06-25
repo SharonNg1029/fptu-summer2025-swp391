@@ -290,26 +290,21 @@ const ServiceManagement = () => {
               justifyContent: "flex-end",
               alignItems: "center",
             }}>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchServices}
-              type="primary"
-              style={{
-                background: "#1890ff",
-                borderColor: "#1890ff",
-                borderRadius: 6,
-              }}
-              size="large">
-              Refresh
-            </Button>
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={handleExportPDF}
-              type="default"
-              style={{ marginLeft: 8, borderRadius: 6 }}
-              size="large">
-              Export PDF
-            </Button>
+            <Space>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportPDF}
+                type="default">
+                Export PDF
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchServices}
+                loading={loading}
+                type="primary">
+                Refresh
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>{" "}

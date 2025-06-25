@@ -15,6 +15,10 @@ import {
   SearchOutlined,
   ReloadOutlined,
   DownloadOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  LoadingOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 import { toast } from "react-toastify";
@@ -23,6 +27,17 @@ import autoTable from "jspdf-autotable";
 
 const { Title } = Typography;
 const { Option } = Select;
+
+const statusList = [
+  "Waiting confirmed",
+  "Booking confirmed",
+  "Awaiting Sample",
+  "In Progress",
+  "Ready",
+  "Pending Payment",
+  "Completed",
+  "Cancel",
+];
 
 const columns = [
   { title: "Kit ID", dataIndex: "kitID", key: "kitID" },
@@ -43,42 +58,43 @@ const columns = [
     dataIndex: "status",
     key: "status",
     render: (status) => {
-      let color = "blue";
-      let display = status;
-      switch (status) {
-        case "Pending Payment":
-          color = "orange";
-          display = "Pending Payment";
-          break;
-
-        case "Paid":
-          color = "gold";
-          display = "Paid";
-          break;
-
-        case "Awaiting Sample":
-          color = "purple";
-          display = "Awaiting Sample";
-          break;
-
-        case "In Progress":
-          color = "cyan";
-          display = "In Progress";
-          break;
-
-        case "Completed":
-          color = "green";
-          display = "Completed";
-          break;
-        default:
-          color = "blue";
-          display = status;
+      let color = "default";
+      let icon = <ClockCircleOutlined />;
+      if (status === "Waiting confirmed") {
+        color = "gold";
+        icon = <ClockCircleOutlined />;
+      }
+      if (status === "Booking confirmed") {
+        color = "blue";
+        icon = <CheckCircleOutlined />;
+      }
+      if (status === "Awaiting Sample") {
+        color = "purple";
+        icon = <LoadingOutlined />;
+      }
+      if (status === "In Progress") {
+        color = "cyan";
+        icon = <LoadingOutlined />;
+      }
+      if (status === "Ready") {
+        color = "lime";
+        icon = <CheckCircleOutlined />;
+      }
+      if (status === "Pending Payment") {
+        color = "orange";
+        icon = <ExclamationCircleOutlined />;
+      }
+      if (status === "Completed") {
+        color = "green";
+        icon = <CheckCircleOutlined />;
+      }
+      if (status === "Cancel") {
+        color = "red";
+        icon = <ExclamationCircleOutlined />;
       }
       return (
-        <Tag
-          color={color}
-          style={{ border: `1px solid ${color}`, background: "#fff", color }}>
-          {display}
+        <Tag icon={icon} color={color}>
+          {status}
         </Tag>
       );
     },
@@ -115,24 +131,30 @@ const Booking = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get("/booking/bookings");
-        setBookings(res.data?.data || res.data || []);
-      } catch {
-        toast.error("Failed to fetch bookings");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBookings();
   }, []);
 
+  // Định nghĩa hàm fetchBookings để có thể gọi lại khi bấm Refresh
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/booking/bookings");
+      setBookings(res.data?.data || res.data || []);
+    } catch {
+      toast.error("Failed to fetch bookings");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filtered bookings
   const filteredBookings = bookings.filter((booking) => {
+    // Only allow filter and display for the specified statuses
+    if (!statusList.includes(booking.status)) return false;
     // Map status from Vietnamese to English for filtering
     let statusEn = booking.status;
     switch (booking.status) {
@@ -163,7 +185,10 @@ const Booking = () => {
       booking.paymentMethod?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.sampleMethod?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.note?.toLowerCase().includes(searchText.toLowerCase());
-    const matchesStatus = !statusFilter || statusEn === statusFilter;
+    // Case-insensitive status filter
+    const matchesStatus =
+      !statusFilter ||
+      (statusEn && statusEn.toLowerCase() === statusFilter.toLowerCase());
     const matchesType = !typeFilter || booking.bookingType === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });
@@ -239,7 +264,11 @@ const Booking = () => {
           align="middle"
           justify="start"
           style={{ flexWrap: "wrap" }}>
-          <Col xs={24} sm={8} lg={6} style={{ minWidth: 220 }}>
+          <Col
+            xs={24}
+            sm={8}
+            lg={6}
+            style={{ minWidth: 220, paddingRight: 8, marginBottom: 8 }}>
             <Input
               placeholder="Search by Booking ID, Customer ID, Service ID, Kit ID, Type, ..."
               prefix={<SearchOutlined />}
@@ -249,7 +278,11 @@ const Booking = () => {
               size="large"
             />
           </Col>
-          <Col xs={24} sm={6} lg={5} style={{ minWidth: 180 }}>
+          <Col
+            xs={24}
+            sm={6}
+            lg={5}
+            style={{ minWidth: 180, paddingRight: 8, marginBottom: 8 }}>
             <Select
               placeholder="Filter by status"
               value={statusFilter}
@@ -257,14 +290,18 @@ const Booking = () => {
               style={{ width: "100%" }}
               allowClear
               size="large">
-              <Option value="Pending Payment">Pending Payment</Option>
-              <Option value="Paid">Paid</Option>
-              <Option value="Awaiting Sample">Awaiting Sample</Option>
-              <Option value="In Progress">In Progress</Option>
-              <Option value="Completed">Completed</Option>
+              {statusList.map((status) => (
+                <Option value={status} key={status}>
+                  {status}
+                </Option>
+              ))}
             </Select>
           </Col>
-          <Col xs={24} sm={6} lg={5} style={{ minWidth: 180 }}>
+          <Col
+            xs={24}
+            sm={6}
+            lg={5}
+            style={{ minWidth: 180, paddingRight: 8, marginBottom: 8 }}>
             <Select
               placeholder="Filter by booking type"
               value={typeFilter}
@@ -284,17 +321,34 @@ const Booking = () => {
           </Col>
           <Col
             xs={24}
-            sm={4}
-            lg={4}
-            style={{ minWidth: 150, display: "flex", alignItems: "center" }}>
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={handleExportPDF}
-              type="default"
-              style={{ marginLeft: 8, borderRadius: 6, width: "100%" }}
-              size="large">
-              Export PDF
-            </Button>
+            sm={12}
+            lg={8}
+            style={{
+              minWidth: 260,
+              marginBottom: 8,
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}>
+            <Space size={12} style={{ width: "auto" }}>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportPDF}
+                type="default"
+                style={{ borderRadius: 6, minWidth: 120 }}
+                size="large">
+                Export PDF
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchBookings}
+                type="primary"
+                style={{ borderRadius: 6, minWidth: 120 }}
+                size="large"
+                loading={loading}>
+                Refresh
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>
@@ -307,14 +361,22 @@ const Booking = () => {
           bordered
           scroll={{ x: true }}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
+            current: currentPage,
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50", "100"],
+            pageSizeOptions: ["5", "10", "20", "50", "100"],
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} bookings`,
-            // Không cho nhập pageSize, chỉ cho chọn
             showLessItems: true,
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            },
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              if (size !== pageSize) setPageSize(size);
+            },
           }}
         />
       </Card>

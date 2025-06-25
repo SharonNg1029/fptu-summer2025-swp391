@@ -64,7 +64,7 @@ const ManagerOverviewPage = () => {
     weeklyProgress: [],
     staffEfficiency: [],
   });
-  const [kitTransactions, setKitTransactions] = useState([]);
+  // const [kitTransactions, setKitTransactions] = useState([]);
   const [assignedBookings, setAssignedBookings] = useState([]);
 
   // Generate comprehensive chart data based on current stats and bookings
@@ -212,7 +212,7 @@ const ManagerOverviewPage = () => {
       ]);
       const kitList = kitRes.data?.data || kitRes.data || [];
       const assignedList = assignedRes.data?.data || assignedRes.data || [];
-      setKitTransactions(kitList);
+      // setKitTransactions(kitList);
       setAssignedBookings(assignedList);
 
       // Tổng số kit đã nhận

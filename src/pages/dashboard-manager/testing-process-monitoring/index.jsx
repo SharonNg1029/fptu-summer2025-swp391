@@ -19,10 +19,13 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -169,6 +172,43 @@ const TestingProcessMonitoringPage = () => {
     },
   ];
 
+  const handleExportPDF = () => {
+    try {
+      if (typeof autoTable !== "function") {
+        toast.error("Export failed: jsPDF autoTable plugin is not available.");
+        return;
+      }
+      const doc = new jsPDF();
+      const tableColumn = [
+        "Test ID",
+        "Customer Name",
+        "Assigned Staff",
+        "Service Type",
+        "Status",
+        "Last Update Status",
+      ];
+      const tableRows = filteredTests.map((test) => [
+        test.assignedID,
+        test.customerName,
+        test.staffName,
+        test.serviceType,
+        test.status,
+        test.lastUpdate ? new Date(test.lastUpdate).toLocaleString() : "N/A",
+      ]);
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        styles: { font: "helvetica", fontSize: 10 },
+        headStyles: { fillColor: [22, 160, 133] },
+        margin: { top: 20 },
+      });
+      doc.save("testing-process-monitoring.pdf");
+      toast.success("Exported PDF successfully!");
+    } catch (error) {
+      toast.error("Failed to export PDF: " + error.message);
+    }
+  };
+
   return (
     <div style={{ padding: "0 24px" }}>
       <div
@@ -186,9 +226,16 @@ const TestingProcessMonitoringPage = () => {
         <ToastContainer />
         <Space>
           <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportPDF}
+            type="default">
+            Export PDF
+          </Button>
+          <Button
             icon={<ReloadOutlined />}
             onClick={fetchTests}
-            loading={loading}>
+            loading={loading}
+            type="primary">
             Refresh
           </Button>
         </Space>

@@ -19,7 +19,9 @@ import {
   HistoryOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
+import { Dropdown, Menu } from "antd";
 import api from "../../../configs/axios";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
@@ -31,6 +33,13 @@ const SystemLogs = () => {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [exportRange, setExportRange] = useState("all");
+
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
   // Fetch system logs
   const fetchLogs = async () => {
@@ -71,13 +80,73 @@ const SystemLogs = () => {
     uniqueUsers: new Set(logs.map((l) => l.username)).size,
   };
 
+  // Helper to filter logs by range
+  const getLogsByRange = (range) => {
+    const now = new Date();
+    if (range === "today") {
+      return filteredLogs.filter((log) => {
+        if (!log.timestamp) return false;
+        const logDate = new Date(log.timestamp);
+        return (
+          logDate.getDate() === now.getDate() &&
+          logDate.getMonth() === now.getMonth() &&
+          logDate.getFullYear() === now.getFullYear()
+        );
+      });
+    } else if (range === "week") {
+      // Get first day of week (Monday)
+      const firstDayOfWeek = new Date(now);
+      firstDayOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      firstDayOfWeek.setHours(0, 0, 0, 0);
+      const lastDayOfWeek = new Date(firstDayOfWeek);
+      lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+      lastDayOfWeek.setHours(23, 59, 59, 999);
+      return filteredLogs.filter((log) => {
+        if (!log.timestamp) return false;
+        const logDate = new Date(log.timestamp);
+        return logDate >= firstDayOfWeek && logDate <= lastDayOfWeek;
+      });
+    } else if (range === "month") {
+      return filteredLogs.filter((log) => {
+        if (!log.timestamp) return false;
+        const logDate = new Date(log.timestamp);
+        return (
+          logDate.getMonth() === now.getMonth() &&
+          logDate.getFullYear() === now.getFullYear()
+        );
+      });
+    }
+    // Default: all
+    return filteredLogs;
+  };
+
+  const handleMenuClick = (e) => {
+    setExportRange(e.key);
+    handleExportPDF(e.key);
+  };
+
+  const exportMenu = (
+    <Menu onClick={handleMenuClick}>
+      <Menu.Item key="today">Today</Menu.Item>
+      <Menu.Item key="week">This Week</Menu.Item>
+      <Menu.Item key="month">This Month</Menu.Item>
+      <Menu.Item key="all">All Logs</Menu.Item>
+    </Menu>
+  );
+
   // Export PDF function
-  const handleExportPDF = () => {
+  const handleExportPDF = (range = exportRange) => {
     try {
       const doc = new jsPDF();
-      doc.text("System Logs Report", 14, 16);
+      let title = "System Logs Report";
+      if (range === "today") title += " - Hôm nay";
+      else if (range === "week") title += " - Tuần này";
+      else if (range === "month") title += " - Tháng này";
+      else title += " - Tất cả";
+      doc.text(title, 14, 16);
       const tableColumn = ["ID", "User", "Action", "IP Address", "Timestamp"];
-      const tableRows = filteredLogs.map((log) => [
+      const logsToExport = getLogsByRange(range);
+      const tableRows = logsToExport.map((log) => [
         log.id,
         log.username,
         log.action,
@@ -91,12 +160,21 @@ const SystemLogs = () => {
         styles: { fontSize: 10 },
         headStyles: { fillColor: [41, 128, 185] },
       });
-      doc.save("system-logs.pdf");
+      doc.save(`system-logs-${range}.pdf`);
       toast.success("PDF exported successfully!");
     } catch (err) {
       toast.error("PDF export failed: " + (err?.message || err));
       console.error("Export PDF error:", err);
     }
+  };
+
+  // Handle table change (pagination)
+  const handleTableChange = (pag) => {
+    setPagination({
+      ...pagination,
+      current: pag.current,
+      pageSize: pag.pageSize,
+    });
   };
 
   // Table columns
@@ -153,9 +231,11 @@ const SystemLogs = () => {
         }}>
         <Title level={2}>System Logs & Monitoring</Title>
         <Space>
-          <Button icon={<DownloadOutlined />} onClick={handleExportPDF}>
-            Export
-          </Button>
+          <Dropdown overlay={exportMenu} trigger={["click"]}>
+            <Button icon={<DownloadOutlined />}>
+              Export <DownOutlined />
+            </Button>
+          </Dropdown>
           <Button
             type="primary"
             icon={<ReloadOutlined />}
@@ -220,11 +300,15 @@ const SystemLogs = () => {
           dataSource={filteredLogs}
           rowKey="id"
           pagination={{
-            pageSize: 10,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
             showSizeChanger: true,
-            pageSizeOptions: [10, 20, 50, 100],
+            showQuickJumper: true,
+            pageSizeOptions: ["5", "10", "20", "50", "100"],
+            total: filteredLogs.length,
           }}
           scroll={{ x: 900 }}
+          onChange={handleTableChange}
         />
       </Card>
     </div>

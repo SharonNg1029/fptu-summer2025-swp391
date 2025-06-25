@@ -18,12 +18,17 @@ import {
   Row,
   Col,
   Descriptions,
+  DatePicker,
 } from "antd";
 import {
   EditOutlined,
   SearchOutlined,
   ReloadOutlined,
   DownloadOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  LoadingOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import jsPDF from "jspdf";
@@ -40,6 +45,8 @@ const OrderProcessing = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   // Lấy staffID từ Redux store
   const currentUser = useSelector((state) => state.user?.currentUser);
   const staffID = currentUser?.staff?.staffID || currentUser?.staffID;
@@ -88,25 +95,43 @@ const OrderProcessing = () => {
   const handleUpdateOrder = async (values) => {
     setLoading(true);
     try {
+      // Validate: Nếu chọn hôm nay và khung giờ đã qua thì toast và return
+      const { date, timeRange } = values;
+      if (date && timeRange) {
+        const now = moment();
+        if (date.isSame(now, "day")) {
+          // Lấy giờ bắt đầu của slot
+          const startHour = parseInt(timeRange.split(":")[0], 10);
+          const startMin = parseInt(timeRange.split(":")[1], 10);
+          const slotMoment = moment(date).hour(startHour).minute(startMin);
+          if (slotMoment.isBefore(now)) {
+            toast.error("Cannot select a time slot in the past for today.");
+            setLoading(false);
+            return;
+          }
+        }
+      }
       const payload = {
         status: values.status,
+        date: date ? date.format("YYYY-MM-DD") : undefined,
+        timeRange: timeRange,
       };
       await api.patch(
         `/staff/updateBooking/${editingOrder.bookingID}`,
         payload
       );
 
-      toast.success("Booking status updated successfully!");
+      toast.success("Booking updated successfully!");
       setIsModalVisible(false);
       setEditingOrder(null);
       form.resetFields();
       fetchOrders(); // Refresh the list
     } catch (error) {
       toast.error(
-        "Failed to update booking status: " +
+        "Failed to update booking: " +
           (error.response?.data?.message || error.message)
       );
-      console.error("Error updating booking status:", error);
+      console.error("Error updating booking:", error);
     } finally {
       setLoading(false);
     }
@@ -189,10 +214,15 @@ const OrderProcessing = () => {
       order.service?.toLowerCase().includes(searchText.toLowerCase()) ||
       order.kitID?.toLowerCase().includes(searchText.toLowerCase());
 
-    const matchesStatus = statusFilter === "" || order.status === statusFilter;
+    // Case-insensitive status filter
+    const matchesStatus =
+      statusFilter === "" ||
+      (order.status &&
+        order.status.toLowerCase() === statusFilter.toLowerCase());
 
     return matchesSearch && matchesStatus;
   });
+
   const columns = [
     {
       title: "Booking ID",
@@ -228,15 +258,44 @@ const OrderProcessing = () => {
       key: "status",
       render: (status) => {
         let color = "default";
-        if (status === "Waiting confirmed") color = "orange";
-        if (status === "Booking confirmed") color = "blue";
-        if (status === "Awaiting Sample") color = "cyan";
-        if (status === "In Progress") color = "purple";
-        if (status === "Ready") color = "geekblue";
-        if (status === "Pending Payment") color = "gold";
-        if (status === "Completed") color = "green";
-        if (status === "Cancel") color = "red";
-        return <Tag color={color}>{status?.toUpperCase()}</Tag>;
+        let icon = <ClockCircleOutlined />;
+        if (status === "Waiting confirmed") {
+          color = "gold";
+          icon = <ClockCircleOutlined />;
+        }
+        if (status === "Booking confirmed") {
+          color = "blue";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Awaiting Sample") {
+          color = "purple";
+          icon = <LoadingOutlined />;
+        }
+        if (status === "In Progress") {
+          color = "cyan";
+          icon = <LoadingOutlined />;
+        }
+        if (status === "Ready") {
+          color = "lime";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Pending Payment") {
+          color = "orange";
+          icon = <ExclamationCircleOutlined />;
+        }
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Cancel") {
+          color = "red";
+          icon = <ExclamationCircleOutlined />;
+        }
+        return (
+          <Tag icon={icon} color={color}>
+            {status}
+          </Tag>
+        );
       },
       filters: [
         { text: "Waiting confirmed", value: "Waiting confirmed" },
@@ -248,7 +307,9 @@ const OrderProcessing = () => {
         { text: "Completed", value: "Completed" },
         { text: "Cancel", value: "Cancel" },
       ],
-      onFilter: (value, record) => record.status === value,
+      // Case-insensitive filter for table dropdown
+      onFilter: (value, record) =>
+        record.status && record.status.toLowerCase() === value.toLowerCase(),
     },
     {
       title: "Appointment Date",
@@ -359,17 +420,28 @@ const OrderProcessing = () => {
           dataSource={filteredOrders}
           rowKey="bookingID"
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
+            current: currentPage,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} assignments`,
+            pageSizeOptions: ["5", "10", "20", "50", "100"],
+            showLessItems: false,
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            },
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              if (size !== pageSize) setPageSize(size);
+            },
           }}
           scroll={{ x: 1000 }}
         />
       </Card>{" "}
       <Modal
-        title="Update Booking Status"
+        title="Update Booking"
         open={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
@@ -380,7 +452,14 @@ const OrderProcessing = () => {
         width={700}>
         {" "}
         {editingOrder && (
-          <Form form={form} layout="vertical" onFinish={handleUpdateOrder}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleUpdateOrder}
+            initialValues={{
+              date: editingOrder.date ? moment(editingOrder.date) : null,
+              timeRange: editingOrder.timeRange || undefined,
+            }}>
             <Descriptions
               bordered
               column={2}
@@ -437,10 +516,70 @@ const OrderProcessing = () => {
               </Select>
             </Form.Item>
 
+            <Form.Item
+              name="date"
+              label="Appointment Date"
+              rules={[
+                { required: true, message: "Please select appointment date" },
+              ]}>
+              <DatePicker
+                style={{ width: "100%" }}
+                disabledDate={(current) =>
+                  current && current < moment().startOf("day")
+                }
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="timeRange"
+              label="Appointment Time"
+              rules={[
+                { required: true, message: "Please select appointment time" },
+              ]}
+              dependencies={["date"]}>
+              <Select
+                placeholder="Select appointment time"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
+                  0
+                }>
+                {(() => {
+                  const timeSlots = [
+                    "8:15 - 9:15",
+                    "9:30 - 10:30",
+                    "10:45 - 11:45",
+                    "13:15 - 14:15",
+                    "14:30 - 15:30",
+                    "15:45 - 16:45",
+                  ];
+                  const selectedDate = form.getFieldValue("date");
+                  const now = moment();
+                  return timeSlots.map((slot) => {
+                    let disabled = false;
+                    if (selectedDate && selectedDate.isSame(now, "day")) {
+                      // Lấy giờ bắt đầu của slot
+                      const startHour = parseInt(slot.split(":")[0], 10);
+                      const startMin = parseInt(slot.split(":")[1], 10);
+                      const slotMoment = moment(selectedDate)
+                        .hour(startHour)
+                        .minute(startMin);
+                      if (slotMoment.isBefore(now)) disabled = true;
+                    }
+                    return (
+                      <Option value={slot} key={slot} disabled={disabled}>
+                        {slot}
+                      </Option>
+                    );
+                  });
+                })()}
+              </Select>
+            </Form.Item>
+
             <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
               <Space>
                 <Button type="primary" htmlType="submit" loading={loading}>
-                  Update Status
+                  Update Booking
                 </Button>
                 <Button
                   onClick={() => {

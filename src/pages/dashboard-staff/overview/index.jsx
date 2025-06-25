@@ -83,7 +83,6 @@ const StaffOverviewPage = () => {
     dailyTasks: [],
     timeRangeStats: [],
   });
-  const [assignments, setAssignments] = useState([]);
 
   // Get staffID from Redux store
   const currentUser = useSelector((state) => state.user?.currentUser);
@@ -100,10 +99,8 @@ const StaffOverviewPage = () => {
     try {
       const response = await api.get(`/staff/my-assignment/${staffID}`);
       const assignments = response.data || [];
-      setAssignments(assignments);
       // Tổng số booking
       const totalAppointments = assignments.length;
-      // Số booking chờ lấy mẫu
       const pendingAppointments = assignments.filter(
         (a) =>
           (a.status || "").trim().toLowerCase() ===
@@ -169,7 +166,11 @@ const StaffOverviewPage = () => {
         timeRangeStats,
       });
     } catch (error) {
-      toast.error("Failed to fetch staff assignment data.");
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch staff assignment data."
+      );
       setOverviewData({
         totalAppointments: 0,
         pendingAppointments: 0,
@@ -514,43 +515,6 @@ const StaffOverviewPage = () => {
                       }}
                     />
                     <Bar dataKey="count" fill="#1890ff" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
-          {/* Chart: Task Summary */}
-          <Row gutter={[24, 24]}>
-            <Col xs={24} lg={24} style={{ minWidth: 0 }}>
-              <Card
-                title={
-                  <span style={{ fontWeight: 600, fontSize: 18 }}>
-                    Task Summary
-                  </span>
-                }
-                style={{
-                  borderRadius: 16,
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-                }}>
-                <ResponsiveContainer width="100%" height={280} minWidth={0}>
-                  <BarChart data={overviewData.dailyTasks} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis type="number" tick={{ fontSize: 12 }} />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      tick={{ fontSize: 12 }}
-                      width={100}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #d9d9d9",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                    <Bar dataKey="count" fill="#722ed1" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </Card>
