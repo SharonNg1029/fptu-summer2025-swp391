@@ -1,8 +1,7 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { Modal, Button, message, Space, Typography } from "antd";
+import { Modal, Button, message, Typography } from "antd";
 import { LogoutOutlined } from "@ant-design/icons";
 import api from "../../configs/axios";
 import { clearUser } from "../../redux/features/userSlice";
@@ -19,6 +18,8 @@ const LogOut = ({
   showConfirmation = true,
   onLogoutSuccess,
   onLogoutError,
+  open, // thêm prop open để điều khiển modal từ ngoài (Header)
+  onCancel, // thêm callback khi cancel modal
   className,
   style,
 }) => {
@@ -27,37 +28,33 @@ const LogOut = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Sync prop open (từ Header) vào state modal
+  useEffect(() => {
+    if (typeof open === "boolean") setIsModalVisible(open);
+  }, [open]);
+
   // Main sign out function - Call API, then clear local data
   const performLogout = async () => {
     try {
       setIsLoggingOut(true);
-      // Gọi API sign out backend trước
       await api.post("/auth/logout");
-      // Get current user info before clearing (for logging purposes)
       const currentUser = localStorage.getItem("user");
       const userInfo = currentUser ? JSON.parse(currentUser) : null;
       console.log("Signing out user:", userInfo?.username || "Unknown user");
-      // Clear Redux state
       dispatch(clearUser());
-      // Clear all authentication data from localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
       localStorage.removeItem("userRole");
       localStorage.removeItem("permissions");
-      // Clear any other app-specific data
       localStorage.removeItem("sidebar:state");
       localStorage.removeItem("theme");
       localStorage.removeItem("language");
-      // Clear sessionStorage as well
       sessionStorage.clear();
-      // Reset axios default headers
       delete api.defaults.headers.common["Authorization"];
-      // Show success toast and redirect after toast closes
       toast.success("Sign out successfully!", {
         onClose: () => navigate("/"),
       });
-      // Call success callback if provided
       if (onLogoutSuccess) {
         onLogoutSuccess();
       }
@@ -72,13 +69,13 @@ const LogOut = ({
       } else {
         toast.error("Sign out failed! Please retry!");
       }
-      // Call error callback if provided
       if (onLogoutError) {
         onLogoutError(error);
       }
     } finally {
       setIsLoggingOut(false);
       setIsModalVisible(false);
+      if (onCancel) onCancel(); // gọi callback để Header set lại state
     }
   };
 
@@ -96,38 +93,26 @@ const LogOut = ({
     performLogout();
   };
 
+  // Khi Cancel thì đóng modal + gọi callback cho Header
   const handleCancelLogout = () => {
     setIsModalVisible(false);
+    if (onCancel) onCancel();
   };
 
   // Emergency logout without confirmation (for error cases)
   const forceLogout = () => {
     try {
-      // Get current user info before clearing
       const currentUser = localStorage.getItem("user");
       const userInfo = currentUser ? JSON.parse(currentUser) : null;
-
-      console.log(
-        "Force logging out user:",
-        userInfo?.username || "Unknown user"
-      );
-
-      // Clear Redux state
+      console.log("Force logging out user:", userInfo?.username || "Unknown user");
       dispatch(clearUser());
-
-      // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
-
-      // Reset axios headers
       delete api.defaults.headers.common["Authorization"];
-
-      // Redirect to home page immediately
       navigate("/", { replace: true });
       window.location.reload();
     } catch (error) {
       console.error("Force logout error:", error);
-      // Fallback: redirect to home page
       window.location.href = "/";
     }
   };
@@ -135,37 +120,20 @@ const LogOut = ({
   // Quick logout without confirmation (for programmatic use)
   const quickLogout = () => {
     try {
-      // Get current user info
       const currentUser = localStorage.getItem("user");
       const userInfo = currentUser ? JSON.parse(currentUser) : null;
-
-      console.log(
-        "Quick logout for user:",
-        userInfo?.username || "Unknown user"
-      );
-
-      // Clear Redux state
+      console.log("Quick logout for user:", userInfo?.username || "Unknown user");
       dispatch(clearUser());
-
-      // Clear authentication data
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
       localStorage.removeItem("userRole");
       localStorage.removeItem("permissions");
-
-      // Clear app-specific data
       localStorage.removeItem("sidebar:state");
       localStorage.removeItem("theme");
       localStorage.removeItem("language");
-
-      // Clear session storage
       sessionStorage.clear();
-
-      // Reset axios headers
       delete api.defaults.headers.common["Authorization"];
-
-      // Show message and redirect
       message.success("Sign Out Successfully!");
       navigate("/", { replace: true });
     } catch (error) {
@@ -179,7 +147,6 @@ const LogOut = ({
   LogOut.forceLogout = forceLogout;
   LogOut.quickLogout = quickLogout;
 
-  // If trigger is "function", don't render anything
   if (trigger === "function") {
     return null;
   }
@@ -209,7 +176,8 @@ const LogOut = ({
 
   return (
     <>
-      {LogoutButton}
+      {/* Chỉ hiện nút nếu trigger là button */}
+      {trigger === "button" && LogoutButton}
       <style>{`
         .signout-btn:not(:disabled):hover {
           color: #fff !important;
@@ -218,13 +186,11 @@ const LogOut = ({
           transition: all 0.2s;
         }
       `}</style>
-
-      {/* Confirmation Modal */}
       <Modal
         open={isModalVisible}
         onOk={handleConfirmLogout}
         onCancel={handleCancelLogout}
-        footer={null} // Ẩn nút mặc định của Modal
+        footer={null}
         okText="Sign Out"
         cancelText="Cancel"
         okButtonProps={{
@@ -253,8 +219,6 @@ const LogOut = ({
               to access your account and use the platform features.
             </p>
           </div>
-
-          {/* Action Buttons */}
           <div className="flex flex-col-reverse sm:flex-row gap-3">
             <button
               onClick={handleCancelLogout}
@@ -269,7 +233,6 @@ const LogOut = ({
             ">
               Cancel
             </button>
-
             <button
               onClick={handleConfirmLogout}
               disabled={isLoggingOut}
@@ -295,8 +258,6 @@ const LogOut = ({
               )}
             </button>
           </div>
-
-          {/* Additional Info */}
           <div className="mt-4 pt-4 border-t border-gray-100">
             <p className="text-xs text-gray-500 text-center">
               Your data will be saved and available when you sign back in

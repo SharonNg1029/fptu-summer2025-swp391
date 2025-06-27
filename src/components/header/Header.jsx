@@ -1,24 +1,25 @@
 import { useState, useEffect } from "react";
 import { FiMenu, FiX, FiSun, FiMoon, FiLogOut } from "react-icons/fi";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../redux/features/userSlice";
+import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import LogOut from "../authen-form/LogOut";
+import { toast } from "react-toastify";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showServicesDropdown, setShowServicesDropdown] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const navigate = useNavigate();
+  
   const location = useLocation();
-  const dispatch = useDispatch();
+  
 
   const userState = useSelector((state) => state.user);
   const user = userState?.currentUser;
   const isAuthenticated = userState?.isAuthenticated;
 
-  // ✅ Tạo userDisplayName trực tiếp từ user object
   const userDisplayName =
     user?.fullName ||
     user?.name ||
@@ -47,26 +48,6 @@ const Header = () => {
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  const handleLogout = async () => {
-    try {
-      dispatch(logout());
-      setShowDropdown(false);
-      setTimeout(() => {
-        navigate("/");
-      }, 100);
-    } catch (error) {
-      console.error("Logout error:", error);
-      window.location.href = "/";
-    }
-  };
-
-  // ✅ SIMPLIFIED: Handle scroll to top on navigation
-  const handleLinkClick = () => {
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 100);
-  };
-
   let hoverTimeout;
 
   const handleServicesMouseEnter = () => {
@@ -88,10 +69,8 @@ const Header = () => {
     }, 100);
   };
 
-  // ✅ SIMPLIFIED: Active page detection
   const isActivePage = (href) => {
     const currentPath = location.pathname;
-
     if (href === "/") return currentPath === "/";
     if (href === "/services") return currentPath.startsWith("/services");
     return currentPath === href;
@@ -101,7 +80,7 @@ const Header = () => {
     return () => {
       if (hoverTimeout) clearTimeout(hoverTimeout);
     };
-  }, []); // hoverTimeout không cần đưa vào dependency vì không phải state/prop
+  }, []);
 
   useEffect(() => {
     document.body.className = isDarkMode ? "dark" : "light";
@@ -111,10 +90,8 @@ const Header = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname]);
 
-  // ✅ ENHANCED: Link styles
   const getLinkStyles = (href) => {
     const isActive = isActivePage(href);
-
     return {
       fontSize: "1.125rem",
       fontWeight: "500",
@@ -139,6 +116,31 @@ const Header = () => {
       color: isActive ? "#ffffff" : "",
       textDecoration: "none",
     };
+  };
+
+  // Callback khi logout thành công/lỗi/hủy
+  const handleLogoutSuccess = () => {
+
+    setShowLogoutConfirm(false);
+    setShowDropdown(false);
+    setIsOpen(false);
+    // Không dispatch(logout()) ở đây vì LogOut đã clearUser và chuyển trang rồi
+  };
+  const handleLogoutError = (error) => {
+    setShowLogoutConfirm(false);
+    setShowDropdown(false);
+    setIsOpen(false);
+    // Có thể hiện thông báo lỗi ở đây nếu muốn
+  };
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  // Để scroll top khi click nav
+  const handleLinkClick = () => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
   };
 
   return (
@@ -179,7 +181,6 @@ const Header = () => {
                         onMouseEnter={handleServicesMouseEnter}
                         onMouseLeave={handleServicesMouseLeave}
                         style={{ margin: "0 8px" }}>
-                        {/* ✅ CHANGED: Button to Link for Services */}
                         <Link
                           to={item.href}
                           onClick={handleServicesClick}
@@ -268,8 +269,6 @@ const Header = () => {
                       </div>
                     );
                   }
-
-                  // ✅ CHANGED: Button to Link for all nav items
                   return (
                     <Link
                       key={item.id}
@@ -341,7 +340,6 @@ const Header = () => {
                           </div>
                         )}
                       </div>
-
                       <Link
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -352,8 +350,9 @@ const Header = () => {
                         }}>
                         Profile
                       </Link>
+                      {/* Nút logout đổi thành mở confirm */}
                       <button
-                        onClick={handleLogout}
+                        onClick={() => setShowLogoutConfirm(true)}
                         className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                         <FiLogOut
                           size={16}
@@ -367,7 +366,6 @@ const Header = () => {
                 </div>
               ) : (
                 <div className="hidden md:flex items-center space-x-3">
-                  {/* ✅ CHANGED: Navigation buttons to Links */}
                   <Link
                     to="/login"
                     onClick={handleLinkClick}
@@ -423,7 +421,6 @@ const Header = () => {
                 if (item.hasDropdown) {
                   return (
                     <div key={item.id}>
-                      {/* ✅ CHANGED: Mobile Services button to Link */}
                       <Link
                         to={item.href}
                         onClick={() => {
@@ -456,8 +453,6 @@ const Header = () => {
                     </div>
                   );
                 }
-
-                // ✅ CHANGED: Mobile nav items button to Link
                 return (
                   <Link
                     key={item.id}
@@ -498,15 +493,12 @@ const Header = () => {
                     style={{ textDecoration: "none" }}>
                     Profile
                   </Link>
+                  {/* Nút logout đổi thành mở confirm */}
                   <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
-                    <FiLogOut
-                      size={16}
-                      className="mr-2 text-red-500"
-                      style={{ marginRight: "8px" }}
-                    />
-                    <span>Logout</span>
+                    onClick={() => setShowLogoutConfirm(true)}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                  >
+                    Logout
                   </button>
                 </div>
               ) : (
@@ -544,7 +536,20 @@ const Header = () => {
         </div>
       </header>
 
-      {/* ✅ ENHANCED: CSS for nav links */}
+      {/* Đặt LogOut ở ngoài, điều khiển qua state */}
+      <LogOut
+        trigger="modal"
+        open={showLogoutConfirm}
+        buttonType="default"
+        buttonText="Logout"
+        showIcon={true}
+        showConfirmation={true}
+        
+        onLogoutSuccess={handleLogoutSuccess}
+        onLogoutError={handleLogoutError}
+        onCancel={handleLogoutCancel}
+      />
+
       <style>{`
         .nav-link {
           text-decoration: none !important;
@@ -553,22 +558,18 @@ const Header = () => {
           display: inline-block !important;
           position: relative !important;
         }
-        
         .nav-link:hover {
           color: #3b82f6 !important;
           text-decoration: none !important;
         }
-        
         .nav-link:focus {
           outline: none !important;
           text-decoration: none !important;
         }
-        
         .nav-link:active {
           outline: none !important;
           text-decoration: none !important;
         }
-        
         .nav-link:visited {
           text-decoration: none !important;
         }
