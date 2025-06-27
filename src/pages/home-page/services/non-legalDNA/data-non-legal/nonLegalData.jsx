@@ -1,5 +1,5 @@
 import React from "react";
-import { FaMale, FaFemale, FaBaby, FaUsers, FaUserFriends, FaHome, FaBuilding, FaMailBulk } from "react-icons/fa";
+import { FaMale, FaFemale, FaBaby, FaUsers, FaUserFriends, FaHome, FaBuilding, FaMailBulk, FaUserNurse } from "react-icons/fa";
 
 // ===== DỮ LIỆU DỊCH VỤ NON-LEGAL DNA TESTING =====
 export const nonLegalServicesData = [
@@ -10,7 +10,7 @@ export const nonLegalServicesData = [
     type: "Non-Legal",
     processingTime: "2-3 working days",
     basePrice: 2500000,
-    expressPrice: 1000000,
+    expressPrice: 2000000,
     icon: <FaMale className="text-xl" />,
     backgroundImage: "https://cdn.internationalpaternity.com/wp-content/uploads/sites/26/2023/05/father-holding-baby-paternity-test-ip.jpg",
     description: `**Who Needs Paternity DNA Testing?**
@@ -40,7 +40,7 @@ The types of samples used for DNA testing in the Genetix process include:
     type: "Non-Legal",
     processingTime: "2-3 working days",
     basePrice: 2500000,
-    expressPrice: 1000000,
+    expressPrice: 2000000,
     icon: <FaFemale className="text-xl" />,
     backgroundImage: "https://easydna.ph/wp-content/uploads/2023/05/easyph-mother-and-baby-motherhood-week-2023-min-1024x683-1160x665.jpg",
     description: `**Who Needs Maternity DNA Testing?**
@@ -102,7 +102,7 @@ The hair roots and nail clippings are individually wrapped in tissue paper and p
     type: "Non-Legal",
     processingTime: "3-5 working days",
     basePrice: 3500000,
-    expressPrice: 1000000,
+    expressPrice: 2000000,
     icon: <FaUsers className="text-xl" />,
     backgroundImage: "https://www.baolongan.vn/image/news/2021/20210602/images/young-siblings-shed-light-on-autism.jpg",
     description: `**About Sibling DNA Testing**
@@ -141,7 +141,7 @@ The types of samples used for sibling DNA testing include:
     type: "Non-Legal",
     processingTime: "3-5 working days",
     basePrice: 3500000,
-    expressPrice: 1000000,
+    expressPrice: 2000000,
     icon: <FaUserFriends className="text-xl" />,
     backgroundImage: "https://images.unsplash.com/photo-1609220136736-443140cffec6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
     description: `**About Grandparent DNA Testing**
@@ -179,21 +179,40 @@ The types of samples used for grandparent DNA testing include:
 // ===== DỮ LIỆU PHƯƠNG THỨC LẤY MẪU NON-LEGAL =====
 export const nonLegalCollectionMethodsData = [
   {
-    name: "Home Collection",
-    price: 300000,
-    icon: <FaHome className="text-xl text-blue-600" />,
-    description: "Professional sample collection at your home",
+    key: "at-home",
+    name: "At Home",
+    icon: <FaHome className="text-2xl text-blue-700" />,
+    description: "Choose a sample mediation method below:",
+    mediationMethods: [
+      {
+        key: "postal-delivery",
+        name: "Postal Delivery",
+        icon: <FaMailBulk className="text-xl text-blue-600" />,
+        price: 250000,
+        description: "Self-collection kit delivered by post",
+      },
+      {
+        key: "staff-collection",
+        name: "Staff Collection",
+        icon: <FaUserNurse className="text-xl text-blue-600" />,
+        price: 500000,
+        description: "Professional staff collects sample at your home",
+      },
+    ],
   },
   {
+    key: "at-facility",
     name: "At Facility",
-    price: 0,
-    icon: <FaBuilding className="text-xl text-blue-600" />,
+    icon: <FaBuilding className="text-2xl text-blue-700" />,
     description: "Visit our facility for sample collection",
-  },
-  {
-    name: "Postal Delivery",
-    price: 200000,
-    icon: <FaMailBulk className="text-xl text-blue-600" />,
-    description: "Self-collection kit delivered by post",
+    mediationMethods: [
+      {
+        key: "walk-in",
+        name: "Walk-in Service",
+        icon: <FaBuilding className="text-xl text-blue-600" />,
+        price: null,
+        description: "Visit our facility for sample collection",
+      },
+    ],
   },
 ];

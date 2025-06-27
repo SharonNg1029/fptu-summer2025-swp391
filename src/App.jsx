@@ -64,7 +64,7 @@ function App() {
         },
         {
           path: "pricing",
-          element: <Pricing />,
+element: <Pricing />,
         },
         {
           path: "blog",

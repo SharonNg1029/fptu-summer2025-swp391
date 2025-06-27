@@ -7,8 +7,7 @@ import {
   FaBolt,
   FaTimes,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom"; // <-- Thêm useNavigate
-
+import { useNavigate } from "react-router-dom";
 import {
   legalServicesData,
   legalCollectionMethodsData,
@@ -91,7 +90,7 @@ const LegalServices = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const modalContentRef = useRef(null);
-  const navigate = useNavigate(); // <-- Dùng navigate để chuyển trang
+  const navigate = useNavigate();
 
   const formatToVND = (price) =>
     new Intl.NumberFormat("vi-VN", {
@@ -158,12 +157,10 @@ const LegalServices = () => {
 
   // ===== BOOKING: Dùng router để truyền serviceID =====
   const handleBookService = (service, isExpressService = false) => {
-    // Chuyển hướng tới booking kèm params trên url
-    // Nếu muốn truyền thêm expressService, truyền qua query param, vd: ?express=true
     navigate(
-      `/booking?serviceID=${encodeURIComponent(
-        service.serviceID
-      )}&express=${isExpressService ? "true" : "false"}`
+      `/booking?serviceID=${encodeURIComponent(service.serviceID)}&express=${
+        isExpressService ? "true" : "false"
+      }`
     );
   };
 
@@ -188,7 +185,7 @@ const LegalServices = () => {
               className="text-5xl font-bold"
               style={{
                 textShadow:
-                  "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000",
+                  "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
               }}
             >
               Legal DNA Testing
@@ -299,30 +296,70 @@ const LegalServices = () => {
             ))}
           </div>
         </div>
-        {/* ===== PHƯƠNG THỨC LẤY MẪU ===== */}
+        {/* ===== PHƯƠNG THỨC LẤY MẪU & VẬN CHUYỂN (HIỂN THỊ DẠNG CHA - CON) ===== */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-16 border border-blue-100">
           <h2 className="text-3xl font-bold text-center text-blue-900 mb-8">
             Sample Collection Methods
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {legalCollectionMethodsData.map((method, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {legalCollectionMethodsData.map((method, idx) => (
               <ServiceCard
-                key={index}
-                className="text-center border-2 border-blue-100 hover:border-blue-300 transition-all duration-200 hover:shadow-lg"
+                key={idx}
+                className="border-2 border-blue-100 hover:border-blue-300 transition-all duration-200 hover:shadow-lg"
               >
                 <div className="p-6">
-                  <div className="flex justify-center mb-4">
+                  <div className="flex items-center gap-4 mb-4">
                     <div className="p-4 bg-blue-50 rounded-full">
                       {method.icon}
                     </div>
+                    <div>
+                      <h4 className="text-xl font-semibold text-blue-900 mb-1">
+                        {method.name}
+                      </h4>
+                      <p className="text-gray-600">{method.description}</p>
+                    </div>
                   </div>
-                  <h4 className="text-xl font-semibold text-blue-900 mb-2">
-                    {method.name}
-                  </h4>
-                  <p className="text-gray-600 mb-4">{method.description}</p>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {method.price === 0 ? "FREE" : formatToVND(method.price)}
-                  </div>
+                  {/* HIỂN THỊ CÁC PHƯƠNG THỨC VẬN CHUYỂN (mediationMethods) */}
+                  {method.mediationMethods &&
+                    method.mediationMethods.length > 0 && (
+                      <>
+                        <div className="text-base font-medium text-gray-800 mt-5 mb-3">
+                          Mediation method:
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          {method.mediationMethods.map((sub, subIdx) => (
+                            <div
+                              key={subIdx}
+                              className="flex items-center gap-4 px-4 py-3 rounded-lg border border-blue-100 bg-blue-50 hover:bg-blue-100 transition"
+                            >
+                              <div className="p-2 rounded-full bg-white border border-blue-200">
+                                {sub.icon}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-semibold text-blue-700">
+                                  {sub.name}
+                                </div>
+                                <div className="text-gray-600 text-sm">
+                                  {sub.description}
+                                </div>
+                              </div>
+                              {/* HIỂN GIÁ NẾU > 0 */}
+                              {sub.price && sub.price > 0 ? (
+                                <div className="font-bold text-blue-600 text-lg">
+                                  {formatToVND(sub.price)}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  {/* Nếu không có mediation methods (hiếm) thì vẫn hiện giá nếu có */}
+                  {!method.mediationMethods && method.price > 0 && (
+                    <div className="text-2xl font-bold text-blue-600 mt-6">
+                      {formatToVND(method.price)}
+                    </div>
+                  )}
                 </div>
               </ServiceCard>
             ))}

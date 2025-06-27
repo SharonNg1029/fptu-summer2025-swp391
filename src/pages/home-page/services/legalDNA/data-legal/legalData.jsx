@@ -6,6 +6,7 @@ import {
   FaHome,
   FaBuilding,
   FaMailBulk,
+  FaUserNurse,
 } from "react-icons/fa";
 
 // ===== DỮ LIỆU DỊCH VỤ LEGAL DNA TESTING =====
@@ -17,7 +18,7 @@ export const legalServicesData = [
     type: "Legal",
     processingTime: "3-7 working days",
     basePrice: 3500000,
-    expressPrice: 1500000,
+    expressPrice: 2500000,
     icon: <FaBaby className="text-xl" />,
     backgroundImage:
       "https://images2.thanhnien.vn/528068263637045248/2023/6/29/giay-khai-sinh-2-1688001417801425690462.jpg",
@@ -65,11 +66,11 @@ However, for DNA testing for birth registration, which falls under the category 
   {
     id: 2,
     serviceID: "SL002",
-    name: "DNA Testing for Immigration, Sponsorship, or Citizenship Applications",
+    name: "DNA Testing for Immigration Cases",
     type: "Legal",
     processingTime: "3-7 working days",
     basePrice: 6000000,
-    expressPrice: 1500000,
+    expressPrice: 2500000,
     icon: <FaPassport className="text-xl" />,
     backgroundImage:
       "https://www.cis.vn/wp-content/uploads/2021/11/huong-dan-thu-tuc-xin-song-tich-cho-viet-kieu1.jpg",
@@ -100,7 +101,7 @@ If the DNA test results conclude that there is NO biological relationship betwee
     type: "Legal",
     processingTime: "3-7 working days",
     basePrice: 4000000,
-    expressPrice: 1500000,
+    expressPrice: 2500000,
     icon: <FaMoneyBillWave className="text-xl" />,
     backgroundImage:
       "https://images2.thanhnien.vn/528068263637045248/2023/6/15/thua-ke-16868272484361420781118.jpg",
@@ -116,22 +117,40 @@ DNA testing is used in cases where it has not yet been verified whether an indiv
 // ===== DỮ LIỆU PHƯƠNG THỨC LẤY MẪU LEGAL =====
 export const legalCollectionMethodsData = [
   {
-    name: "Home Collection",
-    price: 300000,
-    icon: <FaHome className="text-xl text-blue-600" />,
-    description:
-      "Professional sample collection at your home with legal documentation",
+    key: "at-home",
+    name: "At Home",
+    icon: <FaHome className="text-2xl text-blue-700" />,
+    description: "Choose a sample mediation method below:",
+    mediationMethods: [
+      {
+        key: "postal-delivery",
+        name: "Postal Delivery",
+        icon: <FaMailBulk className="text-xl text-blue-600" />,
+        price: 250000,
+        description: "Self-collection kit delivered by post",
+      },
+      {
+        key: "staff-collection",
+        name: "Staff Collection",
+        icon: <FaUserNurse className="text-xl text-blue-600" />,
+        price: 500000,
+        description: "Professional staff collects sample at your home",
+      },
+    ],
   },
   {
+    key: "at-facility",
     name: "At Facility",
-    price: 0,
-    icon: <FaBuilding className="text-xl text-blue-600" />,
-    description: "Visit our facility for certified legal sample collection",
-  },
-  {
-    name: "Postal Delivery",
-    price: 200000,
-    icon: <FaMailBulk className="text-xl text-blue-600" />,
-    description: "Legal collection kit with certified chain of custody",
+    icon: <FaBuilding className="text-2xl text-blue-700" />,
+    description: "Visit our facility for sample collection",
+    mediationMethods: [
+      {
+        key: "walk-in",
+        name: "Walk-in Service",
+        icon: <FaBuilding className="text-xl text-blue-600" />,
+        price: null,
+        description: "Visit our facility for sample collection",
+      },
+    ],
   },
 ];

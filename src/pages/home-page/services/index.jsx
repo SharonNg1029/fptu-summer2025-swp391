@@ -70,10 +70,13 @@ const ServicesOverview = () => {
       shortName: "PowerPlex® Fusion 6C System",
       image: "/images/powerPlex.jpg",
       manufacturer: "Promega Corporation, USA",
-      purpose: "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
-      kitType: "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 27 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
-      approval: "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
-      loci: "27 loci"
+      purpose:
+        "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
+      kitType:
+        "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 27 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
+      approval:
+        "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
+      loci: "27 loci",
     },
     {
       id: 2,
@@ -81,11 +84,14 @@ const ServicesOverview = () => {
       shortName: "GlobalFiler™ PCR Amplification Kit",
       image: "/images/GlobalFiler.jpg",
       manufacturer: "Thermo Fisher Scientific, USA",
-      purpose: "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
-      kitType: "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 24 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
-      approval: "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
-      loci: "24 loci"
-    }
+      purpose:
+        "This kit is designed for PCR (Polymerase Chain Reaction) amplification of human DNA, serving genetic analysis in forensics, personal identification, paternity determination, and DNA database construction.",
+      kitType:
+        "This is a 6-dye multiplex STR (Short Tandem Repeat) kit that simultaneously amplifies 24 loci (genetic markers) in a single reaction, providing the highest discrimination power among current forensic kits.",
+      approval:
+        "FBI (Federal Bureau of Investigation) approved for use in forensic laboratories creating DNA profiles and uploading to the CODIS (Combined DNA Index System) database.",
+      loci: "24 loci",
+    },
   ];
 
   const openModal = (kit) => {
@@ -101,30 +107,37 @@ const ServicesOverview = () => {
       {/* Hero Section */}
       <div
         className="relative text-white h-[600px] mt-10 flex items-center justify-center"
-        style={{ 
-          backgroundImage: "url('https://drugtesters.net/wp-content/uploads/2024/12/MDT-1-768x432.png')",
+        style={{
+          backgroundImage:
+            "url('https://drugtesters.net/wp-content/uploads/2024/12/MDT-1-768x432.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundRepeat: "no-repeat"
+          backgroundRepeat: "no-repeat",
         }}
       >
         <div className="absolute inset-0 bg-black opacity-60"></div>
         <div className="relative max-w-7xl mx-auto px-6 text-center">
-          <h1 
+          <h1
             className="text-5xl font-bold mb-6"
             style={{
-              textShadow: "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000"
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
             }}
           >
             DNA Testing Service
           </h1>
-          <p 
+          <p
             className="text-base mb-8 max-w-3xl mx-auto leading-relaxed font-medium"
             style={{
-              textShadow: "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080"
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
             }}
           >
-            DNA testing analyzes genetic information from chromosomes to determine biological relationships between individuals. This advanced scientific method provides accurate lineage determination through comprehensive genetic analysis, making it the most reliable approach for establishing family connections.
+            DNA testing analyzes genetic information from chromosomes to
+            determine biological relationships between individuals. This
+            advanced scientific method provides accurate lineage determination
+            through comprehensive genetic analysis, making it the most reliable
+            approach for establishing family connections.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
@@ -157,22 +170,15 @@ const ServicesOverview = () => {
               >
                 <div className="p-6 flex flex-col flex-grow">
                   <div className="flex-grow">
-                    <h3 
-                      className="text-2xl font-bold mb-3"
-                      style={{ 
-                        background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text"
-                      }}
-                    >
+                    <h3 className="text-2xl font-bold mb-3 text-black">
                       {service.title}
                     </h3>
 
-                    <div 
+                    <div
                       className="w-16 h-0.5 mb-3"
-                      style={{ 
-                        background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
                       }}
                     ></div>
 
@@ -201,16 +207,8 @@ const ServicesOverview = () => {
                 <div className="px-6 pb-6 mt-auto">
                   <Link
                     to={service.link}
-                    className="inline-flex items-center justify-center w-full px-4 py-3 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
-                    style={{ 
-                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = "linear-gradient(135deg, #012c5e 0%, #1d4ed8 100%)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = "linear-gradient(135deg, #023670 0%, #2563eb 100%)";
-                    }}
+                    className="inline-flex items-center justify-center w-full px-4 py-3 bg-gradient-to-br from-sky-500 via-blue-600 to-blue-700 
+    hover:from-sky-600 hover:via-blue-700 hover:to-blue-800 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
                   >
                     View Details
                     <svg
@@ -285,7 +283,8 @@ const ServicesOverview = () => {
               Professional Testing Kits
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              State-of-the-art DNA analysis kits used in our laboratory for precise and reliable results
+              State-of-the-art DNA analysis kits used in our laboratory for
+              precise and reliable results
             </p>
           </div>
 
@@ -306,10 +305,11 @@ const ServicesOverview = () => {
                       e.target.nextSibling.style.display = "flex";
                     }}
                   />
-                  <div 
+                  <div
                     className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden"
-                    style={{ 
-                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
                     }}
                   >
                     <div className="text-center text-white">
@@ -333,10 +333,7 @@ const ServicesOverview = () => {
 
                   <button
                     onClick={() => openModal(kit)}
-                    className="inline-flex items-center justify-center px-6 py-3 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
-                    style={{ 
-                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
-                    }}
+                    className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-br from-sky-500 via-blue-600 to-blue-700 hover:from-sky-600 hover:via-blue-700 hover:to-blue-800 text-white font-medium text-sm rounded-lg transition-all duration-200 hover:scale-105"
                   >
                     View Details
                     <svg
@@ -373,8 +370,18 @@ const ServicesOverview = () => {
                 onClick={closeModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -393,10 +400,11 @@ const ServicesOverview = () => {
                       e.target.nextSibling.style.display = "flex";
                     }}
                   />
-                  <div 
+                  <div
                     className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center hidden"
-                    style={{ 
-                      background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)" 
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
                     }}
                   >
                     <div className="text-center text-white">
@@ -416,23 +424,37 @@ const ServicesOverview = () => {
               {/* Kit Details */}
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Manufacturer</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Manufacturer
+                  </h3>
                   <p className="text-gray-700">{selectedKit.manufacturer}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Purpose</h3>
-                  <p className="text-gray-700 leading-relaxed">{selectedKit.purpose}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Purpose
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {selectedKit.purpose}
+                  </p>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Kit Type</h3>
-                  <p className="text-gray-700 leading-relaxed">{selectedKit.kitType}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Kit Type
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {selectedKit.kitType}
+                  </p>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Approval</h3>
-                  <p className="text-gray-700 leading-relaxed">{selectedKit.approval}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Approval
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {selectedKit.approval}
+                  </p>
                 </div>
               </div>
             </div>

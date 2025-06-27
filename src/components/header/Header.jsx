@@ -1,25 +1,22 @@
 import { useState, useEffect } from "react";
-import { FiMenu, FiX, FiSun, FiMoon, FiLogOut } from "react-icons/fi";
+import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LogOut from "../authen-form/LogOut";
-import { toast } from "react-toastify";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showServicesDropdown, setShowServicesDropdown] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  
   const location = useLocation();
-  
 
   const userState = useSelector((state) => state.user);
   const user = userState?.currentUser;
   const isAuthenticated = userState?.isAuthenticated;
 
+  // CHỈ LẤY FULLNAME hoặc name, KHÔNG LẤY EMAIL
   const userDisplayName =
     user?.fullName ||
     user?.name ||
@@ -45,7 +42,6 @@ const Header = () => {
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
   let hoverTimeout;
@@ -83,10 +79,6 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    document.body.className = isDarkMode ? "dark" : "light";
-  }, [isDarkMode]);
-
-  useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname]);
 
@@ -100,7 +92,7 @@ const Header = () => {
       textDecoration: "none",
       padding: "8px 12px",
       margin: "0 8px",
-      color: isActive ? "#023670" : isDarkMode ? "#ffffff" : "#1f2937",
+      color: isActive ? "#023670" : "#1f2937",
       transition: "color 0.2s ease-in-out",
       borderRadius: "4px",
       backgroundColor: isActive ? "#e0f2fe" : "transparent",
@@ -120,17 +112,14 @@ const Header = () => {
 
   // Callback khi logout thành công/lỗi/hủy
   const handleLogoutSuccess = () => {
-
     setShowLogoutConfirm(false);
     setShowDropdown(false);
     setIsOpen(false);
-    // Không dispatch(logout()) ở đây vì LogOut đã clearUser và chuyển trang rồi
   };
   const handleLogoutError = (error) => {
     setShowLogoutConfirm(false);
     setShowDropdown(false);
     setIsOpen(false);
-    // Có thể hiện thông báo lỗi ở đây nếu muốn
   };
   const handleLogoutCancel = () => {
     setShowLogoutConfirm(false);
@@ -146,9 +135,7 @@ const Header = () => {
   return (
     <>
       <header
-        className={`fixed w-full top-0 z-50 transition-all duration-300 shadow-md ${
-          isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-        }`}>
+        className={`fixed w-full top-0 z-50 transition-all duration-300 shadow-md bg-white text-gray-800`}>
         <div className="px-4">
           <div className="flex items-center h-16">
             {/* Logo */}
@@ -194,8 +181,6 @@ const Header = () => {
                           onMouseLeave={(e) => {
                             e.target.style.color = isActive
                               ? "#023670"
-                              : isDarkMode
-                              ? "#ffffff"
                               : "#1f2937";
                           }}>
                           {item.label}
@@ -212,9 +197,7 @@ const Header = () => {
                                 style={{
                                   borderLeft: "9px solid transparent",
                                   borderRight: "9px solid transparent",
-                                  borderBottom: `9px solid ${
-                                    isDarkMode ? "#6b7280" : "#d1d5db"
-                                  }`,
+                                  borderBottom: "#d1d5db 9px solid",
                                   zIndex: 1,
                                 }}
                               />
@@ -223,19 +206,15 @@ const Header = () => {
                                 style={{
                                   borderLeft: "8px solid transparent",
                                   borderRight: "8px solid transparent",
-                                  borderBottom: `8px solid ${
-                                    isDarkMode ? "#374151" : "#ffffff"
-                                  }`,
+                                  borderBottom: "#ffffff 8px solid",
                                   zIndex: 2,
                                   marginLeft: "1px",
                                 }}
                               />
                               <div
-                                className="rounded-md shadow-lg py-2 bg-white dark:bg-gray-800"
+                                className="rounded-md shadow-lg py-2 bg-white"
                                 style={{
-                                  border: `2px solid ${
-                                    isDarkMode ? "#6b7280" : "#d1d5db"
-                                  }`,
+                                  border: `2px solid #d1d5db`,
                                 }}>
                                 {item.dropdownItems.map((dropdownItem) => {
                                   const isDropdownActive =
@@ -246,8 +225,8 @@ const Header = () => {
                                       to={dropdownItem.href}
                                       className={`block px-4 py-3 text-sm transition-colors duration-200 ${
                                         isDropdownActive
-                                          ? "bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                          ? "bg-blue-50 text-blue-700"
+                                          : "text-gray-700 hover:bg-gray-100"
                                       }`}
                                       style={{ textDecoration: "none" }}
                                       onClick={() => {
@@ -286,8 +265,6 @@ const Header = () => {
                         const isActive = isActivePage(item.href);
                         e.target.style.color = isActive
                           ? "#023670"
-                          : isDarkMode
-                          ? "#ffffff"
                           : "#1f2937";
                       }}>
                       {item.label}
@@ -299,15 +276,6 @@ const Header = () => {
 
             {/* Buttons */}
             <div className="w-1/3 flex items-center justify-end space-x-4">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                aria-label={
-                  isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
-                }>
-                {isDarkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
-              </button>
-
               {user && isAuthenticated ? (
                 <div className="relative">
                   <button
@@ -319,7 +287,7 @@ const Header = () => {
                         "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"
                       }
                       alt={userDisplayName}
-                      className="h-12 w-12 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600"
+                      className="h-12 w-12 rounded-full object-cover border-2 border-gray-300"
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src =
@@ -329,20 +297,16 @@ const Header = () => {
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
-                      <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                        <div className="font-medium text-gray-700 dark:text-gray-200">
-                          {userDisplayName}
+                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-200">
+                        <div className="font-medium text-gray-700">
+                          Hello, {userDisplayName}!
                         </div>
-                        {user?.email && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {user.email}
-                          </div>
-                        )}
+                        {/* ĐÃ XOÁ HIỂN EMAIL Ở ĐÂY */}
                       </div>
                       <Link
                         to="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                         style={{ textDecoration: "none" }}
                         onClick={() => {
                           setShowDropdown(false);
@@ -353,7 +317,7 @@ const Header = () => {
                       {/* Nút logout đổi thành mở confirm */}
                       <button
                         onClick={() => setShowLogoutConfirm(true)}
-                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
                         <FiLogOut
                           size={16}
                           className="mr-2 text-red-500"
@@ -405,7 +369,7 @@ const Header = () => {
 
               <button
                 onClick={toggleMenu}
-                className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+                className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white hover:bg-gray-200 transition-colors duration-200">
                 {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
               </button>
             </div>
@@ -416,7 +380,7 @@ const Header = () => {
             className={`md:hidden transition-all duration-300 ${
               isOpen ? "block" : "hidden"
             }`}>
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50 dark:bg-gray-800 rounded-lg mt-2">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50 rounded-lg mt-2">
               {navItems.map((item) => {
                 if (item.hasDropdown) {
                   return (
@@ -427,7 +391,7 @@ const Header = () => {
                           setIsOpen(false);
                           handleLinkClick();
                         }}
-                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 transition-colors duration-200 capitalize"
                         style={{
                           ...getMobileLinkStyles(item.href),
                           textDecoration: "none",
@@ -442,7 +406,7 @@ const Header = () => {
                             setIsOpen(false);
                             handleLinkClick();
                           }}
-                          className="block w-full text-left pl-6 pr-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                          className="block w-full text-left pl-6 pr-3 py-2 text-sm text-gray-600 hover:bg-gray-200 transition-colors duration-200"
                           style={{
                             ...getMobileLinkStyles(dropdownItem.href),
                             textDecoration: "none",
@@ -461,7 +425,7 @@ const Header = () => {
                       setIsOpen(false);
                       handleLinkClick();
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 capitalize"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 transition-colors duration-200 capitalize"
                     style={{
                       ...getMobileLinkStyles(item.href),
                       textDecoration: "none",
@@ -472,16 +436,12 @@ const Header = () => {
               })}
 
               {user && isAuthenticated ? (
-                <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
-                  <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                    <div className="font-medium text-gray-700 dark:text-gray-200">
-                      {userDisplayName}
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="px-3 py-2 text-xs text-gray-500">
+                    <div className="font-medium text-gray-700">
+                      Hello, {userDisplayName}!
                     </div>
-                    {user?.email && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {user.email}
-                      </div>
-                    )}
+                    {/* XOÁ EMAIL Ở MOBILE MENU */}
                   </div>
                   <Link
                     to="/profile"
@@ -489,20 +449,20 @@ const Header = () => {
                       setIsOpen(false);
                       handleLinkClick();
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 transition-colors duration-200"
                     style={{ textDecoration: "none" }}>
                     Profile
                   </Link>
                   {/* Nút logout đổi thành mở confirm */}
                   <button
                     onClick={() => setShowLogoutConfirm(true)}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-200 transition-colors duration-200"
                   >
                     Logout
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                <div className="space-y-2 pt-2 border-t border-gray-200">
                   <Link
                     to="/login"
                     onClick={() => {
@@ -544,7 +504,6 @@ const Header = () => {
         buttonText="Logout"
         showIcon={true}
         showConfirmation={true}
-        
         onLogoutSuccess={handleLogoutSuccess}
         onLogoutError={handleLogoutError}
         onCancel={handleLogoutCancel}
