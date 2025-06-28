@@ -2,7 +2,7 @@ import axios from "axios"
 
 // Set config defaults when creating the instance
 const api = axios.create({
-  baseURL: "http://192.168.46.130:8080/api",
+  baseURL: "http://103.90.227.214:8080/api",
 })
 
 // Authentication helper functions
