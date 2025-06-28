@@ -35,6 +35,7 @@ import { Toaster } from "react-hot-toast";
 import Contact from "./pages/home-page/contact";
 import ProfilePage from "./pages/profile";
 import Pricing from "./pages/home-page/pricing";
+import ViewReports from "./pages/dashboard-manager/staff-reports";
 
 function App() {
   const router = createBrowserRouter([
@@ -64,7 +65,7 @@ function App() {
         },
         {
           path: "pricing",
-element: <Pricing />,
+          element: <Pricing />,
         },
         {
           path: "blog",
@@ -139,6 +140,7 @@ element: <Pricing />,
         },
         { path: "customer-feedback", element: <CustomerFeedbackPage /> },
         { path: "inventory", element: <Inventory /> },
+        { path: "view-staff-reports", element: <ViewReports /> },
       ],
     },
     {

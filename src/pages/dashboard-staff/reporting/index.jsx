@@ -12,12 +12,14 @@ import {
   DatePicker,
   Card,
   Tag,
+  Modal,
 } from "antd";
 import {
   SendOutlined,
   HistoryOutlined,
   ReloadOutlined,
   DownloadOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios"; // Import axios instance
 import { toast, ToastContainer } from "react-toastify";
@@ -33,6 +35,19 @@ const { Option } = Select;
 const StaffReporting = () => {
   const [loading, setLoading] = useState(true);
   const [workReports, setWorkReports] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [reportForm] = Form.useForm();
+
+  const appointmentTimeSlots = [
+    "8:15 - 9:15",
+    "9:30 - 10:30",
+    "10:45 - 11:45",
+    "13:15 - 14:15",
+    "14:30 - 15:30",
+    "15:45 - 16:45",
+  ];
+
+  const reportStatusOptions = ["Completed", "Delay", "Cancel"];
 
   const fetchWorkReports = useCallback(async () => {
     setLoading(true);
@@ -76,6 +91,41 @@ const StaffReporting = () => {
       toast.success("PDF exported successfully!");
     } catch (error) {
       toast.error("Failed to export PDF: " + error.message);
+    }
+  };
+
+  const handleCreateReport = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+    reportForm.resetFields();
+  };
+
+  const handleReportSubmit = async (values) => {
+    try {
+      const reportData = {
+        appointmentTime: values.appointmentTime,
+        status: values.status,
+        note: values.note,
+      };
+
+      // Call the API to create report
+      await api.post("/staff/create-report", reportData);
+
+      toast.success("Report created successfully!");
+      setIsModalVisible(false);
+      reportForm.resetFields();
+
+      // Optionally refresh the data
+      fetchWorkReports();
+    } catch (error) {
+      toast.error(
+        "Failed to create report: " +
+          (error.response?.data?.message || error.message)
+      );
+      console.error("Error creating report:", error);
     }
   };
 
@@ -165,8 +215,8 @@ const StaffReporting = () => {
             gap: 8,
           }}>
           <Button
-            icon={<SendOutlined />}
-            onClick={() => toast.info("Create Report feature coming soon!")}
+            icon={<PlusOutlined />}
+            onClick={handleCreateReport}
             style={{
               background: "#fff",
               color: "#1677ff",
@@ -182,6 +232,81 @@ const StaffReporting = () => {
           </Button>
         </div>
       </Card>
+
+      <Modal
+        title="Create Report"
+        open={isModalVisible}
+        onCancel={handleModalCancel}
+        footer={null}
+        width={600}>
+        <Form
+          form={reportForm}
+          layout="vertical"
+          onFinish={handleReportSubmit}
+          requiredMark={false}>
+          <Form.Item
+            label="Appointment Time"
+            name="appointmentTime"
+            rules={[
+              {
+                required: true,
+                message: "Please select an appointment time!",
+              },
+            ]}>
+            <Select placeholder="Select appointment time" size="large">
+              {appointmentTimeSlots.map((timeSlot) => (
+                <Option key={timeSlot} value={timeSlot}>
+                  {timeSlot}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Status"
+            name="status"
+            rules={[
+              {
+                required: true,
+                message: "Please select a status!",
+              },
+            ]}>
+            <Select placeholder="Select status" size="large">
+              {reportStatusOptions.map((status) => (
+                <Option key={status} value={status}>
+                  {status}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Note"
+            name="note"
+            rules={[
+              {
+                required: true,
+                message: "Please enter a note!",
+              },
+            ]}>
+            <TextArea
+              rows={4}
+              placeholder="Enter your note here..."
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+            <Space>
+              <Button onClick={handleModalCancel}>Cancel</Button>
+              <Button type="primary" htmlType="submit">
+                Submit
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
       <ToastContainer />
     </div>
   );

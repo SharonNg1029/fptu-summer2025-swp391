@@ -51,6 +51,7 @@ const TestingProcessMonitoringPage = () => {
           lastUpdate: item.lastUpdate,
           serviceType: item.serviceType,
           status: item.status,
+          timeRange: item.timeRange,
         }))
       );
     } catch (error) {
@@ -100,9 +101,15 @@ const TestingProcessMonitoringPage = () => {
       key: "staffName",
     },
     {
-      title: "Service Type",
-      dataIndex: "serviceType",
-      key: "serviceType",
+      title: "Service",
+      dataIndex: "service",
+      key: "service",
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "timeRange",
+      key: "timeRange",
+      render: (timeRange) => timeRange || "N/A",
     },
     {
       title: "Status",
@@ -183,6 +190,7 @@ const TestingProcessMonitoringPage = () => {
         "Test ID",
         "Customer Name",
         "Assigned Staff",
+        "Appointment Time",
         "Service Type",
         "Status",
         "Last Update Status",
@@ -191,6 +199,7 @@ const TestingProcessMonitoringPage = () => {
         test.assignedID,
         test.customerName,
         test.staffName,
+        test.timeRange || "N/A",
         test.serviceType,
         test.status,
         test.lastUpdate ? new Date(test.lastUpdate).toLocaleString() : "N/A",

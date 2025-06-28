@@ -51,6 +51,7 @@ const items = [
   ),
   getItem("Customer Feedback", "customer-feedback", <MessageOutlined />),
   getItem("Test Kit Inventory", "inventory", <InboxOutlined />),
+  getItem("View Staff's Reports", "view-staff-reports", <InboxOutlined />),
 ];
 
 const ManagerDashboard = () => {
