@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { nonLegalServicesData } from "../../pages/home-page/services/non-legalDNA/data-non-legal/nonLegalData";
 import { legalServicesData } from "../../pages/home-page/services/legalDNA/data-legal/legalData";
+import { guideSteps } from "../../pages/home-page/guide/guideSteps";
 
 const HomeContent = () => {
   // State cho FAQ
@@ -114,6 +115,38 @@ const HomeContent = () => {
       </div>
     </div>
   );
+  // Lấy 3 bước đầu tiên từ guideSteps
+  const featuredGuideSteps = guideSteps.slice(0, 3);
+  const renderGuideStepCard = (step) => (
+    <div
+      key={step.id}
+      className="w-[430px] max-w-full rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col border border-gray-200 transition-transform duration-200 hover:-translate-y-1"
+      style={{
+        boxShadow: "0 8px 40px 0 rgba(0,99,210,0.11)",
+        minHeight: 420,
+        padding: "42px 40px",
+      }}
+    >
+      <div className="flex flex-col items-center">
+        <div
+          className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl mb-7"
+          style={{
+            background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+          }}
+        >
+          {step.icon}
+        </div>
+        <h3 className="text-2xl font-medium text-gray-900 mb-5 text-center leading-tight">
+          {step.title}
+        </h3>
+        <ul className="list-disc list-inside text-gray-700 text-lg text-left pl-2 space-y-2">
+          {step.items.slice(0, 3).map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -121,10 +154,13 @@ const HomeContent = () => {
       <div
         className="relative w-full h-[798px] bg-no-repeat bg-cover bg-center flex items-center justify-center"
         style={{
-          backgroundImage: "url('https://cdn.glasspress.io/health-street.net/blog/preparing-for-a-dna-test-steps-to-ensure-accurate-results-image-featured.jpg')",
+          backgroundImage:
+            "url('https://cdn.glasspress.io/health-street.net/blog/preparing-for-a-dna-test-steps-to-ensure-accurate-results-image-featured.jpg')",
         }}
       >
-        <div className="text-center">
+        {/* Overlay đen bán trong suốt giống DNA Testing Service */}
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div className="relative z-10 text-center">
           <h1
             className="text-white text-5xl font-bold mb-4"
             style={{
@@ -255,7 +291,7 @@ const HomeContent = () => {
       {/* FEATURED SERVICES SECTION */}
       <div className="py-16 bg-gray-50">
         <h2
-          className="text-3xl font-bold text-blue-900 mb-10 text-center"
+          className="text-4xl font-bold text-blue-900 mb-10 text-center"
           style={{ color: "#003469" }}
         >
           Featured DNA Services
@@ -317,10 +353,10 @@ const HomeContent = () => {
 
       {/* Quy trình xét nghiệm ADN */}
       <div className="py-10 px-4 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="max-w-6xl mx-auto w-full">
+        <div className="max-w-5xl mx-auto w-full">
           <div className="text-center mb-16">
             <h2
-              className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
+              className="text-4xl font-bold text-blue-900 mb-10 text-center"
               style={{ color: "#003469" }}
             >
               DNA Testing Process
@@ -427,13 +463,31 @@ const HomeContent = () => {
         </div>
       </div>
 
+      <div className="py-16 bg-gray-50 ">
+        <h2
+          className="text-4xl font-bold text-blue-900 mb-10 text-center"
+          style={{ color: "#003469" }}
+        >
+          Quick Start Guide
+        </h2>
+        <div className="max-w-[1300px] mx-auto flex flex-row gap-10 justify-center">
+          {featuredGuideSteps.map((step) => renderGuideStepCard(step))}
+        </div>
+        <a
+          href="/guide"
+          className="mt-8 block mx-auto w-fit px-10 py-3 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-blue-700 hover:from-sky-600 hover:via-blue-700 hover:to-blue-800 text-white font-semibold transition-all shadow text-center text-lg"
+        >
+          View Full Guide
+        </a>
+      </div>
+
       {/* ✅ FAQ SECTION - UPDATED */}
       <div className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-16">
             <h2
-              className="text-4xl md:text-5xl font-bold mb-4"
+              className="text-4xl font-bold text-blue-900 mb-10 text-center"
               style={{ color: "#003469" }}
             >
               Frequently Asked Questions

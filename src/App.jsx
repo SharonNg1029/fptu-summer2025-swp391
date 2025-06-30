@@ -37,6 +37,7 @@ import ProfilePage from "./pages/profile";
 import Pricing from "./pages/home-page/pricing";
 import ViewReports from "./pages/dashboard-manager/staff-reports";
 import BookingPage from "./pages/booking/BookingPage";
+import BlogDetail from "./pages/home-page/blog/BlogDetail";
 
 function App() {
   const router = createBrowserRouter([
@@ -71,6 +72,9 @@ function App() {
         {
           path: "blog",
           element: <Blog />,
+        },
+        { path: "blog/:slug", 
+          element: <BlogDetail /> 
         },
         {
           path: "contact",

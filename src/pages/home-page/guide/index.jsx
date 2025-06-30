@@ -107,7 +107,7 @@ const Guide = () => {
     },
   ];
 
-  const collectionMethods = [
+ const collectionMethods = [
     {
       title: "At Facility (Walk-in Service)",
       description: "Come to our facility for professional sample collection",
