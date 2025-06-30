@@ -64,19 +64,31 @@ const Overview = () => {
   const generateChartData = useCallback(() => {
     // Group bookings by month and week for real chart data
     const bookings = allBookings;
-    // Helper: get month label (e.g. 'Jan') from date string
-    const getMonthLabel = (dateStr) => {
-      const d = new Date(dateStr);
+    // Helper: get month label (e.g. 'Jan') from appointmentTime array
+    const getMonthLabel = (appointmentTime) => {
+      if (!Array.isArray(appointmentTime) || appointmentTime.length < 2)
+        return "";
+      const d = new Date(appointmentTime[0], appointmentTime[1] - 1);
       return d.toLocaleString("default", { month: "short" });
     };
-    // Helper: get year-month key (e.g. '2025-06')
-    const getYearMonth = (dateStr) => {
-      const d = new Date(dateStr);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    // Helper: get year-month key (e.g. '2025-06') from appointmentTime array
+    const getYearMonth = (appointmentTime) => {
+      if (!Array.isArray(appointmentTime) || appointmentTime.length < 2)
+        return "";
+      return `${appointmentTime[0]}-${String(appointmentTime[1]).padStart(
+        2,
+        "0"
+      )}`;
     };
-    // Helper: get week number in year
-    const getWeekNumber = (dateStr) => {
-      const d = new Date(dateStr);
+    // Helper: get week number in year from appointmentTime array
+    const getWeekNumber = (appointmentTime) => {
+      if (!Array.isArray(appointmentTime) || appointmentTime.length < 3)
+        return 0;
+      const d = new Date(
+        appointmentTime[0],
+        appointmentTime[1] - 1,
+        appointmentTime[2]
+      );
       const firstDay = new Date(d.getFullYear(), 0, 1);
       const pastDays = (d - firstDay) / 86400000;
       return Math.ceil((pastDays + firstDay.getDay() + 1) / 7);
@@ -85,13 +97,13 @@ const Overview = () => {
     // Monthly stats: group by year-month
     const monthlyMap = {};
     bookings.forEach((b) => {
-      if (!b.request_date) return;
-      const ym = getYearMonth(b.request_date);
+      if (!b.appointmentTime) return;
+      const ym = getYearMonth(b.appointmentTime);
       if (!monthlyMap[ym]) {
         monthlyMap[ym] = {
           tests: 0,
           revenue: 0,
-          month: getMonthLabel(b.request_date),
+          month: getMonthLabel(b.appointmentTime),
         };
       }
       monthlyMap[ym].tests += 1;
@@ -129,10 +141,14 @@ const Overview = () => {
     // Weekly trends: group by week number in current year
     const weekMap = {};
     bookings.forEach((b) => {
-      if (!b.request_date) return;
-      const d = new Date(b.request_date);
+      if (!b.appointmentTime) return;
+      const d = new Date(
+        b.appointmentTime[0],
+        b.appointmentTime[1] - 1,
+        b.appointmentTime[2]
+      );
       const year = d.getFullYear();
-      const week = getWeekNumber(b.request_date);
+      const week = getWeekNumber(b.appointmentTime);
       const key = `${year}-W${week}`;
       if (!weekMap[key]) {
         weekMap[key] = { week: `W${week}`, bookings: 0, revenue: 0 };
@@ -166,19 +182,34 @@ const Overview = () => {
     const fetchRecentBookings = async () => {
       try {
         const response = await api.get("/booking/bookings", {
-          params: { limit: 5, sort: "desc", sortBy: "request_date" },
+          params: { limit: 5, sort: "desc", sortBy: "appointmentTime" },
         });
-        console.log("Recent bookings response:", response);
-
         let bookingsData = response.data?.data || response.data || [];
-        // Ensure only 5 most recent bookings are shown, sorted by request_date descending
+        // Ensure only 5 most recent bookings are shown, sorted by appointmentTime descending
         bookingsData = bookingsData
           .slice() // clone array
-          .sort((a, b) => new Date(b.request_date) - new Date(a.request_date))
+          .sort((a, b) => {
+            // appointmentTime: [year, month, day]
+            if (
+              !Array.isArray(a.appointmentTime) ||
+              !Array.isArray(b.appointmentTime)
+            )
+              return 0;
+            const dateA = new Date(
+              a.appointmentTime[0],
+              a.appointmentTime[1] - 1,
+              a.appointmentTime[2]
+            );
+            const dateB = new Date(
+              b.appointmentTime[0],
+              b.appointmentTime[1] - 1,
+              b.appointmentTime[2]
+            );
+            return dateB - dateA;
+          })
           .slice(0, 5);
         setRecentBookings(bookingsData);
       } catch (error) {
-        console.error("Error fetching recent bookings:", error);
         let errorMessage = "Error fetching recent bookings";
         if (error.response?.data?.data) {
           errorMessage = error.response.data.data;
@@ -285,24 +316,13 @@ const Overview = () => {
           params: { limit: 10000 },
         });
         const bookings = response.data?.data || response.data || [];
-        // Lấy revenue của tháng hiện tại
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth(); // 0-based
-        const currentMonthRevenue = bookings.reduce((sum, b) => {
-          if (!b.request_date) return sum;
-          const d = new Date(b.request_date);
-          if (
-            d.getFullYear() === currentYear &&
-            d.getMonth() === currentMonth
-          ) {
-            return sum + Number(b.totalCost || 0);
-          }
-          return sum;
-        }, 0);
+        // Tính tổng revenue từ totalCost của tất cả bookings
+        const totalRevenue = Array.isArray(bookings)
+          ? bookings.reduce((sum, b) => sum + Number(b.totalCost || 0), 0)
+          : 0;
         setStats((prev) => ({
           ...prev,
-          revenue: Math.round(currentMonthRevenue),
+          revenue: Math.round(totalRevenue),
         }));
       } catch (error) {
         toast.error(error);
@@ -358,6 +378,26 @@ const Overview = () => {
     }
   }, [dateRange]);
 
+  // Fetch total customers from /admin/account
+  const [totalCustomers, setTotalCustomers] = useState(0);
+
+  useEffect(() => {
+    const fetchTotalUsersFromAccount = async () => {
+      try {
+        const response = await api.get("/admin/account");
+        const accounts = response.data?.data || response.data || [];
+        // Đếm số lượng user có role khác ADMIN (tức là CUSTOMER, MANAGER, STAFF, ...), không phân biệt hoa thường
+        const userCount = accounts.filter(
+          (acc) => String(acc.role).toUpperCase() !== "ADMIN"
+        ).length;
+        setTotalCustomers(userCount);
+      } catch {
+        setTotalCustomers(0);
+      }
+    };
+    fetchTotalUsersFromAccount();
+  }, []);
+
   // Generate chart data when stats or bookings change
   useEffect(() => {
     if (!loading) {
@@ -374,8 +414,8 @@ const Overview = () => {
   const columns = [
     {
       title: "Booking ID",
-      dataIndex: "bookingID",
-      key: "bookingID",
+      dataIndex: "bookingId",
+      key: "bookingId",
     },
     {
       title: "Customer ID",
@@ -383,15 +423,23 @@ const Overview = () => {
       key: "customerID",
     },
     {
-      title: "Service Type",
-      dataIndex: "bookingType",
-      key: "bookingType",
+      title: "Service ID",
+      dataIndex: "serviceID",
+      key: "serviceID",
     },
     {
       title: "Request Date",
-      dataIndex: "request_date",
-      key: "request_date",
-      render: (date) => (date ? new Date(date).toLocaleDateString() : "N/A"),
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (appointmentTime) => {
+        if (!Array.isArray(appointmentTime) || appointmentTime.length < 3)
+          return "N/A";
+        // appointmentTime: [year, month, day]
+        const [year, month, day] = appointmentTime;
+        return `${day.toString().padStart(2, "0")}/${month
+          .toString()
+          .padStart(2, "0")}/${year}`;
+      },
     },
     {
       title: "Status",
@@ -416,6 +464,12 @@ const Overview = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: "Total Cost",
+      dataIndex: "totalCost",
+      key: "totalCost",
+      render: (cost) => (cost ? `$${Number(cost).toLocaleString()}` : "$0"),
     },
   ];
 
@@ -463,10 +517,10 @@ const Overview = () => {
             <Statistic
               title={
                 <span style={{ fontWeight: 600, fontSize: 16, color: "#666" }}>
-                  Total Customers
+                  Total User
                 </span>
               }
-              value={stats.totalCustomer}
+              value={totalCustomers}
               prefix={
                 <UserOutlined style={{ color: "#1890ff", fontSize: 24 }} />
               }
@@ -477,7 +531,7 @@ const Overview = () => {
               }}
             />
             <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
-              Unique customers this period
+              Unique users this period
             </div>
           </Card>
         </Col>

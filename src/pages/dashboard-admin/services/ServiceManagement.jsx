@@ -83,18 +83,22 @@ const ServiceManagement = () => {
   // Calculate statistics
   const stats = {
     totalServices: services.length,
+    // Doanh thu và số đơn hàng thực tế phải lấy từ booking, không phải từ service
     totalRevenue: services.reduce(
-      (sum, service) => sum + service.cost * (service.monthlyOrders || 0),
+      (sum, service) => sum + (service.totalCost || 0),
       0
     ),
     totalOrders: services.reduce(
-      (sum, service) => sum + (service.monthlyOrders || 0),
+      (sum, service) => sum + (service.totalCost ? 1 : 0),
       0
     ),
     avgPrice:
       services.length > 0
-        ? services.reduce((sum, service) => sum + service.cost, 0) /
-          services.length
+        ? Math.round(
+            (services.reduce((sum, service) => sum + (service.cost || 0), 0) /
+              services.length) *
+              100
+          ) / 100
         : 0,
   };
 
@@ -218,44 +222,68 @@ const ServiceManagement = () => {
     <div>
       <Title level={2}>Service Management</Title>
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}>
-          <Card bordered={false}>
+        <Col span={12}>
+          <Card
+            loading={loading}
+            style={{
+              borderRadius: 16,
+              minHeight: 120,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 4px 20px rgba(24, 144, 255, 0.1)",
+              border: "1px solid #e6f7ff",
+            }}>
             <Statistic
-              title="Total Services"
+              title={
+                <span style={{ fontWeight: 600, fontSize: 16, color: "#666" }}>
+                  Total Services
+                </span>
+              }
               value={stats.totalServices}
-              prefix={<MedicineBoxOutlined />}
+              prefix={
+                <MedicineBoxOutlined
+                  style={{ color: "#1890ff", fontSize: 24 }}
+                />
+              }
+              valueStyle={{
+                color: "#1890ff",
+                fontSize: 28,
+                fontWeight: 700,
+              }}
             />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false}>
+        <Col span={12}>
+          <Card
+            loading={loading}
+            style={{
+              borderRadius: 16,
+              minHeight: 120,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 4px 20px rgba(250, 173, 20, 0.1)",
+              border: "1px solid #fffbe6",
+            }}>
             <Statistic
-              title="Monthly Revenue"
-              value={stats.totalRevenue}
-              precision={2}
-              prefix="$"
-              valueStyle={{ color: "#3f8600" }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card bordered={false}>
-            <Statistic
-              title="Monthly Orders"
-              value={stats.totalOrders}
-              prefix={<BarChartOutlined />}
-              valueStyle={{ color: "#1890ff" }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card bordered={false}>
-            <Statistic
-              title="Average Price"
-              value={stats.avgPrice}
-              precision={2}
-              prefix="$"
-              valueStyle={{ color: "#722ed1" }}
+              title={
+                <span style={{ fontWeight: 600, fontSize: 16, color: "#666" }}>
+                  Average Price
+                </span>
+              }
+              value={
+                stats.avgPrice >= 1000000
+                  ? `$${(stats.avgPrice / 1000000).toFixed(1)}M`
+                  : stats.avgPrice >= 1000
+                  ? `$${(stats.avgPrice / 1000).toFixed(1)}K`
+                  : `$${stats.avgPrice}`
+              }
+              valueStyle={{
+                color: "#faad14",
+                fontSize: 28,
+                fontWeight: 700,
+              }}
             />
           </Card>
         </Col>

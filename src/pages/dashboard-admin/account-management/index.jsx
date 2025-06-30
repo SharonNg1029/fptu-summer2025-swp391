@@ -554,22 +554,29 @@ const AccountManagement = () => {
     total: accounts.length,
     active: accounts.filter((acc) => acc.status === "ACTIVE").length,
     inactive: accounts.filter((acc) => acc.status === "INACTIVE").length,
-    // Sửa lại customers và staff lấy từ API nếu có, fallback local
+    // Đếm customer không phân biệt hoa thường
     customers:
       customerStats.totalCustomers ||
-      accounts.filter((acc) => acc.role === "CUSTOMER").length,
+      accounts.filter((acc) => String(acc.role).toUpperCase() === "CUSTOMER")
+        .length,
     staff: accounts.filter((acc) =>
-      ["STAFF", "MANAGER", "ADMIN"].includes(acc.role)
+      ["STAFF", "MANAGER", "ADMIN"].includes(String(acc.role).toUpperCase())
+    ).length,
+    managers: accounts.filter(
+      (acc) => String(acc.role).toUpperCase() === "MANAGER"
     ).length,
     customersWithActiveOrders: accountsWithActiveOrders.size,
     // Use API data if available, fallback to local calculation
     totalCustomersFromAPI:
       customerStats.totalCustomers ||
-      accounts.filter((acc) => acc.role === "CUSTOMER").length,
+      accounts.filter((acc) => String(acc.role).toUpperCase() === "CUSTOMER")
+        .length,
     activeCustomersFromAPI:
       customerStats.activeCustomers ||
       accounts.filter(
-        (acc) => acc.role === "CUSTOMER" && acc.status === "ACTIVE"
+        (acc) =>
+          String(acc.role).toUpperCase() === "CUSTOMER" &&
+          acc.status === "ACTIVE"
       ).length,
   };
 
@@ -823,6 +830,7 @@ const AccountManagement = () => {
       </div>
 
       {/* Statistics Cards */}
+
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
@@ -836,20 +844,10 @@ const AccountManagement = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Active Accounts"
-              value={stats.active}
+              title="Managers"
+              value={stats.managers}
               prefix={<UserOutlined />}
-              valueStyle={{ color: "#52c41a" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Customers"
-              value={stats.customers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: "#1890ff" }}
+              valueStyle={{ color: "#faad14" }}
             />
           </Card>
         </Col>
@@ -863,11 +861,41 @@ const AccountManagement = () => {
             />
           </Card>
         </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Customers"
+              value={stats.customers}
+              prefix={<UserOutlined />}
+              valueStyle={{ color: "#1890ff" }}
+            />
+          </Card>
+        </Col>
       </Row>
 
       {/* Additional Statistics */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={8}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Active Accounts"
+              value={stats.active}
+              prefix={<UserOutlined />}
+              valueStyle={{ color: "#52c41a" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Inactive Accounts"
+              value={stats.inactive}
+              prefix={<LockOutlined />}
+              valueStyle={{ color: "#ff4d4f" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="Customers With Active Orders"
@@ -878,28 +906,18 @@ const AccountManagement = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card>
-            <Statistic
-              title="Inactive Accounts"
-              value={stats.inactive}
-              prefix={<LockOutlined />}
-              valueStyle={{ color: "#ff4d4f" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
+        <Col xs={24} sm={12} lg={6}>
           <Card
-            style={{ backgroundColor: "#f6ffed", border: "1px solid #b7eb8f" }}>
+            style={{
+              backgroundColor: "#f6ffed",
+              border: "1px solid #b7eb8f",
+            }}>
             <Statistic
-              title="Protection Status"
-              value="Active"
-              prefix="🛡️"
               valueStyle={{ color: "#389e0d" }}
               formatter={() => (
                 <div style={{ fontSize: "14px" }}>
                   <div style={{ fontWeight: "bold", color: "#389e0d" }}>
-                    Orders Protected
+                    🛡️Orders Protected
                   </div>
                   <div style={{ fontSize: "12px", color: "#666" }}>
                     Accounts with active orders cannot be deleted

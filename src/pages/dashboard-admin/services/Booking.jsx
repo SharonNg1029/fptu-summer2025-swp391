@@ -41,18 +41,32 @@ const statusList = [
 
 const columns = [
   { title: "Kit ID", dataIndex: "kitID", key: "kitID" },
-  { title: "Booking ID", dataIndex: "bookingID", key: "bookingID" },
+  { title: "Booking ID", dataIndex: "bookingId", key: "bookingId" },
   { title: "Customer ID", dataIndex: "customerID", key: "customerID" },
+  { title: "Customer Name", dataIndex: "customerName", key: "customerName" },
   { title: "Service ID", dataIndex: "serviceID", key: "serviceID" },
-  { title: "Booking Type", dataIndex: "bookingType", key: "bookingType" },
-  { title: "Payment Method", dataIndex: "paymentMethod", key: "paymentMethod" },
-  { title: "Sample Method", dataIndex: "sampleMethod", key: "sampleMethod" },
   {
-    title: "Request Date",
-    dataIndex: "request_date",
-    key: "request_date",
-    render: (date) => (date ? new Date(date).toLocaleDateString() : "N/A"),
+    title: "Collection Method",
+    dataIndex: "collectionMethod",
+    key: "collectionMethod",
   },
+  { title: "Payment Method", dataIndex: "paymentMethod", key: "paymentMethod" },
+  {
+    title: "Appointment Date",
+    dataIndex: "appointmentTime",
+    key: "appointmentTime",
+    render: (appointmentTime) => {
+      // appointmentTime: [2025, 1, 16]
+      if (Array.isArray(appointmentTime) && appointmentTime.length === 3) {
+        const [year, month, day] = appointmentTime;
+        return `${day.toString().padStart(2, "0")}/${month
+          .toString()
+          .padStart(2, "0")}/${year}`;
+      }
+      return "N/A";
+    },
+  },
+  { title: "Time Range", dataIndex: "timeRange", key: "timeRange" },
   {
     title: "Status",
     dataIndex: "status",
@@ -122,7 +136,29 @@ const columns = [
         ? cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " VNĐ"
         : "",
   },
+  {
+    title: "Total Cost (VNĐ)",
+    dataIndex: "totalCost",
+    key: "totalCost",
+    render: (cost) =>
+      cost != null
+        ? cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " VNĐ"
+        : "",
+  },
+  {
+    title: "Express Service",
+    dataIndex: "expressService",
+    key: "expressService",
+    render: (val) => (val ? "Yes" : "No"),
+  },
+  { title: "Address", dataIndex: "address", key: "address" },
   { title: "Note", dataIndex: "note", key: "note" },
+  {
+    title: "Test Subjects",
+    dataIndex: "testSubjects",
+    key: "testSubjects",
+    render: (val) => val || "",
+  },
 ];
 
 const Booking = () => {
@@ -130,7 +166,8 @@ const Booking = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
+  const [collectionMethodFilter, setCollectionMethodFilter] = useState("");
+  const [mediationMethodFilter, setMediationMethodFilter] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -177,20 +214,31 @@ const Booking = () => {
         statusEn = booking.status;
     }
     const matchesSearch =
-      booking.bookingID?.toString().includes(searchText) ||
+      booking.bookingId?.toString().includes(searchText) ||
       booking.customerID?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.serviceID?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.kitID?.toLowerCase().includes(searchText.toLowerCase()) ||
-      booking.bookingType?.toLowerCase().includes(searchText.toLowerCase()) ||
+      booking.collectionMethod
+        ?.toLowerCase()
+        .includes(searchText.toLowerCase()) ||
       booking.paymentMethod?.toLowerCase().includes(searchText.toLowerCase()) ||
-      booking.sampleMethod?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.note?.toLowerCase().includes(searchText.toLowerCase());
     // Case-insensitive status filter
     const matchesStatus =
       !statusFilter ||
       (statusEn && statusEn.toLowerCase() === statusFilter.toLowerCase());
-    const matchesType = !typeFilter || booking.bookingType === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
+    const matchesCollectionMethod =
+      !collectionMethodFilter ||
+      booking.collectionMethod === collectionMethodFilter;
+    const matchesMediationMethod =
+      !mediationMethodFilter ||
+      booking.mediationMethod === mediationMethodFilter;
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesCollectionMethod &&
+      matchesMediationMethod
+    );
   });
 
   const handleExportPDF = () => {
@@ -263,12 +311,8 @@ const Booking = () => {
           gutter={[16, 16]}
           align="middle"
           justify="start"
-          style={{ flexWrap: "wrap" }}>
-          <Col
-            xs={24}
-            sm={8}
-            lg={6}
-            style={{ minWidth: 220, paddingRight: 8, marginBottom: 8 }}>
+          style={{ flexWrap: "wrap", width: "100%" }}>
+          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
             <Input
               placeholder="Search by Booking ID, Customer ID, Service ID, Kit ID, Type, ..."
               prefix={<SearchOutlined />}
@@ -278,13 +322,9 @@ const Booking = () => {
               size="large"
             />
           </Col>
-          <Col
-            xs={24}
-            sm={6}
-            lg={5}
-            style={{ minWidth: 180, paddingRight: 8, marginBottom: 8 }}>
+          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
             <Select
-              placeholder="Filter by status"
+              placeholder="Filter by Status"
               value={statusFilter}
               onChange={setStatusFilter}
               style={{ width: "100%" }}
@@ -297,58 +337,76 @@ const Booking = () => {
               ))}
             </Select>
           </Col>
-          <Col
-            xs={24}
-            sm={6}
-            lg={5}
-            style={{ minWidth: 180, paddingRight: 8, marginBottom: 8 }}>
+          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
             <Select
-              placeholder="Filter by booking type"
-              value={typeFilter}
-              onChange={setTypeFilter}
+              placeholder="Filter by Collection Method"
+              value={collectionMethodFilter}
+              onChange={setCollectionMethodFilter}
               style={{ width: "100%" }}
               allowClear
               size="large">
-              {/* Lấy danh sách loại bookingType duy nhất */}
-              {[...new Set(bookings.map((b) => b.bookingType))]
+              {/* Lấy danh sách collectionMethod duy nhất */}
+              {[...new Set(bookings.map((b) => b.collectionMethod))]
                 .filter(Boolean)
-                .map((type) => (
-                  <Option key={type} value={type}>
-                    {type}
+                .map((method) => (
+                  <Option key={method} value={method}>
+                    {method}
+                  </Option>
+                ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+            <Select
+              placeholder="Filter by Mediation Method"
+              value={mediationMethodFilter}
+              onChange={setMediationMethodFilter}
+              style={{ width: "100%" }}
+              allowClear
+              size="large">
+              {/* Lấy danh sách mediationMethod duy nhất */}
+              {[...new Set(bookings.map((b) => b.mediationMethod))]
+                .filter(Boolean)
+                .map((method) => (
+                  <Option key={method} value={method}>
+                    {method}
                   </Option>
                 ))}
             </Select>
           </Col>
           <Col
             xs={24}
-            sm={12}
-            lg={8}
-            style={{
-              minWidth: 260,
-              marginBottom: 8,
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}>
-            <Space size={12} style={{ width: "auto" }}>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportPDF}
-                type="default"
-                style={{ borderRadius: 6, minWidth: 120 }}
-                size="large">
-                Export PDF
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchBookings}
-                type="primary"
-                style={{ borderRadius: 6, minWidth: 120 }}
-                size="large"
-                loading={loading}>
-                Refresh
-              </Button>
-            </Space>
+            sm={24}
+            md={24}
+            lg={24}
+            xl={24}
+            style={{ marginBottom: 8 }}>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+              }}>
+              <Space size={12} style={{ width: "auto" }}>
+                <Button
+                  icon={<DownloadOutlined />}
+                  onClick={handleExportPDF}
+                  type="default"
+                  style={{ borderRadius: 6, minWidth: 120 }}
+                  size="large">
+                  Export PDF
+                </Button>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={fetchBookings}
+                  type="primary"
+                  style={{ borderRadius: 6, minWidth: 120 }}
+                  size="large"
+                  loading={loading}>
+                  Refresh
+                </Button>
+              </Space>
+            </div>
           </Col>
         </Row>
       </Card>
@@ -356,7 +414,7 @@ const Booking = () => {
         <Table
           columns={columns}
           dataSource={filteredBookings}
-          rowKey="bookingID"
+          rowKey="bookingId"
           loading={loading}
           bordered
           scroll={{ x: true }}
