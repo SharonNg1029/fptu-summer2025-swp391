@@ -1,4 +1,6 @@
 import React from "react";
+import { useSelector } from "react-redux";
+import { selectFullName } from "../../redux/features/userSlice";
 import { useState, useEffect, useRef } from "react";
 import {
   UserOutlined,
@@ -63,6 +65,7 @@ const AdminDashboard = () => {
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
+  const fullName = useSelector(selectFullName);
   const searchRef = useRef(null); // eslint-disable-line no-unused-vars
 
   const {
@@ -195,7 +198,7 @@ const AdminDashboard = () => {
                 style={{ backgroundColor: "#1890ff" }}
                 icon={<UserOutlined />}
               />
-              <span>My Profile</span>
+              <span>{fullName || "My Profile"}</span>
             </Button>
 
             {/* Logout Button */}
