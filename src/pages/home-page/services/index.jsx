@@ -359,8 +359,13 @@ const ServicesOverview = () => {
 
       {/* Modal */}
       {selectedKit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay blur giống Non-Legal DNA */}
+          <div
+            className="absolute inset-0 bg-white/30 backdrop-blur-md transition-all duration-200"
+            onClick={closeModal}
+          ></div>
+          <div className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl z-10">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-black">
@@ -429,7 +434,6 @@ const ServicesOverview = () => {
                   </h3>
                   <p className="text-gray-700">{selectedKit.manufacturer}</p>
                 </div>
-
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Purpose
@@ -438,7 +442,6 @@ const ServicesOverview = () => {
                     {selectedKit.purpose}
                   </p>
                 </div>
-
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Kit Type
@@ -447,7 +450,6 @@ const ServicesOverview = () => {
                     {selectedKit.kitType}
                   </p>
                 </div>
-
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Approval

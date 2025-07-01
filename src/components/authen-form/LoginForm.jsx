@@ -15,6 +15,19 @@ function LoginForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // State for username (for autofill)
+  const [savedUsername, setSavedUsername] = React.useState("");
+  const [form] = Form.useForm();
+
+  React.useEffect(() => {
+    // On mount, check localStorage for saved username
+    const rememberedUsername = localStorage.getItem("rememberedUsername");
+    if (rememberedUsername) {
+      setSavedUsername(rememberedUsername);
+      form.setFieldsValue({ username: rememberedUsername });
+    }
+  }, [form]);
+
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await api.post("/auth/google", {
@@ -148,6 +161,13 @@ function LoginForm() {
 
       saveAuthData(authData);
 
+      // Handle remember me: save or remove username
+      if (values.remember) {
+        localStorage.setItem("rememberedUsername", values.username);
+      } else {
+        localStorage.removeItem("rememberedUsername");
+      }
+
       toast.success("Login successful!");
 
       const { role } = userData;
@@ -216,10 +236,11 @@ function LoginForm() {
         <p className="login-subtitle">Sign in to your account</p>
 
         <Form
+          form={form}
           name="login"
           layout="vertical"
           style={{ width: "100%" }}
-          initialValues={{ remember: false }}
+          initialValues={{ remember: false, username: savedUsername }}
           onFinish={handleNormalLogin}
           onFinishFailed={handleNormalLoginError}
           autoComplete="off">
@@ -232,6 +253,7 @@ function LoginForm() {
             <Input
               placeholder="Enter your username"
               prefix={<UserOutlined />}
+              autoComplete="username"
             />
           </Form.Item>
 

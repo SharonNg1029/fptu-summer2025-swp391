@@ -42,7 +42,6 @@ const Header = () => {
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
-  const toggleDropdown = () => setShowDropdown(!showDropdown);
 
   let hoverTimeout;
 
@@ -130,6 +129,18 @@ const Header = () => {
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 100);
+  };
+
+  // avatar dropdown hover logic
+  let avatarTimeout = null;
+  const handleAvatarMouseEnter = () => {
+    if (avatarTimeout) clearTimeout(avatarTimeout);
+    setShowDropdown(true);
+  };
+  const handleAvatarMouseLeave = () => {
+    avatarTimeout = setTimeout(() => {
+      setShowDropdown(false);
+    }, 150);
   };
 
   return (
@@ -277,10 +288,17 @@ const Header = () => {
             {/* Buttons */}
             <div className="w-1/3 flex items-center justify-end space-x-4">
               {user && isAuthenticated ? (
-                <div className="relative">
+                <div
+                  className="relative"
+                  onMouseEnter={handleAvatarMouseEnter}
+                  onMouseLeave={handleAvatarMouseLeave}
+                  style={{ cursor: "pointer" }}
+                >
                   <button
-                    onClick={toggleDropdown}
-                    className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity duration-200">
+                    className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity duration-200"
+                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                    tabIndex={-1}
+                  >
                     <img
                       src={
                         user?.avatar ||
@@ -297,7 +315,11 @@ const Header = () => {
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50">
+                    <div
+                      className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50"
+                      onMouseEnter={handleAvatarMouseEnter}
+                      onMouseLeave={handleAvatarMouseLeave}
+                    >
                       <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-200">
                         <div className="font-medium text-gray-700">
                           Hello, {userDisplayName}!

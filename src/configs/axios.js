@@ -1,8 +1,10 @@
 import axios from "axios"
+import { store } from "../app/store"
+import { selectToken } from "../redux/features/userSlice"
 
 // Set config defaults when creating the instance
 const api = axios.create({
-  baseURL: "http://192.168.46.130:8080/api",
+  baseURL: "http://103.90.227.214:8080/api",
 })
 
 // Authentication helper functions
@@ -74,7 +76,17 @@ export const isAuthenticated = () => {
 // Request interceptor to add token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token")
+    // Lấy token từ Redux store nếu có, fallback sang localStorage nếu chưa có
+    let token
+    try {
+      const state = store.getState()
+      token = selectToken(state)
+    } catch {
+      token = null
+    }
+    if (!token) {
+      token = localStorage.getItem("token")
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }

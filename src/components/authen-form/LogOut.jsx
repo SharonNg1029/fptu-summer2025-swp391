@@ -50,6 +50,14 @@ const LogOut = ({
       localStorage.removeItem("sidebar:state");
       localStorage.removeItem("theme");
       localStorage.removeItem("language");
+      // Chỉ giữ lại rememberedUsername nếu nó đã tồn tại trước khi logout
+      // Nếu không có, không set lại (fix lỗi remember me)
+      const hadRememberedUsername = localStorage.getItem("rememberedUsername");
+      // ...existing code...
+      // Sau khi xóa các key khác, nếu trước đó KHÔNG có rememberedUsername thì remove luôn
+      if (!hadRememberedUsername) {
+        localStorage.removeItem("rememberedUsername");
+      }
       sessionStorage.clear();
       delete api.defaults.headers.common["Authorization"];
       toast.success("Sign out successfully!", {
@@ -104,9 +112,17 @@ const LogOut = ({
     try {
       const currentUser = localStorage.getItem("user");
       const userInfo = currentUser ? JSON.parse(currentUser) : null;
-      console.log("Force logging out user:", userInfo?.username || "Unknown user");
+      console.log(
+        "Force logging out user:",
+        userInfo?.username || "Unknown user"
+      );
       dispatch(clearUser());
+      // Only clear all except rememberedUsername
+      const rememberedUsername = localStorage.getItem("rememberedUsername");
       localStorage.clear();
+      if (rememberedUsername) {
+        localStorage.setItem("rememberedUsername", rememberedUsername);
+      }
       sessionStorage.clear();
       delete api.defaults.headers.common["Authorization"];
       navigate("/", { replace: true });
@@ -122,7 +138,10 @@ const LogOut = ({
     try {
       const currentUser = localStorage.getItem("user");
       const userInfo = currentUser ? JSON.parse(currentUser) : null;
-      console.log("Quick logout for user:", userInfo?.username || "Unknown user");
+      console.log(
+        "Quick logout for user:",
+        userInfo?.username || "Unknown user"
+      );
       dispatch(clearUser());
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
@@ -132,6 +151,7 @@ const LogOut = ({
       localStorage.removeItem("sidebar:state");
       localStorage.removeItem("theme");
       localStorage.removeItem("language");
+      // Do NOT remove rememberedUsername (for login autofill)
       sessionStorage.clear();
       delete api.defaults.headers.common["Authorization"];
       message.success("Sign Out Successfully!");

@@ -432,292 +432,321 @@ const Inventory = () => {
         />
       )}
 
-      <Tabs activeKey={activeTab} onChange={setActiveTab} type="card">
-        {/* Stock Overview Tab */}
-        <TabPane
-          tab={
-            <span>
-              <HistoryOutlined />
-              Kit Transactions
-            </span>
-          }
-          key="inventory">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 24,
-            }}>
-            <Title level={3}>Kit Inventory</Title>
-            <Space>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportInventoryPDF}>
-                Export Inventory
-              </Button>
-              <Button
-                type="primary"
-                icon={<ReloadOutlined />}
-                onClick={fetchInventory}
-                loading={loading}>
-                Refresh
-              </Button>
-            </Space>
-          </div>
-          {/* Stats Cards */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic
-                  title="Total Kits"
-                  value={inventoryStats.totalKits}
-                  prefix={<InboxOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic
-                  title="Kit Sold"
-                  value={inventoryStats.totalKitSold}
-                  prefix={<BarChartOutlined />}
-                  valueStyle={{ color: "#722ed1" }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic
-                  title="Low Stock Items"
-                  value={
-                    lowStockKitNames.length > 0
-                      ? lowStockKitNames.join(", ")
-                      : "None"
-                  }
-                  prefix={<WarningOutlined />}
-                  valueStyle={{ color: "#faad14" }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Inventory Table */}
-          <Card>
-            <Table
-              loading={loading}
-              columns={inventoryColumns}
-              dataSource={filteredInventory}
-              rowKey="id"
-              pagination={false} // Loại bỏ phân trang
-              expandable={{
-                expandedRowRender: (record) => (
-                  <div>
-                    <Row gutter={[16, 16]}>
-                      <Col span={8}>
-                        <Text strong>Unit Price:</Text> $
-                        {(record.unitPrice || 0).toFixed(2)}
-                      </Col>
-                      <Col span={8}>
-                        <Text strong>Location:</Text> {record.location || "N/A"}
-                      </Col>
-                      <Col span={8}>
-                        <Text strong>Supplier:</Text> {record.supplier || "N/A"}
-                      </Col>
-                    </Row>
-                    <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
-                      <Col span={8}>
-                        <Text strong>Last Restocked:</Text>{" "}
-                        {record.lastRestocked || "N/A"}
-                      </Col>
-                      <Col span={8}>
-                        <Text strong>Expiry Date:</Text>{" "}
-                        {record.expiryDate || "N/A"}
-                      </Col>
-                      <Col span={8}>
-                        <Text strong>Batch Number:</Text>{" "}
-                        {record.batchNumber || "N/A"}
-                      </Col>
-                    </Row>
-                  </div>
-                ),
-              }}
-            />
-          </Card>
-        </TabPane>
-
-        {/* Add Inventory Tab */}
-        <TabPane
-          tab={
-            <span>
-              <PlusOutlined />
-              Add Inventory
-            </span>
-          }
-          key="add">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 24,
-            }}>
-            <Title level={3}>Add Inventory</Title>
-          </div>
-
-          {/* Single Item Form */}
-          <Card title="Add Inventory Item">
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSingleSubmit}
-              initialValues={{ quantity: 1 }}>
-              <Form.Item
-                name="kitID"
-                label="Kit ID"
-                rules={[{ required: true, message: "Please select Kit ID" }]}>
-                <Select
-                  placeholder="Select Kit ID"
-                  onChange={(value) => {
-                    form.setFieldsValue({
-                      name:
-                        value === "K001"
-                          ? "PowerPlex Fusion"
-                          : value === "K002"
-                          ? "Global Filer"
-                          : "",
-                    });
+      {/* Tabs items for new antd Tabs API */}
+      {(() => {
+        const tabItems = [
+          {
+            key: "inventory",
+            label: (
+              <span>
+                <HistoryOutlined />
+                Kit Transactions
+              </span>
+            ),
+            children: (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 24,
                   }}>
-                  <Option value="K001">K001</Option>
-                  <Option value="K002">K002</Option>
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="name"
-                label="Kit Name"
-                rules={[{ required: true, message: "Kit Name is required" }]}>
-                <Input disabled placeholder="Kit Name will be auto-filled" />
-              </Form.Item>
-              <Form.Item
-                name="quantity"
-                label="Quantity"
-                rules={[{ required: true, message: "Please enter quantity" }]}>
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  icon={<SaveOutlined />}>
-                  Add Inventory Item
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        </TabPane>
+                  <Title level={3}>Kit Inventory</Title>
+                  <Space>
+                    <Button
+                      icon={<DownloadOutlined />}
+                      onClick={handleExportInventoryPDF}>
+                      Export Inventory
+                    </Button>
+                    <Button
+                      type="primary"
+                      icon={<ReloadOutlined />}
+                      onClick={fetchInventory}
+                      loading={loading}>
+                      Refresh
+                    </Button>
+                  </Space>
+                </div>
+                {/* Stats Cards */}
+                <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card>
+                      <Statistic
+                        title="Total Kits"
+                        value={inventoryStats.totalKits}
+                        prefix={<InboxOutlined />}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card>
+                      <Statistic
+                        title="Kit Sold"
+                        value={inventoryStats.totalKitSold}
+                        prefix={<BarChartOutlined />}
+                        valueStyle={{ color: "#722ed1" }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card>
+                      <Statistic
+                        title="Low Stock Items"
+                        value={
+                          lowStockKitNames.length > 0
+                            ? lowStockKitNames.join(", ")
+                            : "None"
+                        }
+                        prefix={<WarningOutlined />}
+                        valueStyle={{ color: "#faad14" }}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
 
-        {/* Kit Transactions Tab */}
-        <TabPane
-          tab={
-            <span>
-              <HistoryOutlined />
-              Kit Transactions
-            </span>
-          }
-          key="transactions">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 24,
-            }}>
-            <Title level={3}>Kit Transactions</Title>
-            <Space>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportTransactionsPDF}>
-                Export Transactions
-              </Button>
-              <Button
-                type="primary"
-                icon={<ReloadOutlined />}
-                onClick={fetchTransactions}
-                loading={loading}>
-                Refresh
-              </Button>
-            </Space>
-          </div>
+                {/* Inventory Table */}
+                <Card>
+                  <Table
+                    loading={loading}
+                    columns={inventoryColumns}
+                    dataSource={filteredInventory}
+                    rowKey={(kit) => kit.kitID || kit.id || kit.name}
+                    pagination={false} // Loại bỏ phân trang
+                    expandable={{
+                      expandedRowRender: (record) => (
+                        <div>
+                          <Row gutter={[16, 16]}>
+                            <Col span={8}>
+                              <Text strong>Unit Price:</Text> $
+                              {(record.unitPrice || 0).toFixed(2)}
+                            </Col>
+                            <Col span={8}>
+                              <Text strong>Location:</Text>{" "}
+                              {record.location || "N/A"}
+                            </Col>
+                            <Col span={8}>
+                              <Text strong>Supplier:</Text>{" "}
+                              {record.supplier || "N/A"}
+                            </Col>
+                          </Row>
+                          <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
+                            <Col span={8}>
+                              <Text strong>Last Restocked:</Text>{" "}
+                              {record.lastRestocked || "N/A"}
+                            </Col>
+                            <Col span={8}>
+                              <Text strong>Expiry Date:</Text>{" "}
+                              {record.expiryDate || "N/A"}
+                            </Col>
+                            <Col span={8}>
+                              <Text strong>Batch Number:</Text>{" "}
+                              {record.batchNumber || "N/A"}
+                            </Col>
+                          </Row>
+                        </div>
+                      ),
+                    }}
+                  />
+                </Card>
+              </>
+            ),
+          },
+          {
+            key: "add",
+            label: (
+              <span>
+                <PlusOutlined />
+                Add Inventory
+              </span>
+            ),
+            children: (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 24,
+                  }}>
+                  <Title level={3}>Add Inventory</Title>
+                </div>
 
-          {/* Transaction Statistics Cards */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic
-                  title="Total Transactions"
-                  value={transactionStats.totalTransactions}
-                  prefix={<HistoryOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic
-                  title="Kit Received"
-                  value={transactionStats.kitReceived}
-                  prefix={<ArrowUpOutlined />}
-                  valueStyle={{ color: "#52c41a" }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic
-                  title="Kit Unreceived"
-                  value={transactionStats.kitUnreceived}
-                  prefix={<ArrowDownOutlined />}
-                  valueStyle={{ color: "#ff4d4f" }}
-                />
-              </Card>
-            </Col>
-          </Row>
+                {/* Single Item Form */}
+                <Card title="Add Inventory Item">
+                  <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSingleSubmit}
+                    initialValues={{ quantity: 1 }}>
+                    <Form.Item
+                      name="kitID"
+                      label="Kit ID"
+                      rules={[
+                        { required: true, message: "Please select Kit ID" },
+                      ]}>
+                      <Select
+                        placeholder="Select Kit ID"
+                        onChange={(value) => {
+                          form.setFieldsValue({
+                            name:
+                              value === "K001"
+                                ? "PowerPlex Fusion"
+                                : value === "K002"
+                                ? "Global Filer"
+                                : "",
+                          });
+                        }}>
+                        <Option value="K001">K001</Option>
+                        <Option value="K002">K002</Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      name="name"
+                      label="Kit Name"
+                      rules={[
+                        { required: true, message: "Kit Name is required" },
+                      ]}>
+                      <Input
+                        disabled
+                        placeholder="Kit Name will be auto-filled"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      name="quantity"
+                      label="Quantity"
+                      rules={[
+                        { required: true, message: "Please enter quantity" },
+                      ]}>
+                      <InputNumber min={0} style={{ width: "100%" }} />
+                    </Form.Item>
+                    <Form.Item>
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={loading}
+                        icon={<SaveOutlined />}>
+                        Add Inventory Item
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                </Card>
+              </>
+            ),
+          },
+          {
+            key: "transactions",
+            label: (
+              <span>
+                <HistoryOutlined />
+                Kit Transactions
+              </span>
+            ),
+            children: (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 24,
+                  }}>
+                  <Title level={3}>Kit Transactions</Title>
+                  <Space>
+                    <Button
+                      icon={<DownloadOutlined />}
+                      onClick={handleExportTransactionsPDF}>
+                      Export Transactions
+                    </Button>
+                    <Button
+                      type="primary"
+                      icon={<ReloadOutlined />}
+                      onClick={fetchTransactions}
+                      loading={loading}>
+                      Refresh
+                    </Button>
+                  </Space>
+                </div>
 
-          {/* Filter by Received/Not Received */}
-          <Card style={{ marginBottom: 16 }}>
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={6}>
-                <Select
-                  placeholder="Filter by status"
-                  value={typeFilter}
-                  onChange={setTypeFilter}
-                  style={{ width: "100%" }}
-                  allowClear>
-                  <Option value="received">Received</Option>
-                  <Option value="not-received">Not Received</Option>
-                </Select>
-              </Col>
-            </Row>
-          </Card>
+                {/* Transaction Statistics Cards */}
+                <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card>
+                      <Statistic
+                        title="Total Transactions"
+                        value={transactionStats.totalTransactions}
+                        prefix={<HistoryOutlined />}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card>
+                      <Statistic
+                        title="Kit Received"
+                        value={transactionStats.kitReceived}
+                        prefix={<ArrowUpOutlined />}
+                        valueStyle={{ color: "#52c41a" }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card>
+                      <Statistic
+                        title="Kit Unreceived"
+                        value={transactionStats.kitUnreceived}
+                        prefix={<ArrowDownOutlined />}
+                        valueStyle={{ color: "#ff4d4f" }}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
 
-          {/* Table */}
-          <Card>
-            <Table
-              loading={loading}
-              columns={transactionColumns}
-              dataSource={filteredTransactions}
-              rowKey="transactionID"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} transactions`,
-              }}
-            />
-          </Card>
-        </TabPane>
-      </Tabs>
+                {/* Filter by Received/Not Received */}
+                <Card style={{ marginBottom: 16 }}>
+                  <Row gutter={[16, 16]} align="middle">
+                    <Col xs={24} sm={6}>
+                      <Select
+                        placeholder="Filter by status"
+                        value={typeFilter}
+                        onChange={setTypeFilter}
+                        style={{ width: "100%" }}
+                        allowClear>
+                        <Option value="received">Received</Option>
+                        <Option value="not-received">Not Received</Option>
+                      </Select>
+                    </Col>
+                  </Row>
+                </Card>
+
+                {/* Table */}
+                <Card>
+                  <Table
+                    loading={loading}
+                    columns={transactionColumns}
+                    dataSource={filteredTransactions}
+                    rowKey="transactionID"
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} of ${total} transactions`,
+                    }}
+                  />
+                </Card>
+              </>
+            ),
+          },
+        ];
+        return (
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            type="card"
+            items={tabItems}
+          />
+        );
+      })()}
 
       {/* Add Stock Modal */}
       <Modal
@@ -1010,7 +1039,7 @@ const Inventory = () => {
         <Table
           dataSource={lowStockKits}
           columns={inventoryColumns}
-          rowKey={(kit) => kit.kitID || kit.id}
+          rowKey={(kit) => kit.kitID || kit.id || kit.name}
           pagination={false}
         />
       </Modal>

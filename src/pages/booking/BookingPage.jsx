@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
-import { Form, Input, Select, DatePicker, Radio, Button, message, Row, Col, Card, Typography, Space, Checkbox } from 'antd';
-import { UserOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, MailOutlined, IdcardOutlined, TeamOutlined, EnvironmentOutlined, CreditCardOutlined, QrcodeOutlined } from '@ant-design/icons';
+import { Form, Input, Select, DatePicker, Radio, Button, message, Row, Col, Card, Typography, Space, Checkbox, Modal, Steps, Descriptions, Divider, Alert, Result } from 'antd';
+import { UserOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, MailOutlined, IdcardOutlined, TeamOutlined, EnvironmentOutlined, CreditCardOutlined, QrcodeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { legalServicesData, legalCollectionMethodsData } from '../home-page/services/legalDNA/data-legal/legalData';
 import { nonLegalServicesData, nonLegalCollectionMethodsData } from '../home-page/services/non-legalDNA/data-non-legal/nonLegalData';
@@ -11,19 +11,416 @@ import { FaCalendarAlt, FaClock, FaUser, FaPhone, FaEnvelope, FaIdCard, FaUsers,
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymentMethod: paymentMethodProp }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState(paymentMethodProp || 'cash');
+  const [qrCodeData, setQrCodeData] = useState(null);
+  const [paymentCode, setPaymentCode] = useState('');
+  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+  const signatureRef = useRef();
+
+  // Luôn gọi useEffect ở đầu component
+  useEffect(() => {
+    if (visible && paymentMethodProp) {
+      setPaymentMethod(paymentMethodProp);
+    }
+  }, [visible, paymentMethodProp]);
+
+  if (!bookingData) return null;
+
+  // Helper: format currency
+  const formatCurrency = (amount) => amount ? `${Number(amount).toLocaleString()} đ` : '0 đ';
+
+  // Helper: get address
+  const getCollectionAddress = () => {
+    if (bookingData.collectionMethod?.name === 'At Home') {
+      return bookingData.homeAddress || '—';
+    }
+    return '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City';
+  };
+
+  // Helper: get express service
+  const getExpressService = () => bookingData.isExpressService ? 'Có' : 'Không';
+
+  // Helper: get mediation method label
+  const getMediationLabel = (method) => {
+    if (method === 'postal-delivery') return 'Postal Delivery';
+    if (method === 'staff-collection') return 'Staff Collection';
+    if (method === 'walk-in') return 'Walk-in Service';
+    if (method === 'express') return 'Express Service';
+    return method;
+  };
+
+  // Helper: get payment label
+  const getPaymentLabel = (method) => {
+    if (method === 'cash') return 'Thanh toán tiền mặt khi nhận dịch vụ';
+    if (method === 'bank-transfer') return 'Quét mã QR để thanh toán';
+    return method;
+  };
+
+  // Helper: get cost breakdown
+  const getCostBreakdown = () => {
+    const { service, selectedMedicationMethod, isExpressService } = bookingData;
+    let serviceCost = service?.basePrice || 0;
+    let mediationCost = 0;
+    let expressCost = 0;
+    if (bookingData.medicationMethod === 'staff-collection') mediationCost = 500000;
+    if (bookingData.medicationMethod === 'postal-delivery') mediationCost = 250000;
+    if (isExpressService) expressCost = service?.expressPrice || 1500000;
+    return { serviceCost, mediationCost, expressCost };
+  };
+
+  // Payment code & QR
+  const generatePaymentCode = () => `DNA${Date.now().toString().slice(-6)}`;
+  const handlePaymentMethodChange = (e) => setPaymentMethod(e.target.value);
+
+  // Step 1: Confirm info
+  const handleEdit = () => {
+    setCurrentStep(1);
+    onCancel();
+  };
+  const handleConfirm = async () => {
+    const code = generatePaymentCode();
+    setPaymentCode(code);
+    if (paymentMethod === 'cash') {
+      // Cash flow: chuyển thẳng đến ký tên (step 2)
+      setCurrentStep(2);
+    } else {
+      // QR flow: hiển thị mã QR thanh toán (step 2)
+      setQrCodeData(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAYMENT:${code}`);
+      setCurrentStep(2);
+    }
+  };
+
+  // Step 2: QR Payment
+  const handleCheckPayment = () => {
+    // Xác nhận thanh toán thành công, chuyển đến ký tên
+    setIsPaymentConfirmed(true);
+    setCurrentStep(3);
+  };
+
+  // Step 3: Signature (cho cả cash và QR)
+  const handleSignatureComplete = () => {
+    if (signatureRef.current && signatureRef.current.isEmpty && signatureRef.current.isEmpty()) {
+      return;
+    }
+    const signatureData = signatureRef.current?.toDataURL ? signatureRef.current.toDataURL() : '';
+    const finalBookingData = {
+      ...bookingData,
+      paymentMethod,
+      paymentCode,
+      signature: signatureData,
+      status: 'confirmed'
+    };
+    onConfirm(finalBookingData);
+    setCurrentStep(4);
+  };
+
+  // Step 4: Success
+  const handleClose = () => {
+    setCurrentStep(1);
+    setPaymentMethod('cash');
+    setQrCodeData(null);
+    setPaymentCode('');
+    setIsPaymentConfirmed(false);
+    if (signatureRef.current && signatureRef.current.clear) signatureRef.current.clear();
+    onCancel();
+  };
+
+  // Render info summary
+  const kitTypes = [
+    { value: 'K001', label: 'PowerPlex Fusion', price: 0 },
+    { value: 'K002', label: 'Global Filer', price: 0 }
+  ];
+
+  const renderSummary = () => {
+    const { serviceType, service, collectionMethod, medicationMethod, appointmentDate, timeSlot, isExpressService, totalCost, firstPerson, secondPerson, homeAddress, selectedKitType, bookingTime } = bookingData;
+    const { serviceCost, mediationCost, expressCost } = getCostBreakdown();
+    return (
+      <Card bordered style={{ background: '#f9fafb', borderRadius: 12, boxShadow: '0 2px 8px #f0f1f2' }}>
+        <Alert
+          message={<b>Thông tin không thể thay đổi sau khi đặt thành công, vui lòng kiểm tra toàn bộ thông tin dưới đây là chính xác.</b>}
+          type="warning"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+        <Descriptions title="Thông tin dịch vụ" column={1} bordered size="middle">
+          <Descriptions.Item label="Loại dịch vụ">{serviceType === 'legal' ? 'Legal DNA Testing' : 'Non-Legal DNA Testing'}</Descriptions.Item>
+          <Descriptions.Item label="Tên dịch vụ">{service?.name}</Descriptions.Item>
+          <Descriptions.Item label="Phương thức thu thập mẫu">{collectionMethod?.name}</Descriptions.Item>
+          <Descriptions.Item label="Địa chỉ thu thập">{collectionMethod?.name === 'At Home' ? homeAddress || '—' : '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City'}</Descriptions.Item>
+          <Descriptions.Item label="Phương thức vận chuyển">{getMediationLabel(medicationMethod)}</Descriptions.Item>
+          <Descriptions.Item label="Express Service">{isExpressService ? 'Có' : 'Không'}</Descriptions.Item>
+          <Descriptions.Item label="Kit">{selectedKitType ? (kitTypes.find(k => k.value === selectedKitType)?.label) : '—'}</Descriptions.Item>
+          <Descriptions.Item label="Lịch hẹn">
+            {appointmentDate ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CalendarOutlined style={{ color: '#1890ff' }} />
+                  <span style={{ fontWeight: '500' }}>
+                    {moment(appointmentDate).format('DD/MM/YYYY (dddd)')}
+                  </span>
+                </div>
+                {timeSlot && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ClockCircleOutlined style={{ color: '#52c41a' }} />
+                    <span style={{
+                      fontWeight: '500',
+                      color: '#52c41a',
+                      backgroundColor: '#f6ffed',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #b7eb8f',
+                      minWidth: 110,
+                      textAlign: 'right',
+                      whiteSpace: 'nowrap',
+                      display: 'block'
+                    }}>
+                      {timeSlot}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <span style={{ color: '#bfbfbf' }}>—</span>
+            )}
+          </Descriptions.Item>
+          <Descriptions.Item label="Thời gian đặt lịch">{bookingTime ? new Date(bookingTime).toLocaleString('vi-VN', { hour12: false }) : ''}</Descriptions.Item>
+        </Descriptions>
+        <Divider />
+        <Descriptions title="Thông tin người xét nghiệm" column={1} bordered size="middle">
+          <Descriptions.Item label="Người thứ nhất (người đại diện)">
+            <div>
+              Họ và tên: {firstPerson?.fullName}<br/>
+              Ngày sinh: {firstPerson?.dateOfBirth?.format ? firstPerson.dateOfBirth.format('DD/MM/YYYY') : firstPerson?.dateOfBirth}<br/>
+              Giới tính: {firstPerson?.gender}<br/>
+              Số điện thoại: {firstPerson?.phoneNumber}<br/>
+              Email: {firstPerson?.email}<br/>
+              Mối quan hệ: {firstPerson?.relationship}<br/>
+              Loại mẫu: {firstPerson?.sampleType}<br/>
+              Số CCCD/CMND: {firstPerson?.personalId}
+            </div>
+          </Descriptions.Item>
+          <Descriptions.Item label="Người thứ hai">
+            <div>
+              Họ và tên: {secondPerson?.fullName}<br/>
+              Ngày sinh: {secondPerson?.dateOfBirth?.format ? secondPerson.dateOfBirth.format('DD/MM/YYYY') : secondPerson?.dateOfBirth}<br/>
+              Giới tính: {secondPerson?.gender}<br/>
+              Mối quan hệ: {secondPerson?.relationship}<br/>
+              Loại mẫu: {secondPerson?.sampleType}
+            </div>
+          </Descriptions.Item>
+        </Descriptions>
+        <Divider />
+        <Descriptions title="Chi phí chi tiết" column={1} bordered size="middle">
+          <Descriptions.Item label="Service Cost">{formatCurrency(serviceCost)}</Descriptions.Item>
+          <Descriptions.Item label="Mediation Method Cost">{formatCurrency(mediationCost)}</Descriptions.Item>
+          {isExpressService && <Descriptions.Item label="Express Service Cost">{formatCurrency(expressCost)}</Descriptions.Item>}
+          <Descriptions.Item label={<b>Total Cost</b>}>
+            <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(totalCost)}</span>
+          </Descriptions.Item>
+        </Descriptions>
+        <Divider />
+        <div className="mt-6">
+          <Text strong style={{ fontSize: '16px' }}>Phương thức thanh toán</Text>
+          <div style={{ marginTop: '12px', width: '100%' }}>
+            {paymentMethod === 'cash' && (
+              <div className="flex items-center">
+                <CreditCardOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                <span style={{ fontSize: 16 }}>Thanh toán tiền mặt khi nhận dịch vụ</span>
+              </div>
+            )}
+            {paymentMethod === 'bank-transfer' && (
+              <div className="flex items-center">
+                <QrcodeOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                <span style={{ fontSize: 16 }}>Quét mã QR để thanh toán</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
+  // Render QR code
+  const renderQRCode = () => (
+    <div className="text-center">
+      <div className="mb-4">Vui lòng quét mã QR để thanh toán:</div>
+      <img src={qrCodeData} alt="QR Code" className="mx-auto mb-4" style={{ width: 200, height: 200 }} />
+      <div className="mb-2">Mã thanh toán: <b>{paymentCode}</b></div>
+      <div className="mb-4 text-sm text-gray-500">Sau khi thanh toán, nhấn "Xác nhận đã thanh toán" để tiếp tục.</div>
+    </div>
+  );
+
+  // Render signature form (giả lập)
+  const renderSignature = () => (
+    <div className="text-center">
+      <div className="mb-4">Vui lòng ký tên xác nhận đặt lịch:</div>
+      <div className="mb-4">
+        {/* Giả lập vùng ký tên */}
+        <div ref={signatureRef} style={{ border: '1px solid #ccc', width: 300, height: 100, margin: '0 auto', background: '#fff' }}>
+          <span style={{ color: '#bbb', lineHeight: '100px' }}>[Ký tên tại đây]</span>
+        </div>
+      </div>
+      <div className="mb-2 text-sm text-gray-500">Ký tên xác nhận, sau đó nhấn "Hoàn tất đặt lịch".</div>
+    </div>
+  );
+
+  // Render success
+  const renderSuccess = () => {
+    const getSuccessMessage = () => {
+      const { collectionMethod, appointmentDate, timeSlot } = bookingData;
+      const location = collectionMethod?.name === 'At Home' ? 'ở nhà' : 'ở cơ sở y tế';
+      const appointmentInfo = appointmentDate && timeSlot ? 
+        `đúng lịch hẹn ${moment(appointmentDate).format('DD/MM/YYYY')} lúc ${timeSlot}` : 
+        'đúng lịch hẹn đã đặt';
+      
+      if (paymentMethod === 'cash') {
+        return `Đặt lịch thành công! Vui lòng có mặt ${location} ${appointmentInfo} và thanh toán khi nhận dịch vụ.`;
+      } else {
+        return `Đặt lịch thành công! Vui lòng có mặt ${location} ${appointmentInfo}.`;
+      }
+    };
+
+    return (
+      <div className="text-center">
+        <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
+        <Title level={3} style={{ color: '#52c41a', marginBottom: '16px' }}>Đặt lịch thành công!</Title>
+        <div style={{ marginBottom: '16px', fontSize: '16px' }}>
+          {getSuccessMessage()}
+        </div>
+        <div style={{ marginBottom: '8px' }}>Mã đặt lịch: <b>{paymentCode}</b></div>
+        <div style={{ fontSize: '14px', color: '#666' }}>
+          Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.
+        </div>
+      </div>
+    );
+  };
+
+  // Render step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return renderSummary();
+      case 2:
+        // Step 2: QR Payment cho bank-transfer, Signature cho cash
+        return paymentMethod === 'cash' ? renderSignature() : renderQRCode();
+      case 3:
+        // Step 3: Signature cho bank-transfer sau khi thanh toán
+        return renderSignature();
+      case 4:
+        return renderSuccess();
+      default:
+        return null;
+    }
+  };
+
+  // Render footer
+  const renderFooter = () => {
+    switch (currentStep) {
+      case 1:
+        return [
+          <Button key="edit" onClick={handleEdit}>Edit</Button>,
+          <Button key="confirm" type="primary" onClick={handleConfirm}>Confirm</Button>
+        ];
+      case 2:
+        if (paymentMethod === 'cash') {
+          // Cash flow: ở step ký tên
+          return [
+            <Button key="back" onClick={() => setCurrentStep(1)}>Quay lại</Button>,
+            <Button key="complete" type="primary" onClick={handleSignatureComplete}>Hoàn tất đặt lịch</Button>
+          ];
+        } else {
+          // QR flow: ở step thanh toán
+          return [
+            <Button key="back" onClick={() => setCurrentStep(1)}>Quay lại</Button>,
+            <Button key="check" type="primary" onClick={handleCheckPayment}>Xác nhận đã thanh toán</Button>
+          ];
+        }
+      case 3:
+        // QR flow: ở step ký tên sau thanh toán
+        return [
+          <Button key="back" onClick={() => setCurrentStep(2)}>Quay lại</Button>,
+          <Button key="complete" type="primary" onClick={handleSignatureComplete}>Hoàn tất đặt lịch</Button>
+        ];
+      case 4:
+        return [
+          <Button key="close" type="primary" onClick={handleClose}>Đóng</Button>
+        ];
+      default:
+        return [];
+    }
+  };
+
+  // Steps - động dựa trên phương thức thanh toán
+  const getSteps = () => {
+    if (paymentMethod === 'cash') {
+      return [
+        { title: 'Xác nhận' },
+        { title: 'Ký tên' },
+        { title: 'Hoàn thành' }
+      ];
+    } else {
+      return [
+        { title: 'Xác nhận' },
+        { title: 'Thanh toán' },
+        { title: 'Ký tên' },
+        { title: 'Hoàn thành' }
+      ];
+    }
+  };
+
+  const getCurrentStepIndex = () => {
+    if (paymentMethod === 'cash') {
+      // Cash flow: 1->2->4 (bỏ qua step 3)
+      if (currentStep === 1) return 0;
+      if (currentStep === 2) return 1;
+      if (currentStep === 4) return 2;
+    } else {
+      // QR flow: 1->2->3->4
+      return currentStep - 1;
+    }
+    return 0;
+  };
+
+  return (
+    <Modal
+      title="Xác nhận đặt lịch"
+      open={visible}
+      onCancel={handleClose}
+      footer={renderFooter()}
+      width={700}
+      destroyOnClose
+      styles={{
+        body: {
+          padding: '0',
+          maxHeight: '70vh',
+          overflowY: 'auto'
+        }
+      }}
+      bodyStyle={{
+        padding: '0',
+        maxHeight: '70vh',
+        overflowY: 'auto'
+      }}
+    >
+      <div style={{ padding: '24px' }}>
+        <Steps current={getCurrentStepIndex()} items={getSteps()} className="mb-6" />
+        {renderStepContent()}
+      </div>
+    </Modal>
+  );
+};
+
 const BookingPage = () => {
-  const dispatch = useDispatch();
-  const { currentUser, isAuthenticated, customerID } = useSelector(state => state.user);
+  const { customerID } = useSelector(state => state.user);
   const [form] = Form.useForm();
   
-  // ... existing code ...
   const [searchParams] = useSearchParams();
   const serviceID = searchParams.get('serviceID');
   const expressService = searchParams.get('express');
   
   // State cho form booking
-  const [serviceType, setServiceType] = useState("");
-  const [serviceName, setServiceName] = useState("");
   const [selectedServiceType, setSelectedServiceType] = useState('legal');
   const [selectedService, setSelectedService] = useState(null);
   const [selectedCollectionMethod, setSelectedCollectionMethod] = useState(null);
@@ -33,29 +430,13 @@ const BookingPage = () => {
   const [timeSlot, setTimeSlot] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [homeAddress, setHomeAddress] = useState('');
+  const [selectedKitType, setSelectedKitType] = useState(''); // Thêm state cho loại kit
   
-  // State cho thông tin test subjects
-  const [firstPerson, setFirstPerson] = useState({
-    fullName: '',
-    dateOfBirth: '',
-    gender: 'male',
-    phoneNumber: '',
-    email: '',
-    relationship: '',
-    sampleType: '',
-    personalId: ''
-  });
-  
-  const [secondPerson, setSecondPerson] = useState({
-    fullName: '',
-    dateOfBirth: '',
-    gender: 'male',
-    relationship: '',
-    sampleType: '',
-    personalId: ''
-  });
+  // State cho modal xác nhận
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ... existing code ...
   const isServicePreSelected = Boolean(serviceID);
   const isExpressPreSelected = Boolean(expressService === 'true');
   const isStandardPreSelected = Boolean(expressService === 'false');
@@ -140,10 +521,10 @@ const BookingPage = () => {
 
   // Sample types
   const sampleTypes = [
-    'Blood Sample',
-    'Buccal Swab (Saliva)',
-    'Hair with Root Follicles',
-    'Nail Clippings'
+    'Blood',
+    'Buccal Swab',
+    'Hair',
+    'Nail'
   ];
   
   // Relationships
@@ -153,16 +534,63 @@ const BookingPage = () => {
   ];
 
   // Validation functions
-  const validateAge18 = (_, value) => {
+ const validateAge18 = (_, value) => {
     if (!value) {
-      return Promise.reject(new Error('Vui lòng chọn ngày sinh!'));
+      return Promise.reject(new Error("Vui lòng chọn ngày sinh!"));
     }
-    const age = moment().diff(moment(value), 'years');
+
+    // Convert moment object to JavaScript Date
+    let birthDate;
+    if (moment.isMoment(value)) {
+      birthDate = value.toDate(); // Convert moment to native Date
+    } else {
+      birthDate = new Date(value);
+    }
+
+    if (isNaN(birthDate.getTime())) {
+      return Promise.reject(new Error("Ngày sinh không hợp lệ!"));
+    }
+
+    const today = new Date();
+
+    // Tính tuổi chính xác
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // Nếu chưa đến tháng sinh hoặc đến tháng sinh nhưng chưa đến ngày sinh
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    console.log("-----------------------------");
+    console.log("birthDate:", birthDate.toISOString().split("T")[0]);
+    console.log("today:", today.toISOString().split("T")[0]);
+    console.log("calculated age:", age);
+    console.log("-----------------------------");
+
     if (age < 18) {
-      return Promise.reject(new Error('Người đại diện phải trên 18 tuổi!'));
+      return Promise.reject(
+        new Error("Người đại diện phải từ 18 tuổi trở lên!")
+      );
     }
+
     return Promise.resolve();
   };
+
+
+
+
+
+
+
+  // Kit Types
+  const kitTypes = [
+    { value: 'K001', label: 'PowerPlex Fusion', price: 0 },
+    { value: 'K002', label: 'Global Filer', price: 0 }
+  ];
 
   const validatePhoneNumber = (_, value) => {
     if (!value) {
@@ -212,6 +640,14 @@ const BookingPage = () => {
     return current && current < moment().startOf('day');
   };
 
+  // Reset timeSlot when switching to postal-delivery
+  useEffect(() => {
+    if (selectedMedicationMethod === 'postal-delivery') {
+      setTimeSlot('');
+      form.setFieldsValue({ timeSlot: undefined });
+    }
+  }, [selectedMedicationMethod, form]);
+
 
 
   // ... existing useEffect code ...
@@ -246,6 +682,12 @@ const BookingPage = () => {
   
   const handleExpressServiceChange = (checked) => {
     setIsExpressService(checked);
+    
+    // Nếu tick Express Service và đang chọn Postal Delivery, reset về null
+    if (checked && selectedMedicationMethod === 'postal-delivery') {
+      setSelectedMedicationMethod(null);
+    }
+    
     if (checked) {
       setSelectedMedicationMethod('express');
     } else {
@@ -264,26 +706,162 @@ const BookingPage = () => {
     if (currentCollectionMethods.length > 0) {
       setSelectedCollectionMethod(currentCollectionMethods[1]);
     }
-  }, [selectedServiceType, serviceID]);
+  }, [selectedServiceType, serviceID, currentServicesData, currentCollectionMethods]);
   
   const handleConfirmBooking = (values) => {
-    const bookingData = {
-      customerID,
-      serviceType: selectedServiceType,
-      service: selectedService,
-      collectionMethod: selectedCollectionMethod,
-      medicationMethod: selectedMedicationMethod,
-      appointmentDate: values.appointmentDate?.format('YYYY-MM-DD'),
-      timeSlot: values.timeSlot,
-      firstPerson: values.firstPerson,
-      secondPerson: values.secondPerson,
-      totalCost: calculateTotalCost(),
-      paymentMethod,
-      bookingTime: new Date().toISOString()
-    };
+    // Lấy giá trị mới nhất từ Form (tránh lỗi khi Form chưa cập nhật kịp)
+    const appointmentDateValue = form.getFieldValue('appointmentDate');
+    const timeSlotValue = form.getFieldValue('timeSlot');
+
+    // Validation bổ sung cho các trường bắt buộc
+    if (!selectedService) {
+      message.error('Vui lòng chọn dịch vụ!');
+      return;
+    }
+    if (!selectedCollectionMethod) {
+      message.error('Vui lòng chọn phương thức lấy mẫu!');
+      return;
+    }
+    if (!selectedMedicationMethod) {
+      message.error('Vui lòng chọn phương thức medication!');
+      return;
+    }
+    if (!selectedKitType) {
+      message.error('Vui lòng chọn loại kit!');
+      return;
+    }
+
+    // Validation cho appointment date (bắt buộc cho tất cả trừ postal delivery)
+    if (selectedMedicationMethod !== 'postal-delivery' && !appointmentDateValue) {
+      message.error('Vui lòng chọn ngày hẹn!');
+      return;
+    }
+
+    // Validation cho time slot (bắt buộc khi có appointment date và không phải postal delivery)
+    if (selectedMedicationMethod !== 'postal-delivery' && appointmentDateValue && !timeSlotValue) {
+      message.error('Vui lòng chọn khung giờ!');
+      return;
+    }
+
+    // Validation cho home address (bắt buộc khi chọn at home hoặc postal delivery)
+    if ((selectedCollectionMethod?.name === 'At Home' || selectedMedicationMethod === 'postal-delivery') && (!homeAddress || homeAddress.trim() === '')) {
+      message.error('Vui lòng nhập địa chỉ nhà khi chọn lấy mẫu tại nhà hoặc giao hàng tận nơi!');
+      return;
+    }
+
+    // Validation cho thông tin người thứ nhất (bắt buộc)
+    if (!values.firstPerson?.fullName || values.firstPerson.fullName.trim() === '') {
+      message.error('Vui lòng nhập họ và tên người thứ nhất!');
+      return;
+    }
+    if (!values.firstPerson?.email || values.firstPerson.email.trim() === '') {
+      message.error('Vui lòng nhập email người thứ nhất!');
+      return;
+    }
+    if (!values.firstPerson?.gender) {
+      message.error('Vui lòng chọn giới tính người thứ nhất!');
+      return;
+    }
+    if (!values.firstPerson?.relationship) {
+      message.error('Vui lòng chọn mối quan hệ người thứ nhất!');
+      return;
+    }
+    if (!values.firstPerson?.sampleType) {
+      message.error('Vui lòng chọn loại mẫu người thứ nhất!');
+      return;
+    }
+    if (!values.firstPerson?.personalId) {
+      message.error('Vui lòng nhập số CCCD/CMND người thứ nhất!');
+      return;
+    }
+
+    // Validation cho thông tin người thứ hai (bắt buộc)
+    if (!values.secondPerson?.fullName || values.secondPerson.fullName.trim() === '') {
+      message.error('Vui lòng nhập họ và tên người thứ hai!');
+      return;
+    }
+    if (!values.secondPerson?.dateOfBirth) {
+      message.error('Vui lòng chọn ngày sinh người thứ hai!');
+      return;
+    }
+    if (!values.secondPerson?.gender) {
+      message.error('Vui lòng chọn giới tính người thứ hai!');
+      return;
+    }
+    if (!values.secondPerson?.sampleType) {
+      message.error('Vui lòng chọn loại mẫu người thứ hai!');
+      return;
+    }
     
-    console.log('Booking Data:', bookingData);
-    message.success('Đặt lịch thành công!');
+    setIsSubmitting(true);
+    try {
+      const bookingData = {
+        customerID,
+        serviceType: selectedServiceType,
+        service: selectedService,
+        collectionMethod: selectedCollectionMethod,
+        medicationMethod: selectedMedicationMethod,
+        appointmentDate: appointmentDateValue ? appointmentDateValue.format('YYYY-MM-DD') : '',
+        timeSlot: selectedMedicationMethod === 'postal-delivery' ? null : timeSlotValue,
+        firstPerson: values.firstPerson,
+        secondPerson: values.secondPerson,
+        totalCost: calculateTotalCost(),
+        paymentMethod,
+        bookingTime: new Date().toISOString(),
+        // Thêm các trường mới để ConfirmBookingModal luôn nhận được dữ liệu mới nhất
+        homeAddress,
+        selectedKitType,
+        isExpressService,
+      };
+      setBookingData(bookingData); // Đảm bảo bookingData luôn là dữ liệu mới nhất
+      setIsModalVisible(true);
+    } catch {
+      message.error('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Thêm function xử lý khi hoàn tất booking từ modal
+  const handleBookingComplete = async (finalBookingData) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Gọi API
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalBookingData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      await response.json();
+      
+      message.success('Đặt lịch thành công!');
+      form.resetFields();
+      setAppointmentDate('');
+      setTimeSlot('');
+      setIsModalVisible(false);
+      setBookingData(null);
+      
+      // Redirect hoặc refresh data
+      // navigate('/booking-history');
+      
+    } catch (error) {
+      console.error('Error saving booking:', error);
+      message.error('Có lỗi xảy ra khi lưu thông tin đặt lịch!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function đóng modal
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+    setBookingData(null);
   };
 
   return (
@@ -297,28 +875,7 @@ const BookingPage = () => {
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Service Information */}
         <div className="lg:col-span-2 space-y-6">
-          
-          {/* Thông báo khi service được pre-selected */}
-          {isServicePreSelected && (
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-700">
-                    <strong>Service đã được chọn từ trang trước:</strong> {selectedService?.name} ({selectedServiceType === 'legal' ? 'Legal' : 'Non-Legal'})
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Thông tin service không thể thay đổi để đảm bảo tính nhất quán với lựa chọn ban đầu.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
+              
           {/* Service Booking Information */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center">
@@ -367,11 +924,7 @@ const BookingPage = () => {
                   )}
                 </button>
               </div>
-              {isServicePreSelected && (
-                <p className="text-xs text-gray-500 mt-2">
-                  🔒 Service type đã được khóa vì đã chọn từ trang service
-                </p>
-              )}
+             
             </div>
             
             {/* Service Selection */}
@@ -411,31 +964,20 @@ const BookingPage = () => {
                   type="checkbox"
                   id="expressService"
                   checked={isExpressService}
-                  onChange={(e) => !isExpressPreSelected && !isStandardPreSelected && handleExpressServiceChange(e.target.checked)}
-                  disabled={isExpressPreSelected || isStandardPreSelected}
-                  className={`w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 ${
-                    isStandardPreSelected ? 'opacity-40 cursor-not-allowed' : ''
-                  }`}
+                  onChange={(e) => handleExpressServiceChange(e.target.checked)}
+                  className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
                 />
-                <label htmlFor="expressService" className={`ml-3 flex-1 ${
-                  isStandardPreSelected ? 'opacity-60' : ''
-                }`}>
+                <label htmlFor="expressService" className="ml-3 flex-1">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className={`font-medium flex items-center ${
-                        isStandardPreSelected ? 'text-orange-400' : 'text-orange-700'
-                      }`}>
+                      <span className="font-medium flex items-center text-orange-700">
                         <FaClock className="mr-2" />
                         Express Service
                       </span>
-                      <p className={`text-sm mt-1 ${
-                        isStandardPreSelected ? 'text-orange-300' : 'text-orange-600'
-                      }`}>
+                      <p className="text-sm mt-1 text-orange-600">
                         Xử lý nhanh và ưu tiên cao - Kết quả trong thời gian ngắn nhất
                       </p>
-                      <p className={`text-sm font-semibold mt-1 ${
-                        isStandardPreSelected ? 'text-orange-300' : 'text-orange-600'
-                      }`}>
+                      <p className="text-sm font-semibold mt-1 text-orange-600">
                         Phí thêm: {selectedService?.expressPrice ? `${selectedService.expressPrice.toLocaleString()} đ` : '1,500,000 đ'}
                       </p>
                     </div>
@@ -458,16 +1000,8 @@ const BookingPage = () => {
                   </div>
                 </label>
               </div>
-              {isExpressPreSelected && (
-                <p className="text-xs text-orange-600 mt-2">
-                  🔒 Express Service đã được chọn từ trang trước và không thể thay đổi
-                </p>
-              )}
-              {isStandardPreSelected && (
-                <p className="text-xs text-orange-400 mt-2">
-                  🔒 Bạn đã chọn Standard Service - Express Service không khả dụng
-                </p>
-              )}
+              
+             
             </div>
             
             {/* Collection Method */}
@@ -475,7 +1009,17 @@ const BookingPage = () => {
               <label className="block text-sm font-medium mb-2">Collection Method *</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div
-                  onClick={() => setSelectedCollectionMethod({name: 'At Home', price: 0})}
+                  onClick={() => {
+                    setSelectedCollectionMethod({name: 'At Home', price: 0});
+                    // Nếu đang là At Facility thì chuyển sang At Home, nếu medication method không hợp lệ thì set lại
+                    if (selectedMedicationMethod === 'walk-in' || selectedMedicationMethod === 'express') {
+                      setSelectedMedicationMethod('staff-collection');
+                    }
+                    // Reset timeSlot, appointmentDate khi chuyển collection method
+                    setTimeSlot('');
+                    setAppointmentDate('');
+                    form.setFieldsValue({ timeSlot: undefined, appointmentDate: undefined });
+                  }}
                   className={`p-4 border rounded-lg cursor-pointer transition-all ${
                     selectedCollectionMethod?.name === 'At Home'
                       ? 'border-blue-500 bg-blue-50'
@@ -491,7 +1035,14 @@ const BookingPage = () => {
                 </div>
                 
                 <div
-                  onClick={() => setSelectedCollectionMethod({name: 'At Facility', price: 0})}
+                  onClick={() => {
+                    setSelectedCollectionMethod({name: 'At Facility', price: 0});
+                    setSelectedMedicationMethod('walk-in');
+                    // Reset timeSlot, appointmentDate khi chuyển collection method
+                    setTimeSlot('');
+                    setAppointmentDate('');
+                    form.setFieldsValue({ timeSlot: undefined, appointmentDate: undefined });
+                  }}
                   className={`p-4 border rounded-lg cursor-pointer transition-all ${
                     selectedCollectionMethod?.name === 'At Facility'
                       ? 'border-blue-500 bg-blue-50'
@@ -506,8 +1057,47 @@ const BookingPage = () => {
                   <p className="text-sm font-semibold text-blue-600">Free</p>
                 </div>
               </div>
-            </div>
-            
+              
+              {/* Address Information - hiển thị bên dưới Collection Method */}
+              {selectedCollectionMethod?.name === 'At Home' && (
+                <div className="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                  <div className="flex items-start mb-3">
+                    <FaMapMarkerAlt className="text-blue-600 mr-2 mt-1" />
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-blue-700 mb-2">Địa chỉ nhà *</label>
+                      <p className="text-sm text-blue-600 mb-3"> Vui lòng cung cấp địa chỉ địa nhà chính xác của bạn.</p>
+                    </div>
+                  </div>
+                  <textarea
+                    value={homeAddress}
+                    onChange={(e) => setHomeAddress(e.target.value)}
+                    placeholder="Nhập địa chỉ đầy đủ (số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố)..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    rows={3}
+                    required
+                  />
+                </div>
+              )}
+              
+              {selectedCollectionMethod?.name === 'At Facility' && (
+                <div className="mt-4 p-4 border border-green-200 rounded-lg bg-green-50">
+                  <div className="flex items-start">
+                    <FaMapMarkerAlt className="text-green-600 mr-2 mt-1" />
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-green-700 mb-2">Địa chỉ cơ sở</label>
+                      <div className="p-3 bg-white border border-green-200 rounded-lg">
+                        <p className="text-sm font-medium text-green-700 mb-1">
+                          7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City
+                        </p>
+                        <p className="text-xs text-green-600">
+                          📍 Vui lòng đến địa chỉ trên để thực hiện thu thập mẫu
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             {/* Medication Method */}
             {selectedCollectionMethod && (
               <div className="mb-4">
@@ -539,13 +1129,11 @@ const BookingPage = () => {
                   {/* Staff Collection - Only for At Home */}
                   {selectedCollectionMethod?.name === 'At Home' && (
                     <div
-                      onClick={() => !isExpressPreSelected && setSelectedMedicationMethod('staff-collection')}
-                      className={`p-4 border rounded-lg transition-all ${
+                      onClick={() => setSelectedMedicationMethod('staff-collection')}
+                      className={`p-4 border rounded-lg transition-all cursor-pointer ${
                         selectedMedicationMethod === 'staff-collection'
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      } ${
-                        isExpressPreSelected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       }`}
                     >
                       <div className="flex items-center">
@@ -559,16 +1147,16 @@ const BookingPage = () => {
                     </div>
                   )}
                   
-                  {/* Postal Delivery - Only for At Home and Non-Legal */}
-                  {selectedCollectionMethod?.name === 'At Home' && selectedServiceType !== 'legal' && (
+                  {/* Postal Delivery - Hidden when Express Service is selected */}
+                  {selectedCollectionMethod?.name === 'At Home' && 
+                   selectedServiceType !== 'legal' && 
+                   !isExpressService && (
                     <div
-                      onClick={() => !isExpressPreSelected && setSelectedMedicationMethod('postal-delivery')}
-                      className={`p-4 border rounded-lg transition-all ${
+                      onClick={() => setSelectedMedicationMethod('postal-delivery')}
+                      className={`p-4 border rounded-lg transition-all cursor-pointer ${
                         selectedMedicationMethod === 'postal-delivery'
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      } ${
-                        isExpressPreSelected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       }`}
                     >
                       <div className="flex items-center">
@@ -584,6 +1172,173 @@ const BookingPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Kit Type Selection */}
+            {selectedMedicationMethod && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Kit Type Selection *</label>
+                <p className="text-sm text-gray-600 mb-3">
+                  📋 Chọn loại kit sẽ được sử dụng cho cả hai người tham gia xét nghiệm
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {kitTypes.map(kit => (
+                    <div
+                      key={kit.value}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedKitType === kit.value
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedKitType(kit.value)}
+                    >
+                      <div className="font-medium">{kit.label}</div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {kit.value === 'K001' 
+                          ? 'Kit xét nghiệm DNA với công nghệ PowerPlex Fusion'
+                          : 'Kit xét nghiệm DNA với công nghệ Global Filer'
+                        }
+                      </p>
+                      <p className="text-sm font-semibold text-blue-600">
+                        {kit.price === 0 ? 'Miễn phí' : `${kit.price.toLocaleString()} đ`}
+                      </p>
+                      {selectedKitType === kit.value && (
+                        <div className="flex items-center text-blue-600 mt-2">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-medium">Đã chọn</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedKitType && (
+                  <div className="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-700 mb-1">
+                          Kit đã chọn: {kitTypes.find(k => k.value === selectedKitType)?.label}
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          ✅ Kit này sẽ được sử dụng cho cả hai người tham gia xét nghiệm
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Appointment Schedule - Di chuyển lên đây */}
+            <Card 
+              title={
+                <Space>
+                  <CalendarOutlined style={{ color: '#1890ff' }} />
+                  <span>Lịch hẹn</span>
+                </Space>
+              }
+              style={{ marginBottom: 24 }}
+            >
+              {/* Date Selection */}
+              <div className="mb-6">
+                <Form.Item
+                  name="appointmentDate"
+                  label="Ngày hẹn"
+                  rules={[{ validator: validateAppointmentDate }]}
+                >
+                  <DatePicker 
+                    style={{ width: '100%' }}
+                    placeholder="Chọn ngày hẹn"
+                    format="DD/MM/YYYY"
+                    disabledDate={disabledDate}
+                    value={form.getFieldValue('appointmentDate')}
+                    onChange={(date) => {
+                      form.setFieldsValue({ appointmentDate: date });
+                      setAppointmentDate(date ? date.format('YYYY-MM-DD') : '');
+                      // Reset time slot when date changes
+                      form.setFieldsValue({ timeSlot: undefined });
+                      setTimeSlot('');
+                    }}
+                  />
+                </Form.Item>
+              </div>
+
+              {/* Time Selection - Only show when date is selected AND not postal delivery */}
+              {appointmentDate && selectedMedicationMethod !== 'postal-delivery' && (
+                <div>
+                  <Form.Item
+                    name="timeSlot"
+                    label="Khung giờ"
+                    rules={[{ required: true, message: 'Vui lòng chọn khung giờ!' }]}
+                  >
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {timeSlots.map(time => {
+                        const isDisabled = isTimeSlotDisabled(time);
+                        return (
+                          <div
+                            key={time}
+                            className={`
+                              p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 text-center flex items-center justify-center
+                              ${
+                                timeSlot === time
+                                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                  : isDisabled
+                                  ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                              }
+                            `}
+                            onClick={() => {
+                              if (!isDisabled) {
+                                setTimeSlot(time);
+                                form.setFieldsValue({ timeSlot: time });
+                              }
+                            }}
+                          >
+                            <span className="w-full text-base font-medium flex justify-center items-center">{time}</span>
+                            {isDisabled && (
+                              <div className="text-xs mt-1 ml-2">Đã qua</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Form.Item>
+                  
+                  {/* Message when all time slots are disabled */}
+                  {areAllTimeSlotsDisabled() && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center">
+                        <ClockCircleOutlined className="text-yellow-600 mr-2" />
+                        <span className="text-yellow-800 font-medium">
+                          Tất cả khung giờ hôm nay đã qua. Xin hẹn quay lại vào ngày khác!
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Message for postal delivery */}
+              {appointmentDate && selectedMedicationMethod === 'postal-delivery' && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <MailOutlined className="text-blue-600 mr-2" />
+                    <span className="text-blue-800 font-medium">
+                      Với phương thức gửi bưu điện, bạn chỉ cần chọn ngày. Kit sẽ được gửi đến địa chỉ của bạn trong ngày đã chọn.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+          </div>
+
+
+
           </div>
           
           {/* Test Subject Information với Antd Form */}
@@ -650,6 +1405,16 @@ const BookingPage = () => {
                         placeholder="Chọn ngày sinh"
                         format="DD/MM/YYYY"
                         disabledDate={(current) => current && current > moment().endOf('day')}
+                        onChange={(date, dateString) => {
+                          console.log('DatePicker onChange triggered:');
+                          console.log('Date object:', date);
+                          console.log('Date string:', dateString);
+                          console.log('Is moment object:', moment.isMoment(date));
+                          if (date) {
+                            console.log('Formatted date:', date.format('DD/MM/YYYY'));
+                            console.log('Age calculation:', moment().diff(date, 'years'));
+                          }
+                        }}
                       />
                     </Form.Item>
                   </Col>
@@ -727,6 +1492,8 @@ const BookingPage = () => {
                       <Input placeholder="Nhập số CCCD/CMND" prefix={<IdcardOutlined />} />
                     </Form.Item>
                   </Col>
+                  
+
                 </Row>
               </Card>
               
@@ -812,105 +1579,11 @@ const BookingPage = () => {
                     </Form.Item>
                   </Col>
                   
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      name={['secondPerson', 'personalId']}
-                      label="Số CCCD/CMND"
-                      rules={[{ validator: validatePersonalId }]}
-                    >
-                      <Input placeholder="Nhập số CCCD/CMND" prefix={<IdcardOutlined />} />
-                    </Form.Item>
-                  </Col>
+
                 </Row>
               </Card>
               
-              {/* Appointment Schedule */}
-              <Card 
-                title={
-                  <Space>
-                    <CalendarOutlined style={{ color: '#1890ff' }} />
-                    <span>Lịch hẹn</span>
-                  </Space>
-                }
-                style={{ marginBottom: 24 }}
-              >
-                {/* Date Selection */}
-                <div className="mb-6">
-                  <Form.Item
-                    name="appointmentDate"
-                    label="Ngày hẹn"
-                    rules={[{ validator: validateAppointmentDate }]}
-                  >
-                    <DatePicker 
-                      style={{ width: '100%' }}
-                      placeholder="Chọn ngày hẹn"
-                      format="DD/MM/YYYY"
-                      disabledDate={disabledDate}
-                      onChange={(date) => {
-                        setAppointmentDate(date?.format('YYYY-MM-DD') || '');
-                        // Reset time slot when date changes
-                        form.setFieldsValue({ timeSlot: undefined });
-                        setTimeSlot('');
-                      }}
-                    />
-                  </Form.Item>
-                </div>
 
-                {/* Time Selection - Only show when date is selected */}
-                {appointmentDate && (
-                  <div>
-                    <Form.Item
-                      name="timeSlot"
-                      label="Khung giờ"
-                      rules={[{ required: true, message: 'Vui lòng chọn khung giờ!' }]}
-                    >
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {timeSlots.map(time => {
-                          const isDisabled = isTimeSlotDisabled(time);
-                          return (
-                            <div
-                              key={time}
-                              className={`
-                                p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 text-center
-                                ${
-                                  timeSlot === time
-                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                    : isDisabled
-                                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
-                                }
-                              `}
-                              onClick={() => {
-                                if (!isDisabled) {
-                                  setTimeSlot(time);
-                                  form.setFieldsValue({ timeSlot: time });
-                                }
-                              }}
-                            >
-                              <div className="font-medium">{time}</div>
-                              {isDisabled && (
-                                <div className="text-xs mt-1">Đã qua</div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Form.Item>
-                    
-                    {/* Message when all time slots are disabled */}
-                    {areAllTimeSlotsDisabled() && (
-                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-center">
-                          <ClockCircleOutlined className="text-yellow-600 mr-2" />
-                          <span className="text-yellow-800 font-medium">
-                            Tất cả khung giờ hôm nay đã qua. Xin hẹn quay lại vào ngày khác!
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Card>
               
             </Form>
           </Card>
@@ -955,17 +1628,28 @@ const BookingPage = () => {
                 </span>
               </div>
               
+              {/* Thêm hiển thị Kit Type */}
+              {selectedKitType && (() => {
+                const kit = kitTypes.find(k => k.value === selectedKitType);
+                return kit ? (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Kit Type:</span>
+                    <span className="font-medium text-right">{kit.label}</span>
+                  </div>
+                ) : null;
+              })()}
+              
               {appointmentDate && (
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Date:</span>
-                  <span className="font-medium">{appointmentDate}</span>
+                  <span className="font-medium flex-1 text-right truncate">{appointmentDate}</span>
                 </div>
               )}
               
               {timeSlot && (
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Time:</span>
-                  <span className="font-medium">{timeSlot}</span>
+                  <span className="font-medium flex-1 text-right truncate">{timeSlot}</span>
                 </div>
               )}
             </div>
@@ -1014,6 +1698,16 @@ const BookingPage = () => {
                 </div>
               )}
               
+              {selectedKitType && (() => {
+                const kit = kitTypes.find(k => k.value === selectedKitType);
+                return kit && kit.price > 0 ? (
+                  <div className="flex justify-between text-sm">
+                    <span>Kit Fee:</span>
+                    <span>{kit.price.toLocaleString()} đ</span>
+                  </div>
+                ) : null;
+              })()}
+              
               <div className="border-t pt-2 flex justify-between font-semibold text-lg">
                 <span>Total:</span>
                 <span className="text-blue-600">{calculateTotalCost().toLocaleString()} đ</span>
@@ -1044,7 +1738,7 @@ const BookingPage = () => {
                     className="mr-2"
                   />
                   <FaQrcode className="mr-2 text-blue-600" />
-                  Bank Transfer
+                  QR Payment
                 </label>
               </div>
             </div>
@@ -1053,19 +1747,26 @@ const BookingPage = () => {
             <div className="mt-6 pt-4 border-t">
               <Button 
                 type="primary" 
-                htmlType="submit" 
-                size="large"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-                onClick={() => {
-                  form.submit();
-                }}
+                htmlType="submit"
+                loading={isSubmitting}
+                className="w-full h-12 text-lg font-semibold"
+                onClick={() => form.submit()} // Đảm bảo submit form khi bấm nút ngoài Form
               >
-                Xác nhận đặt lịch
+                {isSubmitting ? 'Đang xử lý...' : 'Xác nhận đặt lịch'}
               </Button>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Confirm Booking Modal */}
+      <ConfirmBookingModal
+        visible={isModalVisible}
+        onCancel={handleModalCancel}
+        bookingData={bookingData}
+        onConfirm={handleBookingComplete}
+        paymentMethod={paymentMethod}
+      />
     </div>
   );
 };

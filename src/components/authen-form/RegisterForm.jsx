@@ -13,8 +13,10 @@ import "react-toastify/dist/ReactToastify.css";
 import "./register.css";
 import { Link, useNavigate } from "react-router-dom";
 import enUS from "antd/locale/en_US";
-import api from "../../configs/axios";
+import api, { saveAuthData } from "../../configs/axios";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { login } from "../../redux/features/userSlice";
+import { useDispatch } from "react-redux";
 
 // Custom OTP Verification Component - UPDATED
 const OTPVerification = ({ email, onVerify, onClose }) => {
@@ -188,6 +190,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
 
 function RegisterForm() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // State cho OTP
   const [currentToastId, setCurrentToastId] = useState(null);
@@ -195,25 +198,55 @@ function RegisterForm() {
   // Google Client ID
   const GOOGLE_CLIENT_ID = "26142191146-7u8f63rgtupdv8v6kv8ug307j55hjfob.apps.googleusercontent.com";
 
-  // Google Success Handler
+  // Google Success Handler (đồng bộ với LoginForm)
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await api.post("/auth/google", {
-credential: credentialResponse.credential,
+        credential: credentialResponse.credential,
       });
-      const { role } = response.data;
+      const userData = response.data;
+
+      if (!userData || !userData.role) {
+        toast.error("Google registration failed: Invalid response from server.");
+        return;
+      }
+
+      const enhancedUserData = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        fullName:
+          userData.fullName ||
+          userData.fullname ||
+          userData.name ||
+          userData.username,
+        role: userData.role,
+        avatar: userData.avatar || userData.picture,
+        phone: userData.phone,
+        isEmailVerified: userData.isEmailVerified || true,
+        lastLogin: new Date().toISOString(),
+        loginMethod: "google",
+      };
+
+      dispatch(login(enhancedUserData));
+      saveAuthData({
+        token: userData.token,
+        refreshToken: userData.refreshToken,
+        user: enhancedUserData,
+      });
+
       toast.success("Google registration successful!");
 
-      if (role === "Customer") {
-        navigate("/");
-      } else if (["Staff", "Manager", "Admin"].includes(role)) {
-        navigate("/dashboard");
-      } else {
-        navigate("/");
-      }
+      // Navigate về home cho mọi role
+      navigate("/");
     } catch (e) {
-      console.error(e);
-      toast.error(e.response?.data || "Google registration failed! Please try again.");
+      console.error("Google registration error:", e);
+      const msg =
+        e.response?.data?.message ||
+        e.response?.data ||
+        e.message ||
+        "Google registration failed!";
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     }
   };
 

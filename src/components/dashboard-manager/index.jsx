@@ -1,4 +1,6 @@
 import React from "react";
+import { useSelector } from "react-redux";
+import { selectFullName } from "../../redux/features/userSlice";
 import { useState, useEffect, useRef } from "react";
 import {
   UserOutlined,
@@ -22,7 +24,6 @@ import {
 } from "antd";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import LogOut from "../authen-form/LogOut";
-import axiosInstance from "../../configs/axios";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -51,6 +52,7 @@ const items = [
   ),
   getItem("Customer Feedback", "customer-feedback", <MessageOutlined />),
   getItem("Test Kit Inventory", "inventory", <InboxOutlined />),
+  getItem("View Staff's Reports", "view-staff-reports", <InboxOutlined />),
 ];
 
 const ManagerDashboard = () => {
@@ -58,6 +60,7 @@ const ManagerDashboard = () => {
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
+  const fullName = useSelector(selectFullName);
   const searchRef = useRef(null); // eslint-disable-line no-unused-vars
 
   const {
@@ -79,19 +82,6 @@ const ManagerDashboard = () => {
 
     setBreadcrumbs(breadcrumbItems);
   }, [location]);
-
-  // Lấy thông tin user khi load Dashboard (ví dụ sử dụng Bearer Token)
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        await axiosInstance.get("/user/profile"); // endpoint ví dụ
-        // Xử lý dữ liệu user nếu cần
-      } catch (error) {
-        console.error("Fail to get user info:", error);
-      }
-    };
-    fetchUserInfo();
-  }, []);
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -188,7 +178,7 @@ const ManagerDashboard = () => {
                 style={{ backgroundColor: "#1890ff" }}
                 icon={<UserOutlined />}
               />
-              <span>My Profile</span>
+              <span>{fullName || "My Profile"}</span>
             </Button>
 
             {/* Logout Button */}
@@ -211,16 +201,24 @@ const ManagerDashboard = () => {
         </Header>
 
         <Content style={{ margin: "16px 16px 0", overflow: "initial" }}>
-          <Breadcrumb style={{ marginBottom: 16 }}>
-            <Breadcrumb.Item>
-              <Link to="/manager-dashboard">Dashboard</Link>
-            </Breadcrumb.Item>
-            {breadcrumbs.slice(1).map((breadcrumb, index) => (
-              <Breadcrumb.Item key={index}>
-                <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
-              </Breadcrumb.Item>
-            ))}
-          </Breadcrumb>
+          <Breadcrumb
+            style={{ marginBottom: 16 }}
+            items={[
+              {
+                title: <Link to="/manager-dashboard">Dashboard</Link>,
+              },
+              ...breadcrumbs.slice(1).map((breadcrumb, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                return {
+                  title: isLast ? (
+                    breadcrumb.title
+                  ) : (
+                    <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
+                  ),
+                };
+              }),
+            ]}
+          />
 
           <div
             style={{
@@ -239,7 +237,7 @@ const ManagerDashboard = () => {
       </Layout>
 
       {/* Enhanced CSS for search dropdown and interactions */}
-      <style jsx global>{`
+      <style>{`
         @media (max-width: 768px) {
           .hide-on-small {
             display: none;

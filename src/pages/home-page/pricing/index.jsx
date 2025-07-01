@@ -158,7 +158,7 @@ const Pricing = () => {
         className="relative text-white h-[600px] mt-10 flex items-center justify-center"
         style={{
           backgroundImage:
-            "url('https://images.pexels.com/photos/3825527/pexels-photo-3825527.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')",
+            "url('https://cdn.health-street.net/9/1/images/76d09e796fa9/dna-test.jpg?v=2024')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

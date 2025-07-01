@@ -1,163 +1,250 @@
 import React from "react";
+import { Phone, Mail, MapPin, UserPlus, ArrowRight } from "lucide-react";
 
 const contacts = [
   {
     icon: (
-      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-        <svg
-          className="w-6 h-6 text-white"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" />
-        </svg>
-      </div>
+      <a
+        href="tel:+84901452366"
+        className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0 group"
+        tabIndex={-1}
+        aria-label="Call Phone Support">
+        <Phone className="w-8 h-8" style={{ color: "white" }} />
+      </a>
     ),
     title: "Phone Support",
     desc: "Call us directly for immediate assistance",
     content: (
-      <>
+      <div className="text-center">
         <a
           href="tel:+84901452366"
-          className="text-2xl font-bold text-blue-600 hover:text-blue-800 transition-colors"
-        >
+          className="text-2xl font-bold hover:opacity-80 transition-opacity block"
+          style={{
+            background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}>
           +84 901 452 366
         </a>
-        <p className="text-sm text-green-600 mt-1">Available 24/7</p>
-      </>
+        <p className="text-sm text-green-600 mt-2 font-medium">
+          Available 24/7
+        </p>
+      </div>
     ),
   },
   {
     icon: (
-      <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-        <svg
-          className="w-6 h-6 text-white"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
-        </svg>
-      </div>
+      <a
+        href="https://mail.google.com/mail/?view=cm&to=genetixcontactsp@gmail.com&su=Support%20for%20DNA%20testing%20services"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-16 h-16 bg-gradient-to-br from-blue-700 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0 group"
+        tabIndex={-1}
+        aria-label="Email Support">
+        <Mail className="w-8 h-8" style={{ color: "white" }} />
+      </a>
     ),
     title: "Email Support",
     desc: "Send us a detailed message",
     content: (
-      <>
+      <div className="text-center">
         <a
           href="https://mail.google.com/mail/?view=cm&to=genetixcontactsp@gmail.com&su=Support%20for%20DNA%20testing%20services"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-lg font-bold text-blue-600 hover:text-blue-800 transition-colors"
-        >
+          className="text-lg font-bold hover:opacity-80 transition-opacity block break-words"
+          style={{
+            background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}>
           genetixcontactsp@gmail.com
         </a>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 mt-2 font-medium">
           We'll respond within 24 hours
         </p>
-      </>
+      </div>
     ),
   },
   {
     icon: (
-      <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
-        <svg
-          className="w-6 h-6 text-white"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z" />
-        </svg>
-      </div>
+      <a
+        href="https://maps.app.goo.gl/sVkfKF45QDd8PgdMA"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-16 h-16 flex items-center justify-center flex-shrink-0 group"
+        tabIndex={-1}
+        aria-label="Visit Our Office on Google Maps"
+        style={{
+          background: "white",
+          borderRadius: "9999px",
+          border: "3.5px solid #ef2323",
+          boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
+        }}>
+        <MapPin
+          className="w-10 h-10"
+          style={{
+            color: "#ef2323",
+            background: "white",
+            borderRadius: "9999px",
+          }}
+        />
+      </a>
     ),
     title: "Visit Our Office",
     desc: "Professional medical facility",
     content: (
-      <>
-        <p className="text-lg font-semibold text-gray-800">
-          7 D1 Street, Long Thanh My Ward,<br />
+      <div className="text-center">
+        <a
+          href="https://maps.app.goo.gl/sVkfKF45QDd8PgdMA"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-lg font-bold hover:opacity-80 transition-opacity block break-words"
+          style={{
+            background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}>
+          7 D1 Street, Long Thanh My Ward,
+          <br />
           Thu Duc City, Ho Chi Minh City, Vietnam
+        </a>
+        <p className="text-sm text-gray-500 mt-2 font-medium">
+          Monday - Saturday: 8:00 - 12:00 & 13:00 - 17:00
+          <br />
+          Sunday: 8:00 - 12:00 Open Morning Only
         </p>
-        <p className="text-sm text-gray-500 mt-1">
-          Monday - Sunday: 8:00 AM - 8:00 PM
-        </p>
-      </>
+      </div>
     ),
   },
 ];
 
 const Contact = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center pt-16">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Contact Us
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Ready to get started? Our expert team is here to help you with
-              professional DNA testing services.
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      {/* Hero Section */}
+      <div
+        className="relative text-white h-[600px] mt-10 flex items-center justify-center"
+        style={{
+          backgroundImage:
+            "url('https://cdn.maticagroup.com/assets/files/Contact-us-2500px.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}>
+        {/* Enhanced overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70"></div>
+
+        <div
+          className="relative max-w-7xl mx-auto px-6 text-center"
+          style={{
+            textShadow:
+              "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
+          }}>
+          {/* Title with subtle drop shadow instead of stroke */}
+          <h1 className="text-5xl font-bold mb-6 drop-shadow-2xl">
+            Contact Us
+          </h1>
+
+          {/* Description container for better readability */}
+          <p
+            className="text-lg mb-8 max-w-3xl mx-auto leading-relaxed font-medium"
+            style={{
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
+            }}>
+            Ready to get started? Our expert team is here to help you with
+            professional DNA testing services.
+          </p>
+
+          <div className="flex flex-wrap justify-center items-center gap-4">
+            <div className="bg-white/20 rounded-full px-6 py-2">
+              <span className="font-semibold">✓ 24/7 Support</span>
+            </div>
+            <div className="bg-white/20 rounded-full px-6 py-2">
+              <span className="font-semibold">✓ Expert Team</span>
+            </div>
+            <div className="bg-white/20 rounded-full px-6 py-2">
+              <span className="font-semibold">✓ Professional Service</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Contact Section */}
-      <div className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Left Side - Contact Information */}
-            <div className="flex-1">
-              <div className="flex flex-row gap-8">
-                {contacts.map((item, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center text-center">
-                    {item.icon}
-                    <h3 className="text-xl font-semibold text-gray-900 mt-4 mb-2">
+      <div className="py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Contact Methods Section */}
+          <div className="mb-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Get In Touch
+              </h2>
+              <div
+                className="w-24 h-1 mx-auto mb-6"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                }}></div>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Choose your preferred way to contact us for DNA testing services
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {contacts.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group hover:transform hover:scale-105">
+                  <div className="p-8 text-center h-full flex flex-col items-center justify-center">
+                    <div className="mb-6">{item.icon}</div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">
                       {item.title}
                     </h3>
-                    <p className="text-gray-600 mb-2">{item.desc}</p>
-                    <div>{item.content}</div>
+                    <p className="text-gray-600 text-sm mb-4">{item.desc}</p>
+                    <div className="mt-auto w-full">{item.content}</div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-            {/* You can add a right side (form, map, etc.) here if needed */}
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div
-            className="rounded-3xl shadow-2xl p-12"
-            style={{
-              background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)"
-            }}
-          >
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to Get Started?
-            </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Contact us today for a free consultation about your DNA testing needs
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="tel:+84901452366"
-                className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Call Now: +84 901 452 366
-              </a>
-              <a
-                href="https://mail.google.com/mail/?view=cm&to=genetixcontactsp@gmail.com&su=Free%20Consultation%20Request"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors"
-              >
-                Send Email
-              </a>
-            </div>
+      {/* Call to Action */}
+      <div className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Ready to Get Started?
+          </h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Contact us today for professional DNA testing services and get
+            accurate results with our expert team support.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a
+              href="tel:+84901452366"
+              className="inline-flex items-center justify-center px-8 py-4 text-white font-medium text-lg rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                textDecoration: "none",
+              }}>
+              <Phone className="mr-2 w-5 h-5" style={{ color: "white" }} />
+              Call Us Now
+            </a>
+            <a
+              href="mailto:genetixcontactsp@gmail.com"
+              className="inline-flex items-center justify-center px-8 py-4 text-white font-medium text-lg rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                textDecoration: "none",
+              }}>
+              <Mail className="mr-2 w-5 h-5" />
+              Email Us
+            </a>
           </div>
         </div>
       </div>

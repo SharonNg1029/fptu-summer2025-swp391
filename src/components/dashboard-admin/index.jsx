@@ -1,4 +1,6 @@
 import React from "react";
+import { useSelector } from "react-redux";
+import { selectFullName } from "../../redux/features/userSlice";
 import { useState, useEffect, useRef } from "react";
 import {
   UserOutlined,
@@ -22,7 +24,6 @@ import {
 } from "antd";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import LogOut from "../authen-form/LogOut";
-import axiosInstance from "../../configs/axios";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -63,6 +64,7 @@ const AdminDashboard = () => {
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
+  const fullName = useSelector(selectFullName);
   const searchRef = useRef(null); // eslint-disable-line no-unused-vars
 
   const {
@@ -84,19 +86,6 @@ const AdminDashboard = () => {
 
     setBreadcrumbs(breadcrumbItems);
   }, [location]);
-
-  // Lấy thông tin user khi load Dashboard (ví dụ sử dụng Bearer Token)
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        await axiosInstance.get("/profile"); // endpoint ví dụ
-        // Xử lý dữ liệu user nếu cần
-      } catch (error) {
-        console.error("Fail to get user info:", error);
-      }
-    };
-    fetchUserInfo();
-  }, []);
 
   // User dropdown menu items
 
@@ -195,7 +184,7 @@ const AdminDashboard = () => {
                 style={{ backgroundColor: "#1890ff" }}
                 icon={<UserOutlined />}
               />
-              <span>My Profile</span>
+              <span>{fullName || "My Profile"}</span>
             </Button>
 
             {/* Logout Button */}
@@ -218,16 +207,31 @@ const AdminDashboard = () => {
         </Header>
 
         <Content style={{ margin: "16px 16px 0", overflow: "initial" }}>
-          <Breadcrumb style={{ marginBottom: 16 }}>
-            <Breadcrumb.Item>
-              <Link to="/dashboard">Dashboard</Link>
-            </Breadcrumb.Item>
-            {breadcrumbs.slice(1).map((breadcrumb, index) => (
-              <Breadcrumb.Item key={index}>
-                <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
-              </Breadcrumb.Item>
-            ))}
-          </Breadcrumb>
+          <Breadcrumb
+            style={{ marginBottom: 16 }}
+            items={[
+              {
+                key: "dashboard",
+                title:
+                  location.pathname === "/dashboard" ? (
+                    "Dashboard"
+                  ) : (
+                    <Link to="/dashboard">Dashboard</Link>
+                  ),
+                path: "/dashboard",
+              },
+              ...breadcrumbs.slice(1).map((breadcrumb, idx, arr) => ({
+                key: breadcrumb.path || `breadcrumb-${idx}`,
+                title:
+                  idx === arr.length - 1 || !breadcrumb.path ? (
+                    breadcrumb.title
+                  ) : (
+                    <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
+                  ),
+                path: breadcrumb.path,
+              })),
+            ]}
+          />
 
           <div
             style={{
@@ -246,7 +250,7 @@ const AdminDashboard = () => {
       </Layout>
 
       {/* Enhanced CSS for search dropdown and interactions */}
-      <style global>{`
+      <style>{`
         @media (max-width: 768px) {
           .hide-on-small {
             display: none;

@@ -125,14 +125,7 @@ const SystemLogs = () => {
     handleExportPDF(e.key);
   };
 
-  const exportMenu = (
-    <Menu onClick={handleMenuClick}>
-      <Menu.Item key="today">Today</Menu.Item>
-      <Menu.Item key="week">This Week</Menu.Item>
-      <Menu.Item key="month">This Month</Menu.Item>
-      <Menu.Item key="all">All Logs</Menu.Item>
-    </Menu>
-  );
+  // Removed exportMenu (no longer needed with new Dropdown API)
 
   // Export PDF function
   const handleExportPDF = (range = exportRange) => {
@@ -231,7 +224,16 @@ const SystemLogs = () => {
         }}>
         <Title level={2}>System Logs & Monitoring</Title>
         <Space>
-          <Dropdown overlay={exportMenu} trigger={["click"]}>
+          <Dropdown
+            menu={{
+              items: [
+                { key: "today", label: "Today", onClick: handleMenuClick },
+                { key: "week", label: "This Week", onClick: handleMenuClick },
+                { key: "month", label: "This Month", onClick: handleMenuClick },
+                { key: "all", label: "All Logs", onClick: handleMenuClick },
+              ],
+            }}
+            trigger={["click"]}>
             <Button icon={<DownloadOutlined />}>
               Export <DownOutlined />
             </Button>
