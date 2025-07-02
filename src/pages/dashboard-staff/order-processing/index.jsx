@@ -206,17 +206,23 @@ const OrderProcessing = () => {
   };
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.bookingID
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase()) ||
-      order.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      order.service?.toLowerCase().includes(searchText.toLowerCase()) ||
-      order.kitID?.toLowerCase().includes(searchText.toLowerCase());
+      (order.bookingID
+        ? order.bookingID.toString().toLowerCase()
+        : ""
+      ).includes(searchText.toLowerCase()) ||
+      (order.customerName ? order.customerName.toLowerCase() : "").includes(
+        searchText.toLowerCase()
+      ) ||
+      (order.service ? order.service.toLowerCase() : "").includes(
+        searchText.toLowerCase()
+      ) ||
+      (order.kitID ? order.kitID.toLowerCase() : "").includes(
+        searchText.toLowerCase()
+      );
 
     // Case-insensitive status filter
     const matchesStatus =
-      statusFilter === "" ||
+      !statusFilter ||
       (order.status &&
         order.status.toLowerCase() === statusFilter.toLowerCase());
 
@@ -259,35 +265,36 @@ const OrderProcessing = () => {
       render: (status) => {
         let color = "default";
         let icon = <ClockCircleOutlined />;
-        if (status === "Waiting confirmed") {
+        const statusLower = (status || "").toLowerCase();
+        if (statusLower === "awaiting confirmation") {
           color = "gold";
           icon = <ClockCircleOutlined />;
         }
-        if (status === "Booking confirmed") {
+        if (statusLower === "booking confirmed") {
           color = "blue";
           icon = <CheckCircleOutlined />;
         }
-        if (status === "Awaiting Sample") {
+        if (statusLower === "awaiting sample") {
           color = "purple";
           icon = <LoadingOutlined />;
         }
-        if (status === "In Progress") {
+        if (statusLower === "in progress") {
           color = "cyan";
           icon = <LoadingOutlined />;
         }
-        if (status === "Ready") {
+        if (statusLower === "ready") {
           color = "lime";
           icon = <CheckCircleOutlined />;
         }
-        if (status === "Pending Payment") {
+        if (statusLower === "pending payment") {
           color = "orange";
           icon = <ExclamationCircleOutlined />;
         }
-        if (status === "Completed") {
+        if (statusLower === "completed") {
           color = "green";
           icon = <CheckCircleOutlined />;
         }
-        if (status === "Cancel") {
+        if (statusLower === "cancel") {
           color = "red";
           icon = <ExclamationCircleOutlined />;
         }
@@ -298,7 +305,7 @@ const OrderProcessing = () => {
         );
       },
       filters: [
-        { text: "Waiting confirmed", value: "Waiting confirmed" },
+        { text: "Awaiting confirmation", value: "Awaiting confirmation" },
         { text: "Booking confirmed", value: "Booking confirmed" },
         { text: "Awaiting Sample", value: "Awaiting Sample" },
         { text: "In Progress", value: "In Progress" },
@@ -400,7 +407,9 @@ const OrderProcessing = () => {
               style={{ width: "100%" }}
               allowClear>
               <Option value="">All Statuses</Option>
-              <Option value="Waiting confirmed">Waiting confirmed</Option>
+              <Option value="Awaiting confirmation">
+                Awaiting confirmation
+              </Option>
               <Option value="Booking confirmed">Booking confirmed</Option>
               <Option value="Awaiting Sample">Awaiting Sample</Option>
               <Option value="In Progress">In Progress</Option>
@@ -477,7 +486,7 @@ const OrderProcessing = () => {
               <Descriptions.Item label="Current Status" span={2}>
                 <Tag
                   color={
-                    editingOrder.status === "Waiting confirmed"
+                    editingOrder.status === "Awaiting confirmation"
                       ? "orange"
                       : editingOrder.status === "Booking confirmed"
                       ? "blue"
@@ -505,7 +514,9 @@ const OrderProcessing = () => {
               label="New Status"
               rules={[{ required: true, message: "Please select new status" }]}>
               <Select placeholder="Select new status">
-                <Option value="Waiting confirmed">Waiting Confirmed</Option>
+                <Option value="Awaiting confirmation">
+                  Awaiting Confirmation
+                </Option>
                 <Option value="Booking confirmed">Booking Confirmed</Option>
                 <Option value="Awaiting Sample">Awaiting Sample</Option>
                 <Option value="In Progress">In Progress</Option>
