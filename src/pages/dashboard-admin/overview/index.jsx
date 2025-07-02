@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import {
   Row,
@@ -41,7 +42,8 @@ import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 
-const Overview = () => {
+function Overview() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   // Removed dateRange state
   const [stats, setStats] = useState({
@@ -821,7 +823,15 @@ const Overview = () => {
               </span>
             }
             loading={loading}
-            extra={<Button type="link">View All</Button>}
+            extra={
+              <Button
+                type="link"
+                onClick={() =>
+                  navigate("/dashboard/services/service-management")
+                }>
+                View All
+              </Button>
+            }
             style={{
               borderRadius: 16,
               boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
@@ -844,6 +854,6 @@ const Overview = () => {
       </Row>
     </div>
   );
-};
+}
 
 export default Overview;
