@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
@@ -70,14 +67,24 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
 
   // Helper: get cost breakdown
   const getCostBreakdown = () => {
-    const { service, selectedMedicationMethod, isExpressService } = bookingData;
+    const { service, selectedMedicationMethod, isExpressService, selectedCollectionMethod } = bookingData;
     let serviceCost = service?.basePrice || 0;
+    let collectionCost = selectedCollectionMethod?.price || 0;
     let mediationCost = 0;
     let expressCost = 0;
-    if (bookingData.medicationMethod === 'staff-collection') mediationCost = 500000;
-    if (bookingData.medicationMethod === 'postal-delivery') mediationCost = 250000;
-    if (isExpressService) expressCost = service?.expressPrice || 1500000;
-    return { serviceCost, mediationCost, expressCost };
+    
+    // Sử dụng logic giống calculateTotalCost
+    if (selectedMedicationMethod === 'staff-collection') {
+      mediationCost = 500000;
+    } else if (selectedMedicationMethod === 'postal-delivery') {
+      mediationCost = 250000;
+    }
+    
+    if (isExpressService) {
+      expressCost = service?.expressPrice || 1500000;
+    }
+    
+    return { serviceCost, collectionCost, mediationCost, expressCost };
   };
 
   // Payment code & QR
@@ -128,35 +135,6 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     
     return true;
   };
-
-  // Hàm lưu chữ ký lên server (tạm thời comment vì API chưa có)
-  /*
-  const saveSignatureToServer = async (signatureData, bookingCode) => {
-    try {
-      const response = await fetch('/api/signatures', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          signature: signatureData,
-          bookingCode: bookingCode,
-          timestamp: new Date().toISOString()
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save signature');
-      }
-      
-      const result = await response.json();
-      return result.signatureId;
-    } catch (error) {
-      console.error('Error saving signature:', error);
-      throw error;
-    }
-  };
-  */
 
   // Step 3: Signature (cho cả cash và QR)
   const handleSignatureComplete = async () => {
@@ -260,22 +238,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     setShowPDFOption(false);
   };
 
-/*
-// Tạo PDF dưới dạng Blob - Không cần thiết nữa, dùng generatePDF trực tiếp
-const generatePDFBlob = async () => {
-  // API chưa có, tạm thời comment
-};
 
-// Lưu PDF lên server - API chưa có
-const savePDFToServer = async (pdfBlob, bookingCode) => {
-  // API chưa có, tạm thời comment
-};
-
-// Tải file cho người dùng - Không cần thiết nữa
-const downloadPDFFile = (blob, filename) => {
-  // Không cần thiết nữa
-};
-*/
 
 // Generate PDF function với jsPDF (An toàn và đơn giản)
 const generatePDF = async () => {
@@ -367,52 +330,58 @@ const generatePDF = async () => {
     
     // Lấy thông tin chi phí từ bookingData
     const { service, isExpressService } = bookingData;
-    const { serviceCost, mediationCost, expressCost } = getCostBreakdown();
+    const { serviceCost, collectionCost, mediationCost, expressCost } = getCostBreakdown();
     
-    // Tạo bảng chi phí động dựa trên express service
-    const costTableBody = [
-      [
-        { text: 'Phí xét nghiệm mẫu 1', alignment: 'left' },
-        { text: `${Math.floor(serviceCost/2).toLocaleString()} VND`, alignment: 'right' }
-      ],
-      [
-        { text: 'Phí xét nghiệm mẫu 2', alignment: 'left' },
-        { text: `${Math.floor(serviceCost/2).toLocaleString()} VND`, alignment: 'right' }
-      ]
-    ];
+    // Tạo bảng chi phí động dựa trên các thành phần thực tế
+    const costTableBody = [];
     
-    // Thêm phí mediation nếu có
+    // Phí dịch vụ - sử dụng giá trị đầy đủ, không chia đôi
+    if (serviceCost > 0) {
+      costTableBody.push([
+        { text: 'Phí xét nghiệm dịch vụ', alignment: 'left' },
+        { text: `${serviceCost.toLocaleString()} VND`, alignment: 'right' }
+      ]);
+    }
+    
+    // Phí thu mẫu
+    if (collectionCost > 0) {
+      costTableBody.push([
+        { text: 'Phí thu mẫu', alignment: 'left' },
+        { text: `${collectionCost.toLocaleString()} VND`, alignment: 'right' }
+      ]);
+    }
+    
+    // Phí vận chuyển/giao hàng
     if (mediationCost > 0) {
-      const mediationMethodName = bookingData.medicationMethod === 'staff-collection' ? 'Phí thu mẫu tại nhà' : 'Phí gửi bưu điện';
+      const mediationMethodName = bookingData.selectedMedicationMethod === 'staff-collection' 
+        ? 'Phí thu mẫu tại nhà' 
+        : 'Phí gửi bưu điện';
       costTableBody.push([
         { text: mediationMethodName, alignment: 'left' },
         { text: `${mediationCost.toLocaleString()} VND`, alignment: 'right' }
       ]);
     }
     
-    // Thêm express service nếu được chọn
+    // Express service
     if (isExpressService && expressCost > 0) {
       costTableBody.push([
-        { text: '⚡ Express Service', alignment: 'left', color: '#fa8c16', bold: true },
+        { text: 'Express Service', alignment: 'left', color: '#fa8c16', bold: true },
         { text: `${expressCost.toLocaleString()} VND`, alignment: 'right', color: '#fa8c16', bold: true }
       ]);
-    } else if (isExpressService === false) {
-      // Hiển thị "Không" nếu không chọn express service
-      costTableBody.push([
-        { text: 'Express Service', alignment: 'left' },
-        { text: 'Không', alignment: 'right' }
-      ]);
     }
+    
+    // Tính tổng chi phí chính xác
+    const calculatedTotal = serviceCost + collectionCost + mediationCost + expressCost;
     
     // Thêm dòng tổng cộng
     costTableBody.push(
       [
         { text: 'Cộng', bold: true, alignment: 'left' },
-        { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right' }
+        { text: `${calculatedTotal.toLocaleString()} VND`, bold: true, alignment: 'right' }
       ],
       [
         { text: 'Tổng chi phí', bold: true, alignment: 'left' },
-        { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right', color: '#e91e63' }
+        { text: `${calculatedTotal.toLocaleString()} VND`, bold: true, alignment: 'right', color: '#e91e63' }
       ]
     );
 
@@ -421,7 +390,6 @@ const generatePDF = async () => {
       content: [
         {
           text: [
-            { text: "Dịch vụ:\n", style: "header", alignment: "center" },
             { text: "Đơn yêu cầu xét nghiệm ADN\n", style: "header", alignment: "center" },
             { text: "Kính gửi: Cơ sở Y tế Genetix", alignment: "center" }
           ]
@@ -440,18 +408,31 @@ const generatePDF = async () => {
           ]
         },
         {
+      text: [
+        "Địa chỉ: ",
+        { 
+          text: bookingData?.collectionMethod?.name === 'At Home' 
+            ? (bookingData?.homeAddress || firstPerson?.address || "")
+            : "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City", 
+          color: "#e91e63", 
+          bold: true 
+        },
+        "\n"
+      ]
+    },
+        {
           text: [
-            "Địa chỉ: ",
-            { text: firstPerson?.address || bookingData?.homeAddress || "", color: "#e91e63", bold: true },
+            "Số điện thoại: ",
+            { text: firstPerson?.phoneNumber || "", color: "#e91e63", bold: true },
+            "    Email: ",
+            { text: firstPerson?.email || "", color: "#e91e63", bold: true },
             "\n"
           ]
         },
         {
           text: [
-            "Số điện thoại: ",
-            { text: firstPerson?.phoneNumber || "", color: "#e91e63", bold: true },
-            "    Email/zalo: ",
-            { text: firstPerson?.email || "", color: "#e91e63", bold: true },
+            "Số CCCD/CMND: ",
+            { text: firstPerson?.personalId || "Chưa cung cấp", color: "#e91e63", bold: true },
             "\n"
           ]
         },
@@ -463,7 +444,7 @@ const generatePDF = async () => {
           style: 'tableExample',
           table: {
             widths: [
-              "auto", "*", "auto", "auto", "auto", "auto", "auto"
+              "auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"
             ],
             body: [
               [
@@ -473,6 +454,7 @@ const generatePDF = async () => {
                 { text: "Giới tính", style: "tableHeader" },
                 { text: "Mối quan hệ", style: "tableHeader" },
                 { text: "Loại mẫu", style: "tableHeader" },
+                { text: "CCCD/CMND", style: "tableHeader" },
                 { text: "Ngày thu mẫu", style: "tableHeader" }
               ],
               [
@@ -482,6 +464,7 @@ const generatePDF = async () => {
                 { text: firstPerson?.gender === "male" ? "Nam" : firstPerson?.gender === "female" ? "Nữ" : firstPerson?.gender || "", color: "#e91e63", bold: true },
                 { text: firstPerson?.relationship || "", color: "#e91e63", bold: true },
                 { text: firstPerson?.sampleType || "", color: "#e91e63", bold: true },
+                { text: firstPerson?.personalId || "Chưa cung cấp", color: "#e91e63", bold: true },
                 { text: formatDate(appointmentDate), color: "#2196f3", bold: true }
               ],
               [
@@ -491,6 +474,7 @@ const generatePDF = async () => {
                 { text: secondPerson?.gender === "male" ? "Nam" : secondPerson?.gender === "female" ? "Nữ" : secondPerson?.gender || "", color: "#e91e63", bold: true },
                 { text: secondPerson?.relationship || "", color: "#e91e63", bold: true },
                 { text: secondPerson?.sampleType || "", color: "#e91e63", bold: true },
+                { text: secondPerson?.personalId || "Chưa cung cấp", color: "#e91e63", bold: true },
                 { text: formatDate(appointmentDate), color: "#2196f3", bold: true }
               ]
             ]
@@ -1548,6 +1532,112 @@ const BookingPage = () => {
     'Nail'
   ];
   
+  // Định nghĩa các cặp mối quan hệ hợp lệ
+  const relationshipPairs = {
+    'Father-Child': ['Father', 'Child'],
+    'Mother-Child': ['Mother', 'Child'], 
+    'Sibling-Sibling': ['Sibling', 'Sibling'],
+    'Grandparent-Grandchild': ['Grandparent', 'Grandchild']
+  };
+
+  // Map dịch vụ DNA testing với các cặp quan hệ hợp lệ
+  const serviceRelationshipMap = new Map([
+    // Paternity Testing (Cha-Con): Luôn là Cha – Con
+    ['Paternity Testing', ['Father-Child']],
+    
+    // Maternity Testing (Mẹ-Con): Luôn là Mẹ – Con
+    ['Maternity Testing', ['Mother-Child']],
+    
+    // Non-Invasive Relationship Testing (NIPT): Luôn là Cha – Con
+    ['Non-Invasive Relationship Testing (NIPT)', ['Father-Child']],
+    
+    // Sibling Testing: Luôn là Anh/Chị/Em ruột
+    ['Sibling Testing', ['Sibling-Sibling']],
+    
+    // Grandparent Testing: Luôn là Ông/Bà – Cháu
+    ['Grandparent Testing', ['Grandparent-Grandchild']],
+    
+    // DNA Testing for Birth Registration: Có thể chọn Cha – Con hoặc Mẹ – Con
+    ['DNA Testing for Birth Registration', ['Father-Child', 'Mother-Child']],
+    
+    // DNA Testing for Immigration Cases: Tất cả các cặp hợp lệ
+    ['DNA Testing for Immigration Cases', ['Father-Child', 'Mother-Child', 'Sibling-Sibling', 'Grandparent-Grandchild']],
+    
+    // DNA Testing for Inheritance or Asset Division: Ưu tiên theo thứ tự
+    ['DNA Testing for Inheritance or Asset Division', ['Father-Child', 'Mother-Child', 'Grandparent-Grandchild', 'Sibling-Sibling']]
+  ]);
+
+  // Hàm lọc mối quan hệ theo dịch vụ được chọn
+  const getValidRelationshipsForService = (serviceName) => {
+    if (!serviceName) return [];
+    
+    const validPairs = serviceRelationshipMap.get(serviceName) || [];
+    const validRelationships = new Set();
+    
+    validPairs.forEach(pair => {
+      const relationships = relationshipPairs[pair];
+      if (relationships) {
+        relationships.forEach(rel => validRelationships.add(rel));
+      }
+    });
+    
+    return Array.from(validRelationships);
+  };
+
+  // Thêm hàm để lấy mối quan hệ hợp lệ cho người thứ hai dựa trên người thứ nhất
+  const getValidRelationshipsForSecondPerson = (serviceName, firstPersonRelationship) => {
+    if (!serviceName || !firstPersonRelationship) {
+      return getValidRelationshipsForService(serviceName);
+    }
+    
+    const validPairs = serviceRelationshipMap.get(serviceName) || [];
+    const validSecondPersonRelationships = new Set();
+    
+    validPairs.forEach(pairKey => {
+      const pair = relationshipPairs[pairKey];
+      if (pair) {
+        // Nếu first person chọn pair[0], thì second person chỉ có thể chọn pair[1]
+        if (pair[0] === firstPersonRelationship) {
+          validSecondPersonRelationships.add(pair[1]);
+        }
+        // Nếu first person chọn pair[1], thì second person chỉ có thể chọn pair[0]
+        else if (pair[1] === firstPersonRelationship) {
+          validSecondPersonRelationships.add(pair[0]);
+        }
+      }
+    });
+    
+    return Array.from(validSecondPersonRelationships);
+  };
+
+  // Hàm kiểm tra cặp mối quan hệ có hợp lệ với dịch vụ không
+  const isValidRelationshipPair = (serviceName, relationship1, relationship2) => {
+    if (!serviceName || !relationship1 || !relationship2) return false;
+    
+    const validPairs = serviceRelationshipMap.get(serviceName) || [];
+    
+    return validPairs.some(pairKey => {
+      const pair = relationshipPairs[pairKey];
+      if (!pair) return false;
+      
+      // Kiểm tra cả hai chiều của cặp quan hệ
+      return (pair[0] === relationship1 && pair[1] === relationship2) ||
+             (pair[0] === relationship2 && pair[1] === relationship1);
+    });
+  };
+
+  // Cập nhật danh sách relationships dựa trên service được chọn
+  const [availableRelationships, setAvailableRelationships] = useState([
+    'Father', 'Mother', 'Child', 'Sibling',
+    'Grandparent', 'Grandchild'
+  ]);
+
+  // Thêm state để quản lý available relationships cho second person
+  const [availableSecondPersonRelationships, setAvailableSecondPersonRelationships] = useState([
+    'Father', 'Mother', 'Child', 'Sibling',
+    'Grandparent', 'Grandchild'
+  ]);
+
   // Relationships
   const relationships = [
     'Father', 'Mother', 'Child', 'Sibling',
@@ -1645,6 +1735,39 @@ const BookingPage = () => {
     return Promise.resolve();
   };
 
+  // Cập nhật validation function cho relationship
+  const validateRelationshipPair = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error('Vui lòng chọn mối quan hệ!'));
+    }
+    
+    return Promise.resolve(); // Chỉ validate required, không validate pair ở đây
+  };
+
+  // Tạo validation riêng cho second person để kiểm tra cặp
+  const validateSecondPersonRelationship = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error('Vui lòng chọn mối quan hệ!'));
+    }
+    
+    const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
+    
+    // Chỉ kiểm tra cặp khi cả hai đã được chọn
+    if (firstPersonRelationship && value && selectedService?.name) {
+      if (!isValidRelationshipPair(selectedService.name, firstPersonRelationship, value)) {
+        const validPairs = serviceRelationshipMap.get(selectedService.name) || [];
+        const pairNames = validPairs.map(pair => {
+          const relationships = relationshipPairs[pair];
+          return relationships ? relationships.join(' - ') : pair;
+        }).join(', ');
+        
+        return Promise.reject(new Error(`Cặp mối quan hệ không hợp lệ cho dịch vụ này. Các cặp hợp lệ: ${pairNames}`));
+      }
+    }
+    
+    return Promise.resolve();
+  };
+
   const validateRelationshipDifferent = (_, value) => {
     if (!value) {
       return Promise.reject(new Error('Vui lòng chọn mối quan hệ!'));
@@ -1657,6 +1780,58 @@ const BookingPage = () => {
     if (value === firstPersonRelationship) {
       return Promise.reject(new Error('Mối quan hệ của người thứ hai phải khác với người đại diện (trừ trường hợp Sibling)!'));
     }
+    return Promise.resolve();
+  };
+
+  const validateGenderRelationship = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error('Vui lòng chọn mối quan hệ!'));
+    }
+    
+    const gender = form.getFieldValue(['firstPerson', 'gender']);
+    
+    // Kiểm tra logic giới tính và quan hệ
+    if (gender === 'male' && value === 'Mother') {
+      return Promise.reject(new Error('Nam giới không thể chọn mối quan hệ "Mother"!'));
+    }
+    
+    if (gender === 'female' && value === 'Father') {
+      return Promise.reject(new Error('Nữ giới không thể chọn mối quan hệ "Father"!'));
+    }
+    
+    return Promise.resolve();
+  };
+
+  const validateSecondPersonGenderRelationship = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error('Vui lòng chọn mối quan hệ!'));
+    }
+    
+    const gender = form.getFieldValue(['secondPerson', 'gender']);
+    
+    // Kiểm tra logic giới tính và quan hệ cho người thứ hai
+    if (gender === 'male' && value === 'Mother') {
+      return Promise.reject(new Error('Nam giới không thể chọn mối quan hệ "Mother"!'));
+    }
+    
+    if (gender === 'female' && value === 'Father') {
+      return Promise.reject(new Error('Nữ giới không thể chọn mối quan hệ "Father"!'));
+    }
+    
+    // Kiểm tra cặp mối quan hệ hợp lệ
+    const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
+    if (firstPersonRelationship && value && selectedService?.name) {
+      if (!isValidRelationshipPair(selectedService.name, firstPersonRelationship, value)) {
+        const validPairs = serviceRelationshipMap.get(selectedService.name) || [];
+        const pairNames = validPairs.map(pair => {
+          const relationships = relationshipPairs[pair];
+          return relationships ? relationships.join(' - ') : pair;
+        }).join(', ');
+        
+        return Promise.reject(new Error(`Cặp mối quan hệ không hợp lệ cho dịch vụ này. Các cặp hợp lệ: ${pairNames}`));
+      }
+    }
+    
     return Promise.resolve();
   };
 
@@ -1673,9 +1848,43 @@ const BookingPage = () => {
     }
   }, [selectedMedicationMethod, form]);
 
+  // Theo dõi thay đổi của Person First và tự động điền cho Person Second nếu chưa có dữ liệu hoặc còn trống
+  useEffect(() => {
+    const first = form.getFieldValue('firstPerson');
+    const second = form.getFieldValue('secondPerson');
+    // Nếu first đã điền đủ và second chưa điền hoặc giống mặc định thì tự động copy
+    if (
+      first &&
+      first.fullName &&
+      first.dateOfBirth &&
+      first.gender &&
+      first.relationship &&
+      first.sampleType &&
+      (
+        !second ||
+        (!second.fullName && !second.dateOfBirth && !second.gender && !second.relationship && !second.sampleType)
+      )
+    ) {
+      form.setFieldsValue({
+        secondPerson: {
+          ...second,
+          fullName: first.fullName,
+          dateOfBirth: first.dateOfBirth,
+          gender: first.gender,
+          relationship: first.relationship,
+          sampleType: first.sampleType
+        }
+      });
+    }
+  }, [
+    form,
+    form.getFieldValue('firstPerson.fullName'),
+    form.getFieldValue('firstPerson.dateOfBirth'),
+    form.getFieldValue('firstPerson.gender'),
+    form.getFieldValue('firstPerson.relationship'),
+    form.getFieldValue('firstPerson.sampleType')
+  ]);
 
-
-  // ... existing useEffect code ...
   useEffect(() => {
     if (serviceID) {
       let foundService = legalServicesData.find(service => service.serviceID === serviceID);
@@ -1724,6 +1933,83 @@ const BookingPage = () => {
     }
   };
   
+  // Thêm useEffect để cập nhật relationships khi service thay đổi
+  useEffect(() => {
+    if (selectedService?.name) {
+      const validRelationships = getValidRelationshipsForService(selectedService.name);
+      setAvailableRelationships(validRelationships.length > 0 ? validRelationships : [
+        'Father', 'Mother', 'Child', 'Sibling',
+        'Grandparent', 'Grandchild'
+      ]);
+      
+      // Reset relationships trong form khi service thay đổi
+      form.setFieldsValue({
+        firstPerson: { ...form.getFieldValue('firstPerson'), relationship: undefined },
+        secondPerson: { ...form.getFieldValue('secondPerson'), relationship: undefined }
+      });
+      
+      // Reset available relationships cho second person
+      setAvailableSecondPersonRelationships(validRelationships.length > 0 ? validRelationships : [
+        'Father', 'Mother', 'Child', 'Sibling',
+        'Grandparent', 'Grandchild'
+      ]);
+    }
+  }, [selectedService, form]);
+
+  // Cập nhật useEffect để theo dõi thay đổi của first person relationship
+  useEffect(() => {
+    const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
+    
+    if (selectedService?.name && firstPersonRelationship) {
+      // Cập nhật available relationships cho second person dựa trên first person
+      const validSecondRelationships = getValidRelationshipsForSecondPerson(
+        selectedService.name, 
+        firstPersonRelationship
+      );
+      
+      setAvailableSecondPersonRelationships(validSecondRelationships.length > 0 
+        ? validSecondRelationships 
+        : availableRelationships
+      );
+      
+      // Reset second person relationship nếu không còn hợp lệ
+      const currentSecondRelationship = form.getFieldValue(['secondPerson', 'relationship']);
+      if (currentSecondRelationship && !validSecondRelationships.includes(currentSecondRelationship)) {
+        form.setFieldsValue({
+          secondPerson: {
+            ...form.getFieldValue('secondPerson'),
+            relationship: undefined
+          }
+        });
+      }
+    } else {
+      // Nếu chưa chọn service hoặc first person relationship, hiển thị tất cả
+      setAvailableSecondPersonRelationships(availableRelationships);
+    }
+  }, [
+    selectedService?.name,
+    form.getFieldValue(['firstPerson', 'relationship']),
+    availableRelationships,
+    form
+  ]);
+
+  useEffect(() => {
+    // Trigger validation cho relationship khi gender thay đổi
+    const firstPersonGender = form.getFieldValue(['firstPerson', 'gender']);
+    const secondPersonGender = form.getFieldValue(['secondPerson', 'gender']);
+    
+    if (firstPersonGender) {
+      form.validateFields([['firstPerson', 'relationship']]);
+    }
+    
+    if (secondPersonGender) {
+      form.validateFields([['secondPerson', 'relationship']]);
+    }
+  }, [
+    form.getFieldValue(['firstPerson', 'gender']),
+    form.getFieldValue(['secondPerson', 'gender'])
+  ]);
+
   useEffect(() => {
     if (!serviceID && currentServicesData.length > 0) {
       setSelectedService(currentServicesData[0]);
@@ -2439,7 +2725,7 @@ const BookingPage = () => {
                         placeholder="Chọn ngày sinh"
                         format="DD/MM/YYYY"
                         disabledDate={(current) => current && current > moment().endOf('day')}
-                        onChange={(date, dateString) => {
+                        onChange={(date) => {
                           console.log('DatePicker onChange triggered:');
                           console.log('Date object:', date);
                           console.log('Date string:', dateString);
@@ -2459,7 +2745,14 @@ const BookingPage = () => {
                       label="Giới tính"
                       rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
                     >
-                      <Radio.Group>
+                      <Radio.Group
+                        onChange={() => {
+                          // Trigger validation cho relationship khi thay đổi giới tính
+                          setTimeout(() => {
+                            form.validateFields([['firstPerson', 'relationship']]);
+                          }, 0);
+                        }}
+                      >
                         <Radio value="male">Nam</Radio>
                         <Radio value="female">Nữ</Radio>
                       </Radio.Group>
@@ -2493,10 +2786,43 @@ const BookingPage = () => {
                     <Form.Item
                       name={['firstPerson', 'relationship']}
                       label="Mối quan hệ"
-                      rules={[{ required: true, message: 'Vui lòng chọn mối quan hệ!' }]}
+                      rules={[
+
+                        { validator: validateGenderRelationship }
+                      ]}
+                      dependencies={[['firstPerson', 'gender']]}
                     >
-                      <Select placeholder="Chọn mối quan hệ">
-                        {relationships.map(rel => (
+                      <Select 
+                        placeholder="Chọn mối quan hệ"
+                        onChange={(value) => {
+                          // Trigger validation và cập nhật available relationships cho second person
+                          form.validateFields([['firstPerson', 'relationship'], ['secondPerson', 'relationship']]);
+                          
+                          // Cập nhật available relationships cho second person
+                          if (selectedService?.name && value) {
+                            const validSecondRelationships = getValidRelationshipsForSecondPerson(
+                              selectedService.name, 
+                              value
+                            );
+                            setAvailableSecondPersonRelationships(validSecondRelationships.length > 0 
+                              ? validSecondRelationships 
+                              : availableRelationships
+                            );
+                            
+                            // Reset second person relationship nếu không còn hợp lệ
+                            const currentSecondRelationship = form.getFieldValue(['secondPerson', 'relationship']);
+                            if (currentSecondRelationship && !validSecondRelationships.includes(currentSecondRelationship)) {
+                              form.setFieldsValue({
+                                secondPerson: {
+                                  ...form.getFieldValue('secondPerson'),
+                                  relationship: undefined
+                                }
+                              });
+                            }
+                          }
+                        }}
+                      >
+                        {availableRelationships.map(rel => (
                           <Option key={rel} value={rel}>{rel}</Option>
                         ))}
                       </Select>
@@ -2577,7 +2903,14 @@ const BookingPage = () => {
                       label="Giới tính"
                       rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
                     >
-                      <Radio.Group>
+                      <Radio.Group
+                        onChange={() => {
+                          // Trigger validation cho relationship khi thay đổi giới tính
+                          setTimeout(() => {
+                            form.validateFields([['secondPerson', 'relationship']]);
+                          }, 0);
+                        }}
+                      >
                         <Radio value="male">Nam</Radio>
                         <Radio value="female">Nữ</Radio>
                       </Radio.Group>
@@ -2588,11 +2921,19 @@ const BookingPage = () => {
                     <Form.Item
                       name={['secondPerson', 'relationship']}
                       label="Mối quan hệ"
-                      rules={[{ validator: validateRelationshipDifferent }]}
-                      dependencies={[['firstPerson', 'relationship']]}
+                      rules={[
+                        { validator: validateSecondPersonGenderRelationship }
+                      ]}
+                      dependencies={[['firstPerson', 'relationship'], ['secondPerson', 'gender']]}
                     >
-                      <Select placeholder="Chọn mối quan hệ">
-                        {relationships.map(rel => (
+                      <Select 
+                        placeholder="Chọn mối quan hệ"
+                        onChange={() => {
+                          // Trigger validation cho second person khi thay đổi
+                          form.validateFields([['secondPerson', 'relationship']]);
+                        }}
+                      >
+                        {availableSecondPersonRelationships.map(rel => (
                           <Option key={rel} value={rel}>{rel}</Option>
                         ))}
                       </Select>
