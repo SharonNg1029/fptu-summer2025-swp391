@@ -287,7 +287,7 @@ const TestingProcessMonitoringPage = () => {
           loading={loading}
           columns={columns}
           dataSource={filteredTests}
-          rowKey="testId"
+          rowKey="assignedID"
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
