@@ -102,7 +102,7 @@ const ServiceManagement = () => {
         : 0,
   };
 
-  // Service table columns
+  // Service table columns (bắt đúng dữ liệu từ API)
   const serviceColumns = [
     {
       title: "Service ID",
@@ -130,13 +130,24 @@ const ServiceManagement = () => {
         </Tag>
       ),
     },
+
     {
-      title: "Price",
+      title: "Standard Price",
       dataIndex: "cost",
       key: "cost",
       render: (cost) =>
         cost != null
           ? cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫"
+          : "0 ₫",
+    },
+    {
+      title: "Express Price",
+      dataIndex: "expressPrice",
+      key: "expressPrice",
+      render: (expressPrice) =>
+        expressPrice != null
+          ? expressPrice.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) +
+            " ₫"
           : "0 ₫",
     },
     {
@@ -188,8 +199,9 @@ const ServiceManagement = () => {
       // Lấy dữ liệu từ filteredServices
       const tableColumn = [
         "Service ID",
-        "Service Type",
+
         "Service Name",
+        "Service Type",
         "Price",
         "Estimated Time",
       ];
