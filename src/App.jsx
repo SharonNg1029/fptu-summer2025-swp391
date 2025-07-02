@@ -38,6 +38,7 @@ import Pricing from "./pages/home-page/pricing";
 import ViewReports from "./pages/dashboard-manager/staff-reports";
 import BookingPage from "./pages/booking/BookingPage";
 import BlogDetail from "./pages/home-page/blog/BlogDetail";
+import ChangePasswordPage from "./pages/home-page/resetPassword/ChangePasswordPage";
 
 function App() {
   const router = createBrowserRouter([
@@ -152,6 +153,10 @@ function App() {
     {
       path: "/verify",
       element: <VerifyPage />,
+    },
+    {
+      path: "/reset-password",
+      element: <ChangePasswordPage />,
     },
   ]);
 

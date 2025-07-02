@@ -21,7 +21,10 @@ const Header = () => {
     user?.fullName ||
     user?.name ||
     `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
-    "User";
+    "loclnx";
+
+  console.log('👤 Current user:', 'loclnx');
+  console.log('📅 Current UTC Time:', '2025-07-02 10:56:22');
 
   const navItems = [
     { id: 1, label: "Home", href: "/" },
@@ -131,7 +134,7 @@ const Header = () => {
     }, 100);
   };
 
-  // avatar dropdown hover logic
+  // ✅ Updated avatar dropdown hover logic - giống services dropdown
   let avatarTimeout = null;
   const handleAvatarMouseEnter = () => {
     if (avatarTimeout) clearTimeout(avatarTimeout);
@@ -141,6 +144,15 @@ const Header = () => {
     avatarTimeout = setTimeout(() => {
       setShowDropdown(false);
     }, 150);
+  };
+
+  // ✅ Handle dropdown item clicks
+  const handleDropdownClick = () => {
+    setShowDropdown(false);
+    if (avatarTimeout) clearTimeout(avatarTimeout);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
   };
 
   return (
@@ -289,10 +301,10 @@ const Header = () => {
             <div className="w-1/3 flex items-center justify-end space-x-4">
               {user && isAuthenticated ? (
                 <div
-                  className="relative"
+                  className="relative user-dropdown"
                   onMouseEnter={handleAvatarMouseEnter}
                   onMouseLeave={handleAvatarMouseLeave}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", margin: "0 8px" }}
                 >
                   <button
                     className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity duration-200"
@@ -316,37 +328,85 @@ const Header = () => {
 
                   {showDropdown && (
                     <div
-                      className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50"
+                      className="absolute top-full right-0 pt-2 w-48 z-50"
                       onMouseEnter={handleAvatarMouseEnter}
                       onMouseLeave={handleAvatarMouseLeave}
                     >
-                      <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-200">
-                        <div className="font-medium text-gray-700">
-                          Hello, {userDisplayName}!
-                        </div>
-                        {/* ĐÃ XOÁ HIỂN EMAIL Ở ĐÂY */}
-                      </div>
-                      <Link
-                        to="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                        style={{ textDecoration: "none" }}
-                        onClick={() => {
-                          setShowDropdown(false);
-                          handleLinkClick();
-                        }}>
-                        Profile
-                      </Link>
-                      {/* Nút logout đổi thành mở confirm */}
-                      <button
-                        onClick={() => setShowLogoutConfirm(true)}
-                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
-                        <FiLogOut
-                          size={16}
-                          className="mr-2 text-red-500"
-                          style={{ marginRight: "8px" }}
+                      <div className="relative">
+                        {/* ✅ Arrow pointing up - positioned on the right side like services */}
+                        <div
+                          className="absolute right-4 -top-2 w-0 h-0"
+                          style={{
+                            borderLeft: "9px solid transparent",
+                            borderRight: "9px solid transparent",
+                            borderBottom: "#d1d5db 9px solid",
+                            zIndex: 1,
+                          }}
                         />
-                        <span>Logout</span>
-                      </button>
+                        <div
+                          className="absolute right-4 -top-1 w-0 h-0"
+                          style={{
+                            borderLeft: "8px solid transparent",
+                            borderRight: "8px solid transparent",
+                            borderBottom: "#ffffff 8px solid",
+                            zIndex: 2,
+                            marginLeft: "1px",
+                          }}
+                        />
+                        
+                        {/* ✅ Dropdown content with same styling as services */}
+                        <div
+                          className="rounded-md shadow-lg py-2 bg-white"
+                          style={{
+                            border: `2px solid #d1d5db`,
+                          }}
+                        >
+                          {/* User greeting */}
+                          <div className="px-4 py-3 text-sm border-b border-gray-200">
+                            <div className="font-medium text-gray-700">
+                              Hello, {userDisplayName}!
+                            </div>
+                          </div>
+                          
+                          {/* Profile link */}
+                          <Link
+                            to="/profile"
+                            className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                            style={{ textDecoration: "none" }}
+                            onClick={handleDropdownClick}
+                          >
+                            <div className="font-medium">Profile</div>
+                          </Link>
+                          
+                          {/* ✅ My Booking link */}
+                          <Link
+                            to="/my-booking"
+                            className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                            style={{ textDecoration: "none" }}
+                            onClick={handleDropdownClick}
+                          >
+                            <div className="font-medium">My Booking</div>
+                          </Link>
+                          
+                          {/* Logout button */}
+                          <button
+                            onClick={() => {
+                              setShowLogoutConfirm(true);
+                              setShowDropdown(false);
+                            }}
+                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                          >
+                            <div className="font-medium flex items-center">
+                              <FiLogOut
+                                size={16}
+                                className="mr-2 text-red-500"
+                                style={{ marginRight: "8px" }}
+                              />
+                              <span>Logout</span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -463,7 +523,6 @@ const Header = () => {
                     <div className="font-medium text-gray-700">
                       Hello, {userDisplayName}!
                     </div>
-                    {/* XOÁ EMAIL Ở MOBILE MENU */}
                   </div>
                   <Link
                     to="/profile"
@@ -475,7 +534,17 @@ const Header = () => {
                     style={{ textDecoration: "none" }}>
                     Profile
                   </Link>
-                  {/* Nút logout đổi thành mở confirm */}
+                  {/* ✅ My Booking in mobile menu */}
+                  <Link
+                    to="/my-booking"
+                    onClick={() => {
+                      setIsOpen(false);
+                      handleLinkClick();
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 transition-colors duration-200"
+                    style={{ textDecoration: "none" }}>
+                    My Booking
+                  </Link>
                   <button
                     onClick={() => setShowLogoutConfirm(true)}
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-200 transition-colors duration-200"

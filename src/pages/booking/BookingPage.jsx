@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
@@ -365,57 +362,6 @@ const generatePDF = async () => {
 
     console.log('Bắt đầu tạo docDefinition...');
     
-    // Lấy thông tin chi phí từ bookingData
-    const { service, isExpressService } = bookingData;
-    const { serviceCost, mediationCost, expressCost } = getCostBreakdown();
-    
-    // Tạo bảng chi phí động dựa trên express service
-    const costTableBody = [
-      [
-        { text: 'Phí xét nghiệm mẫu 1', alignment: 'left' },
-        { text: `${Math.floor(serviceCost/2).toLocaleString()} VND`, alignment: 'right' }
-      ],
-      [
-        { text: 'Phí xét nghiệm mẫu 2', alignment: 'left' },
-        { text: `${Math.floor(serviceCost/2).toLocaleString()} VND`, alignment: 'right' }
-      ]
-    ];
-    
-    // Thêm phí mediation nếu có
-    if (mediationCost > 0) {
-      const mediationMethodName = bookingData.medicationMethod === 'staff-collection' ? 'Phí thu mẫu tại nhà' : 'Phí gửi bưu điện';
-      costTableBody.push([
-        { text: mediationMethodName, alignment: 'left' },
-        { text: `${mediationCost.toLocaleString()} VND`, alignment: 'right' }
-      ]);
-    }
-    
-    // Thêm express service nếu được chọn
-    if (isExpressService && expressCost > 0) {
-      costTableBody.push([
-        { text: '⚡ Express Service', alignment: 'left', color: '#fa8c16', bold: true },
-        { text: `${expressCost.toLocaleString()} VND`, alignment: 'right', color: '#fa8c16', bold: true }
-      ]);
-    } else if (isExpressService === false) {
-      // Hiển thị "Không" nếu không chọn express service
-      costTableBody.push([
-        { text: 'Express Service', alignment: 'left' },
-        { text: 'Không', alignment: 'right' }
-      ]);
-    }
-    
-    // Thêm dòng tổng cộng
-    costTableBody.push(
-      [
-        { text: 'Cộng', bold: true, alignment: 'left' },
-        { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right' }
-      ],
-      [
-        { text: 'Tổng chi phí', bold: true, alignment: 'left' },
-        { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right', color: '#e91e63' }
-      ]
-    );
-
     // ⭐ TẠO DOCDEFINITION GIỐNG HANDLEEXPORTPDF
     const docDefinition = {
       content: [
@@ -443,6 +389,17 @@ const generatePDF = async () => {
           text: [
             "Địa chỉ: ",
             { text: firstPerson?.address || bookingData?.homeAddress || "", color: "#e91e63", bold: true },
+            "\n"
+          ]
+        },
+        {
+          text: [
+            "CMND/CCCD/Passport: ",
+            { text: firstPerson?.personalId || "", color: "#e91e63", bold: true },
+            "    ngày cấp: ",
+            { text: firstPerson?.issuedDate || "......", color: "#e91e63", bold: true },
+            "    nơi cấp: ",
+            { text: firstPerson?.issuedPlace || "......", color: "#e91e63", bold: true },
             "\n"
           ]
         },
@@ -510,7 +467,24 @@ const generatePDF = async () => {
         {
           table: {
             widths: ['*', 'auto'],
-            body: costTableBody
+            body: [
+              [
+                { text: 'Phí xét nghiệm mẫu 1', alignment: 'left' },
+                { text: `${Math.floor((totalCost || 0)/2).toLocaleString()} VND`, alignment: 'right' }
+              ],
+              [
+                { text: 'Phí xét nghiệm mẫu 2', alignment: 'left' },
+                { text: `${Math.floor((totalCost || 0)/2).toLocaleString()} VND`, alignment: 'right' }
+              ],
+              [
+                { text: 'Cộng', bold: true, alignment: 'left' },
+                { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right' }
+              ],
+              [
+                { text: 'Tổng chi phí', bold: true, alignment: 'left' },
+                { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right', color: '#e91e63' }
+              ]
+            ]
           },
           layout: {
             hLineWidth: function(i, node) {

@@ -8,6 +8,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux"; // ✅ Add useSelector
 import {
   legalServicesData,
   legalCollectionMethodsData,
@@ -92,6 +93,16 @@ const LegalServices = () => {
   const modalContentRef = useRef(null);
   const navigate = useNavigate();
 
+  // ✅ Add authentication check
+  const userState = useSelector((state) => state.user);
+  const isAuthenticated = userState?.isAuthenticated;
+  const currentUser = userState?.currentUser;
+
+  console.log('👤 Current user:', 'loclnx');
+  console.log('📅 Current UTC Time:', '2025-07-02 12:16:28');
+  console.log('🔐 Is Authenticated:', isAuthenticated);
+  console.log('⚖️ Legal Services Page Access');
+
   const formatToVND = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -155,8 +166,26 @@ const LegalServices = () => {
     setIsScrolled(false);
   };
 
-  // ===== BOOKING: Dùng router để truyền serviceID =====
+  // ✅ Updated handleBookService với authentication check
   const handleBookService = (service, isExpressService = false) => {
+    console.log('🔍 Checking authentication for legal service booking...');
+    console.log('👤 User:', currentUser?.fullName || 'loclnx');
+    console.log('🔐 Authenticated:', isAuthenticated);
+    console.log('📅 Legal Booking Time:', '2025-07-02 12:16:28');
+    console.log('⚖️ Legal Service Type:', service.type);
+
+    if (!isAuthenticated) {
+      console.log('❌ User not authenticated, redirecting to login...');
+      // Chuyển hướng đến trang login với return URL
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+
+    console.log('✅ User authenticated, proceeding to legal service booking...');
+    console.log('📋 Legal Service ID:', service.serviceID);
+    console.log('⚡ Express Legal Service:', isExpressService);
+
+    // Nếu đã đăng nhập, tiến hành booking
     navigate(
       `/booking?serviceID=${encodeURIComponent(service.serviceID)}&express=${
         isExpressService ? "true" : "false"
@@ -490,18 +519,35 @@ const LegalServices = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* ✅ Authentication check for legal service booking buttons */}
+              {!isAuthenticated && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <FaBalanceScale className="h-5 w-5 text-red-400" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-800">
+                        <strong>Legal DNA Testing requires authentication.</strong> Please <strong>sign in</strong> to book our legal services. You'll be redirected to the login page.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-4">
                 <CustomButton
                   onClick={() => handleBookService(selectedService, false)}
                   className="flex-1 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800"
                 >
-                  Book Standard Service
+                  {isAuthenticated ? 'Book Standard Service' : 'Sign In to Book Standard'}
                 </CustomButton>
                 <CustomButton
                   onClick={() => handleBookService(selectedService, true)}
                   className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
-                  Book Express Service
+                  {isAuthenticated ? 'Book Express Service' : 'Sign In to Book Express'}
                 </CustomButton>
               </div>
             </div>
