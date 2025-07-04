@@ -40,11 +40,11 @@ const statusList = [
 ];
 
 const columns = [
-  { title: "Kit ID", dataIndex: "kitID", key: "kitID" },
   { title: "Booking ID", dataIndex: "bookingId", key: "bookingId" },
   { title: "Customer ID", dataIndex: "customerID", key: "customerID" },
-  { title: "Customer Name", dataIndex: "customerName", key: "customerName" },
+  { title: "Kit ID", dataIndex: "kitID", key: "kitID" },
   { title: "Service ID", dataIndex: "serviceID", key: "serviceID" },
+  { title: "Payment Code", dataIndex: "paymentCode", key: "paymentCode" },
   {
     title: "Collection Method",
     dataIndex: "collectionMethod",
@@ -153,12 +153,6 @@ const columns = [
   },
   { title: "Address", dataIndex: "address", key: "address" },
   { title: "Note", dataIndex: "note", key: "note" },
-  {
-    title: "Test Subjects",
-    dataIndex: "testSubjects",
-    key: "testSubjects",
-    render: (val) => val || "",
-  },
 ];
 
 const Booking = () => {

@@ -832,9 +832,7 @@ function Overview() {
             extra={
               <Button
                 type="link"
-                onClick={() =>
-                  navigate("/dashboard/services/service-management")
-                }>
+                onClick={() => navigate("/dashboard/services/booking")}>
                 View All
               </Button>
             }
