@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
-import { Form, Input, Select, DatePicker, Radio, Button, message, Row, Col, Card, Typography, Space, Checkbox, Modal, Steps, Descriptions, Divider, Alert, Result } from 'antd';
-import { UserOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, MailOutlined, IdcardOutlined, TeamOutlined, EnvironmentOutlined, CreditCardOutlined, QrcodeOutlined, CheckCircleOutlined, DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Form, Input, Select, DatePicker, Radio, Button, message, Row, Col, Card, Typography, Space, Checkbox, Modal, Steps, Descriptions, Divider, Alert, Result, Tooltip } from 'antd';
+import { UserOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, MailOutlined, IdcardOutlined, TeamOutlined, EnvironmentOutlined, CreditCardOutlined, QrcodeOutlined, CheckCircleOutlined, DownloadOutlined, FileTextOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import SignatureCanvas from 'react-signature-canvas';
 import jsPDF from 'jspdf';
@@ -107,14 +107,13 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       onOk: () => {
         const code = generatePaymentCode();
         setPaymentCode(code);
-        if (paymentMethod === 'cash') {
-          // Cash flow: chuyển thẳng đến ký tên (step 2)
-          setCurrentStep(2);
-        } else {
+        
+        // Luôn chuyển đến bước tiếp theo (step 2) cho cả hai phương thức thanh toán
+        if (paymentMethod === 'bank-transfer') {
           // QR flow: hiển thị mã QR thanh toán (step 2)
           setQrCodeData(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAYMENT:${code}`);
-          setCurrentStep(2);
         }
+        setCurrentStep(2);
       }
     });
   };
@@ -123,7 +122,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   const handleCheckPayment = () => {
     // Xác nhận thanh toán thành công, chuyển đến ký tên
     setIsPaymentConfirmed(true);
-    setCurrentStep(3);
+    setCurrentStep(3); // Chuyển đến bước ký tên (step 3) sau khi thanh toán QR
   };
 
   // Hàm kiểm tra chất lượng chữ ký (ít strict hơn)
@@ -135,6 +134,35 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     
     return true;
   };
+
+  // Hàm lưu chữ ký lên server (tạm thời comment vì API chưa có)
+  /*
+  const saveSignatureToServer = async (signatureData, bookingCode) => {
+    try {
+      const response = await fetch('/api/signatures', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          signature: signatureData,
+          bookingCode: bookingCode,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save signature');
+      }
+      
+      const result = await response.json();
+      return result.signatureId;
+    } catch (error) {
+      console.error('Error saving signature:', error);
+      throw error;
+    }
+  };
+  */
 
   // Step 3: Signature (cho cả cash và QR)
   const handleSignatureComplete = async () => {
@@ -181,8 +209,16 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       
       // Lưu data tạm thời và chuyển đến bước xác nhận PDF
       setFinalBookingData(bookingDataWithSignature);
-      setIsPDFConfirmStep(true);
-      setShowPDFOption(true);
+      
+      // Chuyển sang bước tiếp theo sau khi ký tên
+      if (paymentMethod === 'cash') {
+        // Với thanh toán tiền mặt, chuyển thẳng đến bước xác nhận PDF
+        setIsPDFConfirmStep(true);
+        setShowPDFOption(true);
+      } else {
+        // Với thanh toán QR, chuyển sang bước hoàn thành (step 4)
+        setCurrentStep(4);
+      }
       
       message.success('Ký tên thành công!');
       
@@ -206,21 +242,36 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
         return;
       }
       
-      // Tạo PDF trực tiếp
-      await generatePDF();
+      // Hiển thị thông báo đang xử lý
+      const processingMsg = message.loading('Đang tạo file PDF...', 0);
       
-      // Lưu đơn hàng với thông tin PDF đã tạo
-      const updatedBookingData = {
-        ...finalBookingData,
-        pdfGenerated: true,
-        pdfGeneratedAt: new Date().toISOString()
-      };
-      
-      // Lưu đơn hàng
-      onConfirm(updatedBookingData);
-      setCurrentStep(4);
-      setIsPDFConfirmStep(false);
-      
+      try {
+        // Tạo PDF trực tiếp với tham số shouldDownload là true để tải xuống
+        await generatePDF(true);
+        
+        // Đóng thông báo đang xử lý
+        processingMsg();
+        
+        // Lưu đơn hàng với thông tin PDF đã tạo
+        const updatedBookingData = {
+          ...finalBookingData,
+          pdfGenerated: true,
+          pdfGeneratedAt: new Date().toISOString()
+        };
+        
+        // Lưu đơn hàng
+        onConfirm(updatedBookingData);
+        setCurrentStep(4);
+        setIsPDFConfirmStep(false);
+        
+        // Thông báo thành công
+        message.success('Tải file PDF thành công!');
+      } catch (pdfError) {
+        // Đóng thông báo đang xử lý
+        processingMsg();
+        console.error('Lỗi khi tạo PDF:', pdfError);
+        message.error(`Không thể tạo PDF: ${pdfError.message}. Vui lòng thử lại!`);
+      }
     } catch (error) {
       console.error('Error downloading PDF:', error);
       message.error('Có lỗi khi tạo PDF. Vui lòng thử lại!');
@@ -231,17 +282,53 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
 
   // Hàm xử lý khi người dùng bỏ qua PDF
   const handleSkipPDF = () => {
-    // Lưu đơn hàng mà không tải PDF
-    onConfirm(finalBookingData);
-    setCurrentStep(4);
-    setIsPDFConfirmStep(false);
-    setShowPDFOption(false);
+    // Hiển thị thông báo đang xử lý
+    const processingMsg = message.loading('Đang xử lý...', 0);
+    
+    // Tạo PDF nhưng không tải xuống
+    generatePDF(false)
+      .then(() => {
+        // Lưu đơn hàng mà không tải PDF
+        onConfirm(finalBookingData);
+        setCurrentStep(4);
+        setIsPDFConfirmStep(false);
+        setShowPDFOption(false);
+      })
+      .catch(error => {
+        console.error('Error generating PDF without download:', error);
+        message.error('Có lỗi xảy ra, nhưng đơn hàng vẫn được lưu.');
+        
+        // Vẫn tiếp tục lưu đơn hàng ngay cả khi có lỗi
+        onConfirm(finalBookingData);
+        setCurrentStep(4);
+        setIsPDFConfirmStep(false);
+        setShowPDFOption(false);
+      })
+      .finally(() => {
+        // Đóng thông báo đang xử lý
+        processingMsg();
+      });
   };
 
+/*
+// Tạo PDF dưới dạng Blob - Không cần thiết nữa, dùng generatePDF trực tiếp
+const generatePDFBlob = async () => {
+  // API chưa có, tạm thời comment
+};
 
+// Lưu PDF lên server - API chưa có
+const savePDFToServer = async (pdfBlob, bookingCode) => {
+  // API chưa có, tạm thời comment
+};
+
+// Tải file cho người dùng - Không cần thiết nữa
+const downloadPDFFile = (blob, filename) => {
+  // Không cần thiết nữa
+};
+*/
 
 // Generate PDF function với jsPDF (An toàn và đơn giản)
-const generatePDF = async () => {
+const generatePDF = async (shouldDownload = true) => {
   let loadingMessage;
   try {
     console.log('=== BẮT ĐẦU TẠO PDF ===');
@@ -251,6 +338,19 @@ const generatePDF = async () => {
     // Kiểm tra dữ liệu cần thiết trước khi tạo PDF
     if (!bookingData) {
       throw new Error('Không có dữ liệu đặt lịch!');
+    }
+
+    try {
+      // Đảm bảo thư viện pdfmake đã được tải
+      console.log('Đang tải thư viện pdfmake...');
+      const pdfMakeModule = await import("pdfmake/build/pdfmake");
+      const pdfFonts = await import("pdfmake/build/vfs_fonts");
+      const pdfMake = pdfMakeModule.default;
+      pdfMake.vfs = pdfFonts && pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
+      console.log('Đã tải thành công thư viện pdfmake');
+    } catch (error) {
+      console.error('Lỗi khi tải thư viện pdfmake:', error);
+      throw new Error('Không thể tải thư viện PDF. Vui lòng thử lại!');
     }
 
     const { firstPerson, secondPerson, appointmentDate, totalCost } = bookingData;
@@ -295,15 +395,7 @@ const generatePDF = async () => {
 
     console.log('Signature length:', signatureImg.length);
 
-    console.log('Bắt đầu tải thư viện pdfmake...');
-    
-    // ⭐ DYNAMIC IMPORT PDFMAKE GIỐNG HANDLEEXPORTPDF
-    const pdfMakeModule = await import("pdfmake/build/pdfmake");
-    const pdfFonts = await import("pdfmake/build/vfs_fonts");
-    const pdfMake = pdfMakeModule.default;
-    pdfMake.vfs = pdfFonts && pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
-    
-    console.log('Đã tải thành công thư viện pdfmake');
+    // Thư viện pdfmake đã được tải ở trên
 
     // Format ngày an toàn
     const formatDate = (d) => {
@@ -328,7 +420,6 @@ const generatePDF = async () => {
 
     console.log('Bắt đầu tạo docDefinition...');
     
-<<<<<<< HEAD
     // Lấy thông tin chi phí từ bookingData
     const { service, isExpressService } = bookingData;
     const { serviceCost, collectionCost, mediationCost, expressCost } = getCostBreakdown();
@@ -386,8 +477,6 @@ const generatePDF = async () => {
       ]
     );
 
-=======
->>>>>>> c33a5dd685c61803dcff57629b699d5d8cdbd351
     // ⭐ TẠO DOCDEFINITION GIỐNG HANDLEEXPORTPDF
     const docDefinition = {
       content: [
@@ -425,35 +514,17 @@ const generatePDF = async () => {
     },
         {
           text: [
+            "Số CCCD/CMND: ",
+            { text: firstPerson?.personalId || "Chưa cung cấp", color: "#e91e63", bold: true },
+            "\n"
+          ]
+        },
+        {
+          text: [
             "Số điện thoại: ",
             { text: firstPerson?.phoneNumber || "", color: "#e91e63", bold: true },
             "    Email: ",
             { text: firstPerson?.email || "", color: "#e91e63", bold: true },
-            "\n"
-          ]
-        },
-        {
-          text: [
-<<<<<<< HEAD
-            "Số CCCD/CMND: ",
-            { text: firstPerson?.personalId || "Chưa cung cấp", color: "#e91e63", bold: true },
-=======
-            "CMND/CCCD/Passport: ",
-            { text: firstPerson?.personalId || "", color: "#e91e63", bold: true },
-            "    ngày cấp: ",
-            { text: firstPerson?.issuedDate || "......", color: "#e91e63", bold: true },
-            "    nơi cấp: ",
-            { text: firstPerson?.issuedPlace || "......", color: "#e91e63", bold: true },
-            "\n"
-          ]
-        },
-        {
-          text: [
-            "Số điện thoại: ",
-            { text: firstPerson?.phoneNumber || "", color: "#e91e63", bold: true },
-            "    Email/zalo: ",
-            { text: firstPerson?.email || "", color: "#e91e63", bold: true },
->>>>>>> c33a5dd685c61803dcff57629b699d5d8cdbd351
             "\n"
           ]
         },
@@ -495,7 +566,7 @@ const generatePDF = async () => {
                 { text: secondPerson?.gender === "male" ? "Nam" : secondPerson?.gender === "female" ? "Nữ" : secondPerson?.gender || "", color: "#e91e63", bold: true },
                 { text: secondPerson?.relationship || "", color: "#e91e63", bold: true },
                 { text: secondPerson?.sampleType || "", color: "#e91e63", bold: true },
-                { text: secondPerson?.personalId || "Chưa cung cấp", color: "#e91e63", bold: true },
+                { text: secondPerson?.personalId || "", color: "#e91e63", bold: true },
                 { text: formatDate(appointmentDate), color: "#2196f3", bold: true }
               ]
             ]
@@ -511,28 +582,46 @@ const generatePDF = async () => {
             paddingBottom: function(i, node) { return 2; }
           }
         },
+        
+        // ===== THÊM PHẦN CAM KẾT =====
+        {
+          text: "Tôi xin cam kết:",
+          style: "commitmentHeader",
+          bold: true,
+          color: "#000000",
+          margin: [0, 15, 0, 8]
+        },
+        {
+          ol: [
+            {
+              text: "Tôi tự nguyện đề nghị xét nghiệm ADN và chấp nhận chi phí xét nghiệm.",
+              margin: [0, 0, 0, 4]
+            },
+            {
+              text: "Những thông tin tôi đã khai trên đây là đúng sự thật và không thay đổi.",
+              margin: [0, 0, 0, 4]
+            },
+            {
+              text: "Tôi không để người nhà, người quen đến phiền nhiễu, làm mất trật tự.",
+              margin: [0, 0, 0, 4]
+            },
+            {
+              text: "Những trường hợp sinh đôi, người ghép tủy, nhận máu, nếu không khai báo trung thực sẽ bị phạt gấp 2 lần lệ phí đã nộp.",
+              margin: [0, 0, 0, 4]
+            },
+            {
+              text: "Tôi đã đọc và chấp nhận các điều khoản của Viện tại trang 2 và trang 3 của đơn này và tôi đồng ý để Genetix thực hiện các phân tích ADN với các mẫu trên. Nếu vi phạm, tôi xin chịu hoàn toàn trách nhiệm trước pháp luật.",
+              margin: [0, 0, 0, 4]
+            }
+          ],
+          margin: [20, 0, 20, 15]
+        },
+        
         // ===== Bảng tổng chi phí =====
         {
           table: {
             widths: ['*', 'auto'],
-            body: [
-              [
-                { text: 'Phí xét nghiệm mẫu 1', alignment: 'left' },
-                { text: `${Math.floor((totalCost || 0)/2).toLocaleString()} VND`, alignment: 'right' }
-              ],
-              [
-                { text: 'Phí xét nghiệm mẫu 2', alignment: 'left' },
-                { text: `${Math.floor((totalCost || 0)/2).toLocaleString()} VND`, alignment: 'right' }
-              ],
-              [
-                { text: 'Cộng', bold: true, alignment: 'left' },
-                { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right' }
-              ],
-              [
-                { text: 'Tổng chi phí', bold: true, alignment: 'left' },
-                { text: `${(totalCost || 0).toLocaleString()} VND`, bold: true, alignment: 'right', color: '#e91e63' }
-              ]
-            ]
+            body: costTableBody
           },
           layout: {
             hLineWidth: function(i, node) {
@@ -551,7 +640,10 @@ const generatePDF = async () => {
         // ===== Phần ký tên, căn phải, có hình ảnh chữ ký =====
         {
           columns: [
-            { width: '*', text: '' },
+            { 
+              width: '*', 
+              stack: []
+            },
             {
               width: 220,
               stack: [
@@ -570,24 +662,313 @@ const generatePDF = async () => {
             }
           ],
           margin: [0, 40, 0, 0]
+        },
+        
+        // ===== TRANG 2: ĐIỀU KHOẢN DỊCH VỤ (PHẦN 1) =====
+        { text: '', pageBreak: 'before' }, // Tạo trang mới
+        {
+          text: 'ĐIỀU KHOẢN DỊCH VỤ XÉT NGHIỆM ADN - GENETIX',
+          style: 'termsHeader',
+          alignment: 'center',
+          margin: [0, 20, 0, 25]
+        },
+        {
+          ol: [
+            {
+              text: 'Trung tâm cơ sở y tế xét nghiệm huyết thống DNA Genetix được Bộ Khoa Học và Công Nghệ cấp chứng nhận đăng ký hoạt động khoa học công nghệ số A-1889.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Người yêu cầu xét nghiệm phải là người không chịu sự quản thúc của pháp luật, có đầy đủ hành vi năng lực để thực hiện yêu cầu xét nghiệm cũng như tự chịu trách nhiệm về việc yêu cầu xét nghiệm của mình, sau đây gọi chung là "khách hàng".',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: '\'Mẫu\', \'mẫu ADN\' hay "mẫu xét nghiệm quan hệ huyết thống cha-con, mẹ-con hoặc các mối quan hệ huyết thống khác" là các mẫu sinh học (máu, tế bào niêm mạc miệng, móng, tóc...) được lấy trực tiếp từ các bộ phận trên cơ thể của những người cần thực hiện phân tích mối quan hệ huyết thống và phải được lấy theo đúng quy trình thu mẫu của Viện.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Tất cả các mẫu xét nghiệm ADN phải được đựng riêng biệt vào các phong bì hay túi chứa mẫu và được ghi đầy đủ thông tin trùng khớp với thông tin trên Đơn yêu cầu xét nghiệm ADN. Viện sẽ sử dụng các thông tin này cho việc trả kết quả và không chịu trách nhiệm về độ chính xác của các thông tin mà "khách hàng" cung cấp. Các mẫu gửi đến Viện để xét nghiệm ADN không có đầy đủ thông tin ghi trên phong bì đựng mẫu và trên Đơn yêu cầu xét nghiệm ADN thì Viện có quyền hủy bỏ và không bảo lưu.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: '"Khách hàng" phải đảm bảo rằng các mẫu cần xét nghiệm ADN cung cấp cho Viện là hợp pháp (không có sự cưỡng chế hay sai phạm gì khi thu hoặc lấy mẫu); "Khách hàng" phải chấp nhận bồi thường cho bất kỳ tổn thất hoặc thiệt hại mà Viện phải chịu khi các mẫu có được không hợp pháp. Trừ trường hợp lấy mẫu bắt buộc khi có sự chỉ định của tòa án (trường hợp này phải tuân thủ theo đúng trình tự và thủ tục tố tụng của pháp luật, đồng thời được sự chấp thuận của Viện).',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Viện sẽ chỉ tiến hành xét nghiệm ADN khi "Đơn yêu cầu xét nghiệm ADN" có đầy đủ các thông tin cùng chữ ký của "khách hàng" yêu cầu xét nghiệm và nhận được thanh toán đủ số tiền chi phí tương ứng với yêu cầu dịch vụ xét nghiệm. Viện có quyền giữ lại các kết quả phân tích cho đến khi khách hàng thanh toán đủ tiền.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Khách hàng phải chịu mọi chi phí phát sinh trong quá trình chuyển phí xét nghiệm và mẫu tới Viện.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Khách hàng cam kết về thông tin khai trong tờ khai này là đúng sự thật và không được thay đổi. Những trường hợp sinh đôi, người ghép tủy, nhận máu, nếu không khai báo trung thực sẽ bị phạt gấp 2 lần lệ phí đã nộp.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Viện có trách nhiệm đảm bảo thời gian trả kết quả xét nghiệm theo đúng yêu cầu dịch vụ, nhưng không chấp nhận bất kỳ trách nhiệm nào về sự chậm trễ bị gây ra bởi một bên thứ ba.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Viện sẽ chỉ thông báo kết quả xét nghiệm cho người đã cung cấp các mẫu và hoàn thành biểu mẫu Đơn yêu cầu xét nghiệm ADN cùng chữ ký (hoặc đại diện hợp pháp). Kết quả xét nghiệm được trả cho khách hàng bằng các hình thức sau: Email, lấy trực tiếp hoặc xem kết quả trực tuyến.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Trường hợp kết luận trong kết quả xét nghiệm ADN của Viện được xác định là chưa chính xác bởi cơ quan hoặc đơn vị có thẩm quyền, Viện sẽ bồi thường gấp 3 lần số tiền mà khách hàng đã đóng đối với xét nghiệm đó. Các yêu cầu bồi thường sẽ không được chấp nhận khi đơn khiếu nại được gửi đến sau 06 tháng kể từ khi có kết quả.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Trường hợp xét nghiệm ADN tự nguyện – dân sự (mẫu do khách hàng tự cung cấp) kết quả xét nghiệm ADN chỉ có giá trị trên mẫu đó và không có giá trị pháp lý.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Mọi thắc mắc chỉ được giải quyết trong vòng 03 tháng kể từ ngày phát hành kết quả.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Kết quả xét nghiệm có thể sử dụng cho mục đích nghiên cứu khoa học.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Thông tin khách hàng được bảo mật, chỉ có người đứng tên xét nghiệm (hoặc người được ủy quyền) mới được trả kết quả. Chúng tôi cam kết không tiết lộ bất kỳ thông tin cá nhân cũng như kết quả của khách hàng cho bên thứ ba, trừ trường hợp có yêu cầu của cơ quan có thẩm quyền.',
+              margin: [0, 0, 0, 8]
+            },
+            {
+              text: 'Kết quả xét nghiệm ADN có thể bị ảnh hưởng trong các trường hợp những người bố giả định có quan hệ huyết thống họ hàng.',
+              margin: [0, 0, 0, 8]
+            }
+          ],
+          margin: [20, 0, 20, 20]
+        },
+        // Thêm phần xác nhận đọc và đồng ý điều khoản
+        {
+          text: 'NGƯỜI YÊU CẦU PHÂN TÍCH ĐÃ ĐỌC KỸ VÀ ĐỒNG Ý VỚI CÁC ĐIỀU KHOẢN TRÊN',
+          alignment: 'center',
+          bold: true,
+          margin: [0, 20, 0, 10]
+        },
+        {
+          text: '(Ký và ghi rõ họ tên)',
+          alignment: 'center',
+          italics: true,
+          margin: [0, 0, 0, 15]
+        },
+        // Thêm chữ ký vào phần xác nhận điều khoản
+        {
+          alignment: 'center',
+          image: signatureImg,
+          width: 150,
+          margin: [0, 0, 0, 0]
         }
       ],
       styles: {
         header: { fontSize: 16, bold: true, margin: [0, 0, 0, 10] },
+        termsHeader: { fontSize: 14, bold: true, color: '#1976d2' }, // Thêm style cho tiêu đề điều khoản
         tableHeader: { fillColor: "#1976d2", color: "white", bold: true, alignment: "center" },
-        tableExample: { margin: [0, 5, 0, 15] }
+        tableExample: { margin: [0, 5, 0, 15] },
+        legalHeader: { fontSize: 14, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+        pageNumber: { fontSize: 9, italics: true }
       },
-      defaultStyle: { font: "Roboto", fontSize: 11 }  // ⭐ GIỐNG HANDLEEXPORTPDF
+      defaultStyle: { font: "Roboto", fontSize: 10, lineHeight: 1.3 }, // Giảm font size cho điều khoản
+      
+      // Thêm số trang ở góc phải phía dưới
+      footer: function(currentPage, pageCount) {
+        return {
+          text: currentPage.toString() + '/' + pageCount,
+          alignment: 'right',
+          style: 'pageNumber',
+          margin: [0, 0, 40, 10]
+        };
+      }
     };
+    
+    // Thêm trang 4 cho legal DNA testing
+    console.log('Service Type:', bookingData.serviceType);
+    if (bookingData.serviceType === 'legal') {
+      console.log('Adding legal DNA testing page to PDF');
+      // Lấy ngày hiện tại cho biên bản
+      const today = new Date();
+      const day = today.getDate();
+      const month = today.getMonth() + 1;
+      const year = today.getFullYear();
+      
+      // Địa chỉ lấy mẫu
+      const sampleAddress = bookingData?.collectionMethod?.name === 'At Home' 
+        ? (bookingData?.homeAddress || "")
+        : "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City";
+      
+      // Thêm trang biên bản lấy mẫu xét nghiệm cho legal DNA testing
+      docDefinition.content.push(
+        { text: '', pageBreak: 'before' }, // Tạo trang mới
+        {
+          text: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM',
+          style: 'legalHeader',
+          alignment: 'center'
+        },
+        {
+          text: 'Độc lập – Tự do – Hạnh phúc',
+          style: 'legalHeader',
+          alignment: 'center',
+          margin: [0, 0, 0, 20]
+        },
+        {
+          text: 'BIÊN BẢN LẤY MẪU XÉT NGHIỆM',
+          style: 'legalHeader',
+          alignment: 'center',
+          margin: [0, 0, 0, 20]
+        },
+        {
+          text: [
+            `Hôm nay, ngày ${day} tháng ${month} năm ${year}, tại `,
+            { text: sampleAddress, bold: true }
+          ],
+          margin: [0, 0, 0, 10]
+        },
+        {
+          text: 'Chúng tôi gồm có:',
+          margin: [0, 0, 0, 10]
+        },
+        {
+          text: 'Trung tâm cơ sở y tế dịch vụ xét nghiệm huyết thống ADN GENETIX',
+          margin: [0, 0, 0, 10]
+        },
+        {
+          text: [
+            'Người yêu cầu xét nghiệm: ',
+            { text: firstPerson?.fullName || "", bold: true },
+            '   Địa chỉ thu mẫu: ',
+            { text: sampleAddress, bold: true }
+          ],
+          margin: [0, 0, 0, 10]
+        },
+        {
+          text: 'Chúng tôi tiến hành lấy mẫu của những người đề nghị xét nghiệm ADN. Các mẫu của từng người được lấy riêng rẽ như sau:',
+          margin: [0, 0, 0, 20]
+        },
+        // Thông tin người thứ nhất
+        {
+          text: [
+            'Họ và tên: ',
+            { text: firstPerson?.fullName || "", bold: true },
+            '                Ngày sinh: ',
+            { text: formatDate(firstPerson?.dateOfBirth) || "", bold: true }
+          ],
+          margin: [0, 0, 0, 5]
+        },
+        {
+          text: [
+            'CCCD: ',
+            { text: firstPerson?.personalId || "", bold: true },
+            '            Loại mẫu: ',
+            { text: firstPerson?.sampleType || "", bold: true }
+          ],
+          margin: [0, 0, 0, 5]
+        },
+        {
+          text: [
+            'Mối quan hệ: ',
+            { text: firstPerson?.relationship || "", bold: true }
+          ],
+          margin: [0, 0, 0, 20]
+        },
+        // Thông tin người thứ hai
+        {
+          text: [
+            'Họ và tên: ',
+            { text: secondPerson?.fullName || "", bold: true },
+            '               Ngày sinh: ',
+            { text: formatDate(secondPerson?.dateOfBirth) || "", bold: true }
+          ],
+          margin: [0, 0, 0, 5]
+        },
+        {
+          text: [
+            'CCCD (nếu có): ',
+            { text: secondPerson?.personalId || "", bold: true },
+            '            Loại mẫu: ',
+            { text: secondPerson?.sampleType || "", bold: true }
+          ],
+          margin: [0, 0, 0, 5]
+        },
+        {
+          text: [
+            'Mối quan hệ: ',
+            { text: secondPerson?.relationship || "", bold: true }
+          ],
+          margin: [0, 0, 0, 40]
+        },
+                 // Phần ký tên
+         {
+           columns: [
+             {
+               width: '*',
+               stack: [
+                 { text: 'Viện xét nghiệm ADN Genetix\n', alignment: 'center', bold: true },
+                 { 
+                   svg: '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="95" fill="none" stroke="#cc0000" stroke-width="8" stroke-opacity="0.9"/><text x="50%" y="50%" font-size="36" text-anchor="middle" dominant-baseline="middle" fill="#cc0000" font-weight="bold">GENETIX</text><text x="50%" y="25%" font-size="14" text-anchor="middle" dominant-baseline="middle" fill="#cc0000" font-weight="bold" transform="rotate(-45, 100, 100)">Bloodline DNA Testing Centre</text><text x="50%" y="75%" font-size="14" text-anchor="middle" dominant-baseline="middle" fill="#cc0000" font-weight="bold" transform="rotate(45, 100, 100)">Bloodline DNA Testing Centre</text><path d="M30,100 L45,100 M155,100 L170,100" stroke="#cc0000" stroke-width="3"/><path d="M100,30 L100,45 M100,155 L100,170" stroke="#cc0000" stroke-width="3"/><text x="25%" y="30%" font-size="12" text-anchor="middle" fill="#cc0000" font-weight="bold">★</text><text x="75%" y="30%" font-size="12" text-anchor="middle" fill="#cc0000" font-weight="bold">★</text></svg>',
+                   width: 100,
+                   alignment: 'center',
+                   margin: [0, 5, 0, 5]
+                 }
+               ]
+             },
+             {
+               width: '*',
+               stack: [
+                 { text: 'Người yêu cầu xét nghiệm\n', alignment: 'center', bold: true },
+                 // Thêm chữ ký vào biên bản
+                 signatureImg
+                   ? { image: signatureImg, width: 100, alignment: "center", margin: [0, 10, 0, 5] }
+                   : { text: "(Chưa ký)", alignment: "center", margin: [0, 10, 0, 5] },
+                 { text: '(Ký và ghi rõ họ tên)', alignment: 'center', italics: true }
+               ]
+             }
+           ],
+           margin: [0, 0, 0, 20]
+         }
+      );
+    }
 
     console.log('Bắt đầu tạo PDF...');
     
-    // ⭐ TẠO VÀ DOWNLOAD PDF GIỐNG HANDLEEXPORTPDF
-    pdfMake.createPdf(docDefinition).download(`DonYeuCauXetNghiemADN_${paymentCode || 'DNA'}.pdf`);
-    
-    if (loadingMessage) loadingMessage();
-    message.success('Tải file PDF thành công với chữ ký!');
-    console.log('✓ PDF đã được tạo và tải xuống thành công');
+    try {
+      // ⭐ TẠO VÀ DOWNLOAD PDF
+      const pdfMakeModule = await import("pdfmake/build/pdfmake");
+      const pdfMake = pdfMakeModule.default;
+      const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+      
+      // Tạo một Promise để đảm bảo PDF được tạo hoàn toàn trước khi tải xuống
+      await new Promise((resolve, reject) => {
+        pdfDocGenerator.getBuffer((buffer) => {
+          // Nếu có buffer, PDF đã được tạo thành công
+          if (buffer) {
+            console.log('PDF đã được tạo thành công, kích thước:', buffer.length);
+            resolve();
+          } else {
+            reject(new Error('Không thể tạo buffer PDF'));
+          }
+        });
+      });
+      
+      // Nếu shouldDownload là true thì tải xuống, ngược lại chỉ tạo PDF mà không tải xuống
+      if (shouldDownload) {
+        // Tải xuống file PDF
+        pdfDocGenerator.download(`DonYeuCauXetNghiemADN_${paymentCode || 'DNA'}.pdf`);
+        message.success('Tải file PDF thành công!');
+      } else {
+        // Tạo PDF nhưng không tải xuống, có thể trả về đối tượng PDF để sử dụng sau này
+        message.success('Đã tạo file PDF thành công!');
+      }
+      
+      if (loadingMessage) loadingMessage();
+      console.log('✓ PDF đã được tạo thành công');
+      
+      return pdfDocGenerator; // Trả về đối tượng PDF để có thể sử dụng sau này
+    } catch (pdfError) {
+      console.error('Lỗi khi tạo hoặc tải xuống PDF:', pdfError);
+      throw new Error(`Không thể tạo hoặc tải xuống PDF: ${pdfError.message}`);
+    }
     
   } catch (error) {
     console.error('=== LỖI TẠO PDF ===');
@@ -611,6 +992,8 @@ const generatePDF = async () => {
     } else {
       message.error(`Có lỗi xảy ra khi tạo file PDF: ${error.message}. Vui lòng thử lại!`);
     }
+    
+    return null;
   }
 };
 
@@ -1162,23 +1545,36 @@ const generatePDF = async () => {
     </div>
   );
 
-  // Hàm tái tạo và tải PDF
-  const regenerateAndDownloadPDF = async (bookingCode) => {
+    // Hàm tái tạo và tải PDF
+const regenerateAndDownloadPDF = async (bookingCode) => {
+  try {
+    setIsGeneratingPDF(true);
+    
+    // Hiển thị thông báo đang xử lý
+    const processingMsg = message.loading('Đang tạo lại file PDF...', 0);
+    
     try {
-      setIsGeneratingPDF(true);
+      // Tái tạo PDF với dữ liệu hiện tại và tham số shouldDownload là true để tải xuống
+      await generatePDF(true);
       
-      // Tái tạo PDF với dữ liệu hiện tại
-      await generatePDF();
+      // Đóng thông báo đang xử lý
+      processingMsg();
       
+      // Thông báo thành công
       message.success('Tải lại file PDF thành công!');
-      
-    } catch (error) {
-      console.error('Error regenerating PDF:', error);
-      message.error('Không thể tải lại PDF. Vui lòng thử lại!');
-    } finally {
-      setIsGeneratingPDF(false);
+    } catch (pdfError) {
+      // Đóng thông báo đang xử lý
+      processingMsg();
+      console.error('Lỗi khi tạo lại PDF:', pdfError);
+      message.error(`Không thể tạo lại PDF: ${pdfError.message}. Vui lòng thử lại!`);
     }
-  };
+  } catch (error) {
+    console.error('Error regenerating PDF:', error);
+    message.error('Không thể tải lại PDF. Vui lòng thử lại!');
+  } finally {
+    setIsGeneratingPDF(false);
+  }
+};
 
   // Render success với option xuất PDF
   const renderSuccess = () => {
@@ -1363,14 +1759,14 @@ const generatePDF = async () => {
       case 1:
         return [
           <Button key="edit" onClick={handleEdit}>Edit</Button>,
-          <Button key="confirm" type="primary" onClick={handleConfirm}>Confirm</Button>
+          <Button key="confirm" type="primary" onClick={handleConfirm}>Xác nhận</Button>
         ];
       case 2:
         if (paymentMethod === 'cash') {
           // Cash flow: ở step ký tên
           return [
             <Button key="back" onClick={() => setCurrentStep(1)} disabled={isProcessingSignature}>Quay lại</Button>,
-            <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Hoàn tất đặt lịch</Button>
+            <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Ký tên</Button>
           ];
         } else {
           // QR flow: ở step thanh toán
@@ -1383,7 +1779,7 @@ const generatePDF = async () => {
         // QR flow: ở step ký tên sau thanh toán
         return [
           <Button key="back" onClick={() => setCurrentStep(2)} disabled={isProcessingSignature}>Quay lại</Button>,
-          <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Hoàn tất đặt lịch</Button>
+          <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Ký tên</Button>
         ];
       case 4:
         return [
@@ -1567,7 +1963,8 @@ const BookingPage = () => {
     'Blood',
     'Buccal Swab',
     'Hair',
-    'Nail'
+    'Nail',
+    'Amniotic Fluid' // Thêm loại mẫu nước ối cho NIPT
   ];
   
   // Định nghĩa các cặp mối quan hệ hợp lệ
@@ -1576,6 +1973,17 @@ const BookingPage = () => {
     'Mother-Child': ['Mother', 'Child'], 
     'Sibling-Sibling': ['Sibling', 'Sibling'],
     'Grandparent-Grandchild': ['Grandparent', 'Grandchild']
+  };
+  
+  // Định nghĩa tên tiếng Việt cho các mối quan hệ
+  const relationshipVietnameseNames = {
+    'Father': 'Cha',
+    'Mother': 'Mẹ',
+    'Child': 'Con',
+    'Sibling': 'Anh/Chị/Em ruột',
+    'Grandparent': 'Ông/Bà',
+    'Grandchild': 'Cháu',
+    'Other': 'Khác'
   };
 
   // Map dịch vụ DNA testing với các cặp quan hệ hợp lệ
@@ -1618,6 +2026,26 @@ const BookingPage = () => {
         relationships.forEach(rel => validRelationships.add(rel));
       }
     });
+    
+    // Xử lý đặc biệt cho DNA Testing for Inheritance or Asset Division
+    // Sắp xếp theo thứ tự ưu tiên: Father/Mother - Child > Grandparent - Grandchild > Sibling - Sibling
+    if (serviceName === 'DNA Testing for Inheritance or Asset Division') {
+      const orderedRelationships = [];
+      
+      // Thứ tự ưu tiên 1: Father/Mother - Child
+      if (validRelationships.has('Father')) orderedRelationships.push('Father');
+      if (validRelationships.has('Mother')) orderedRelationships.push('Mother');
+      if (validRelationships.has('Child')) orderedRelationships.push('Child');
+      
+      // Thứ tự ưu tiên 2: Grandparent - Grandchild
+      if (validRelationships.has('Grandparent')) orderedRelationships.push('Grandparent');
+      if (validRelationships.has('Grandchild')) orderedRelationships.push('Grandchild');
+      
+      // Thứ tự ưu tiên 3: Sibling - Sibling
+      if (validRelationships.has('Sibling')) orderedRelationships.push('Sibling');
+      
+      return orderedRelationships;
+    }
     
     return Array.from(validRelationships);
   };
@@ -1729,11 +2157,58 @@ const BookingPage = () => {
     return Promise.resolve();
   };
 
+  // Thêm hàm kiểm tra tuổi người thứ hai dựa trên mối quan hệ
+  const validateSecondPersonAge = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error("Vui lòng chọn ngày sinh!"));
+    }
 
+    // Lấy mối quan hệ người thứ hai
+    const relationship = form.getFieldValue(['secondPerson', 'relationship']);
+    
+    // Nếu chưa chọn relationship, chỉ validate là có chọn ngày sinh
+    if (!relationship) {
+      return Promise.resolve();
+    }
 
+    // Convert moment object to JavaScript Date
+    let birthDate;
+    if (moment.isMoment(value)) {
+      birthDate = value.toDate();
+    } else {
+      birthDate = new Date(value);
+    }
 
+    if (isNaN(birthDate.getTime())) {
+      return Promise.reject(new Error("Ngày sinh không hợp lệ!"));
+    }
 
+    const today = new Date();
 
+    // Tính tuổi chính xác
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    // Nếu không phải là Child, phải từ 18 tuổi trở lên
+    if (relationship !== 'Child' && age < 18) {
+      return Promise.reject(
+        new Error(`Người có mối quan hệ "${relationship}" phải từ 18 tuổi trở lên!`)
+      );
+    }
+
+    // Đặc biệt kiểm tra Father và Mother, phải từ 18 tuổi trở lên
+    if ((relationship === 'Father' || relationship === 'Mother') && age < 18) {
+      return Promise.reject(
+        new Error(`Người có mối quan hệ "${relationship}" phải từ 18 tuổi trở lên!`)
+      );
+    }
+
+    return Promise.resolve();
+  };
 
   // Kit Types
   const kitTypes = [
@@ -1991,6 +2466,17 @@ const BookingPage = () => {
         'Father', 'Mother', 'Child', 'Sibling',
         'Grandparent', 'Grandchild'
       ]);
+      
+      // Xử lý đặc biệt cho NIPT
+      if (selectedService.name === 'Non-Invasive Relationship Testing (NIPT)') {
+        // Nếu là NIPT, reset mẫu của người thứ hai (Child) và đặt là null
+        form.setFieldsValue({
+          secondPerson: { 
+            ...form.getFieldValue('secondPerson'),
+            sampleType: 'Amniotic Fluid' // Mẫu nước ối cho NIPT
+          }
+        });
+      }
     }
   }, [selectedService, form]);
 
@@ -2004,7 +2490,6 @@ const BookingPage = () => {
         selectedService.name, 
         firstPersonRelationship
       );
-      
       setAvailableSecondPersonRelationships(validSecondRelationships.length > 0 
         ? validSecondRelationships 
         : availableRelationships
@@ -2017,6 +2502,20 @@ const BookingPage = () => {
           secondPerson: {
             ...form.getFieldValue('secondPerson'),
             relationship: undefined
+          }
+        });
+      }
+      
+      // Xử lý đặc biệt cho NIPT
+      if (selectedService.name === 'Non-Invasive Relationship Testing (NIPT)' && 
+          firstPersonRelationship === 'Father' &&
+          validSecondRelationships.includes('Child')) {
+        // Tự động chọn Child cho người thứ hai
+        form.setFieldsValue({
+          secondPerson: {
+            ...form.getFieldValue('secondPerson'),
+            relationship: 'Child',
+            sampleType: 'Amniotic Fluid' // Mẫu nước ối cho NIPT
           }
         });
       }
@@ -2309,6 +2808,65 @@ const BookingPage = () => {
                   </option>
                 ))}
               </select>
+              
+              {/* Thông báo đặc biệt cho các dịch vụ */}
+              {selectedService?.name === 'DNA Testing for Inheritance or Asset Division' && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-start">
+                    <InfoCircleOutlined className="text-blue-600 mr-2 mt-1" />
+                    <div>
+                      <p className="text-sm text-blue-700 font-medium">Thứ tự ưu tiên mối quan hệ:</p>
+                      <ol className="text-xs text-blue-600 list-decimal pl-5 mt-1">
+                        <li>Cha/Mẹ - Con</li>
+                        <li>Ông/Bà - Cháu</li>
+                        <li>Anh/Chị/Em ruột</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-start">
+                    <InfoCircleOutlined className="text-blue-600 mr-2 mt-1" />
+                    <div>
+                      <p className="text-sm text-blue-700 font-medium">Xét nghiệm thai nhi không xâm lấn</p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Mẫu của thai nhi (Child) sẽ tự động được thiết lập là "Amniotic Fluid" (nước ối)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {selectedService?.name === 'DNA Testing for Birth Registration' && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-start">
+                    <InfoCircleOutlined className="text-blue-600 mr-2 mt-1" />
+                    <div>
+                      <p className="text-sm text-blue-700 font-medium">Xét nghiệm ADN cho đăng ký khai sinh</p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Cho phép chọn một trong hai cặp quan hệ: Cha - Con hoặc Mẹ - Con
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {selectedService?.name === 'DNA Testing for Immigration Cases' && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-start">
+                    <InfoCircleOutlined className="text-blue-600 mr-2 mt-1" />
+                    <div>
+                      <p className="text-sm text-blue-700 font-medium">Xét nghiệm ADN cho di cư/nhập tịch</p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Hỗ trợ tất cả các cặp quan hệ hợp lệ: Cha - Con, Mẹ - Con, Anh/Chị/Em ruột, Ông/Bà - Cháu
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Express Service Checkbox */}
@@ -2342,7 +2900,7 @@ const BookingPage = () => {
                     {isExpressPreSelected && isExpressService && (
                       <div className="flex items-center text-orange-600">
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 616 0z" clipRule="evenodd" />
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0 1 10 0v2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm8-2v2H7V7a3 3 0 0 1 6 0z" clipRule="evenodd" />
                         </svg>
                         <span className="text-xs font-medium">Đã chọn</span>
                       </div>
@@ -2350,7 +2908,7 @@ const BookingPage = () => {
                     {isStandardPreSelected && (
                       <div className="flex items-center text-orange-400">
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 616 0z" clipRule="evenodd" />
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0 1 10 0v2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm8-2v2H7V7a3 3 0 0 1 6 0z" clipRule="evenodd" />
                         </svg>
                         <span className="text-xs font-medium">Không khả dụng</span>
                       </div>
@@ -2764,14 +3322,13 @@ const BookingPage = () => {
                         format="DD/MM/YYYY"
                         disabledDate={(current) => current && current > moment().endOf('day')}
                         onChange={(date) => {
-                          console.log('DatePicker onChange triggered:');
-                          console.log('Date object:', date);
-                          console.log('Date string:', dateString);
-                          console.log('Is moment object:', moment.isMoment(date));
-                          if (date) {
-                            console.log('Formatted date:', date.format('DD/MM/YYYY'));
-                            console.log('Age calculation:', moment().diff(date, 'years'));
-                          }
+                                                     // Xử lý sự kiện onChange của DatePicker
+                           if (date) {
+                             console.log('Date object:', date);
+                             console.log('Is moment object:', moment.isMoment(date));
+                             console.log('Formatted date:', date.format('DD/MM/YYYY'));
+                             console.log('Age calculation:', moment().diff(date, 'years'));
+                           }
                         }}
                       />
                     </Form.Item>
@@ -2861,7 +3418,7 @@ const BookingPage = () => {
                         }}
                       >
                         {availableRelationships.map(rel => (
-                          <Option key={rel} value={rel}>{rel}</Option>
+                          <Option key={rel} value={rel}>{rel} - {relationshipVietnameseNames[rel]}</Option>
                         ))}
                       </Select>
                     </Form.Item>
@@ -2924,7 +3481,8 @@ const BookingPage = () => {
                     <Form.Item
                       name={['secondPerson', 'dateOfBirth']}
                       label="Ngày sinh"
-                      rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}
+                      rules={[{ validator: validateSecondPersonAge }]}
+                      dependencies={[['secondPerson', 'relationship']]}
                     >
                       <DatePicker 
                         style={{ width: '100%' }}
@@ -2968,11 +3526,14 @@ const BookingPage = () => {
                         placeholder="Chọn mối quan hệ"
                         onChange={() => {
                           // Trigger validation cho second person khi thay đổi
-                          form.validateFields([['secondPerson', 'relationship']]);
+                          form.validateFields([
+                            ['secondPerson', 'relationship'],
+                            ['secondPerson', 'dateOfBirth'] // Thêm validation cho dateOfBirth khi relationship thay đổi
+                          ]);
                         }}
                       >
                         {availableSecondPersonRelationships.map(rel => (
-                          <Option key={rel} value={rel}>{rel}</Option>
+                          <Option key={rel} value={rel}>{rel} - {relationshipVietnameseNames[rel]}</Option>
                         ))}
                       </Select>
                     </Form.Item>
@@ -2984,11 +3545,24 @@ const BookingPage = () => {
                       label="Loại mẫu"
                       rules={[{ required: true, message: 'Vui lòng chọn loại mẫu!' }]}
                     >
-                      <Select placeholder="Chọn loại mẫu">
-                        {sampleTypes.map(type => (
-                          <Option key={type} value={type}>{type}</Option>
-                        ))}
-                      </Select>
+                      {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
+                       form.getFieldValue(['secondPerson', 'relationship']) === 'Child' ? (
+                        <Input 
+                          value="Amniotic Fluid" 
+                          disabled 
+                          suffix={
+                            <Tooltip title="Mẫu nước ối được sử dụng tự động cho xét nghiệm NIPT">
+                              <InfoCircleOutlined style={{ color: 'rgba(0,0,0,.45)' }} />
+                            </Tooltip>
+                          }
+                        />
+                      ) : (
+                        <Select placeholder="Chọn loại mẫu">
+                          {sampleTypes.map(type => (
+                            <Option key={type} value={type}>{type}</Option>
+                          ))}
+                        </Select>
+                      )}
                     </Form.Item>
                   </Col>
                   
@@ -3135,7 +3709,7 @@ const BookingPage = () => {
                   <input
                     type="radio"
                     value="cash"
-                    checked={paymentMethod === 'cash'}
+                  checked={paymentMethod === 'cash'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="mr-2"
                   />
