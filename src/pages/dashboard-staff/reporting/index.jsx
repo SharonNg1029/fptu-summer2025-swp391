@@ -353,8 +353,12 @@ const StaffReporting = () => {
                   pageSize: 10,
                   showSizeChanger: true,
                   showQuickJumper: true,
+                  pageSizeOptions: [5, 10, 20, 50, 100],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} reports`,
+                  onShowSizeChange: () => {
+                    // No state for current page in today tab, so just reload page
+                  },
                 }}
               />
             </Form>
@@ -401,15 +405,15 @@ const StaffReporting = () => {
               pagination={{
                 ...futureReportsPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50],
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
-                onChange: (paginationConfig) => {
-                  setFutureReportsPagination({
-                    current: paginationConfig.current,
-                    pageSize: paginationConfig.pageSize,
-                  });
+                onShowSizeChange: (current, size) => {
+                  setFutureReportsPagination({ current: 1, pageSize: size });
+                },
+                onChange: (page, pageSize) => {
+                  setFutureReportsPagination({ current: page, pageSize });
                 },
               }}
               scroll={{ x: 1200 }}
@@ -468,16 +472,16 @@ const StaffReporting = () => {
               pagination={{
                 ...completedReportsPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50, 100],
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
-              }}
-              onChange={(paginationConfig) => {
-                setCompletedReportsPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
+                onShowSizeChange: (current, size) => {
+                  setCompletedReportsPagination({ current: 1, pageSize: size });
+                },
+                onChange: (page, pageSize) => {
+                  setCompletedReportsPagination({ current: page, pageSize });
+                },
               }}
               scroll={{ x: 1200 }}
             />

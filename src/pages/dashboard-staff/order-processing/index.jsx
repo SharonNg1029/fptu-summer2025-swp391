@@ -435,7 +435,7 @@ const OrderProcessing = () => {
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} assignments`,
-            pageSizeOptions: ["5", "10", "20", "50", "100"],
+            pageSizeOptions: [5, 10, 20, 50, 100],
             showLessItems: false,
             onShowSizeChange: (current, size) => {
               setPageSize(size);
