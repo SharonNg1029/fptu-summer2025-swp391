@@ -13,18 +13,19 @@ import {
   Button,
   Modal,
   Form,
+  Rate, // Import Rate component
 } from "antd";
 import {
   SearchOutlined,
   ReloadOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  EditOutlined,
-  LoadingOutlined,
+  StarOutlined, // Using Star for rating display
+  DownloadOutlined, // Import DownloadOutlined
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -34,16 +35,13 @@ const CustomerFeedbackPage = () => {
   const [loading, setLoading] = useState(true);
   const [feedbackList, setFeedbackList] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingFeedback, setEditingFeedback] = useState(null);
-
-  const [form] = Form.useForm();
+  const [ratingFilter, setRatingFilter] = useState(null); // Add state for rating filter
 
   const fetchFeedback = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get("/manager/feedback"); // Example API endpoint
+      // Updated API path as requested
+      const response = await api.get("/manager/all-feedback");
       setFeedbackList(response.data?.data || response.data || []);
     } catch (error) {
       toast.error(
@@ -60,114 +58,115 @@ const CustomerFeedbackPage = () => {
     fetchFeedback();
   }, [fetchFeedback]);
 
-  const handleEdit = (record) => {
-    setEditingFeedback(record);
-    form.setFieldsValue(record);
-    setIsModalVisible(true);
-  };
-
-  const handleUpdateFeedback = async (values) => {
-    setLoading(true);
+  // Edit and Update functions are removed as they are no longer applicable
+  // const handleEdit = (record) => { ... };
+  // const handleUpdateFeedback = async (values) => { ... };
+  const handleExportPDF = () => {
     try {
-      await api.patch(`/manager/feedback/${editingFeedback.id}`, values); // Example API endpoint for updating feedback
-      toast.success("Feedback updated successfully!");
-      setIsModalVisible(false);
-      setEditingFeedback(null);
-      form.resetFields();
-      fetchFeedback();
+      if (!jsPDF || !jsPDF.prototype.autoTable) {
+        toast.error("jsPDF autoTable plugin is not available.");
+        return;
+      }
+
+      const doc = new jsPDF();
+      const tableColumns = [
+        "Customer ID",
+        "Booking ID",
+        "Title",
+        "Content",
+        "Rating",
+        "Date",
+      ];
+      const tableRows = filteredFeedback.map((feedback) => [
+        feedback.customerID,
+        feedback.bookingID,
+        feedback.title,
+        feedback.content,
+        feedback.rating,
+        new Date(feedback.createAt).toLocaleDateString(),
+      ]);
+
+      doc.autoTable({
+        head: [tableColumns],
+        body: tableRows,
+      });
+
+      doc.save("customer_feedback.pdf");
     } catch (error) {
-      toast.error(
-        "Failed to update feedback: " +
-          (error.response?.data?.message || error.message)
-      );
-      console.error("Error updating feedback:", error);
-    } finally {
-      setLoading(false);
+      toast.error("Failed to export PDF: " + error.message);
+      console.error("PDF Export Error:", error);
     }
   };
 
   const filteredFeedback = feedbackList.filter((feedback) => {
+    const searchString = searchText.toLowerCase();
+    // Normalize data to prevent errors if some fields are null/undefined
+    const customerId = String(feedback.customerID || "").toLowerCase();
+    const bookingId = String(feedback.bookingID || "").toLowerCase();
+    const title = String(feedback.title || "").toLowerCase();
+    const content = String(feedback.content || "").toLowerCase();
+
     const matchesSearch =
-      feedback.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      feedback.subject?.toLowerCase().includes(searchText.toLowerCase()) ||
-      feedback.message?.toLowerCase().includes(searchText.toLowerCase());
+      customerId.includes(searchString) ||
+      bookingId.includes(searchString) ||
+      title.includes(searchString) ||
+      content.includes(searchString);
 
-    const matchesStatus =
-      statusFilter === "" || feedback.status === statusFilter;
+    const matchesRating =
+      ratingFilter === null || feedback.rating === ratingFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesRating;
   });
 
   const columns = [
     {
-      title: "Customer Name",
-      dataIndex: "customerName",
-      key: "customerName",
+      title: "Customer ID",
+      dataIndex: "customerID",
+      key: "customerID",
       sorter: (a, b) =>
-        (a.customerName || "").localeCompare(b.customerName || ""),
+        String(a.customerID || "").localeCompare(String(b.customerID || "")),
     },
     {
-      title: "Subject",
-      dataIndex: "subject",
-      key: "subject",
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      sorter: (a, b) =>
+        String(a.bookingID || "").localeCompare(String(b.bookingID || "")),
     },
     {
-      title: "Message",
-      dataIndex: "message",
-      key: "message",
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+    },
+    {
+      title: "Content",
+      dataIndex: "content",
+      key: "content",
       render: (text) => (
-        <Typography.Paragraph ellipsis={{ rows: 2 }}>
+        <Typography.Paragraph ellipsis={{ rows: 2, tooltip: text }}>
           {text}
         </Typography.Paragraph>
       ),
     },
     {
+      title: "Rating",
+      dataIndex: "rating",
+      key: "rating",
+      render: (rating) => (
+        <Rate disabled defaultValue={rating} style={{ fontSize: 16 }} />
+      ),
+      sorter: (a, b) => (a.rating || 0) - (b.rating || 0),
+    },
+    {
       title: "Date",
-      dataIndex: "date",
-      key: "date",
+      dataIndex: "createAt",
+      key: "createAt",
       render: (date) => (date ? new Date(date).toLocaleDateString() : "N/A"),
       sorter: (a, b) =>
-        new Date(a.date || "1970-01-01") - new Date(b.date || "1970-01-01"),
+        new Date(a.createAt || 0).getTime() -
+        new Date(b.createAt || 0).getTime(),
     },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        let color = "default";
-        let icon = <ExclamationCircleOutlined />;
-        if (status === "Pending") {
-          color = "orange";
-          icon = <LoadingOutlined />;
-        }
-        if (status === "Resolved") {
-          color = "green";
-          icon = <CheckCircleOutlined />;
-        }
-        return (
-          <Tag icon={icon} color={color}>
-            {status}
-          </Tag>
-        );
-      },
-      filters: [
-        { text: "Pending", value: "Pending" },
-        { text: "Resolved", value: "Resolved" },
-      ],
-      onFilter: (value, record) => record.status === value,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => handleEdit(record)}>
-          Manage
-        </Button>
-      ),
-    },
+    // Actions column is removed as it's no longer applicable
   ];
 
   return (
@@ -185,10 +184,14 @@ const CustomerFeedbackPage = () => {
           Customer Feedback
         </Title>
         <Space>
+          <Button icon={<DownloadOutlined />} onClick={handleExportPDF}>
+            Export PDF
+          </Button>
           <Button
             icon={<ReloadOutlined />}
             onClick={fetchFeedback}
-            loading={loading}>
+            loading={loading}
+            type="primary">
             Refresh
           </Button>
         </Space>
@@ -198,7 +201,7 @@ const CustomerFeedbackPage = () => {
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} lg={10}>
             <Input
-              placeholder="Search by customer name, subject, message..."
+              placeholder="Search by Customer ID, Booking ID, Title, Content..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -207,14 +210,17 @@ const CustomerFeedbackPage = () => {
           </Col>
           <Col xs={24} sm={6} lg={7}>
             <Select
-              placeholder="Filter by status"
-              value={statusFilter}
-              onChange={setStatusFilter}
+              placeholder="Filter by rating"
+              value={ratingFilter}
+              onChange={setRatingFilter}
               style={{ width: "100%" }}
               allowClear>
-              <Option value="">All Statuses</Option>
-              <Option value="Pending">Pending</Option>
-              <Option value="Resolved">Resolved</Option>
+              <Option value={null}>All Ratings</Option>
+              {[5, 4, 3, 2, 1].map((r) => (
+                <Option key={r} value={r}>
+                  {r} Star{r > 1 ? "s" : ""}
+                </Option>
+              ))}
             </Select>
           </Col>
         </Row>
@@ -225,7 +231,7 @@ const CustomerFeedbackPage = () => {
           loading={loading}
           columns={columns}
           dataSource={filteredFeedback}
-          rowKey="id"
+          rowKey="bookingID" // Assuming bookingID is unique for each feedback
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -237,60 +243,7 @@ const CustomerFeedbackPage = () => {
         />
       </Card>
 
-      <Modal
-        title="Manage Customer Feedback"
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          setEditingFeedback(null);
-          form.resetFields();
-        }}
-        footer={null}
-        width={700}>
-        {editingFeedback && (
-          <Form form={form} layout="vertical" onFinish={handleUpdateFeedback}>
-            <Form.Item name="customerName" label="Customer Name">
-              <Input disabled />
-            </Form.Item>
-            <Form.Item name="subject" label="Subject">
-              <Input disabled />
-            </Form.Item>
-            <Form.Item name="message" label="Message">
-              <TextArea rows={4} disabled />
-            </Form.Item>
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: "Please select a status" }]}>
-              <Select placeholder="Select status">
-                <Option value="Pending">Pending</Option>
-                <Option value="Resolved">Resolved</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name="response" label="Your Response (Optional)">
-              <TextArea
-                rows={4}
-                placeholder="Enter your response to the customer"
-              />
-            </Form.Item>
-            <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-              <Space>
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  Update Feedback
-                </Button>
-                <Button
-                  onClick={() => {
-                    setIsModalVisible(false);
-                    setEditingFeedback(null);
-                    form.resetFields();
-                  }}>
-                  Cancel
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
+      {/* Modal is removed as it's no longer needed */}
       <ToastContainer />
     </div>
   );
