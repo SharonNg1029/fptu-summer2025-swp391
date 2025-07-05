@@ -28,6 +28,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 import { toast, ToastContainer } from "react-toastify";
@@ -43,108 +44,72 @@ const { RangePicker } = DatePicker;
 const ViewReports = () => {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState([]);
-  const [futureReports, setFutureReports] = useState([]);
-  const [todayReports, setTodayReports] = useState([]);
+  const [unassignedBookings, setUnassignedBookings] = useState([]);
   const [staffList, setStaffList] = useState([]);
-  const [activeTab, setActiveTab] = useState("today");
+  const [activeTab, setActiveTab] = useState("assign");
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [staffFilter, setStaffFilter] = useState("");
   const [dateRange, setDateRange] = useState([]);
   const { managerID } = useParams();
 
+  // Assign Staff Modal State
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [assignLoading, setAssignLoading] = useState(false);
+
   // Pagination states
-  const [todayPagination, setTodayPagination] = useState({
-    current: 1,
-    pageSize: 10,
-  });
   const [allPagination, setAllPagination] = useState({
     current: 1,
     pageSize: 10,
   });
 
-  // Get today's date
-  const today = dayjs().format("YYYY-MM-DD");
+  const [assignPagination, setAssignPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
-  // Status options
-  const reportStatusOptions = [
-    "Pending",
-    "Approved",
-    "Rejected",
-    "Resolved",
-    "Completed",
-    "Delay",
-    "Cancel",
-  ];
+  // --- Data Fetching Functions ---
 
-  // Fetch staff list for filter dropdown
-  const fetchStaffList = useCallback(async () => {
-    try {
-      const response = await api.get("/manager/staff-list");
-      setStaffList(response.data?.data || response.data || []);
-    } catch (error) {
-      console.error("Failed to fetch staff list:", error);
-    }
-  }, []);
-
-  // Fetch today's reports
-  const fetchTodayReports = useCallback(
-    async (filters = {}) => {
-      setLoading(true);
-      try {
-        const response = await api.get("/manager/today-reports", {
-          params: { date: today, ...filters },
-        });
-        setTodayReports(response.data?.data || response.data || []);
-      } catch (error) {
-        toast.error(
-          "Failed to fetch today's reports: " +
-            (error.response?.data?.message || error.message)
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [today]
-  );
-
-  // Fetch all reports for this manager
-  const fetchAllReports = useCallback(
-    async (filters = {}) => {
-      if (!managerID) return;
-      setLoading(true);
-      try {
-        const response = await api.get(`/manager/report/${managerID}`, {
-          params: filters,
-        });
-        setReports(response.data?.data || response.data || []);
-      } catch (error) {
-        toast.error(
-          "Failed to fetch reports: " +
-            (error.response?.data?.message || error.message)
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [managerID]
-  );
-  // Assign staff to booking (PATCH)
-  // (Removed unused assignStaffToBooking function)
-
-  // Fetch future reports (from tomorrow onwards)
-  const fetchFutureReports = useCallback(async () => {
+  const fetchUnassignedBookings = useCallback(async () => {
     if (!managerID) return;
     setLoading(true);
     try {
-      const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
-      const response = await api.get(`/manager/report/${managerID}`, {
-        params: { startDate: tomorrow },
-      });
-      setFutureReports(response.data?.data || response.data || []);
+      const response = await api.get(
+        `/manager/unassigned-bookings/${managerID}`
+      );
+      setUnassignedBookings(response.data?.data || response.data || []);
     } catch (error) {
       toast.error(
-        "Failed to fetch future reports: " +
+        "Failed to fetch unassigned bookings: " +
+          (error.response?.data?.message || error.message)
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [managerID]);
+
+  const fetchAllReports = useCallback(async () => {
+    if (!managerID) return;
+    setLoading(true);
+    try {
+      const response = await api.get(`/manager/report/${managerID}`);
+      const fetchedData = response.data?.data || response.data || [];
+      setReports(fetchedData);
+
+      // Dynamically generate staff list from all reports
+      const uniqueStaff = Array.from(
+        new Map(
+          fetchedData
+            .filter((r) => r.staffId && r.staffName)
+            .map((r) => [r.staffId, { id: r.staffId, name: r.staffName }])
+        ).values()
+      );
+      setStaffList(uniqueStaff);
+    } catch (error) {
+      toast.error(
+        "Failed to fetch all reports: " +
           (error.response?.data?.message || error.message)
       );
     } finally {
@@ -153,17 +118,57 @@ const ViewReports = () => {
   }, [managerID]);
 
   useEffect(() => {
-    fetchStaffList();
-    fetchTodayReports();
-    fetchAllReports();
-    fetchFutureReports();
-  }, [fetchStaffList, fetchTodayReports, fetchAllReports, fetchFutureReports]);
+    if (activeTab === "assign") {
+      fetchUnassignedBookings();
+    } else if (activeTab === "all") {
+      fetchAllReports();
+    }
+  }, [activeTab, fetchUnassignedBookings, fetchAllReports]);
 
-  // Handle search and filter for today's reports
-  // Removed unused handleTodaySearch, handleAllSearch, handleReset (no longer needed)
+  // --- Staff Assignment Functions ---
 
-  // Export today's reports to PDF
-  const handleExportTodayPDF = () => {
+  const showAssignModal = (record) => {
+    setSelectedBooking(record);
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setSelectedBooking(null);
+    setSelectedStaff(null);
+  };
+
+  const handleAssignStaff = async () => {
+    if (!selectedBooking || !selectedStaff) {
+      toast.warn("Please select a staff member.");
+      return;
+    }
+    setAssignLoading(true);
+    try {
+      await api.patch(`/manager/assign-staff/${selectedBooking.bookingId}`, {
+        staffId: selectedStaff,
+      });
+      toast.success(
+        `Successfully assigned staff to booking ${selectedBooking.bookingId}`
+      );
+      setIsModalVisible(false);
+      setSelectedBooking(null);
+      setSelectedStaff(null);
+      // Refresh unassigned bookings list
+      fetchUnassignedBookings();
+    } catch (error) {
+      toast.error(
+        "Failed to assign staff: " +
+          (error.response?.data?.message || error.message)
+      );
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
+  // --- PDF Export Functions ---
+
+  const handleExportPDF = (data, title, filename) => {
     try {
       if (!jsPDF || !jsPDF.prototype.autoTable) {
         toast.error("jsPDF autoTable plugin is not available.");
@@ -171,10 +176,8 @@ const ViewReports = () => {
       }
 
       const doc = new jsPDF();
-
-      // Add title
       doc.setFontSize(16);
-      doc.text(`Today's Staff Reports - ${today}`, 14, 20);
+      doc.text(title, 14, 20);
 
       const tableColumns = [
         "Report ID",
@@ -185,11 +188,13 @@ const ViewReports = () => {
         "Note",
       ];
 
-      const tableRows = todayReports.map((row) => [
+      const tableRows = data.map((row) => [
         row.id || "-",
         row.staffName || "N/A",
         row.bookingId || "-",
-        row.appointmentTime || "-",
+        row.appointmentTime
+          ? dayjs(row.appointmentTime).format("HH:mm DD/MM/YYYY")
+          : "-",
         row.status || "-",
         row.note || "-",
       ]);
@@ -202,82 +207,16 @@ const ViewReports = () => {
         headStyles: { fillColor: [22, 119, 255] },
       });
 
-      doc.save(`today_reports_${today}.pdf`);
-      toast.success("Today's reports PDF exported successfully!");
+      doc.save(filename);
+      toast.success("PDF exported successfully!");
     } catch (error) {
       toast.error("Failed to export PDF: " + error.message);
     }
   };
 
-  // Export all reports to PDF
-  const handleExportAllPDF = () => {
-    try {
-      if (!jsPDF || !jsPDF.prototype.autoTable) {
-        toast.error("jsPDF autoTable plugin is not available.");
-        return;
-      }
+  // --- Table Column Definitions ---
 
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(16);
-      doc.text("All Staff Reports", 14, 20);
-
-      const tableColumns = [
-        "Report ID",
-        "Staff Name",
-        "Booking ID",
-        "Appointment Time",
-        "Status",
-        "Note",
-      ];
-
-      const tableRows = reports.map((row) => [
-        row.id || "-",
-        row.staffName || "N/A",
-        row.bookingId || "-",
-        row.appointmentTime || "-",
-        row.status || "-",
-        row.note || "-",
-      ]);
-
-      doc.autoTable({
-        head: [tableColumns],
-        body: tableRows,
-        startY: 30,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [22, 119, 255] },
-      });
-
-      doc.save(`all_staff_reports_${dayjs().format("YYYY-MM-DD")}.pdf`);
-      toast.success("All reports PDF exported successfully!");
-    } catch (error) {
-      toast.error("Failed to export PDF: " + error.message);
-    }
-  };
-
-  // Get statistics for today's reports
-  const getTodayStats = () => {
-    const completed = todayReports.filter(
-      (r) => r.status === "Completed" || r.status === "Resolved"
-    ).length;
-    const pending = todayReports.filter((r) => r.status === "Pending").length;
-    const delayed = todayReports.filter((r) => r.status === "Delay").length;
-    const cancelled = todayReports.filter(
-      (r) => r.status === "Cancel" || r.status === "Rejected"
-    ).length;
-
-    return {
-      completed,
-      pending,
-      delayed,
-      cancelled,
-      total: todayReports.length,
-    };
-  };
-
-  // Table columns for today's reports
-  const todayReportColumns = [
+  const baseReportColumns = [
     {
       title: "Report ID",
       dataIndex: "id",
@@ -290,80 +229,7 @@ const ViewReports = () => {
       dataIndex: "staffName",
       key: "staffName",
       sorter: (a, b) => (a.staffName || "").localeCompare(b.staffName || ""),
-      width: 120,
-    },
-    {
-      title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
-      width: 100,
-    },
-    {
-      title: "Appointment Time",
-      dataIndex: "appointmentTime",
-      key: "appointmentTime",
-      render: (time) => (time ? dayjs(time).format("HH:mm DD/MM/YYYY") : "-"),
-      width: 150,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        let color = "default";
-        let icon = null;
-        if (status === "Completed" || status === "Resolved") {
-          color = "green";
-          icon = <CheckCircleOutlined />;
-        }
-        if (status === "Pending") {
-          color = "orange";
-          icon = <ClockCircleOutlined />;
-        }
-        if (status === "Delay") {
-          color = "orange";
-          icon = <ClockCircleOutlined />;
-        }
-        if (status === "Cancel" || status === "Rejected") {
-          color = "red";
-          icon = <CloseCircleOutlined />;
-        }
-        if (status === "Approved") {
-          color = "blue";
-          icon = <CheckCircleOutlined />;
-        }
-        return (
-          <Tag color={color} icon={icon}>
-            {status}
-          </Tag>
-        );
-      },
-      width: 100,
-    },
-    {
-      title: "Note",
-      dataIndex: "note",
-      key: "note",
-      render: (note) => note || "-",
-      ellipsis: true,
-    },
-  ];
-
-  // Table columns for all reports
-  const allReportColumns = [
-    {
-      title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
-      width: 100,
-    },
-    {
-      title: "Staff Name",
-      dataIndex: "staffName",
-      key: "staffName",
-      sorter: (a, b) => (a.staffName || "").localeCompare(b.staffName || ""),
+      render: (name) => name || <Tag color="volcano">Unassigned</Tag>,
       width: 120,
     },
     {
@@ -415,11 +281,6 @@ const ViewReports = () => {
           </Tag>
         );
       },
-      filters: reportStatusOptions.map((status) => ({
-        text: status,
-        value: status,
-      })),
-      onFilter: (value, record) => record.status === value,
       width: 100,
     },
     {
@@ -429,6 +290,10 @@ const ViewReports = () => {
       render: (note) => note || "-",
       ellipsis: true,
     },
+  ];
+
+  const allReportColumns = [
+    ...baseReportColumns,
     {
       title: "Created Date",
       dataIndex: "createdAt",
@@ -439,233 +304,100 @@ const ViewReports = () => {
     },
   ];
 
-  const stats = getTodayStats();
-
-  // Tab items
-  const tabItems = [
+  const assignBookingColumns = [
     {
-      key: "today",
-      label: (
-        <span>
-          <CalendarOutlined style={{ marginRight: 8 }} />
-          Today's Reports
-        </span>
-      ),
-      children: (
-        <>
-          {/* Statistics Cards */}
-          <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Total Reports"
-                  value={stats.total}
-                  prefix={<FileTextOutlined />}
-                  valueStyle={{ color: "#1677ff" }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Completed"
-                  value={stats.completed}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: "#52c41a" }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Pending"
-                  value={stats.pending}
-                  prefix={<ClockCircleOutlined />}
-                  valueStyle={{ color: "#faad14" }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Issues"
-                  value={stats.delayed + stats.cancelled}
-                  prefix={<CloseCircleOutlined />}
-                  valueStyle={{ color: "#ff4d4f" }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Table */}
-          <Card>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 16,
-                gap: 16,
-                flexWrap: "wrap",
-              }}>
-              <Title level={4} style={{ margin: 0, flex: 1 }}>
-                Today's Staff Reports ({todayReports.length})
-              </Title>
-              {/* Action buttons for Export PDF and Refresh (moved here) */}
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportAllPDF}
-                type="default">
-                Export PDF
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => fetchAllReports()}
-                loading={loading}
-                type="primary">
-                Refresh
-              </Button>
-            </div>
-
-            <Row
-              gutter={[16, 16]}
-              style={{
-                marginBottom: 16,
-              }}>
-              <Col xs={24} sm={12} lg={10}>
-                <Input
-                  placeholder="Search reports..."
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={(e) => {
-                    setSearchText(e.target.value);
-                    const filters = {
-                      staffId: staffFilter,
-                      status: statusFilter,
-                      search: e.target.value,
-                    };
-                    fetchTodayReports(filters);
-                  }}
-                  allowClear
-                  style={{ width: "100%" }}
-                />
-              </Col>
-              <Col xs={24} sm={6} lg={7}>
-                <Select
-                  placeholder="All Staff"
-                  value={staffFilter}
-                  onChange={(value) => {
-                    setStaffFilter(value);
-                    const filters = {
-                      staffId: value,
-                      status: statusFilter,
-                      search: searchText,
-                    };
-                    fetchTodayReports(filters);
-                  }}
-                  allowClear
-                  style={{ width: "100%" }}>
-                  {staffList.map((staff) => (
-                    <Option key={staff.id} value={staff.id}>
-                      {staff.name || staff.fullName}
-                    </Option>
-                  ))}
-                </Select>
-              </Col>
-              <Col xs={24} sm={6} lg={7}>
-                <Select
-                  placeholder="All Statuses"
-                  value={statusFilter}
-                  onChange={(value) => {
-                    setStatusFilter(value);
-                    const filters = {
-                      staffId: staffFilter,
-                      status: value,
-                      search: searchText,
-                    };
-                    fetchTodayReports(filters);
-                  }}
-                  allowClear
-                  style={{ width: "100%" }}>
-                  <Option value="Pending">Pending</Option>
-                  <Option value="Approved">Approved</Option>
-                  <Option value="Rejected">Rejected</Option>
-                  <Option value="Resolved">Resolved</Option>
-                  <Option value="Completed">Completed</Option>
-                  <Option value="Delay">Delay</Option>
-                  <Option value="Cancel">Cancel</Option>
-                </Select>
-              </Col>
-            </Row>
-
-            <Table
-              loading={loading}
-              columns={todayReportColumns}
-              dataSource={todayReports}
-              rowKey="id"
-              pagination={{
-                ...todayPagination,
-                showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50],
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} reports`,
-              }}
-              onChange={(paginationConfig) => {
-                setTodayPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
-              }}
-              scroll={{ x: 800 }}
-            />
-          </Card>
-        </>
-      ),
+      title: "Booking ID",
+      dataIndex: "bookingId",
+      key: "bookingId",
+      width: 100,
     },
     {
-      key: "future",
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      width: 150,
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (time) => (time ? dayjs(time).format("HH:mm DD/MM/YYYY") : "-"),
+      sorter: (a, b) =>
+        dayjs(a.appointmentTime).unix() - dayjs(b.appointmentTime).unix(),
+      width: 180,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: () => <Tag color="volcano">Unassigned</Tag>,
+      width: 120,
+    },
+    {
+      title: "Action",
+      key: "action",
+      fixed: "right",
+      width: 120,
+      render: (_, record) => (
+        <Button
+          icon={<UserAddOutlined />}
+          onClick={() => showAssignModal(record)}
+          type="primary"
+          size="small">
+          Assign Staff
+        </Button>
+      ),
+    },
+  ];
+
+  // --- Tab Items ---
+  const tabItems = [
+    {
+      key: "assign",
       label: (
         <span>
-          <CalendarOutlined style={{ marginRight: 8 }} />
-          Future Schedule
+          <UserAddOutlined style={{ marginRight: 8 }} />
+          Assign Staff
         </span>
       ),
       children: (
         <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              Bookings Awaiting Assignment ({unassignedBookings.length})
+            </Title>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchUnassignedBookings}
+              loading={loading}>
+              Refresh
+            </Button>
+          </div>
           <Card>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 16,
-                gap: 16,
-                flexWrap: "wrap",
-              }}>
-              <Title level={4} style={{ margin: 0, flex: 1 }}>
-                Future Reports ({futureReports.length})
-              </Title>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchFutureReports}
-                loading={loading}
-                type="primary">
-                Refresh
-              </Button>
-            </div>
             <Table
               loading={loading}
-              columns={allReportColumns}
-              dataSource={futureReports}
-              rowKey="id"
+              columns={assignBookingColumns}
+              dataSource={unassignedBookings}
+              rowKey="bookingId"
               pagination={{
-                pageSize: 10,
+                ...assignPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50, 100],
-                showQuickJumper: true,
+                pageSizeOptions: [10, 20, 50],
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} reports`,
+                  `${range[0]}-${range[1]} of ${total} bookings`,
+                onChange: (page, pageSize) =>
+                  setAssignPagination({ current: page, pageSize: pageSize }),
               }}
-              scroll={{ x: 1000 }}
+              locale={{
+                emptyText: "Hiện tại chưa có booking nào cần phân công",
+              }}
+              scroll={{ x: 800 }}
             />
           </Card>
         </>
@@ -675,140 +407,95 @@ const ViewReports = () => {
       key: "all",
       label: (
         <span>
-          <UserOutlined style={{ marginRight: 8 }} />
-          Report History
+          <FileTextOutlined style={{ marginRight: 8 }} />
+          All Reports
         </span>
       ),
       children: (
         <>
-          {/* Table */}
-          <Card>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 16,
-                gap: 16,
-                flexWrap: "wrap",
-              }}>
-              <Title level={4} style={{ margin: 0, flex: 1 }}>
-                Report History ({reports.length})
-              </Title>
+          {/* Filter Controls */}
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={8}>
+              <Input
+                placeholder="Search by Report ID, Booking ID, Staff Name..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                prefix={<SearchOutlined />}
+              />
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Filter by Status"
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value)}
+                style={{ width: "100%" }}
+                allowClear>
+                <Option value="Pending">Pending</Option>
+                <Option value="Approved">Approved</Option>
+                <Option value="Resolved">Resolved</Option>
+                <Option value="Rejected">Rejected</Option>
+              </Select>
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Filter by Staff"
+                value={staffFilter}
+                onChange={(value) => setStaffFilter(value)}
+                style={{ width: "100%" }}
+                allowClear
+                showSearch>
+                {staffList.map((staff) => (
+                  <Option key={staff.id} value={staff.id}>
+                    {staff.name}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={6}>
+              <RangePicker
+                style={{ width: "100%" }}
+                value={dateRange}
+                onChange={(dates) => setDateRange(dates)}
+              />
+            </Col>
+          </Row>
+          {/* Action Buttons */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              All Staff Reports ({reports.length})
+            </Title>
+            <Space>
               <Button
                 icon={<DownloadOutlined />}
-                onClick={handleExportTodayPDF}
-                type="default">
+                onClick={() =>
+                  handleExportPDF(
+                    reports,
+                    "All Staff Reports",
+                    "all_reports.pdf"
+                  )
+                }
+                style={{
+                  background: "#1677ff",
+                  color: "#fff",
+                  border: "none",
+                }}>
                 Export PDF
               </Button>
               <Button
                 icon={<ReloadOutlined />}
-                onClick={() => fetchTodayReports()}
-                loading={loading}
-                type="primary">
+                onClick={fetchAllReports}
+                loading={loading}>
                 Refresh
               </Button>
-            </div>
-
-            <div
-              style={{
-                marginBottom: 16,
-                display: "flex",
-                gap: 16,
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}>
-              <Input
-                placeholder="Search reports..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: statusFilter,
-                    search: e.target.value,
-                  };
-                  if (dateRange && dateRange.length === 2) {
-                    filters.startDate = dateRange[0].format("YYYY-MM-DD");
-                    filters.endDate = dateRange[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                allowClear
-                style={{ width: 300 }}
-              />
-
-              <Select
-                placeholder="All Staff"
-                value={staffFilter}
-                onChange={(value) => {
-                  setStaffFilter(value);
-                  const filters = {
-                    staffId: value,
-                    status: statusFilter,
-                    search: searchText,
-                  };
-                  if (dateRange && dateRange.length === 2) {
-                    filters.startDate = dateRange[0].format("YYYY-MM-DD");
-                    filters.endDate = dateRange[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                {staffList.map((staff) => (
-                  <Option key={staff.id} value={staff.id}>
-                    {staff.name || staff.fullName}
-                  </Option>
-                ))}
-              </Select>
-
-              <RangePicker
-                value={dateRange}
-                onChange={(range) => {
-                  setDateRange(range);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: statusFilter,
-                    search: searchText,
-                  };
-                  if (range && range.length === 2) {
-                    filters.startDate = range[0].format("YYYY-MM-DD");
-                    filters.endDate = range[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                style={{ width: 300 }}
-              />
-
-              <Select
-                placeholder="All Statuses"
-                value={statusFilter}
-                onChange={(value) => {
-                  setStatusFilter(value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: value,
-                    search: searchText,
-                  };
-                  if (dateRange && dateRange.length === 2) {
-                    filters.startDate = dateRange[0].format("YYYY-MM-DD");
-                    filters.endDate = dateRange[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                <Option value="Pending">Pending</Option>
-                <Option value="Approved">Approved</Option>
-                <Option value="Rejected">Rejected</Option>
-                <Option value="Resolved">Resolved</Option>
-                <Option value="Completed">Completed</Option>
-                <Option value="Delay">Delay</Option>
-                <Option value="Cancel">Cancel</Option>
-              </Select>
-            </div>
-
+            </Space>
+          </div>
+          <Card>
             <Table
               loading={loading}
               columns={allReportColumns}
@@ -818,17 +505,12 @@ const ViewReports = () => {
                 ...allPagination,
                 showSizeChanger: true,
                 pageSizeOptions: [10, 20, 50, 100],
-                showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
+                onChange: (page, pageSize) =>
+                  setAllPagination({ current: page, pageSize: pageSize }),
               }}
-              onChange={(paginationConfig) => {
-                setAllPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
-              }}
-              scroll={{ x: 1000 }}
+              scroll={{ x: 1200 }}
             />
           </Card>
         </>
@@ -838,18 +520,64 @@ const ViewReports = () => {
 
   return (
     <div style={{ padding: "0 24px" }}>
-      <Title level={2} style={{ marginBottom: 24 }}>
-        Staff Work Reports Management
+      <Title level={2} style={{ margin: 0, marginBottom: 24 }}>
+        Staff Reports Management
       </Title>
-
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
         type="card"
-        style={{ marginBottom: 24 }}
-        tabBarStyle={{ marginBottom: 32 }}
         items={tabItems}
       />
+
+      {/* Assign Staff Modal */}
+      <Modal
+        title={`Assign Staff to Booking #${selectedBooking?.bookingId}`}
+        visible={isModalVisible}
+        onOk={handleAssignStaff}
+        onCancel={handleCancel}
+        confirmLoading={assignLoading}
+        footer={[
+          <Button key="back" onClick={handleCancel}>
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={assignLoading}
+            onClick={handleAssignStaff}>
+            Assign
+          </Button>,
+        ]}>
+        <p>
+          <strong>Customer:</strong> {selectedBooking?.customerName}
+        </p>
+        <p>
+          <strong>Appointment:</strong>{" "}
+          {selectedBooking?.appointmentTime
+            ? dayjs(selectedBooking.appointmentTime).format("HH:mm DD/MM/YYYY")
+            : "N/A"}
+        </p>
+        <Form layout="vertical" style={{ marginTop: 24 }}>
+          <Form.Item label="Select Staff Member" required>
+            <Select
+              showSearch
+              placeholder="Select a staff member"
+              value={selectedStaff}
+              onChange={(value) => setSelectedStaff(value)}
+              style={{ width: "100%" }}
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }>
+              {staffList.map((staff) => (
+                <Option key={staff.id} value={staff.id}>
+                  {staff.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <ToastContainer />
     </div>

@@ -19,6 +19,7 @@ import {
   HistoryOutlined,
   ReloadOutlined,
   DownloadOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios"; // Import axios instance
 import { toast, ToastContainer } from "react-toastify";
@@ -42,7 +43,12 @@ const StaffReporting = () => {
 
   // Lọc báo cáo trong ngày
   const todayReports = workReports.filter(
-    (r) => (r.appointmentTime || "").slice(0, 10) === today
+    (r) => (r.appointmentTime || "").slice(0, 10) === today && !r.isSent
+  );
+
+  // Lọc báo cáo trong tương lai (chưa gửi)
+  const futureReports = workReports.filter(
+    (r) => (r.appointmentTime || "").slice(0, 10) > today && !r.isSent
   );
 
   // Lọc báo cáo đã gửi
@@ -50,6 +56,12 @@ const StaffReporting = () => {
 
   // Pagination state for Sent Reports
   const [completedReportsPagination, setCompletedReportsPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+
+  // Pagination state for Future Reports
+  const [futureReportsPagination, setFutureReportsPagination] = useState({
     current: 1,
     pageSize: 10,
   });
@@ -348,6 +360,61 @@ const StaffReporting = () => {
             </Form>
           </Card>
           {/* Submit Report button removed */}
+        </>
+      ),
+    },
+    {
+      key: "future",
+      label: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 8 }} />
+          Future Schedule
+        </span>
+      ),
+      children: (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+              flexWrap: "wrap",
+              gap: 16,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              Future Schedule ({futureReports.length})
+            </Title>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchWorkReports}
+              loading={loading}>
+              Refresh Reports
+            </Button>
+          </div>
+          <Card>
+            <Table
+              loading={loading}
+              columns={workReportColumns} // Reusing the same columns for simplicity
+              dataSource={futureReports}
+              rowKey="id"
+              pagination={{
+                ...futureReportsPagination,
+                showSizeChanger: true,
+                pageSizeOptions: [10, 20, 50],
+                showQuickJumper: true,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} reports`,
+                onChange: (paginationConfig) => {
+                  setFutureReportsPagination({
+                    current: paginationConfig.current,
+                    pageSize: paginationConfig.pageSize,
+                  });
+                },
+              }}
+              scroll={{ x: 1200 }}
+            />
+          </Card>
         </>
       ),
     },
