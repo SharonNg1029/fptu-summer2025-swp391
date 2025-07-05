@@ -526,77 +526,76 @@ const ViewReports = () => {
               </Button>
             </div>
 
-            <div
+            <Row
+              gutter={[16, 16]}
               style={{
                 marginBottom: 16,
-                display: "flex",
-                gap: 16,
-                alignItems: "center",
-                flexWrap: "wrap",
               }}>
-              <Input
-                placeholder="Search reports..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: statusFilter,
-                    search: e.target.value,
-                  };
-                  fetchTodayReports(filters);
-                }}
-                allowClear
-                style={{ width: 300 }}
-              />
-
-              <Select
-                placeholder="All Staff"
-                value={staffFilter}
-                onChange={(value) => {
-                  setStaffFilter(value);
-                  const filters = {
-                    staffId: value,
-                    status: statusFilter,
-                    search: searchText,
-                  };
-                  fetchTodayReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                {staffList.map((staff) => (
-                  <Option key={staff.id} value={staff.id}>
-                    {staff.name || staff.fullName}
-                  </Option>
-                ))}
-              </Select>
-
-              <Select
-                placeholder="All Statuses"
-                value={statusFilter}
-                onChange={(value) => {
-                  setStatusFilter(value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: value,
-                    search: searchText,
-                  };
-                  fetchTodayReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                <Option value="Pending">Pending</Option>
-                <Option value="Approved">Approved</Option>
-                <Option value="Rejected">Rejected</Option>
-                <Option value="Resolved">Resolved</Option>
-                <Option value="Completed">Completed</Option>
-                <Option value="Delay">Delay</Option>
-                <Option value="Cancel">Cancel</Option>
-              </Select>
-
-              {/* Action buttons for Export PDF and Refresh (moved here) */}
-            </div>
+              <Col xs={24} sm={12} lg={10}>
+                <Input
+                  placeholder="Search reports..."
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                    const filters = {
+                      staffId: staffFilter,
+                      status: statusFilter,
+                      search: e.target.value,
+                    };
+                    fetchTodayReports(filters);
+                  }}
+                  allowClear
+                  style={{ width: "100%" }}
+                />
+              </Col>
+              <Col xs={24} sm={6} lg={7}>
+                <Select
+                  placeholder="All Staff"
+                  value={staffFilter}
+                  onChange={(value) => {
+                    setStaffFilter(value);
+                    const filters = {
+                      staffId: value,
+                      status: statusFilter,
+                      search: searchText,
+                    };
+                    fetchTodayReports(filters);
+                  }}
+                  allowClear
+                  style={{ width: "100%" }}>
+                  {staffList.map((staff) => (
+                    <Option key={staff.id} value={staff.id}>
+                      {staff.name || staff.fullName}
+                    </Option>
+                  ))}
+                </Select>
+              </Col>
+              <Col xs={24} sm={6} lg={7}>
+                <Select
+                  placeholder="All Statuses"
+                  value={statusFilter}
+                  onChange={(value) => {
+                    setStatusFilter(value);
+                    const filters = {
+                      staffId: staffFilter,
+                      status: value,
+                      search: searchText,
+                    };
+                    fetchTodayReports(filters);
+                  }}
+                  allowClear
+                  style={{ width: "100%" }}>
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Approved">Approved</Option>
+                  <Option value="Rejected">Rejected</Option>
+                  <Option value="Resolved">Resolved</Option>
+                  <Option value="Completed">Completed</Option>
+                  <Option value="Delay">Delay</Option>
+                  <Option value="Cancel">Cancel</Option>
+                </Select>
+              </Col>
+            </Row>
 
             <Table
               loading={loading}
