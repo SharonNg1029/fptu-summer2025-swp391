@@ -596,7 +596,7 @@ const ProfilePage = () => {
 
       setIsEditing(false);
       setSuccess(true);
-      toast.success("Profile updated successfully!");
+      
 
       // ✅ Reset DOB validation sau khi save thành công
       setDobValidation({ isValid: true, message: "" });
