@@ -129,58 +129,118 @@ const ProfilePage = () => {
     return { isValid: true, message: "" };
   };
 
-  // ✅ FIXED: Gender conversion functions
-  const convertDatabaseGenderToUI = (dbGender) => {
-    console.log('🔄 Converting DB gender to UI:', { 
-      dbGender, 
-      type: typeof dbGender,
-      timestamp: new Date().toISOString()
-    });
+  // ✅ UTF-8 Encoding Fix Functions
+  const fixVietnameseEncoding = (text) => {
+    if (!text || typeof text !== 'string') return text;
     
-    // Database: 0 = Male, 1 = Female
-    // UI: 1 = Male, 2 = Female
+    try {
+      // Method 1: Try decoding if it's URL encoded
+      if (text.includes('%')) {
+        const decoded = decodeURIComponent(text);
+        if (decoded !== text) {
+          console.log('🔧 Fixed URL encoding:', { original: text, fixed: decoded });
+          return decoded;
+        }
+      }
+      
+      // Method 2: Fix common Vietnamese encoding issues
+      const replacements = {
+        'Nguy?n': 'Nguyễn',
+        'Tr?n': 'Trần', 
+        'L?': 'Lê',
+        'Ph?m': 'Phạm',
+        'Hu?nh': 'Huỳnh',
+        'Võ': 'Võ',
+        'Ngô': 'Ngô',
+        'Đ?ng': 'Đặng',
+        'Bùi': 'Bùi',
+        'Đ?': 'Đỗ',
+        'H?': 'Hồ',
+        'Ng?': 'Ngô',
+        'Dương': 'Dương',
+        '?': 'ế', // Common ? replacement
+        'á': 'á',
+        'à': 'à',
+        'ả': 'ả',
+        'ã': 'ã',
+        'ạ': 'ạ',
+        // Add more mappings as needed
+      };
+      
+      let fixed = text;
+      Object.entries(replacements).forEach(([wrong, correct]) => {
+        if (fixed.includes(wrong)) {
+          fixed = fixed.replace(new RegExp(wrong, 'g'), correct);
+          console.log('🔧 Fixed Vietnamese encoding:', { original: text, fixed, pattern: wrong });
+        }
+      });
+      
+      return fixed;
+    } catch (error) {
+      console.error('❌ Error fixing Vietnamese encoding:', error);
+      return text;
+    }
+  };
+
+  // ✅ Enhanced normalize Vietnamese function
+  const normalizeVietnamese = (text, shouldTrim = false) => {
+    if (!text) return text;
+    
+    // First fix encoding issues
+    let fixed = fixVietnameseEncoding(text);
+    
+    // Then normalize Unicode
+    fixed = fixed.normalize("NFD").normalize("NFC");
+    
+    if (shouldTrim) {
+      fixed = fixed.trim();
+    }
+    
+    return fixed;
+  };
+
+  // ✅ FIXED: Gender conversion functions với 1073741824 support
+  const convertDatabaseGenderToUI = (dbGender) => {
+    console.log('🔄 Converting DB gender to UI:', { dbGender, type: typeof dbGender });
+    
+    // Database: 0 = Male, 1 = Female, 1073741824 = Not specified
+    // UI: 1 = Male, 2 = Female, "" = Not specified
     if (dbGender === 0 || dbGender === "0") {
-      console.log('✅ DB Male (0) → UI Male (1)');
       return "1"; // Male
     }
     if (dbGender === 1 || dbGender === "1") {
-      console.log('✅ DB Female (1) → UI Female (2)');
       return "2"; // Female
     }
+    if (dbGender === 1073741824) {
+      return ""; // Not specified
+    }
     
-    console.log('❌ Unknown gender value, returning empty');
     return ""; // Unknown
   };
 
   const convertUIGenderToDatabase = (uiGender) => {
-    console.log('🔄 Converting UI gender to DB:', { 
-      uiGender, 
-      type: typeof uiGender,
-      timestamp: new Date().toISOString()
-    });
+    console.log('🔄 Converting UI gender to DB:', { uiGender, type: typeof uiGender });
     
-    // UI: 1 = Male, 2 = Female
-    // Database: 0 = Male, 1 = Female
+    // UI: 1 = Male, 2 = Female, "" = Not specified
+    // Database: 0 = Male, 1 = Female, null = Not specified
     if (uiGender === "1" || uiGender === 1) {
-      console.log('✅ UI Male (1) → DB Male (0)');
       return 0; // Male
     }
     if (uiGender === "2" || uiGender === 2) {
-      console.log('✅ UI Female (2) → DB Female (1)');
       return 1; // Female
     }
     
-    console.log('❌ Unknown UI gender, returning null');
-    return null; // Unknown
+    return null; // Not specified
   };
 
   const getGenderDisplayText = (dbGender) => {
     if (dbGender === 0 || dbGender === "0") return "Male";
     if (dbGender === 1 || dbGender === "1") return "Female";
+    if (dbGender === 1073741824) return "Not specified";
     return "Not provided";
   };
 
-  // ✅ Helper function để clean placeholder values
+  // ✅ Updated helper function để clean placeholder values
   const cleanPlaceholderValue = (value, type = 'text') => {
     if (!value) return "";
     
@@ -190,14 +250,7 @@ const ProfilePage = () => {
       return "";
     }
     
-    if (type === 'gender') {
-      if (value === 1 || value === '1') return 1;
-      if (value === 2 || value === '2') return 2;
-      if (value === 0 || value === '0') return 0;
-      if (value === 1073741824 || value > 10) return "";
-      return value;
-    }
-    
+    // ✅ Không filter gender values nữa - accept all including 1073741824
     return value;
   };
 
@@ -207,9 +260,9 @@ const ProfilePage = () => {
     let value = profile?.[fieldName];
     
     // Nếu không có, thử các fallback fields
-    if (!value && fallbackFields.length > 0) {
+    if ((value === null || value === undefined || value === '') && fallbackFields.length > 0) {
       for (const fallback of fallbackFields) {
-        if (profile?.[fallback]) {
+        if (profile?.[fallback] !== null && profile?.[fallback] !== undefined && profile?.[fallback] !== '') {
           value = profile[fallback];
           break;
         }
@@ -217,7 +270,7 @@ const ProfilePage = () => {
     }
     
     // Thử lấy từ account nested object nếu có
-    if (!value && profile?.account?.[fieldName]) {
+    if ((value === null || value === undefined || value === '') && profile?.account?.[fieldName]) {
       value = profile.account[fieldName];
     }
     
@@ -255,13 +308,6 @@ const ProfilePage = () => {
     }
   };
 
-  // Helper function để xử lý tiếng Việt
-  const normalizeVietnamese = (text, shouldTrim = false) => {
-    if (!text) return text;
-    const normalized = text.normalize("NFC");
-    return shouldTrim ? normalized.trim() : normalized;
-  };
-
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userID) {
@@ -277,22 +323,16 @@ const ProfilePage = () => {
         if (userRole === "manager") apiPath = `/manager/my-info/${userID}`;
         if (userRole === "admin") apiPath = `/admin/my-info/${userID}`;
 
-        console.log('🔍 Fetching profile:', {
-          apiPath,
-          userRole,
-          userID,
-          timestamp: new Date().toISOString()
-        });
+        console.log('🔍 Fetching profile from:', apiPath);
 
         const response = await api.get(apiPath, {
           headers: {
             Accept: "application/json; charset=utf-8",
+            "Accept-Charset": "utf-8",
           },
         });
 
         const profile = response.data.data || response.data[0] || response.data;
-        console.log('📊 Raw profile data received:', profile);
-        
         setUserProfile(profile);
 
         // ✅ Get all database fields với fallbacks
@@ -302,17 +342,6 @@ const ProfilePage = () => {
         const address = getFieldValue(profile, 'address', ['Address']);
         const rawGender = getFieldValue(profile, 'gender', ['Gender']);
         const dobValue = getFieldValue(profile, 'dob', ['DOB', 'dateOfBirth']);
-
-        console.log('📋 Extracted field values:', {
-          fullName,
-          email,
-          phone,
-          address,
-          rawGender,
-          rawGenderType: typeof rawGender,
-          dobValue,
-          timestamp: new Date().toISOString()
-        });
 
         // ✅ Handle DOB conversion
         let dobForInput = "";
@@ -335,30 +364,13 @@ const ProfilePage = () => {
         // ✅ FIXED: Convert gender từ Database sang UI
         const genderForUI = convertDatabaseGenderToUI(rawGender);
 
-        console.log('🎯 Gender conversion result:', {
-          rawGender,
-          rawGenderType: typeof rawGender,
-          genderForUI,
-          timestamp: new Date().toISOString()
-        });
-
         setEditForm({
           fullName: normalizeVietnamese(fullName, false) || "",
           dob: dobForInput,
           email: normalizeVietnamese(email, true) || "",
           phone: normalizeVietnamese(phone, true) || "",
           address: normalizeVietnamese(address, false) || "",
-          gender: genderForUI, // ✅ FIXED: Sử dụng function convert
-        });
-
-        console.log('📝 Edit form populated:', {
-          fullName: normalizeVietnamese(fullName, false) || "",
-          dob: dobForInput,
-          email: normalizeVietnamese(email, true) || "",
-          phone: normalizeVietnamese(phone, true) || "",
-          address: normalizeVietnamese(address, false) || "",
           gender: genderForUI,
-          timestamp: new Date().toISOString()
         });
 
         setError(null);
@@ -376,23 +388,10 @@ const ProfilePage = () => {
 
   // ✅ Updated handleInputChange với DOB validation
   const handleInputChange = useCallback((field, value) => {
-    console.log('✏️ Input change:', {
-      field,
-      value,
-      timestamp: new Date().toISOString()
-    });
-
     // ✅ Validate DOB khi thay đổi
     if (field === "dob") {
       const validation = validateDateOfBirth(value);
       setDobValidation(validation);
-      
-      console.log('📅 DOB Validation:', {
-        value,
-        isValid: validation.isValid,
-        message: validation.message,
-        timestamp: new Date().toISOString()
-      });
     }
 
     setEditForm((prev) => ({
@@ -404,7 +403,7 @@ const ProfilePage = () => {
     }));
   }, []);
 
-  // ✅ Updated handleSaveProfile với DOB validation check
+  // ✅ Updated handleSaveProfile với UTF-8 headers và DOB validation
   const handleSaveProfile = async () => {
     if (!userID) return;
 
@@ -435,7 +434,7 @@ const ProfilePage = () => {
         phone: normalizeVietnamese(editForm.phone, true) || null,
         address: normalizeVietnamese(editForm.address, false) || null,
         dob: editForm.dob || null,
-        gender: genderForDatabase, // ✅ FIXED: Sử dụng converted value
+        gender: genderForDatabase,
       };
 
       // Remove null/empty values
@@ -446,37 +445,21 @@ const ProfilePage = () => {
         return acc;
       }, {});
 
-      console.log('💾 Saving profile with validated DOB:', {
-        updatePath,
-        originalGender: editForm.gender,
-        convertedGender: genderForDatabase,
-        validatedDob: editForm.dob,
-        cleanFormData,
-        userRole,
-        userID,
-        timestamp: new Date().toISOString()
-      });
+      console.log('💾 Saving profile data:', { updatePath, cleanFormData });
 
       const response = await api.patch(updatePath, cleanFormData, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           Accept: "application/json; charset=utf-8",
+          "Accept-Charset": "utf-8",
         },
       });
 
-      console.log('✅ Update success:', {
-        status: response.status,
-        data: response.data,
-        timestamp: new Date().toISOString()
-      });
-
-      // ✅ CORRECT refresh paths
+      // ✅ CORRECT refresh paths với UTF-8 headers
       let refreshPath = `/customer/my-info/${userID}`;
       if (userRole === "staff") refreshPath = `/staff/my-info/${userID}`;
       if (userRole === "manager") refreshPath = `/manager/my-info/${userID}`;
       if (userRole === "admin") refreshPath = `/admin/my-info/${userID}`;
-
-      console.log('🔄 Refreshing from path:', refreshPath);
 
       // Wait for server to commit
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -484,6 +467,7 @@ const ProfilePage = () => {
       const refreshResponse = await api.get(refreshPath, {
         headers: {
           Accept: "application/json; charset=utf-8",
+          "Accept-Charset": "utf-8",
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
         },
@@ -494,8 +478,6 @@ const ProfilePage = () => {
 
       const refreshedProfile = refreshResponse.data.data || refreshResponse.data[0] || refreshResponse.data;
       
-      console.log('📊 Refreshed profile:', refreshedProfile);
-
       // ✅ Update states
       setUserProfile(refreshedProfile);
       
@@ -506,17 +488,6 @@ const ProfilePage = () => {
       const refreshedAddress = getFieldValue(refreshedProfile, 'address', ['Address']);
       const refreshedRawGender = getFieldValue(refreshedProfile, 'gender', ['Gender']);
       const refreshedDob = getFieldValue(refreshedProfile, 'dob', ['DOB', 'dateOfBirth']);
-
-      console.log('📋 Extracted refresh data:', {
-        refreshedFullName,
-        refreshedEmail,
-        refreshedPhone,
-        refreshedAddress,
-        refreshedRawGender,
-        refreshedRawGenderType: typeof refreshedRawGender,
-        refreshedDob,
-        timestamp: new Date().toISOString()
-      });
 
       // ✅ FIXED: Handle DOB conversion
       let refreshedDobForInput = "";
@@ -532,28 +503,16 @@ const ProfilePage = () => {
       // ✅ FIXED: Convert gender từ Database sang UI
       const refreshedGenderForUI = convertDatabaseGenderToUI(refreshedRawGender);
 
-      console.log('🔄 Final gender conversion:', {
-        refreshedRawGender,
-        refreshedRawGenderType: typeof refreshedRawGender,
-        refreshedGenderForUI,
-        timestamp: new Date().toISOString()
-      });
-
       const updatedEditForm = {
         fullName: normalizeVietnamese(refreshedFullName, false) || "",
         dob: refreshedDobForInput,
         email: normalizeVietnamese(refreshedEmail, true) || "",
         phone: normalizeVietnamese(refreshedPhone, true) || "",
         address: normalizeVietnamese(refreshedAddress, false) || "",
-        gender: refreshedGenderForUI, // ✅ FIXED: Sử dụng converted value
+        gender: refreshedGenderForUI,
       };
 
       setEditForm(updatedEditForm);
-
-      console.log('📝 Final updated edit form:', {
-        updatedEditForm,
-        timestamp: new Date().toISOString()
-      });
 
       dispatch(updateUser({ ...currentUser, ...refreshedProfile }));
       
@@ -604,13 +563,7 @@ const ProfilePage = () => {
       email: normalizeVietnamese(email, true) || "",
       phone: normalizeVietnamese(phone, true) || "",
       address: normalizeVietnamese(address, false) || "",
-      gender: genderForUI, // ✅ FIXED: Sử dụng converted value
-    });
-
-    console.log('🔄 Form reset with converted gender:', {
-      rawGender,
-      genderForUI,
-      timestamp: new Date().toISOString()
+      gender: genderForUI,
     });
 
     // ✅ Reset DOB validation khi cancel
@@ -624,12 +577,6 @@ const ProfilePage = () => {
   };
 
   const handleChangePassword = () => {
-    console.log('🔐 Navigating to Change Password page', {
-      userRole,
-      userID,
-      timestamp: new Date().toISOString()
-    });
-
     let passwordResetPath = '/reset-password';
     
     if (userRole === "admin" && userID) {
@@ -642,7 +589,6 @@ const ProfilePage = () => {
       passwordResetPath = `/customer/reset-password/${userID}`;
     }
 
-    console.log('🔗 Password reset path:', passwordResetPath);
     navigate(passwordResetPath);
   };
 

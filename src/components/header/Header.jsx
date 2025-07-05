@@ -17,16 +17,11 @@ const Header = () => {
   const isAuthenticated = userState?.isAuthenticated;
 
   // CHỈ LẤY FULLNAME hoặc name, KHÔNG LẤY EMAIL
- const userDisplayName =
-  user?.fullName ||
-  user?.name ||
-  `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
-  "Guest";
-
-console.log('👤 Current user:', userDisplayName || 'Not logged in');
-console.log('📅 Current UTC Time:', '2025-07-02 12:36:50');
-console.log('🔐 Authentication Status:', isAuthenticated);
-console.log('👤 User Object:', user);
+  const userDisplayName =
+    user?.fullName ||
+    user?.name ||
+    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+    "Guest";
 
   const navItems = [
     { id: 1, label: "Home", href: "/" },
