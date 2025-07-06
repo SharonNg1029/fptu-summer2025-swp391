@@ -65,8 +65,15 @@ const AccountManagement = () => {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
+
+  // Xóa filter khi nhấn nút X
+  const handleClearFilter = (filterType) => {
+    if (filterType === "role") setRoleFilter(null);
+    if (filterType === "status") setStatusFilter(null);
+    if (filterType === "search") setSearchText("");
+  };
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [deletingAccounts, setDeletingAccounts] = useState(new Set());
@@ -190,7 +197,9 @@ const AccountManagement = () => {
               : acc.role,
           status: acc.enabled ? "ACTIVE" : "INACTIVE",
           createdAt: acc.createAt,
-          // Các trường khác nếu cần
+          address: acc.address || acc.diachi || "", // Bắt đúng address
+          payment_code:
+            acc.payment_code || acc.paymentCode || acc.paymentCode || "", // Bắt đúng payment_code
           ...acc,
         })
       );
@@ -359,17 +368,17 @@ const AccountManagement = () => {
   const handleFormSubmit = async (values) => {
     try {
       if (editingAccount) {
+        // Đảm bảo data gửi đi đúng định dạng mẫu yêu cầu
         const accountData = {
-          fullName: values.fullName?.trim(),
           email: values.email?.trim(),
           phone: values.phone?.trim(),
           role: values.role,
           enabled: values.status,
+          fullname: values.fullName?.trim(), // Always send fullname
         };
         if (values.password && values.password.trim()) {
           accountData.password = values.password.trim();
         }
-
         // GỌI API
         const res = await api.patch(
           `/admin/account/${editingAccount.id}`,
@@ -547,9 +556,11 @@ const AccountManagement = () => {
       account.fullName?.toLowerCase().includes(searchText.toLowerCase());
 
     const matchesRole =
-      roleFilter === "" || roleFilter === "All" || account.role === roleFilter;
+      roleFilter === null ||
+      roleFilter === "All" ||
+      account.role === roleFilter;
     const matchesStatus =
-      statusFilter === "" || account.status === statusFilter;
+      statusFilter === null || account.status === statusFilter;
 
     const result = matchesSearch && matchesRole && matchesStatus;
     if (!result) {
@@ -850,6 +861,64 @@ const AccountManagement = () => {
         </Space>
       </div>
 
+      {/* Hiển thị filter đang chọn */}
+      <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+        {searchText && (
+          <span
+            style={{
+              border: "1px solid #d9d9d9",
+              borderRadius: 20,
+              padding: "2px 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#fafafa",
+            }}>
+            Search: <b style={{ margin: "0 4px" }}>{searchText}</b>
+            <span
+              style={{ cursor: "pointer", marginLeft: 4 }}
+              onClick={() => handleClearFilter("search")}>
+              ✕
+            </span>
+          </span>
+        )}
+        {roleFilter && roleFilter !== "All" && (
+          <span
+            style={{
+              border: "1px solid #d9d9d9",
+              borderRadius: 20,
+              padding: "2px 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#fafafa",
+            }}>
+            Role: <b style={{ margin: "0 4px" }}>{roleFilter}</b>
+            <span
+              style={{ cursor: "pointer", marginLeft: 4 }}
+              onClick={() => handleClearFilter("role")}>
+              ✕
+            </span>
+          </span>
+        )}
+        {statusFilter && (
+          <span
+            style={{
+              border: "1px solid #d9d9d9",
+              borderRadius: 20,
+              padding: "2px 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#fafafa",
+            }}>
+            Status: <b style={{ margin: "0 4px" }}>{statusFilter}</b>
+            <span
+              style={{ cursor: "pointer", marginLeft: 4 }}
+              onClick={() => handleClearFilter("status")}>
+              ✕
+            </span>
+          </span>
+        )}
+      </div>
+
       {/* Statistics Cards */}
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -966,7 +1035,9 @@ const AccountManagement = () => {
             <Select
               placeholder="Filter by role"
               value={roleFilter}
-              onChange={setRoleFilter}
+              onChange={(value) =>
+                setRoleFilter(value === undefined ? null : value)
+              }
               style={{ width: "100%" }}
               allowClear>
               <Option value="All">All Roles</Option>
@@ -980,7 +1051,9 @@ const AccountManagement = () => {
             <Select
               placeholder="Filter by status"
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(value) =>
+                setStatusFilter(value === undefined ? null : value)
+              }
               style={{ width: "100%" }}
               allowClear>
               <Option value="ACTIVE">Active</Option>
@@ -1141,19 +1214,8 @@ const AccountManagement = () => {
             label={editingAccount ? "New Password (Optional)" : "Password"}
             rules={
               editingAccount
-                ? [
-                    {
-                      min: 6,
-                      message: "Password must be at least 6 characters",
-                    },
-                  ]
-                : [
-                    { required: true, message: "Please enter password" },
-                    {
-                      min: 6,
-                      message: "Password must be at least 6 characters",
-                    },
-                  ]
+                ? []
+                : [{ required: true, message: "Please enter password" }]
             }
             help={
               editingAccount
