@@ -204,6 +204,18 @@ function App() {
       <PersistGate loading={null} persistor={persistor}>
         <ScrollToTopButton />
         <RouterProvider router={router} />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
         <Toaster position="top-right" reverseOrder={false} />
       </PersistGate>
     </Provider>
