@@ -145,10 +145,6 @@ const ProfilePage = () => {
       if (text.includes("%")) {
         const decoded = decodeURIComponent(text);
         if (decoded !== text) {
-          console.log("🔧 Fixed URL encoding:", {
-            original: text,
-            fixed: decoded,
-          });
           return decoded;
         }
       }
@@ -181,11 +177,6 @@ const ProfilePage = () => {
       Object.entries(replacements).forEach(([wrong, correct]) => {
         if (fixed.includes(wrong)) {
           fixed = fixed.replace(new RegExp(wrong, "g"), correct);
-          console.log("🔧 Fixed Vietnamese encoding:", {
-            original: text,
-            fixed,
-            pattern: wrong,
-          });
         }
       });
 
@@ -215,11 +206,6 @@ const ProfilePage = () => {
 
   // ✅ FIXED: Gender conversion functions với 1073741824 support
   const convertDatabaseGenderToUI = (dbGender) => {
-    console.log("🔄 Converting DB gender to UI:", {
-      dbGender,
-      type: typeof dbGender,
-    });
-
     // Database: 0 = Male, 1 = Female, 1073741824 = Not specified
     // UI: 1 = Male, 2 = Female, "" = Not specified
     if (dbGender === 0 || dbGender === "0") {
@@ -236,11 +222,6 @@ const ProfilePage = () => {
   };
 
   const convertUIGenderToDatabase = (uiGender) => {
-    console.log("🔄 Converting UI gender to DB:", {
-      uiGender,
-      type: typeof uiGender,
-    });
-
     // UI: 1 = Male, 2 = Female, "" = Not specified
     // Database: 0 = Male, 1 = Female, null = Not specified
     if (uiGender === "1" || uiGender === 1) {
@@ -360,12 +341,9 @@ const ProfilePage = () => {
         if (userRole === "manager") apiPath = `/manager/my-info/${userID}`;
         if (userRole === "admin") apiPath = `/admin/my-info/${userID}`;
 
-        console.log("🔍 Fetching profile from:", apiPath);
-
         const response = await api.get(apiPath, {
           headers: {
             Accept: "application/json; charset=utf-8",
-            "Accept-Charset": "utf-8",
           },
         });
 
@@ -419,7 +397,6 @@ const ProfilePage = () => {
       } catch (err) {
         console.error("❌ Error fetching user profile:", err);
         setError("Failed to load profile data.");
-        toast.error("Failed to load profile data.");
       } finally {
         setLoading(false);
       }
@@ -463,21 +440,38 @@ const ProfilePage = () => {
     setError(null);
 
     try {
-      // ✅ Correct update paths
-      let updatePath = `/customer/${userID}`;
-      if (userRole === "staff") updatePath = `/staff/my-account/${userID}`;
-      if (userRole === "manager") updatePath = `/manager/my-account/${userID}`;
-      if (userRole === "admin") updatePath = `/admin/my-account/${userID}`;
+      // ✅ FIXED: Correct API endpoint paths based on working Swagger endpoint
+      let updatePath;
+      if (userRole === "customer")
+        updatePath = `/customer/my-account/${userID}`;
+      else if (userRole === "staff") updatePath = `/staff/my-account/${userID}`;
+      else if (userRole === "manager")
+        updatePath = `/manager/my-account/${userID}`;
+      else if (userRole === "admin") updatePath = `/admin/my-account/${userID}`;
+      else updatePath = `/customer/my-account/${userID}`; // fallback
 
       // ✅ FIXED: Convert gender từ UI sang Database
       const genderForDatabase = convertUIGenderToDatabase(editForm.gender);
 
+      // ✅ FIXED: Convert DOB string to array format [year, month, day]
+      let dobForDatabase = null;
+      if (editForm.dob) {
+        const dobParts = editForm.dob.split("-");
+        if (dobParts.length === 3) {
+          dobForDatabase = [
+            parseInt(dobParts[0]), // year
+            parseInt(dobParts[1]), // month
+            parseInt(dobParts[2]), // day
+          ];
+        }
+      }
+
       const formData = {
         fullName: normalizeVietnamese(editForm.fullName, false) || null,
-        email: normalizeVietnamese(editForm.email, true) || null,
+        // ✅ REMOVED: email field - không được phép thay đổi
         phone: normalizeVietnamese(editForm.phone, true) || null,
         address: normalizeVietnamese(editForm.address, false) || null,
-        dob: editForm.dob || null,
+        dob: dobForDatabase, // ✅ FIXED: Use array format
         gender: genderForDatabase,
       };
 
@@ -492,13 +486,17 @@ const ProfilePage = () => {
         {}
       );
 
-      console.log("💾 Saving profile data:", { updatePath, cleanFormData });
+      console.log("💾 Saving profile data:", {
+        userRole,
+        userID,
+        updatePath,
+        cleanFormData,
+      });
 
       await api.patch(updatePath, cleanFormData, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           Accept: "application/json; charset=utf-8",
-          "Accept-Charset": "utf-8",
         },
       });
 
@@ -514,7 +512,6 @@ const ProfilePage = () => {
       const refreshResponse = await api.get(refreshPath, {
         headers: {
           Accept: "application/json; charset=utf-8",
-          "Accept-Charset": "utf-8",
           "Cache-Control": "no-cache",
           Pragma: "no-cache",
         },
@@ -596,7 +593,6 @@ const ProfilePage = () => {
 
       setIsEditing(false);
       setSuccess(true);
-      
 
       // ✅ Reset DOB validation sau khi save thành công
       setDobValidation({ isValid: true, message: "" });
@@ -607,7 +603,6 @@ const ProfilePage = () => {
       const errorMessage =
         err.response?.data?.message || "Failed to update profile.";
       setError(errorMessage);
-      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -898,11 +893,9 @@ const ProfilePage = () => {
                       <input
                         type="email"
                         value={editForm.email}
-                        onChange={(e) =>
-                          handleInputChange("email", e.target.value)
-                        }
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent vietnamese-input"
-                        placeholder="Enter email"
+                        disabled
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 bg-gray-100 text-gray-500 cursor-not-allowed vietnamese-input"
+                        placeholder="Email cannot be changed"
                       />
                     </div>
 
