@@ -71,6 +71,128 @@ const ViewReports = () => {
     pageSize: 10,
   });
 
+  // Pagination for Approve tab
+  const [approvePagination, setApprovePagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+  // --- Approve Report Functions ---
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [approvingReport, setApprovingReport] = useState(null);
+
+  const handleApproveReport = async (record) => {
+    setApproveLoading(true);
+    setApprovingReport(record.id);
+    try {
+      await api.patch(`/manager/assign-staff/${record.assignedID}`, {
+        isApproved: true,
+      });
+      toast.success(`Report #${record.reportID} approved successfully!`);
+      fetchAllReports();
+    } catch (error) {
+      toast.error(
+        "Failed to approve report: " +
+          (error.response?.data?.message || error.message)
+      );
+    } finally {
+      setApproveLoading(false);
+      setApprovingReport(null);
+    }
+  };
+  // --- Approve Tab Columns ---
+  const approveColumns = [
+    {
+      title: "Report ID",
+      dataIndex: "reportID",
+      key: "reportID",
+      width: 100,
+    },
+    {
+      title: "Staff ID",
+      dataIndex: "staffID",
+      key: "staffID",
+      width: 120,
+      render: (id) => id || <Tag color="volcano">Unassigned</Tag>,
+    },
+    {
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      width: 100,
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (time) => time || "-",
+      width: 150,
+    },
+    {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
+      width: 120,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => {
+        let color = "default";
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
+      },
+      width: 100,
+    },
+    {
+      title: "Approved",
+      dataIndex: "isApproved",
+      key: "isApproved",
+      render: (isApproved) =>
+        isApproved === true ? (
+          <Tag color="green">Approved</Tag>
+        ) : (
+          <Tag color="orange">Unapproved</Tag>
+        ),
+      width: 100,
+    },
+    {
+      title: "Action",
+      key: "action",
+      fixed: "right",
+      width: 120,
+      render: (_, record) => (
+        <Button
+          type="primary"
+          icon={<CheckCircleOutlined />}
+          loading={approveLoading && approvingReport === record.id}
+          disabled={record.isApproved}
+          onClick={() => handleApproveReport(record)}
+          size="small">
+          Approve
+        </Button>
+      ),
+    },
+  ];
+
   // --- Data Fetching Functions ---
 
   // Removed fetchUnassignedBookings and setUnassignedBookings as per new API usage
@@ -92,6 +214,7 @@ const ViewReports = () => {
         bookingId: item.bookingID,
         bookingID: item.bookingID,
         appointmentTime: item.appointmentTime,
+        appointmentDate: item.appointmentDate, // lấy ngày từ field appointmentDate
         customerName: item.customerName,
         note: item.note,
         status: item.status,
@@ -102,6 +225,7 @@ const ViewReports = () => {
         staffId: item.staffID,
         staffName: item.staffID, // Nếu có tên staff thì thay bằng tên, còn không thì để staffID
         createdAt: item.createdAt,
+        isApproved: item.isApproved,
       }));
       setReports(normalized);
 
@@ -294,6 +418,25 @@ const ViewReports = () => {
   const allReportColumns = [
     ...baseReportColumns,
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
+      width: 120,
+    },
+    {
+      title: "Approved",
+      dataIndex: "isApproved",
+      key: "isApproved",
+      render: (isApproved) =>
+        isApproved === true ? (
+          <Tag color="green">Approved</Tag>
+        ) : (
+          <Tag color="orange">Unapproved</Tag>
+        ),
+      width: 100,
+    },
+    {
       title: "Created Date",
       dataIndex: "createdAt",
       key: "createdAt",
@@ -407,6 +550,62 @@ const ViewReports = () => {
                 emptyText: "Hiện tại chưa có report nào cần phân công",
               }}
               scroll={{ x: 800 }}
+            />
+          </Card>
+        </>
+      ),
+    },
+    {
+      key: "approve",
+      label: (
+        <span>
+          <CheckCircleOutlined style={{ marginRight: 8 }} />
+          Approve Reports
+        </span>
+      ),
+      children: (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              Reports Awaiting Approval (
+              {reports.filter((r) => r.isApproved === false).length})
+            </Title>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchAllReports}
+              loading={loading}>
+              Refresh
+            </Button>
+          </div>
+          <Card>
+            <Table
+              loading={loading}
+              columns={approveColumns}
+              dataSource={reports.filter((r) => r.isApproved === false)}
+              rowKey={(record) =>
+                record.id || record.bookingId || Math.random().toString()
+              }
+              pagination={{
+                ...approvePagination,
+                showSizeChanger: true,
+                pageSizeOptions: [5, 10, 20, 50, 100],
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} reports`,
+                onShowSizeChange: (current, size) =>
+                  setApprovePagination({ current: 1, pageSize: size }),
+                onChange: (page, pageSize) =>
+                  setApprovePagination({ current: page, pageSize: pageSize }),
+              }}
+              locale={{
+                emptyText: "Hiện tại chưa có report nào cần duyệt",
+              }}
+              scroll={{ x: 900 }}
             />
           </Card>
         </>
@@ -555,12 +754,18 @@ const ViewReports = () => {
       />
 
       {/* Assign Staff Modal */}
+
       <Modal
-        title={`Assign Staff to Report #${selectedBooking?.id}`}
+        title={
+          <span style={{ fontSize: 24, fontWeight: 600 }}>
+            Assign Staff to Report
+          </span>
+        }
         open={isModalVisible}
         onOk={handleAssignStaff}
         onCancel={handleCancel}
         confirmLoading={assignLoading}
+        centered
         footer={[
           <Button key="back" onClick={handleCancel}>
             Cancel
@@ -572,35 +777,43 @@ const ViewReports = () => {
             onClick={handleAssignStaff}>
             Assign
           </Button>,
-        ]}>
-        <p>
-          <strong>Booking ID:</strong> {selectedBooking?.bookingId}
-        </p>
-        <p>
-          <strong>Appointment:</strong>{" "}
-          {selectedBooking?.appointmentTime
-            ? dayjs(selectedBooking.appointmentTime).format("HH:mm DD/MM/YYYY")
-            : "N/A"}
-        </p>
-        <Form layout="vertical" style={{ marginTop: 24 }}>
-          <Form.Item label="Select Staff Member" required>
-            <Select
-              showSearch
-              placeholder="Select a staff member"
-              value={selectedStaff}
-              onChange={(value) => setSelectedStaff(value)}
-              style={{ width: "100%" }}
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }>
-              {staffList.map((staff) => (
-                <Option key={staff.id} value={staff.id}>
-                  {staff.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
+        ]}
+        bodyStyle={{ textAlign: "left" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 12,
+            minWidth: 320,
+          }}>
+          <div>
+            <strong>Report ID:</strong> {selectedBooking?.id}
+          </div>
+          <div>
+            <strong>Booking ID:</strong> {selectedBooking?.bookingId}
+          </div>
+          <Form layout="vertical" style={{ marginTop: 16, width: "100%" }}>
+            <Form.Item label="Select Staff Member" required>
+              <Select
+                showSearch
+                placeholder="Select a staff member"
+                value={selectedStaff}
+                onChange={(value) => setSelectedStaff(value)}
+                style={{ width: "100%" }}
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
+                  0
+                }>
+                {staffList.map((staff) => (
+                  <Option key={staff.id} value={staff.id}>
+                    {staff.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
 
       <ToastContainer />

@@ -24,6 +24,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios"; // Import axios instance
 import { toast, ToastContainer } from "react-toastify";
@@ -37,6 +38,9 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 const StaffReporting = () => {
+  // Modal state for editing report (must be inside component)
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [workReports, setWorkReports] = useState([]);
   const [editingKey, setEditingKey] = useState("");
@@ -192,203 +196,18 @@ const StaffReporting = () => {
   const [form] = Form.useForm();
   const isEditing = (record) => record.reportID === editingKey;
   const edit = (record) => {
-    console.log("Editing record:", record);
-    const initialValues = {
+    // Open modal and set editing record only, do not change editingKey or table state
+    setEditingRecord(record);
+    setIsEditModalVisible(true);
+    form.setFieldsValue({
       status: record.status || "",
       note: record.note || "",
-    };
-    console.log("Setting form values:", initialValues);
-
-    // Reset form first
-    form.resetFields();
-
-    // Set individual fields
-    form.setFieldValue("status", record.status || "");
-    form.setFieldValue("note", record.note || "");
-
-    setEditingKey(record.reportID);
-
-    // Verify form values after setting
-    setTimeout(() => {
-      const currentValues = form.getFieldsValue();
-      console.log("Form values after setting:", currentValues);
-    }, 100);
+    });
+    // Do NOT setEditingKey here
   };
-  const cancel = () => setEditingKey("");
+  // Remove unused cancel function
 
-  const save = async (reportID) => {
-    try {
-      const row = await form.validateFields();
-      console.log("Form data from validateFields:", row);
-
-      // Lấy giá trị hiện tại của form
-      const currentFormValues = form.getFieldsValue();
-      console.log("Current form values:", currentFormValues);
-
-      const newData = [...workReports];
-      const index = newData.findIndex((item) => reportID === item.reportID);
-      if (index > -1) {
-        const item = newData[index];
-        const updatedItem = { ...item, ...row };
-        console.log("Original item:", item);
-        console.log("Updated item:", updatedItem);
-
-        // Hiển thị modal xác nhận
-        Modal.confirm({
-          title: (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "600",
-                  color: "#1890ff",
-                }}>
-                📝 Confirm Report Update
-              </span>
-            </div>
-          ),
-          content: (
-            <div style={{ padding: "16px 0" }}>
-              <p
-                style={{
-                  fontSize: "16px",
-                  marginBottom: "20px",
-                  color: "#262626",
-                  fontWeight: "500",
-                }}>
-                Are you sure you want to update this report with the following
-                information?
-              </p>
-
-              <div
-                style={{
-                  backgroundColor: "#f6f8fa",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  border: "1px solid #e1e4e8",
-                }}>
-                <div style={{ marginBottom: "12px" }}>
-                  <span
-                    style={{
-                      color: "#586069",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      display: "inline-block",
-                      minWidth: "80px",
-                    }}>
-                    Report ID:
-                  </span>
-                  <span
-                    style={{
-                      color: "#1890ff",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      marginLeft: "8px",
-                    }}>
-                    #{reportID}
-                  </span>
-                </div>
-
-                <div style={{ marginBottom: "12px" }}>
-                  <span
-                    style={{
-                      color: "#586069",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      display: "inline-block",
-                      minWidth: "80px",
-                    }}>
-                    Status:
-                  </span>
-                  <span
-                    style={{
-                      backgroundColor:
-                        updatedItem.status === "Completed"
-                          ? "#52c41a"
-                          : updatedItem.status === "Pending"
-                          ? "#1890ff"
-                          : updatedItem.status === "Delay"
-                          ? "#fa8c16"
-                          : "#ff4d4f",
-                      color: "white",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      marginLeft: "8px",
-                    }}>
-                    {updatedItem.status}
-                  </span>
-                </div>
-
-                <div>
-                  <span
-                    style={{
-                      color: "#586069",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      display: "inline-block",
-                      minWidth: "80px",
-                      verticalAlign: "top",
-                    }}>
-                    Note:
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      marginLeft: "8px",
-                      fontStyle: updatedItem.note ? "normal" : "italic",
-                      color: updatedItem.note ? "#24292e" : "#6a737d",
-                    }}>
-                    {updatedItem.note || "No notes provided"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ),
-          okText: (
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              ✅ Confirm Update
-            </span>
-          ),
-          cancelText: (
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              ❌ Cancel
-            </span>
-          ),
-          okButtonProps: {
-            style: {
-              backgroundColor: "#52c41a",
-              borderColor: "#52c41a",
-              fontWeight: "600",
-              height: "40px",
-              paddingLeft: "20px",
-              paddingRight: "20px",
-            },
-          },
-          cancelButtonProps: {
-            style: {
-              height: "40px",
-              paddingLeft: "20px",
-              paddingRight: "20px",
-              fontWeight: "600",
-            },
-          },
-          width: 520,
-          centered: true,
-          onOk: () => {
-            newData.splice(index, 1, updatedItem);
-            handleSave(updatedItem);
-          },
-          onCancel: () => {
-            console.log("Report update cancelled");
-          },
-        });
-      }
-    } catch (error) {
-      console.error("Form validation error:", error);
-    }
-  };
+  // Remove unused save function
 
   const mergedColumns = [
     {
@@ -412,6 +231,19 @@ const StaffReporting = () => {
       dataIndex: "appointmentTime",
       key: "appointmentTime",
       render: (time) => time || "-",
+    },
+    {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        if (date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
     },
     {
       title: "Status",
@@ -451,18 +283,22 @@ const StaffReporting = () => {
       title: "Actions",
       dataIndex: "actions",
       render: (_, record) => {
-        const editable = isEditing(record);
-        return record.isSent ? null : editable ? (
-          <span>
-            <a onClick={() => save(record.reportID)} style={{ marginRight: 8 }}>
-              Save
-            </a>
-            <a onClick={cancel}>Cancel</a>
-          </span>
-        ) : (
-          <a disabled={editingKey !== ""} onClick={() => edit(record)}>
+        return record.isSent ? null : (
+          <Button
+            key="submit"
+            type="primary"
+            disabled={editingKey !== ""}
+            onClick={() => edit(record)}
+            style={{
+              padding: "0 16px",
+              height: 28,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            icon={<EditOutlined />}>
             Edit
-          </a>
+          </Button>
         );
       },
     },
@@ -716,6 +552,20 @@ const StaffReporting = () => {
       render: (time) => time || "-",
     },
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        // Ưu tiên lấy appointmentDate, nếu không có thì extract từ appointmentTime
+        if (date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
@@ -741,6 +591,17 @@ const StaffReporting = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: "Approved",
+      dataIndex: "isApproved",
+      key: "isApproved",
+      render: (isApproved) =>
+        isApproved === true ? (
+          <Tag color="green">Approved</Tag>
+        ) : (
+          <Tag color="orange">Unapproved</Tag>
+        ),
     },
     {
       title: "Note",
@@ -789,12 +650,7 @@ const StaffReporting = () => {
             <Button
               icon={<ReloadOutlined />}
               onClick={fetchWorkReports}
-              loading={loading}
-              style={{
-                background: "#1677ff",
-                color: "#fff",
-                border: "none",
-              }}>
+              loading={loading}>
               Refresh Reports
             </Button>
           </div>
@@ -948,6 +804,28 @@ const StaffReporting = () => {
     },
   ];
 
+  // Modal handlers moved here so they are accessible INSIDE the component
+  const handleEditModalOk = async () => {
+    if (!editingRecord) return;
+    try {
+      const row = await form.validateFields();
+      // Merge with current editingRecord
+      const updatedItem = { ...editingRecord, ...row };
+      await handleSave(updatedItem);
+      setIsEditModalVisible(false);
+      setEditingRecord(null);
+      setEditingKey(""); // Reset editingKey after save
+    } catch {
+      // Validation error, do nothing
+    }
+  };
+
+  const handleEditModalCancel = () => {
+    setIsEditModalVisible(false);
+    setEditingRecord(null);
+    // Do NOT reset editingKey here
+  };
+
   return (
     <div style={{ padding: "0 24px" }}>
       <Title level={2} style={{ margin: 0, marginBottom: 24 }}>
@@ -961,6 +839,63 @@ const StaffReporting = () => {
         tabBarStyle={{ marginBottom: 32 }}
         items={tabItems}
       />
+      {/* Edit Report Modal */}
+      {isEditModalVisible && (
+        <Modal
+          title={
+            <span style={{ fontSize: 24, fontWeight: 600 }}>Edit Report</span>
+          }
+          open={isEditModalVisible}
+          onOk={handleEditModalOk}
+          onCancel={handleEditModalCancel}
+          confirmLoading={loading}
+          centered
+          footer={[
+            <Button key="back" onClick={handleEditModalCancel}>
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              loading={loading}
+              onClick={handleEditModalOk}>
+              Save
+            </Button>,
+          ]}
+          bodyStyle={{ textAlign: "left" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 12,
+              minWidth: 320,
+            }}>
+            <div>
+              <strong>Report ID:</strong> {editingRecord?.reportID}
+            </div>
+            <div>
+              <strong>Booking ID:</strong> {editingRecord?.bookingID}
+            </div>
+            <Form
+              form={form}
+              layout="vertical"
+              style={{ marginTop: 16, width: "100%" }}>
+              <Form.Item label="Status" name="status" required>
+                <Select placeholder="Select status">
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Completed">Completed</Option>
+                  <Option value="Delay">Delay</Option>
+                  <Option value="Cancel">Cancel</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item label="Note" name="note">
+                <Input placeholder="Enter note" />
+              </Form.Item>
+            </Form>
+          </div>
+        </Modal>
+      )}
       <ToastContainer />
     </div>
   );
