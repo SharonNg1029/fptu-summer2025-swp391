@@ -1,4 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+ 
+
+
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { Form, Input, Select, DatePicker, Radio, Button, message, Row, Col, Card, Typography, Space, Checkbox, Modal, Steps, Descriptions, Divider, Alert, Result, Tooltip } from 'antd';
@@ -6,6 +10,7 @@ import { UserOutlined, CalendarOutlined, ClockCircleOutlined, PhoneOutlined, Mai
 import moment from 'moment';
 import SignatureCanvas from 'react-signature-canvas';
 import jsPDF from 'jspdf';
+import axios from '../../configs/axios';
 import { legalServicesData, legalCollectionMethodsData } from '../home-page/services/legalDNA/data-legal/legalData';
 import { nonLegalServicesData, nonLegalCollectionMethodsData } from '../home-page/services/non-legalDNA/data-non-legal/nonLegalData';
 import { FaCalendarAlt, FaClock, FaUser, FaPhone, FaEnvelope, FaIdCard, FaUsers, FaMapMarkerAlt, FaCreditCard, FaQrcode } from 'react-icons/fa';
@@ -13,23 +18,74 @@ import { FaCalendarAlt, FaClock, FaUser, FaPhone, FaEnvelope, FaIdCard, FaUsers,
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+// Định nghĩa các cặp mối quan hệ hợp lệ (di chuyển ra ngoài component)
+const relationshipPairs = {
+  'Father-Child': ['Father', 'Child'],
+  'Mother-Child': ['Mother', 'Child'], 
+  'Sibling-Sibling': ['Sibling', 'Sibling'],
+  'Grandparent-Grandchild': ['Grandparent', 'Grandchild']
+};
+
+// Định nghĩa tên tiếng Việt cho các mối quan hệ (di chuyển ra ngoài component)
+const relationshipVietnameseNames = {
+  'Father': 'Cha',
+  'Mother': 'Mẹ',
+  'Child': 'Con',
+  'Sibling': 'Anh/Chị/Em ruột',
+  'Grandparent': 'Ông/Bà',
+  'Grandchild': 'Cháu',
+  'Other': 'Khác'
+};
+
+// Map dịch vụ DNA testing với các cặp quan hệ hợp lệ (di chuyển ra ngoài component)
+const serviceRelationshipMap = new Map([
+  // Paternity Testing (Cha-Con): Luôn là Cha – Con
+  ['Paternity Testing', ['Father-Child']],
+  
+  // Maternity Testing (Mẹ-Con): Luôn là Mẹ – Con
+  ['Maternity Testing', ['Mother-Child']],
+  
+  // Non-Invasive Relationship Testing (NIPT): Luôn là Cha – Con
+  ['Non-Invasive Relationship Testing (NIPT)', ['Father-Child']],
+  
+  // Sibling Testing: Luôn là Anh/Chị/Em ruột
+  ['Sibling Testing', ['Sibling-Sibling']],
+  
+  // Grandparent Testing: Luôn là Ông/Bà – Cháu
+  ['Grandparent Testing', ['Grandparent-Grandchild']],
+  
+  // DNA Testing for Birth Registration: Có thể chọn Cha – Con hoặc Mẹ – Con
+  ['DNA Testing for Birth Registration', ['Father-Child', 'Mother-Child']],
+  
+  // DNA Testing for Immigration Cases: Tất cả các cặp hợp lệ
+  ['DNA Testing for Immigration Cases', ['Father-Child', 'Mother-Child', 'Sibling-Sibling', 'Grandparent-Grandchild']],
+  
+  // DNA Testing for Inheritance or Asset Division: Ưu tiên theo thứ tự
+  ['DNA Testing for Inheritance or Asset Division', ['Father-Child', 'Mother-Child', 'Grandparent-Grandchild', 'Sibling-Sibling']]
+]);
+
 const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymentMethod: paymentMethodProp }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState(paymentMethodProp || 'cash');
   const [qrCodeData, setQrCodeData] = useState(null);
   const [paymentCode, setPaymentCode] = useState('');
-  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
   const [showPDFOption, setShowPDFOption] = useState(false);
   const [isPDFConfirmStep, setIsPDFConfirmStep] = useState(false); // Thêm state mới
   const [finalBookingData, setFinalBookingData] = useState(null); // Lưu data tạm thời
   const [isProcessingSignature, setIsProcessingSignature] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false); // Thêm state cho việc xử lý thanh toán
+  const [isRedirectingToVNPAY, setIsRedirectingToVNPAY] = useState(false); // Thêm state cho việc chuyển hướng VNPAY
   const signatureRef = useRef();
 
   // Luôn gọi useEffect ở đầu component
   useEffect(() => {
     if (visible && paymentMethodProp) {
       setPaymentMethod(paymentMethodProp);
+      
+      // Flow mới: luôn bắt đầu từ step 1 (xác nhận thông tin)
+      // cho tất cả các loại thanh toán
+      setCurrentStep(1);
     }
   }, [visible, paymentMethodProp]);
 
@@ -61,7 +117,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   // Helper: get payment label
   const getPaymentLabel = (method) => {
     if (method === 'cash') return 'Thanh toán tiền mặt khi nhận dịch vụ';
-    if (method === 'bank-transfer') return 'Quét mã QR để thanh toán';
+    if (method === 'vnpay') return 'Thanh toán qua VNPAY';
     return method;
   };
 
@@ -96,33 +152,23 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     setCurrentStep(1);
     onCancel();
   };
+  
   const handleConfirm = async () => {
     Modal.confirm({
       title: 'Bạn có chắc những thông tin này là đúng không?',
       okText: 'Có',
       cancelText: 'Không',
-      centered: true, // Đưa modal ra giữa màn hình
-      width: 480, // Tăng kích thước modal lên cho dễ nhìn
-      style: { maxWidth: 600 }, // Giới hạn max width lớn hơn mặc định
-      onOk: () => {
+      centered: true,
+      width: 480,
+      style: { maxWidth: 600 },
+      onOk: async () => {
         const code = generatePaymentCode();
         setPaymentCode(code);
         
-        // Luôn chuyển đến bước tiếp theo (step 2) cho cả hai phương thức thanh toán
-        if (paymentMethod === 'bank-transfer') {
-          // QR flow: hiển thị mã QR thanh toán (step 2)
-          setQrCodeData(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAYMENT:${code}`);
-        }
+        // Flow mới: Với tất cả các loại thanh toán đều chuyển đến step 2 (ký tên)
         setCurrentStep(2);
       }
     });
-  };
-
-  // Step 2: QR Payment
-  const handleCheckPayment = () => {
-    // Xác nhận thanh toán thành công, chuyển đến ký tên
-    setIsPaymentConfirmed(true);
-    setCurrentStep(3); // Chuyển đến bước ký tên (step 3) sau khi thanh toán QR
   };
 
   // Hàm kiểm tra chất lượng chữ ký (ít strict hơn)
@@ -164,7 +210,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   };
   */
 
-  // Step 3: Signature (cho cả cash và QR)
+  // Step 3: Signature (cho cả cash và VNPAY)
   const handleSignatureComplete = async () => {
     // Kiểm tra chữ ký có tồn tại và không trống
     if (!signatureRef.current) {
@@ -203,22 +249,16 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
         paymentCode,
         signature: signatureData,
         signatureId: signatureId, // ID local của chữ ký
-        status: 'confirmed',
+        status: 'signed',
         signedAt: new Date().toISOString()
       };
       
-      // Lưu data tạm thời và chuyển đến bước xác nhận PDF
+      // Lưu data tạm thời
       setFinalBookingData(bookingDataWithSignature);
       
-      // Chuyển sang bước tiếp theo sau khi ký tên
-      if (paymentMethod === 'cash') {
-        // Với thanh toán tiền mặt, chuyển thẳng đến bước xác nhận PDF
-        setIsPDFConfirmStep(true);
-        setShowPDFOption(true);
-      } else {
-        // Với thanh toán QR, chuyển sang bước hoàn thành (step 4)
-        setCurrentStep(4);
-      }
+      // Flow mới: Sau ký tên, tất cả payment method đều chuyển sang PDF option
+      setIsPDFConfirmStep(true);
+      setShowPDFOption(true);
       
       message.success('Ký tên thành công!');
       
@@ -227,6 +267,184 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       message.error('Có lỗi xảy ra khi xử lý chữ ký. Vui lòng thử lại!');
     } finally {
       setIsProcessingSignature(false);
+    }
+  };
+
+  // Hàm xử lý thanh toán VNPAY (được gọi sau khi ký tên và tùy chọn PDF)
+  const handleVNPAYPayment = async () => {
+    let processingMsg = null;
+    
+    try {
+      setIsSubmittingPayment(true);
+      setIsRedirectingToVNPAY(true);
+      
+      // Hiển thị thông báo đang xử lý với delay để người dùng thấy được
+      processingMsg = message.loading('Đang xử lý thanh toán VNPAY, vui lòng đợi giây lát...', 0);
+      
+      // Delay một chút để người dùng thấy thông báo
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Lưu đơn hàng tạm thời vào localStorage để sau này lấy lại
+      const tempBookingData = {
+        ...finalBookingData,
+        paymentMethod,
+        paymentCode,
+        status: 'pending_payment'
+      };
+      
+      // Lưu thông tin đơn hàng vào localStorage
+      const pendingBookings = JSON.parse(localStorage.getItem('pending_vnpay_bookings') || '[]');
+      pendingBookings.push(tempBookingData);
+      localStorage.setItem('pending_vnpay_bookings', JSON.stringify(pendingBookings));
+      
+      // Chuẩn bị payload theo đúng cấu trúc API
+      // Xử lý ngày sinh của người thứ nhất cho LocalDate
+      let firstPersonBirthDate;
+      if (bookingData.firstPerson?.dateOfBirth) {
+        if (typeof bookingData.firstPerson.dateOfBirth === 'object' && bookingData.firstPerson.dateOfBirth.format) {
+          // Format cho LocalDate: yyyy-MM-dd
+          firstPersonBirthDate = bookingData.firstPerson.dateOfBirth.format('YYYY-MM-DD');
+        } else {
+          firstPersonBirthDate = bookingData.firstPerson.dateOfBirth;
+        }
+      } else {
+        firstPersonBirthDate = "";
+      }
+      
+      // Xử lý ngày sinh của người thứ hai cho LocalDate
+      let secondPersonBirthDate;
+      if (bookingData.secondPerson?.dateOfBirth) {
+        if (typeof bookingData.secondPerson.dateOfBirth === 'object' && bookingData.secondPerson.dateOfBirth.format) {
+          // Format cho LocalDate: yyyy-MM-dd
+          secondPersonBirthDate = bookingData.secondPerson.dateOfBirth.format('YYYY-MM-DD');
+        } else {
+          secondPersonBirthDate = bookingData.secondPerson.dateOfBirth;
+        }
+      } else {
+        secondPersonBirthDate = "";
+      }
+      
+      // Chuyển đổi dữ liệu người dùng thành định dạng testSubjects
+      const testSubjects = [
+        // Người thứ nhất
+        {
+          fullname: bookingData.firstPerson?.fullName || "",
+          dateOfBirth: firstPersonBirthDate,
+          gender: bookingData.firstPerson?.gender === 'male' ? 1 : 2,
+          phone: bookingData.firstPerson?.phoneNumber || "",
+          email: bookingData.firstPerson?.email || "",
+          relationship: bookingData.firstPerson?.relationship || "",
+          sampleType: bookingData.firstPerson?.sampleType || "",
+          idNumber: bookingData.firstPerson?.personalId || ""
+        }
+      ];
+      
+      // Thêm người thứ hai nếu có thông tin đầy đủ
+      if (bookingData.secondPerson && bookingData.secondPerson.fullName) {
+        testSubjects.push({
+          fullname: bookingData.secondPerson.fullName,
+          dateOfBirth: secondPersonBirthDate,
+          gender: bookingData.secondPerson.gender === 'male' ? 1 : 2,
+          phone: bookingData.secondPerson.phoneNumber || "",
+          email: bookingData.secondPerson.email || "",
+          relationship: bookingData.secondPerson.relationship || "",
+          sampleType: bookingData.secondPerson.sampleType || "",
+          idNumber: bookingData.secondPerson.personalId || ""
+        });
+      }
+      
+      // Đảm bảo định dạng ngày tháng đúng theo yêu cầu của API (LocalDate)
+      let appointmentTime = bookingData.appointmentDate;
+      if (typeof appointmentTime === 'object' && appointmentTime.format) {
+        appointmentTime = appointmentTime.format('YYYY-MM-DD');
+      }
+      
+      // Tạo payload theo format API đã thành công
+      const payload = {
+        bookingID: null,
+        collectionMethod: bookingData.collectionMethod?.name || "At Facility",
+        paymentMethod: paymentMethod,
+        appointmentTime: appointmentTime,
+        timeRange: bookingData.timeSlot || "",
+        status: "pending_payment",
+        note: "",
+        cost: 0,
+        mediationMethod: bookingData.medicationMethod || "",
+        additionalCost: 0,
+        totalCost: bookingData.totalCost || 0,
+        expressService: bookingData.isExpressService || false,
+        address: bookingData.homeAddress || "",
+        kitID: bookingData.selectedKitType || "",
+        serviceID: bookingData.service?.serviceID || "",
+        customerID: bookingData.customerID || "",
+        customerName: bookingData.firstPerson?.fullName || "",
+        testSubjects: testSubjects
+      };
+      
+      // Gọi API để tạo đơn hàng và nhận URL thanh toán VNPAY
+      const serviceID = bookingData.service?.serviceID || '';
+      const customerID = bookingData.customerID || '';
+      
+      console.log('Gửi yêu cầu thanh toán VNPAY với payload:', payload);
+      
+      // Sử dụng axios để gọi API
+      const response = await axios.post(`/booking/bookings/${serviceID}/${customerID}`, payload);
+      const data = response.data;
+      
+      console.log('Kết quả từ API:', data);
+      
+      if (data.vnpUrl) {
+        console.log('Đã nhận được URL VNPAY, chuyển hướng đến:', data.vnpUrl);
+        
+        // Đóng thông báo loading hiện tại
+        processingMsg();
+        
+        // Hiển thị thông báo chuyển hướng
+        message.success('Tạo thanh toán thành công! Đang chuyển hướng đến VNPAY...', 2);
+        
+        // Delay để người dùng thấy thông báo và UI loading trước khi chuyển hướng
+        setTimeout(() => {
+          window.location.href = data.vnpUrl;
+        }, 1200);
+        
+        return; // Dừng xử lý vì người dùng sẽ được chuyển hướng
+      } else {
+        console.error('Không nhận được vnpUrl từ API:', data);
+        processingMsg(); // Đóng loading message
+        message.error('Không thể tạo liên kết thanh toán VNPAY. Vui lòng thử lại!');
+        setIsSubmittingPayment(false);
+        setIsRedirectingToVNPAY(false);
+      }
+    } catch (error) {
+      console.error('Lỗi khi tạo thanh toán VNPAY:', error);
+      
+      // Đóng loading message
+      processingMsg();
+      
+      // Hiển thị chi tiết lỗi để debug
+      if (error.response) {
+        console.error('Chi tiết lỗi từ server:', error.response.data);
+        console.error('Status code:', error.response.status);
+        
+        // Xử lý lỗi lazy loading từ Hibernate
+        if (typeof error.response.data === 'string' && 
+            (error.response.data.includes('lazily initialize') || 
+             error.response.data.includes('no Session'))) {
+          message.error('Lỗi kết nối dữ liệu từ server. Vui lòng thử lại sau!');
+        } else {
+          // Hiển thị thông báo lỗi cụ thể từ server
+          message.error('Lỗi từ server: ' + (typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)));
+        }
+      } else if (error.request) {
+        console.error('Không nhận được phản hồi từ server:', error.request);
+        message.error('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối mạng!');
+      } else {
+        console.error('Lỗi cấu hình request:', error.message);
+        message.error('Lỗi khi thiết lập yêu cầu: ' + error.message);
+      }
+      
+      setIsSubmittingPayment(false);
+      setIsRedirectingToVNPAY(false);
     }
   };
 
@@ -252,20 +470,28 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
         // Đóng thông báo đang xử lý
         processingMsg();
         
-        // Lưu đơn hàng với thông tin PDF đã tạo
-        const updatedBookingData = {
-          ...finalBookingData,
-          pdfGenerated: true,
-          pdfGeneratedAt: new Date().toISOString()
-        };
-        
-        // Lưu đơn hàng
-        onConfirm(updatedBookingData);
-        setCurrentStep(4);
-        setIsPDFConfirmStep(false);
-        
         // Thông báo thành công
         message.success('Tải file PDF thành công!');
+        
+        // Tiếp tục flow dựa vào payment method
+        if (paymentMethod === 'cash') {
+          // Cash: Lưu đơn hàng và hoàn tất
+          const updatedBookingData = {
+            ...finalBookingData,
+            pdfGenerated: true,
+            pdfGeneratedAt: new Date().toISOString()
+          };
+          
+          onConfirm(updatedBookingData);
+          setCurrentStep(4);
+          setIsPDFConfirmStep(false);
+        } else {
+          // VNPAY: Hiển thị thông báo và chuyển đến thanh toán
+          // KHÔNG reset isPDFConfirmStep về false để tránh quay lại bước ký tên
+          message.info('Đang chuyển sang thanh toán VNPAY...', 1);
+          await handleVNPAYPayment();
+        }
+        
       } catch (pdfError) {
         // Đóng thông báo đang xử lý
         processingMsg();
@@ -281,33 +507,19 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   };
 
   // Hàm xử lý khi người dùng bỏ qua PDF
-  const handleSkipPDF = () => {
-    // Hiển thị thông báo đang xử lý
-    const processingMsg = message.loading('Đang xử lý...', 0);
-    
-    // Tạo PDF nhưng không tải xuống
-    generatePDF(false)
-      .then(() => {
-        // Lưu đơn hàng mà không tải PDF
-        onConfirm(finalBookingData);
-        setCurrentStep(4);
-        setIsPDFConfirmStep(false);
-        setShowPDFOption(false);
-      })
-      .catch(error => {
-        console.error('Error generating PDF without download:', error);
-        message.error('Có lỗi xảy ra, nhưng đơn hàng vẫn được lưu.');
-        
-        // Vẫn tiếp tục lưu đơn hàng ngay cả khi có lỗi
-        onConfirm(finalBookingData);
-        setCurrentStep(4);
-        setIsPDFConfirmStep(false);
-        setShowPDFOption(false);
-      })
-      .finally(() => {
-        // Đóng thông báo đang xử lý
-        processingMsg();
-      });
+  const handleSkipPDF = async () => {
+    if (paymentMethod === 'cash') {
+      // Cash: Lưu đơn hàng và hoàn tất
+      onConfirm(finalBookingData);
+      setCurrentStep(4);
+      setIsPDFConfirmStep(false);
+      setShowPDFOption(false);
+    } else {
+      // VNPAY: Hiển thị thông báo và chuyển đến thanh toán
+      // KHÔNG reset isPDFConfirmStep về false để tránh quay lại bước ký tên
+      message.info('Đang chuyển sang thanh toán VNPAY...', 1);
+      await handleVNPAYPayment();
+    }
   };
 
 /*
@@ -999,17 +1211,23 @@ const generatePDF = async (shouldDownload = true) => {
 
   // Step 4: Success
   const handleClose = () => {
+    // Không cho phép đóng modal khi đang chuyển hướng VNPAY
+    if (isRedirectingToVNPAY) {
+      message.warning('Vui lòng đợi quá trình chuyển hướng thanh toán hoàn tất!');
+      return;
+    }
+    
     setCurrentStep(1);
     setPaymentMethod('cash');
     setQrCodeData(null);
     setPaymentCode('');
-    setIsPaymentConfirmed(false);
     setShowPDFOption(false);
     // Reset các state mới
     setIsPDFConfirmStep(false);
     setFinalBookingData(null);
     setIsProcessingSignature(false);
     setIsGeneratingPDF(false);
+    setIsRedirectingToVNPAY(false);
     if (signatureRef.current && signatureRef.current.clear) signatureRef.current.clear();
     onCancel();
   };
@@ -1427,8 +1645,8 @@ const generatePDF = async (shouldDownload = true) => {
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-                <Text strong style={{ fontSize: 16, color: '#1890ff' }}>📱 Quét mã QR để thanh toán</Text>
+                                  <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+                  <Text strong style={{ fontSize: 16, color: '#1890ff' }}>📱 Thanh toán qua VNPAY</Text>
               </div>
             )}
           </div>
@@ -1436,16 +1654,6 @@ const generatePDF = async (shouldDownload = true) => {
       </div>
     );
   };
-
-  // Render QR code
-  const renderQRCode = () => (
-    <div className="text-center">
-      <div className="mb-4">Vui lòng quét mã QR để thanh toán:</div>
-      <img src={qrCodeData} alt="QR Code" className="mx-auto mb-4" style={{ width: 200, height: 200 }} />
-      <div className="mb-2">Mã thanh toán: <b>{paymentCode}</b></div>
-      <div className="mb-4 text-sm text-gray-500">Sau khi thanh toán, nhấn "Xác nhận đã thanh toán" để tiếp tục.</div>
-    </div>
-  );
 
   // Render signature form với SignatureCanvas thật
   const renderSignature = () => (
@@ -1663,8 +1871,8 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
 
   // Render step content
   const renderStepContent = () => {
-    // Nếu đang ở bước xác nhận PDF
-    if (isPDFConfirmStep) {
+    // Nếu đang ở bước xác nhận PDF hoặc đang xử lý VNPAY
+    if (isPDFConfirmStep || isRedirectingToVNPAY) {
       return (
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
           <CheckCircleOutlined style={{ fontSize: '64px', color: '#52c41a', marginBottom: '24px' }} />
@@ -1698,8 +1906,8 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
                 size="large"
                 icon={<DownloadOutlined />}
                 onClick={handleDownloadPDF}
-                loading={isGeneratingPDF}
-                disabled={isGeneratingPDF}
+                loading={isGeneratingPDF || isRedirectingToVNPAY}
+                disabled={isGeneratingPDF || isRedirectingToVNPAY}
                 style={{ 
                   backgroundColor: '#52c41a', 
                   borderColor: '#52c41a',
@@ -1708,22 +1916,69 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
                   fontSize: '16px'
                 }}
               >
-                {isGeneratingPDF ? 'Đang tạo PDF...' : 'Tải xuống PDF'}
+                {isGeneratingPDF 
+                  ? 'Đang tạo PDF...' 
+                  : (isRedirectingToVNPAY 
+                    ? 'Đang chuyển hướng VNPAY...' 
+                    : 'Tải xuống PDF'
+                  )
+                }
               </Button>
               <Button 
                 size="large"
                 onClick={handleSkipPDF}
-                disabled={isGeneratingPDF}
+                loading={isRedirectingToVNPAY}
+                disabled={isGeneratingPDF || isRedirectingToVNPAY}
                 style={{
                   height: '48px',
                   padding: '0 32px',
                   fontSize: '16px'
                 }}
               >
-                Bỏ qua, hoàn tất đặt lịch
+                {isRedirectingToVNPAY 
+                  ? 'Đang chuyển hướng VNPAY...' 
+                  : (paymentMethod === 'cash' ? 'Bỏ qua, hoàn tất đặt lịch' : 'Bỏ qua, thanh toán VNPAY')
+                }
               </Button>
             </Space>
           </div>
+          
+          {/* Hiển thị thông báo loading khi đang chuyển hướng VNPAY */}
+          {isRedirectingToVNPAY && (
+            <div style={{ 
+              marginTop: '16px',
+              padding: '16px',
+              backgroundColor: '#e6f7ff',
+              borderRadius: '8px',
+              border: '1px solid #91d5ff',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '12px',
+                marginBottom: '8px'
+              }}>
+                <div 
+                  className="vnpay-loading-spinner"
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    border: '2px solid #1890ff',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%'
+                  }}
+                ></div>
+                <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>
+                  Đang xử lý thanh toán VNPAY...
+                </Text>
+              </div>
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                🔄 Vui lòng đợi giây lát, bạn sẽ được chuyển hướng đến trang thanh toán
+              </Text>
+            </div>
+          )}
           
           <Text type="secondary" style={{ fontSize: '12px' }}>
             💡 Bạn có thể tải file PDF sau trong phần lịch sử đặt lịch
@@ -1736,11 +1991,11 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
       case 1:
         return renderSummary();
       case 2:
-        // Step 2: QR Payment cho bank-transfer, Signature cho cash
-        return paymentMethod === 'cash' ? renderSignature() : renderQRCode();
-      case 3:
-        // Step 3: Signature cho bank-transfer sau khi thanh toán
+        // Step 2: Signature cho tất cả payment methods
         return renderSignature();
+      case 3:
+        // Step 3: Không dùng nữa
+        return renderSuccess();
       case 4:
         return renderSuccess();
       default:
@@ -1750,8 +2005,8 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
 
   // Render footer
   const renderFooter = () => {
-    // Ẩn footer khi đang ở bước xác nhận PDF
-    if (isPDFConfirmStep) {
+    // Ẩn footer khi đang ở bước xác nhận PDF hoặc đang xử lý VNPAY
+    if (isPDFConfirmStep || isRedirectingToVNPAY) {
       return null;
     }
     
@@ -1759,26 +2014,20 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
       case 1:
         return [
           <Button key="edit" onClick={handleEdit}>Edit</Button>,
-          <Button key="confirm" type="primary" onClick={handleConfirm}>Xác nhận</Button>
+          <Button 
+            key="confirm" 
+            type="primary" 
+            onClick={handleConfirm} 
+            loading={isSubmittingPayment}
+            disabled={isSubmittingPayment}
+          >
+            {isSubmittingPayment ? 'Đang xử lý...' : 'Xác nhận'}
+          </Button>
         ];
       case 2:
-        if (paymentMethod === 'cash') {
-          // Cash flow: ở step ký tên
-          return [
-            <Button key="back" onClick={() => setCurrentStep(1)} disabled={isProcessingSignature}>Quay lại</Button>,
-            <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Ký tên</Button>
-          ];
-        } else {
-          // QR flow: ở step thanh toán
-          return [
-            <Button key="back" onClick={() => setCurrentStep(1)}>Quay lại</Button>,
-            <Button key="check" type="primary" onClick={handleCheckPayment}>Xác nhận đã thanh toán</Button>
-          ];
-        }
-      case 3:
-        // QR flow: ở step ký tên sau thanh toán
+        // Step 2: Ký tên cho tất cả payment methods
         return [
-          <Button key="back" onClick={() => setCurrentStep(2)} disabled={isProcessingSignature}>Quay lại</Button>,
+          <Button key="back" onClick={() => setCurrentStep(1)} disabled={isProcessingSignature}>Quay lại</Button>,
           <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Ký tên</Button>
         ];
       case 4:
@@ -1792,32 +2041,24 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
 
   // Steps - động dựa trên phương thức thanh toán
   const getSteps = () => {
-    if (paymentMethod === 'cash') {
-      return [
-        { title: 'Xác nhận' },
-        { title: 'Ký tên' },
-        { title: 'Hoàn thành' }
-      ];
-    } else {
-      return [
-        { title: 'Xác nhận' },
-        { title: 'Thanh toán' },
-        { title: 'Ký tên' },
-        { title: 'Hoàn thành' }
-      ];
-    }
+    // Flow mới: cả cash và VNPAY đều có cùng steps
+    return [
+      { title: 'Xác nhận thông tin' },
+      { title: 'Ký tên' },
+      { title: 'Tùy chọn PDF' },
+      { title: paymentMethod === 'cash' ? 'Hoàn tất' : 'Thanh toán & Hoàn tất' }
+    ];
   };
 
   const getCurrentStepIndex = () => {
-    if (paymentMethod === 'cash') {
-      // Cash flow: 1->2->4 (bỏ qua step 3)
-      if (currentStep === 1) return 0;
-      if (currentStep === 2) return 1;
-      if (currentStep === 4) return 2;
-    } else {
-      // QR flow: 1->2->3->4
-      return currentStep - 1;
+    if (isPDFConfirmStep) {
+      return 2; // PDF confirmation step
     }
+    
+    if (currentStep === 1) return 0; // Xác nhận
+    if (currentStep === 2) return 1; // Ký tên
+    if (currentStep === 4) return 3; // Hoàn tất
+    
     return 0;
   };
 
@@ -1830,6 +2071,9 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
       width={1000}
       destroyOnClose
       centered
+      closable={!isRedirectingToVNPAY} // Không cho phép đóng khi đang chuyển hướng VNPAY
+      maskClosable={!isRedirectingToVNPAY} // Không cho phép đóng bằng cách bấm ra ngoài
+      keyboard={!isRedirectingToVNPAY} // Không cho phép đóng bằng phím ESC
       styles={{
         body: {
           padding: '0',
@@ -1875,6 +2119,19 @@ const BookingPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ================ BOOKING TRACKING SYSTEM ================
+  // State cho booking tracking
+  const [bookingId, setBookingId] = useState(null);
+  const [currentServiceID, setCurrentServiceID] = useState(serviceID);
+  const [bookingProcess, setBookingProcess] = useState({
+    stage: 'form_filling', // form_filling, form_submitted, api_called, payment_processing, payment_completed, signature_required, signature_completed, pdf_generated, completed
+    timestamp: new Date().toISOString(),
+    data: {}
+  });
+  const [bookingSteps, setBookingSteps] = useState([]);
+  const [bookingSession, setBookingSession] = useState(null);
+  const [bookingHistory, setBookingHistory] = useState([]);
 
   const isServicePreSelected = Boolean(serviceID);
   const isExpressPreSelected = Boolean(expressService === 'true');
@@ -1966,55 +2223,9 @@ const BookingPage = () => {
     'Nail',
     'Amniotic Fluid' // Thêm loại mẫu nước ối cho NIPT
   ];
-  
-  // Định nghĩa các cặp mối quan hệ hợp lệ
-  const relationshipPairs = {
-    'Father-Child': ['Father', 'Child'],
-    'Mother-Child': ['Mother', 'Child'], 
-    'Sibling-Sibling': ['Sibling', 'Sibling'],
-    'Grandparent-Grandchild': ['Grandparent', 'Grandchild']
-  };
-  
-  // Định nghĩa tên tiếng Việt cho các mối quan hệ
-  const relationshipVietnameseNames = {
-    'Father': 'Cha',
-    'Mother': 'Mẹ',
-    'Child': 'Con',
-    'Sibling': 'Anh/Chị/Em ruột',
-    'Grandparent': 'Ông/Bà',
-    'Grandchild': 'Cháu',
-    'Other': 'Khác'
-  };
-
-  // Map dịch vụ DNA testing với các cặp quan hệ hợp lệ
-  const serviceRelationshipMap = new Map([
-    // Paternity Testing (Cha-Con): Luôn là Cha – Con
-    ['Paternity Testing', ['Father-Child']],
-    
-    // Maternity Testing (Mẹ-Con): Luôn là Mẹ – Con
-    ['Maternity Testing', ['Mother-Child']],
-    
-    // Non-Invasive Relationship Testing (NIPT): Luôn là Cha – Con
-    ['Non-Invasive Relationship Testing (NIPT)', ['Father-Child']],
-    
-    // Sibling Testing: Luôn là Anh/Chị/Em ruột
-    ['Sibling Testing', ['Sibling-Sibling']],
-    
-    // Grandparent Testing: Luôn là Ông/Bà – Cháu
-    ['Grandparent Testing', ['Grandparent-Grandchild']],
-    
-    // DNA Testing for Birth Registration: Có thể chọn Cha – Con hoặc Mẹ – Con
-    ['DNA Testing for Birth Registration', ['Father-Child', 'Mother-Child']],
-    
-    // DNA Testing for Immigration Cases: Tất cả các cặp hợp lệ
-    ['DNA Testing for Immigration Cases', ['Father-Child', 'Mother-Child', 'Sibling-Sibling', 'Grandparent-Grandchild']],
-    
-    // DNA Testing for Inheritance or Asset Division: Ưu tiên theo thứ tự
-    ['DNA Testing for Inheritance or Asset Division', ['Father-Child', 'Mother-Child', 'Grandparent-Grandchild', 'Sibling-Sibling']]
-  ]);
 
   // Hàm lọc mối quan hệ theo dịch vụ được chọn
-  const getValidRelationshipsForService = (serviceName) => {
+  const getValidRelationshipsForService = useCallback((serviceName) => {
     if (!serviceName) return [];
     
     const validPairs = serviceRelationshipMap.get(serviceName) || [];
@@ -2048,10 +2259,10 @@ const BookingPage = () => {
     }
     
     return Array.from(validRelationships);
-  };
+  }, []);
 
   // Thêm hàm để lấy mối quan hệ hợp lệ cho người thứ hai dựa trên người thứ nhất
-  const getValidRelationshipsForSecondPerson = (serviceName, firstPersonRelationship) => {
+  const getValidRelationshipsForSecondPerson = useCallback((serviceName, firstPersonRelationship) => {
     if (!serviceName || !firstPersonRelationship) {
       return getValidRelationshipsForService(serviceName);
     }
@@ -2074,7 +2285,7 @@ const BookingPage = () => {
     });
     
     return Array.from(validSecondPersonRelationships);
-  };
+  }, [getValidRelationshipsForService]);
 
   // Hàm kiểm tra cặp mối quan hệ có hợp lệ với dịch vụ không
   const isValidRelationshipPair = (serviceName, relationship1, relationship2) => {
@@ -2091,6 +2302,184 @@ const BookingPage = () => {
              (pair[0] === relationship2 && pair[1] === relationship1);
     });
   };
+
+  // ================ BOOKING TRACKING HELPER FUNCTIONS ================
+  
+  // Initialize booking session
+  const initializeBookingSession = useCallback(() => {
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const session = {
+      sessionId,
+      startTime: new Date().toISOString(),
+      serviceId: currentServiceID,
+      customerId: customerID,
+      stage: 'initialized',
+      data: {}
+    };
+    
+    setBookingSession(session);
+    
+    // Save to localStorage
+    localStorage.setItem('current_booking_session', JSON.stringify(session));
+    
+    // Track initialization
+    updateBookingProcess('session_initialized', { sessionId });
+    
+    return session;
+  }, [currentServiceID, customerID]);
+
+  // Save booking session to localStorage
+  const saveBookingSession = useCallback((sessionData) => {
+    const updatedSession = {
+      ...bookingSession,
+      ...sessionData,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    setBookingSession(updatedSession);
+    localStorage.setItem('current_booking_session', JSON.stringify(updatedSession));
+  }, [bookingSession]);
+
+  // Restore booking session from localStorage
+  const restoreBookingSession = useCallback(() => {
+    try {
+      const storedSession = localStorage.getItem('current_booking_session');
+      if (storedSession) {
+        const session = JSON.parse(storedSession);
+        setBookingSession(session);
+        
+        // Update process stage
+        setBookingProcess(prev => ({
+          ...prev,
+          stage: session.stage || 'form_filling',
+          timestamp: new Date().toISOString()
+        }));
+        
+        return session;
+      }
+    } catch (error) {
+      console.error('Error restoring booking session:', error);
+    }
+    return null;
+  }, []);
+
+  // Clear booking session
+  const clearBookingSession = useCallback(() => {
+    setBookingSession(null);
+    localStorage.removeItem('current_booking_session');
+    
+    // Reset process
+    setBookingProcess({
+      stage: 'form_filling',
+      timestamp: new Date().toISOString(),
+      data: {}
+    });
+  }, []);
+
+  // Update booking process stage
+  const updateBookingProcess = useCallback((stage, data = {}) => {
+    const processUpdate = {
+      stage,
+      timestamp: new Date().toISOString(),
+      data: { ...bookingProcess.data, ...data }
+    };
+    
+    setBookingProcess(processUpdate);
+    
+    // Add to steps history
+    const step = {
+      id: Date.now(),
+      stage,
+      timestamp: new Date().toISOString(),
+      data,
+      sessionId: bookingSession?.sessionId
+    };
+    
+    setBookingSteps(prev => [...prev, step]);
+    
+    // Save to session
+    if (bookingSession) {
+      saveBookingSession({
+        stage,
+        lastAction: step
+      });
+    }
+  }, [bookingProcess.data, bookingSession, saveBookingSession]);
+
+  // Update booking steps
+  const updateBookingSteps = useCallback((stepData) => {
+    const step = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      sessionId: bookingSession?.sessionId,
+      ...stepData
+    };
+    
+    setBookingSteps(prev => [...prev, step]);
+    
+    // Keep only last 20 steps to avoid memory issues
+    if (bookingSteps.length > 20) {
+      setBookingSteps(prev => prev.slice(-20));
+    }
+  }, [bookingSession?.sessionId, bookingSteps.length]);
+
+  // Add to booking history
+  const addToBookingHistory = useCallback((bookingData) => {
+    const historyEntry = {
+      id: Date.now(),
+      bookingId: bookingData.bookingId || bookingData.paymentCode,
+      serviceId: bookingData.service?.serviceID,
+      serviceName: bookingData.service?.serviceName,
+      customerName: bookingData.firstPerson?.fullName,
+      totalCost: bookingData.totalCost,
+      status: bookingData.status || 'completed',
+      timestamp: new Date().toISOString(),
+      sessionId: bookingSession?.sessionId
+    };
+    
+    setBookingHistory(prev => {
+      const updated = [historyEntry, ...prev];
+      
+      // Keep only last 50 entries
+      const limited = updated.slice(0, 50);
+      
+      // Save to localStorage
+      localStorage.setItem('booking_history', JSON.stringify(limited));
+      
+      return limited;
+    });
+  }, [bookingSession?.sessionId]);
+
+  // Get booking progress percentage
+  const getBookingProgress = useCallback(() => {
+    const stages = [
+      'form_filling', 'form_submitted', 'api_called', 
+      'payment_processing', 'payment_completed', 
+      'signature_required', 'signature_completed', 
+      'pdf_generated', 'completed'
+    ];
+    
+    const currentIndex = stages.indexOf(bookingProcess.stage);
+    return currentIndex >= 0 ? Math.round(((currentIndex + 1) / stages.length) * 100) : 0;
+  }, [bookingProcess.stage]);
+
+  // Get booking summary
+  const getBookingSummary = useCallback(() => {
+    return {
+      sessionId: bookingSession?.sessionId,
+      bookingId: bookingId,
+      serviceId: currentServiceID,
+      customerId: customerID,
+      stage: bookingProcess.stage,
+      progress: getBookingProgress(),
+      stepsCount: bookingSteps.length,
+      historyCount: bookingHistory.length,
+      startTime: bookingSession?.startTime,
+      lastUpdated: bookingSession?.lastUpdated
+    };
+  }, [bookingSession, bookingId, currentServiceID, customerID, bookingProcess.stage, getBookingProgress, bookingSteps.length, bookingHistory.length]);
+
+  // ================ END BOOKING TRACKING HELPER FUNCTIONS ================
 
   // Cập nhật danh sách relationships dựa trên service được chọn
   const [availableRelationships, setAvailableRelationships] = useState([
@@ -2363,40 +2752,38 @@ const BookingPage = () => {
 
   // Theo dõi thay đổi của Person First và tự động điền cho Person Second nếu chưa có dữ liệu hoặc còn trống
   useEffect(() => {
-    const first = form.getFieldValue('firstPerson');
-    const second = form.getFieldValue('secondPerson');
-    // Nếu first đã điền đủ và second chưa điền hoặc giống mặc định thì tự động copy
-    if (
-      first &&
-      first.fullName &&
-      first.dateOfBirth &&
-      first.gender &&
-      first.relationship &&
-      first.sampleType &&
-      (
-        !second ||
-        (!second.fullName && !second.dateOfBirth && !second.gender && !second.relationship && !second.sampleType)
-      )
-    ) {
-      form.setFieldsValue({
-        secondPerson: {
-          ...second,
-          fullName: first.fullName,
-          dateOfBirth: first.dateOfBirth,
-          gender: first.gender,
-          relationship: first.relationship,
-          sampleType: first.sampleType
-        }
-      });
+    try {
+      const first = form.getFieldValue('firstPerson');
+      const second = form.getFieldValue('secondPerson');
+      // Nếu first đã điền đủ và second chưa điền hoặc giống mặc định thì tự động copy
+      if (
+        first &&
+        first.fullName &&
+        first.dateOfBirth &&
+        first.gender &&
+        first.relationship &&
+        first.sampleType &&
+        (
+          !second ||
+          (!second.fullName && !second.dateOfBirth && !second.gender && !second.relationship && !second.sampleType)
+        )
+      ) {
+        form.setFieldsValue({
+          secondPerson: {
+            ...second,
+            fullName: first.fullName,
+            dateOfBirth: first.dateOfBirth,
+            gender: first.gender,
+            relationship: first.relationship,
+            sampleType: first.sampleType
+          }
+        });
+      }
+    } catch (error) {
+      // Ignore form errors during initialization
+      console.warn('Form not ready yet:', error);
     }
-  }, [
-    form,
-    form.getFieldValue('firstPerson.fullName'),
-    form.getFieldValue('firstPerson.dateOfBirth'),
-    form.getFieldValue('firstPerson.gender'),
-    form.getFieldValue('firstPerson.relationship'),
-    form.getFieldValue('firstPerson.sampleType')
-  ]);
+  }, [form]);
 
   useEffect(() => {
     if (serviceID) {
@@ -2478,74 +2865,76 @@ const BookingPage = () => {
         });
       }
     }
-  }, [selectedService, form]);
+  }, [selectedService, form, getValidRelationshipsForService]);
 
   // Cập nhật useEffect để theo dõi thay đổi của first person relationship
   useEffect(() => {
-    const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
-    
-    if (selectedService?.name && firstPersonRelationship) {
-      // Cập nhật available relationships cho second person dựa trên first person
-      const validSecondRelationships = getValidRelationshipsForSecondPerson(
-        selectedService.name, 
-        firstPersonRelationship
-      );
-      setAvailableSecondPersonRelationships(validSecondRelationships.length > 0 
-        ? validSecondRelationships 
-        : availableRelationships
-      );
+    try {
+      const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
       
-      // Reset second person relationship nếu không còn hợp lệ
-      const currentSecondRelationship = form.getFieldValue(['secondPerson', 'relationship']);
-      if (currentSecondRelationship && !validSecondRelationships.includes(currentSecondRelationship)) {
-        form.setFieldsValue({
-          secondPerson: {
-            ...form.getFieldValue('secondPerson'),
-            relationship: undefined
-          }
-        });
+      if (selectedService?.name && firstPersonRelationship) {
+        // Cập nhật available relationships cho second person dựa trên first person
+        const validSecondRelationships = getValidRelationshipsForSecondPerson(
+          selectedService.name, 
+          firstPersonRelationship
+        );
+        setAvailableSecondPersonRelationships(validSecondRelationships.length > 0 
+          ? validSecondRelationships 
+          : availableRelationships
+        );
+        
+        // Reset second person relationship nếu không còn hợp lệ
+        const currentSecondRelationship = form.getFieldValue(['secondPerson', 'relationship']);
+        if (currentSecondRelationship && !validSecondRelationships.includes(currentSecondRelationship)) {
+          form.setFieldsValue({
+            secondPerson: {
+              ...form.getFieldValue('secondPerson'),
+              relationship: undefined
+            }
+          });
+        }
+        
+        // Xử lý đặc biệt cho NIPT
+        if (selectedService.name === 'Non-Invasive Relationship Testing (NIPT)' && 
+            firstPersonRelationship === 'Father' &&
+            validSecondRelationships.includes('Child')) {
+          // Tự động chọn Child cho người thứ hai
+          form.setFieldsValue({
+            secondPerson: {
+              ...form.getFieldValue('secondPerson'),
+              relationship: 'Child',
+              sampleType: 'Amniotic Fluid' // Mẫu nước ối cho NIPT
+            }
+          });
+        }
+      } else {
+        // Nếu chưa chọn service hoặc first person relationship, hiển thị tất cả
+        setAvailableSecondPersonRelationships(availableRelationships);
       }
-      
-      // Xử lý đặc biệt cho NIPT
-      if (selectedService.name === 'Non-Invasive Relationship Testing (NIPT)' && 
-          firstPersonRelationship === 'Father' &&
-          validSecondRelationships.includes('Child')) {
-        // Tự động chọn Child cho người thứ hai
-        form.setFieldsValue({
-          secondPerson: {
-            ...form.getFieldValue('secondPerson'),
-            relationship: 'Child',
-            sampleType: 'Amniotic Fluid' // Mẫu nước ối cho NIPT
-          }
-        });
-      }
-    } else {
-      // Nếu chưa chọn service hoặc first person relationship, hiển thị tất cả
-      setAvailableSecondPersonRelationships(availableRelationships);
+    } catch (error) {
+      // Ignore form errors during initialization
+      console.warn('Form not ready yet:', error);
     }
-  }, [
-    selectedService?.name,
-    form.getFieldValue(['firstPerson', 'relationship']),
-    availableRelationships,
-    form
-  ]);
+  }, [selectedService?.name, availableRelationships, form, getValidRelationshipsForSecondPerson]);
 
   useEffect(() => {
-    // Trigger validation cho relationship khi gender thay đổi
-    const firstPersonGender = form.getFieldValue(['firstPerson', 'gender']);
-    const secondPersonGender = form.getFieldValue(['secondPerson', 'gender']);
-    
-    if (firstPersonGender) {
-      form.validateFields([['firstPerson', 'relationship']]);
+    try {
+      // Trigger validation cho relationship khi gender thay đổi
+      const firstPersonGender = form.getFieldValue(['firstPerson', 'gender']);
+      const secondPersonGender = form.getFieldValue(['secondPerson', 'gender']);
+      
+      if (firstPersonGender) {
+        form.validateFields([['firstPerson', 'relationship']]);
+      }
+      
+      if (secondPersonGender) {
+        form.validateFields([['secondPerson', 'relationship']]);
+      }
+    } catch (error) {
+      // Ignore form errors during initialization
+      console.warn('Form not ready yet:', error);
     }
-    
-    if (secondPersonGender) {
-      form.validateFields([['secondPerson', 'relationship']]);
-    }
-  }, [
-    form.getFieldValue(['firstPerson', 'gender']),
-    form.getFieldValue(['secondPerson', 'gender'])
-  ]);
+  }, [form]);
 
   useEffect(() => {
     if (!serviceID && currentServicesData.length > 0) {
@@ -2643,6 +3032,7 @@ const BookingPage = () => {
     
     setIsSubmitting(true);
     try {
+      // Tạo booking data hoàn chỉnh
       const bookingData = {
         customerID,
         serviceType: selectedServiceType,
@@ -2656,70 +3046,249 @@ const BookingPage = () => {
         totalCost: calculateTotalCost(),
         paymentMethod,
         bookingTime: new Date().toISOString(),
-        // Thêm các trường mới để ConfirmBookingModal luôn nhận được dữ liệu mới nhất
         homeAddress,
         selectedKitType,
         isExpressService,
       };
+      
+      // Log để debug
+      console.log('📋 Booking Data:', bookingData);
+      
+      // Tạo payload API theo format đã thành công
+      const apiPayload = buildBookingPayload(bookingData);
+      console.log('📤 API Payload:', apiPayload);
+      
+      // Test validation API payload
+      console.log('🔍 API Payload validation:');
+      console.log('- Has testSubjects:', apiPayload.testSubjects?.length);
+      console.log('- testSubjects structure:', apiPayload.testSubjects?.map(s => ({
+        fullname: s.fullname,
+        gender: s.gender,
+        sampleType: s.sampleType,
+        relationship: s.relationship
+      })));
+      
       setBookingData(bookingData); // Đảm bảo bookingData luôn là dữ liệu mới nhất
       setIsModalVisible(true);
-    } catch {
+    } catch (error) {
+      console.error('❌ Error in handleConfirmBooking:', error);
       message.error('Có lỗi xảy ra!');
     } finally {
       setIsSubmitting(false);
     }
   };
+  function buildBookingPayload(data) {
+    // Format date function
+    const formatDate = (dateValue) => {
+      if (!dateValue) return "";
+      if (moment.isMoment(dateValue)) {
+        return dateValue.format('YYYY-MM-DD');
+      }
+      if (typeof dateValue === 'string') return dateValue;
+      return dateValue;
+    };
+
+    // Format gender function
+    const formatGender = (genderValue) => {
+      return genderValue === 'male' ? 1 : 2;
+    };
+
+    return {
+      collectionMethod: data.collectionMethod?.name || "At Facility",
+      paymentMethod: data.paymentMethod === 'vnpay' ? 'VNPAY' : 'Cash',
+      appointmentTime: formatDate(data.appointmentDate),
+      timeRange: data.timeSlot || '',
+      status: "pending_payment",
+      note: '',
+      cost: 0,
+      mediationMethod: data.medicationMethod || '',
+      additionalCost: 0,
+      totalCost: data.totalCost || 0,
+      expressService: !!data.isExpressService,
+      address: data.collectionMethod?.name === 'At Home' || data.medicationMethod === 'postal-delivery' ? data.homeAddress : '',
+      kitID: data.selectedKitType || '',
+      serviceID: data.service?.serviceID || '',
+      customerID: data.customerID || '',
+      customerName: data.firstPerson?.fullName || '',
+      testSubjects: [
+        {
+          fullname: data.firstPerson.fullName || '',
+          dateOfBirth: formatDate(data.firstPerson.dateOfBirth),
+          gender: formatGender(data.firstPerson.gender),
+          phone: data.firstPerson.phoneNumber || '',
+          email: data.firstPerson.email || '',
+          relationship: data.firstPerson.relationship || '',
+          sampleType: data.firstPerson.sampleType || '',
+          idNumber: data.firstPerson.personalId || ''
+        },
+        {
+          fullname: data.secondPerson.fullName || '',
+          dateOfBirth: formatDate(data.secondPerson.dateOfBirth),
+          gender: formatGender(data.secondPerson.gender),
+          phone: data.secondPerson.phoneNumber || '',
+          email: data.secondPerson.email || '',
+          relationship: data.secondPerson.relationship || '',
+          sampleType: data.secondPerson.sampleType || '',
+          idNumber: data.secondPerson.personalId || ''
+        }
+      ]
+    };
+  }
 
   // Thêm function xử lý khi hoàn tất booking từ modal
   const handleBookingComplete = async (finalBookingData) => {
-    try {
-      setIsSubmitting(true);
-      
-      // Tạm thời lưu vào localStorage thay vì gọi API
-      // TODO: Thay thế bằng API thực tế khi backend sẵn sàng
-      const bookingId = `BOOKING_${Date.now()}`;
-      const bookingWithId = {
-        ...finalBookingData,
-        bookingId,
-        createdAt: new Date().toISOString()
-      };
-      
-      // Lưu vào localStorage
-      const existingBookings = JSON.parse(localStorage.getItem('dna_bookings') || '[]');
-      existingBookings.push(bookingWithId);
-      localStorage.setItem('dna_bookings', JSON.stringify(existingBookings));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      message.success('Đặt lịch thành công!');
-      form.resetFields();
-      setAppointmentDate('');
-      setTimeSlot('');
-      setIsModalVisible(false);
-      setBookingData(null);
-      
-      // Reset form về trạng thái ban đầu
-      setSelectedService(null);
-      setSelectedCollectionMethod(null);
-      setSelectedMedicationMethod('');
-      setSelectedKitType(null);
-      setHomeAddress('');
-      setIsExpressService(false);
-      
-    } catch (error) {
-      console.error('Error saving booking:', error);
-      message.error('Có lỗi xảy ra khi lưu thông tin đặt lịch! Vui lòng thử lại.');
-    } finally {
-      setIsSubmitting(false);
+  try {
+    setIsSubmitting(true);
+    const serviceID = finalBookingData.service?.serviceID;
+    const customerID = finalBookingData.customerID;
+    if (!serviceID || !customerID) {
+      throw new Error('Thiếu serviceID hoặc customerID');
     }
-  };
+    
+    // Sử dụng payload API đã được chuẩn bị
+    const payload = buildBookingPayload(finalBookingData);
+    console.log('🔥 Final API Payload:', payload);
+    
+    // Sử dụng endpoint giống form đã thành công
+    const response = await axios.post(`/booking/bookings/${serviceID}/${customerID}`, payload);
+    if (!response.data) {
+      throw new Error('Không nhận được dữ liệu từ server');
+    }
+    message.success('Đặt lịch thành công!');
+    form.resetFields();
+    setAppointmentDate('');
+    setTimeSlot('');
+    setIsModalVisible(false);
+    setBookingData(null);
+    setSelectedService(null);
+    setSelectedCollectionMethod(null);
+    setSelectedMedicationMethod('');
+    setSelectedKitType(null);
+    setHomeAddress('');
+    setIsExpressService(false);
+  } catch (error) {
+    let errorMessage = 'Có lỗi xảy ra khi lưu thông tin đặt lịch!';
+    if (error.response) {
+      if (error.response.status === 401) {
+        errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!';
+      } else if (error.response.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+    }
+    message.error(errorMessage);
+    console.error('Booking error:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Function đóng modal
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setBookingData(null);
   };
+
+  // Thêm hàm xử lý khi người dùng quay lại từ trang thanh toán VNPAY
+  useEffect(() => {
+    // Kiểm tra URL có chứa thông tin thanh toán VNPAY không
+    const urlParams = new URLSearchParams(window.location.search);
+    const vnpResponseCode = urlParams.get('vnp_ResponseCode');
+    const vnpOrderInfo = urlParams.get('vnp_OrderInfo');
+    
+    if (vnpResponseCode && vnpOrderInfo) {
+      try {
+        // Xóa tham số VNPAY khỏi URL ngay lập tức để tránh xử lý lại
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        
+        if (vnpResponseCode === '00') {
+          // Thanh toán thành công
+          message.success({
+            content: 'Thanh toán VNPAY thành công! Đặt lịch hoàn tất.',
+            duration: 5,
+            style: {
+              marginTop: '20vh',
+            },
+          });
+          
+          // Lấy thông tin đơn hàng từ localStorage
+          const pendingBookings = JSON.parse(localStorage.getItem('pending_vnpay_bookings') || '[]');
+          const matchedBooking = pendingBookings.find(booking => booking.paymentCode === vnpOrderInfo);
+          
+          if (matchedBooking) {
+            // Cập nhật trạng thái thanh toán
+            const updatedBookingData = {
+              ...matchedBooking,
+              paymentStatus: 'completed',
+              paymentMethod: 'VNPAY',
+              paymentCode: vnpOrderInfo,
+              paymentDate: new Date().toISOString(),
+              status: 'confirmed'
+            };
+            
+            // Xóa đơn hàng khỏi danh sách chờ
+            const updatedPendingBookings = pendingBookings.filter(booking => booking.paymentCode !== vnpOrderInfo);
+            localStorage.setItem('pending_vnpay_bookings', JSON.stringify(updatedPendingBookings));
+            
+            // Cập nhật booking tracking
+            updateBookingProcess('payment_completed', {
+              paymentMethod: 'VNPAY',
+              paymentCode: vnpOrderInfo,
+              paymentDate: new Date().toISOString()
+            });
+            
+            // Thêm vào booking history
+            addToBookingHistory({
+              step: 'payment_completed',
+              timestamp: new Date().toISOString(),
+              data: {
+                paymentMethod: 'VNPAY',
+                paymentCode: vnpOrderInfo,
+                totalCost: updatedBookingData.totalCost
+              }
+            });
+            
+            // Chuyển về trang HOME sau 2 giây
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 2000);
+            
+            console.log('VNPAY payment success - Redirecting to home');
+          } else {
+            // Không tìm thấy đơn hàng phù hợp
+            message.warning('Không tìm thấy thông tin đơn hàng. Vui lòng thử lại.');
+          }
+        } else {
+          // Thanh toán thất bại
+          const errorMessages = {
+            '07': 'Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).',
+            '09': 'Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking tại ngân hàng.',
+            '10': 'Giao dịch không thành công do: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần',
+            '11': 'Giao dịch không thành công do: Đã hết hạn chờ thanh toán. Xin quý khách vui lòng thực hiện lại giao dịch.',
+            '12': 'Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng bị khóa.',
+            '13': 'Giao dịch không thành công do Quý khách nhập sai mật khẩu xác thực giao dịch (OTP).',
+            '24': 'Giao dịch không thành công do: Khách hàng hủy giao dịch',
+            '51': 'Giao dịch không thành công do: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch.',
+            '65': 'Giao dịch không thành công do: Tài khoản của Quý khách đã vượt quá hạn mức giao dịch trong ngày.',
+            '75': 'Ngân hàng thanh toán đang bảo trì.',
+            '79': 'Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định.',
+            '99': 'Các lỗi khác (lỗi còn lại, không có trong danh sách mã lỗi đã liệt kê)'
+          };
+          
+          const errorMessage = errorMessages[vnpResponseCode] || 'Thanh toán VNPAY thất bại hoặc bị hủy!';
+          message.error(errorMessage);
+          
+          // Xóa pending booking nếu có
+          const pendingBookings = JSON.parse(localStorage.getItem('pending_vnpay_bookings') || '[]');
+          const updatedPendingBookings = pendingBookings.filter(booking => booking.paymentCode !== vnpOrderInfo);
+          localStorage.setItem('pending_vnpay_bookings', JSON.stringify(updatedPendingBookings));
+        }
+      } catch (error) {
+        console.error('Error processing VNPAY return:', error);
+        message.error('Có lỗi xảy ra khi xử lý kết quả thanh toán!');
+      }
+    }
+  }, [form, updateBookingProcess, addToBookingHistory]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -3709,7 +4278,7 @@ const BookingPage = () => {
                   <input
                     type="radio"
                     value="cash"
-                  checked={paymentMethod === 'cash'}
+                    checked={paymentMethod === 'cash'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="mr-2"
                   />
@@ -3719,13 +4288,13 @@ const BookingPage = () => {
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    value="bank-transfer"
-                    checked={paymentMethod === 'bank-transfer'}
+                    value="vnpay"
+                    checked={paymentMethod === 'vnpay'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="mr-2"
                   />
                   <FaQrcode className="mr-2 text-blue-600" />
-                  QR Payment
+                  VNPAY
                 </label>
               </div>
             </div>
