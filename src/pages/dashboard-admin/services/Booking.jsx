@@ -159,9 +159,11 @@ const Booking = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [collectionMethodFilter, setCollectionMethodFilter] = useState("");
-  const [mediationMethodFilter, setMediationMethodFilter] = useState("");
+  // Default filter values for initial display
+  const [statusFilter, setStatusFilter] = useState(undefined);
+  const [collectionMethodFilter, setCollectionMethodFilter] =
+    useState(undefined);
+  const [mediationMethodFilter, setMediationMethodFilter] = useState(undefined);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -223,10 +225,14 @@ const Booking = () => {
       (statusEn && statusEn.toLowerCase() === statusFilter.toLowerCase());
     const matchesCollectionMethod =
       !collectionMethodFilter ||
-      booking.collectionMethod === collectionMethodFilter;
+      (booking.collectionMethod &&
+        booking.collectionMethod.toLowerCase() ===
+          collectionMethodFilter.toLowerCase());
     const matchesMediationMethod =
       !mediationMethodFilter ||
-      booking.mediationMethod === mediationMethodFilter;
+      (booking.mediationMethod &&
+        booking.mediationMethod.toLowerCase() ===
+          mediationMethodFilter.toLowerCase());
     return (
       matchesSearch &&
       matchesStatus &&
@@ -298,32 +304,31 @@ const Booking = () => {
   };
 
   return (
-    <div>
+    <>
       <Title level={3}>Tracking Booking</Title>
       <Card style={{ marginBottom: 16 }}>
         <Row
-          gutter={[16, 16]}
+          gutter={[8, 8]}
           align="middle"
-          justify="start"
           style={{ flexWrap: "wrap", width: "100%" }}>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={12} md={6} style={{ marginBottom: 8 }}>
             <Input
               placeholder="Search by Booking ID, Customer ID, Service ID, Kit ID, Type, ..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
-              size="large"
             />
           </Col>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={8} md={6} lg={4} style={{ marginBottom: 8 }}>
             <Select
               placeholder="Filter by Status"
               value={statusFilter}
-              onChange={setStatusFilter}
-              style={{ width: "100%" }}
-              allowClear
-              size="large">
+              onChange={(value) =>
+                setStatusFilter(value === undefined ? null : value)
+              }
+              style={{ width: "100%", minWidth: 180, maxWidth: 240 }}
+              allowClear>
               {statusList.map((status) => (
                 <Option value={status} key={status}>
                   {status}
@@ -331,14 +336,15 @@ const Booking = () => {
               ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={8} md={6} lg={4} style={{ marginBottom: 8 }}>
             <Select
               placeholder="Filter by Collection Method"
               value={collectionMethodFilter}
-              onChange={setCollectionMethodFilter}
-              style={{ width: "100%" }}
-              allowClear
-              size="large">
+              onChange={(value) =>
+                setCollectionMethodFilter(value === undefined ? null : value)
+              }
+              style={{ width: "100%", minWidth: 180, maxWidth: 240 }}
+              allowClear>
               {/* Lấy danh sách collectionMethod duy nhất */}
               {[...new Set(bookings.map((b) => b.collectionMethod))]
                 .filter(Boolean)
@@ -349,58 +355,45 @@ const Booking = () => {
                 ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={8} md={6} lg={4} style={{ marginBottom: 8 }}>
             <Select
               placeholder="Filter by Mediation Method"
               value={mediationMethodFilter}
-              onChange={setMediationMethodFilter}
-              style={{ width: "100%" }}
-              allowClear
-              size="large">
-              {/* Lấy danh sách mediationMethod duy nhất */}
-              {[...new Set(bookings.map((b) => b.mediationMethod))]
-                .filter(Boolean)
-                .map((method) => (
-                  <Option key={method} value={method}>
-                    {method}
-                  </Option>
-                ))}
+              onChange={(value) =>
+                setMediationMethodFilter(value === undefined ? null : value)
+              }
+              style={{ width: "100%", minWidth: 180, maxWidth: 240 }}
+              allowClear>
+              <Option value="Staff Collection">Staff Collection</Option>
+              <Option value="Postal Delivery">Postal Delivery</Option>
+              <Option value="Walk-in Service">Walk-in Service</Option>
             </Select>
           </Col>
+          <Col flex="auto" />
           <Col
-            xs={24}
-            sm={24}
-            md={24}
-            lg={24}
-            xl={24}
-            style={{ marginBottom: 8 }}>
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-              }}>
-              <Space size={12} style={{ width: "auto" }}>
-                <Button
-                  icon={<DownloadOutlined />}
-                  onClick={handleExportPDF}
-                  type="default"
-                  style={{ borderRadius: 6, minWidth: 120 }}
-                  size="large">
-                  Export PDF
-                </Button>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={fetchBookings}
-                  type="primary"
-                  style={{ borderRadius: 6, minWidth: 120 }}
-                  size="large"
-                  loading={loading}>
-                  Refresh
-                </Button>
-              </Space>
-            </div>
+            style={{
+              marginBottom: 8,
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}>
+            <Space size={12} style={{ width: "auto" }}>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportPDF}
+                type="default"
+                style={{ borderRadius: 6, minWidth: 120 }}>
+                Export PDF
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchBookings}
+                type="primary"
+                style={{ borderRadius: 6, minWidth: 120 }}
+                loading={loading}>
+                Refresh
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>
@@ -432,7 +425,7 @@ const Booking = () => {
           }}
         />
       </Card>
-    </div>
+    </>
   );
 };
 

@@ -13,6 +13,7 @@ import {
   DatePicker,
   Card,
   Tag,
+  Modal,
 } from "antd";
 import {
   SendOutlined,
@@ -20,6 +21,9 @@ import {
   ReloadOutlined,
   DownloadOutlined,
   CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios"; // Import axios instance
 import { toast, ToastContainer } from "react-toastify";
@@ -41,18 +45,36 @@ const StaffReporting = () => {
   // Lấy ngày hôm nay (YYYY-MM-DD)
   const today = new Date().toISOString().slice(0, 10);
 
-  // Lọc báo cáo trong ngày
-  const todayReports = workReports.filter(
-    (r) => (r.appointmentTime || "").slice(0, 10) === today && !r.isSent
-  );
+  // Helper function to extract date from appointment time
+  const extractDateFromAppointment = (appointmentTime) => {
+    if (!appointmentTime) return null;
+    // If appointmentTime is just time format like "8:15 - 9:15", we can't extract date
+    // We'll need to check if it contains date information
+    const dateMatch = appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+    return dateMatch ? dateMatch[1] : null;
+  };
 
-  // Lọc báo cáo trong tương lai (chưa gửi)
-  const futureReports = workReports.filter(
-    (r) => (r.appointmentTime || "").slice(0, 10) > today && !r.isSent
-  );
+  // Lọc báo cáo trong ngày - chỉ lấy những báo cáo có status là Pending
+  const todayReports = workReports.filter((r) => {
+    const appointmentDate = extractDateFromAppointment(r.appointmentTime);
+    return (
+      (appointmentDate === today || !appointmentDate) && r.status === "Pending"
+    );
+  });
 
-  // Lọc báo cáo đã gửi
-  const completedWorkReports = workReports.filter((r) => r.isSent);
+  // Lọc báo cáo trong tương lai - chỉ lấy những báo cáo có status là Pending
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const futureReports = workReports.filter((r) => {
+    const appointmentDate = extractDateFromAppointment(r.appointmentTime);
+    return appointmentDate >= tomorrow && r.status === "Pending";
+  });
+
+  // Lọc báo cáo đã hoàn thành - lấy những báo cáo có status khác Pending
+  const completedWorkReports = workReports.filter(
+    (r) => r.status && r.status !== "Pending"
+  );
 
   // Pagination state for Sent Reports
   const [completedReportsPagination, setCompletedReportsPagination] = useState({
@@ -102,16 +124,22 @@ const StaffReporting = () => {
   const handleSave = async (record) => {
     try {
       setLoading(true);
-      await api.patch(`/staff/my-report/${record.id}`, {
+      const payload = {
         status: record.status,
-        note: record.note,
-      });
+        note: record.note || "",
+      };
+
+      console.log("Sending payload:", payload);
+      console.log("Report ID:", record.reportID);
+
+      await api.patch(`/staff/my-report/${record.reportID}`, payload);
       toast.success("Update successfully!");
       fetchWorkReports();
     } catch (error) {
       toast.error(
         "Update failed: " + (error.response?.data?.message || error.message)
       );
+      console.error("Update error:", error);
     } finally {
       setLoading(false);
       setEditingKey("");
@@ -123,15 +151,25 @@ const StaffReporting = () => {
     let inputNode;
     if (dataIndex === "status") {
       inputNode = (
-        <Select style={{ minWidth: 100 }}>
+        <Select
+          style={{ minWidth: 100 }}
+          onChange={(value) => {
+            console.log("Status changed to:", value);
+          }}>
           <Option value="Pending">Pending</Option>
-          <Option value="Approved">Approved</Option>
-          <Option value="Rejected">Rejected</Option>
-          <Option value="Resolved">Resolved</Option>
+          <Option value="Completed">Completed</Option>
+          <Option value="Delay">Delay</Option>
+          <Option value="Cancel">Cancel</Option>
         </Select>
       );
     } else if (dataIndex === "note") {
-      inputNode = <Input />;
+      inputNode = (
+        <Input
+          onChange={(e) => {
+            console.log("Note changed to:", e.target.value);
+          }}
+        />
+      );
     } else {
       inputNode = <Input disabled />;
     }
@@ -142,8 +180,7 @@ const StaffReporting = () => {
             name={dataIndex}
             style={{ margin: 0 }}
             rules={[{ required: false }]}>
-            {" "}
-            {inputNode}{" "}
+            {inputNode}
           </Form.Item>
         ) : (
           children
@@ -153,38 +190,222 @@ const StaffReporting = () => {
   };
 
   const [form] = Form.useForm();
-  const isEditing = (record) => record.id === editingKey;
+  const isEditing = (record) => record.reportID === editingKey;
   const edit = (record) => {
-    form.setFieldsValue({ status: "", note: "", ...record });
-    setEditingKey(record.id);
+    console.log("Editing record:", record);
+    const initialValues = {
+      status: record.status || "",
+      note: record.note || "",
+    };
+    console.log("Setting form values:", initialValues);
+
+    // Reset form first
+    form.resetFields();
+
+    // Set individual fields
+    form.setFieldValue("status", record.status || "");
+    form.setFieldValue("note", record.note || "");
+
+    setEditingKey(record.reportID);
+
+    // Verify form values after setting
+    setTimeout(() => {
+      const currentValues = form.getFieldsValue();
+      console.log("Form values after setting:", currentValues);
+    }, 100);
   };
   const cancel = () => setEditingKey("");
 
-  const save = async (id) => {
+  const save = async (reportID) => {
     try {
       const row = await form.validateFields();
+      console.log("Form data from validateFields:", row);
+
+      // Lấy giá trị hiện tại của form
+      const currentFormValues = form.getFieldsValue();
+      console.log("Current form values:", currentFormValues);
+
       const newData = [...workReports];
-      const index = newData.findIndex((item) => id === item.id);
+      const index = newData.findIndex((item) => reportID === item.reportID);
       if (index > -1) {
         const item = newData[index];
-        newData.splice(index, 1, { ...item, ...row });
-        handleSave({ ...item, ...row });
+        const updatedItem = { ...item, ...row };
+        console.log("Original item:", item);
+        console.log("Updated item:", updatedItem);
+
+        // Hiển thị modal xác nhận
+        Modal.confirm({
+          title: (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#1890ff",
+                }}>
+                📝 Confirm Report Update
+              </span>
+            </div>
+          ),
+          content: (
+            <div style={{ padding: "16px 0" }}>
+              <p
+                style={{
+                  fontSize: "16px",
+                  marginBottom: "20px",
+                  color: "#262626",
+                  fontWeight: "500",
+                }}>
+                Are you sure you want to update this report with the following
+                information?
+              </p>
+
+              <div
+                style={{
+                  backgroundColor: "#f6f8fa",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e1e4e8",
+                }}>
+                <div style={{ marginBottom: "12px" }}>
+                  <span
+                    style={{
+                      color: "#586069",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      display: "inline-block",
+                      minWidth: "80px",
+                    }}>
+                    Report ID:
+                  </span>
+                  <span
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      marginLeft: "8px",
+                    }}>
+                    #{reportID}
+                  </span>
+                </div>
+
+                <div style={{ marginBottom: "12px" }}>
+                  <span
+                    style={{
+                      color: "#586069",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      display: "inline-block",
+                      minWidth: "80px",
+                    }}>
+                    Status:
+                  </span>
+                  <span
+                    style={{
+                      backgroundColor:
+                        updatedItem.status === "Completed"
+                          ? "#52c41a"
+                          : updatedItem.status === "Pending"
+                          ? "#1890ff"
+                          : updatedItem.status === "Delay"
+                          ? "#fa8c16"
+                          : "#ff4d4f",
+                      color: "white",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "8px",
+                    }}>
+                    {updatedItem.status}
+                  </span>
+                </div>
+
+                <div>
+                  <span
+                    style={{
+                      color: "#586069",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      display: "inline-block",
+                      minWidth: "80px",
+                      verticalAlign: "top",
+                    }}>
+                    Note:
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      marginLeft: "8px",
+                      fontStyle: updatedItem.note ? "normal" : "italic",
+                      color: updatedItem.note ? "#24292e" : "#6a737d",
+                    }}>
+                    {updatedItem.note || "No notes provided"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ),
+          okText: (
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              ✅ Confirm Update
+            </span>
+          ),
+          cancelText: (
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              ❌ Cancel
+            </span>
+          ),
+          okButtonProps: {
+            style: {
+              backgroundColor: "#52c41a",
+              borderColor: "#52c41a",
+              fontWeight: "600",
+              height: "40px",
+              paddingLeft: "20px",
+              paddingRight: "20px",
+            },
+          },
+          cancelButtonProps: {
+            style: {
+              height: "40px",
+              paddingLeft: "20px",
+              paddingRight: "20px",
+              fontWeight: "600",
+            },
+          },
+          width: 520,
+          centered: true,
+          onOk: () => {
+            newData.splice(index, 1, updatedItem);
+            handleSave(updatedItem);
+          },
+          onCancel: () => {
+            console.log("Report update cancelled");
+          },
+        });
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error("Form validation error:", error);
     }
   };
 
   const mergedColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "reportID",
+      key: "reportID",
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
+      dataIndex: "bookingID",
+      key: "bookingID",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
     },
     {
       title: "Appointment Time",
@@ -197,8 +418,28 @@ const StaffReporting = () => {
       dataIndex: "status",
       key: "status",
       editable: true,
-      render: (text, record) =>
-        record.isSent ? <Tag color="blue">Đã gửi</Tag> : text,
+      render: (status) => {
+        let color = "default";
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
+      },
     },
     {
       title: "Note",
@@ -213,7 +454,7 @@ const StaffReporting = () => {
         const editable = isEditing(record);
         return record.isSent ? null : editable ? (
           <span>
-            <a onClick={() => save(record.id)} style={{ marginRight: 8 }}>
+            <a onClick={() => save(record.reportID)} style={{ marginRight: 8 }}>
               Save
             </a>
             <a onClick={cancel}>Cancel</a>
@@ -243,25 +484,205 @@ const StaffReporting = () => {
 
   const handleExportPDF = () => {
     try {
-      if (!jsPDF || !jsPDF.prototype.autoTable) {
-        toast.error(
-          "jsPDF autoTable plugin is not available. Please check your dependencies."
-        );
-        return;
-      }
       const doc = new jsPDF();
-      const columns = workReportColumns.map((col) => col.title);
-      const rows = workReports.map((row) => [
-        row.id,
-        row.bookingId || "-",
-        row.appointmentTime || "-",
-        row.status,
-        row.note || "-",
-      ]);
-      doc.autoTable({ head: [columns], body: rows });
-      doc.save("work_reports.pdf");
+
+      // Add professional header with background
+      doc.setFillColor(41, 128, 185); // Professional blue
+      doc.rect(0, 0, doc.internal.pageSize.width, 35, "F");
+
+      // Add title with enhanced styling
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255); // White text
+      doc.text("Staff Work Reports", 14, 20);
+
+      // Add subtitle
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Completed Reports Summary", 14, 28);
+
+      // Add date with different styling
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200); // Light gray text
+      const currentDate = new Date().toLocaleDateString();
+      doc.text(
+        `Generated on: ${currentDate}`,
+        doc.internal.pageSize.width - 55,
+        20
+      );
+
+      // Add report count
+      doc.text(
+        `Total Reports: ${completedWorkReports.length}`,
+        doc.internal.pageSize.width - 55,
+        28
+      );
+
+      // Reset text color for content
+      doc.setTextColor(51, 51, 51);
+
+      // Check if autoTable is available
+      if (doc.autoTable) {
+        const columns = ["ID", "Booking", "Customer", "Time", "Status", "Note"];
+        const rows = completedWorkReports.map((row) => [
+          row.reportID || "-",
+          row.bookingID || "-",
+          (row.customerName || "-").substring(0, 20),
+          (row.appointmentTime || "-").substring(0, 15),
+          row.status || "-",
+          (row.note || "-").substring(0, 25),
+        ]);
+
+        doc.autoTable({
+          head: [columns],
+          body: rows,
+          startY: 45,
+          styles: {
+            fontSize: 9,
+            cellPadding: 4,
+            overflow: "linebreak",
+            halign: "left",
+            lineColor: [200, 200, 200],
+            lineWidth: 0.3,
+            textColor: [51, 51, 51], // Dark gray text for better readability
+          },
+          headStyles: {
+            fillColor: [41, 128, 185], // Professional blue background
+            textColor: [255, 255, 255], // White text
+            fontStyle: "bold",
+            fontSize: 10,
+            halign: "center",
+            cellPadding: 5,
+            lineColor: [255, 255, 255],
+            lineWidth: 0.5,
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250], // Light gray for alternating rows
+          },
+          columnStyles: {
+            0: { halign: "center", cellWidth: 25 }, // ID column
+            1: { halign: "center", cellWidth: 25 }, // Booking column
+            2: { halign: "left", cellWidth: 35 }, // Customer column
+            3: { halign: "center", cellWidth: 30 }, // Time column
+            4: { halign: "center", cellWidth: 25 }, // Status column
+            5: { halign: "left", cellWidth: 40 }, // Note column
+          },
+          tableLineColor: [200, 200, 200],
+          tableLineWidth: 0.5,
+          margin: { left: 14, right: 14 },
+          theme: "grid", // Add grid theme for better structure
+        });
+      } else {
+        // Fallback: Enhanced text-based table with background styling
+        let yPosition = 50;
+
+        // Create header background rectangle
+        doc.setFillColor(41, 128, 185); // Professional blue background
+        doc.rect(14, yPosition - 8, 176, 12, "F"); // Filled rectangle for header
+
+        // Header text
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255); // White text for header
+
+        doc.text("ID", 20, yPosition);
+        doc.text("Booking", 35, yPosition);
+        doc.text("Customer", 65, yPosition);
+        doc.text("Time", 105, yPosition);
+        doc.text("Status", 135, yPosition);
+        doc.text("Note", 165, yPosition);
+
+        yPosition += 10;
+
+        // Reset text color for data rows
+        doc.setTextColor(51, 51, 51); // Dark gray text
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        // Data rows with alternating background colors
+        completedWorkReports.forEach((row, index) => {
+          if (yPosition > 280) {
+            doc.addPage();
+            yPosition = 20;
+
+            // Repeat styled header on new page
+            doc.setFillColor(41, 128, 185);
+            doc.rect(14, yPosition - 8, 176, 12, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+
+            doc.text("ID", 20, yPosition);
+            doc.text("Booking", 35, yPosition);
+            doc.text("Customer", 65, yPosition);
+            doc.text("Time", 105, yPosition);
+            doc.text("Status", 135, yPosition);
+            doc.text("Note", 165, yPosition);
+
+            yPosition += 10;
+            doc.setTextColor(51, 51, 51);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+          }
+
+          // Alternating row background
+          if (index % 2 === 0) {
+            doc.setFillColor(248, 249, 250); // Light gray for even rows
+            doc.rect(14, yPosition - 6, 176, 8, "F");
+          }
+
+          doc.text((row.reportID || "-").toString(), 20, yPosition);
+          doc.text((row.bookingID || "-").toString(), 35, yPosition);
+          doc.text((row.customerName || "-").substring(0, 15), 65, yPosition);
+          doc.text(
+            (row.appointmentTime || "-").substring(0, 12),
+            105,
+            yPosition
+          );
+          doc.text((row.status || "-").toString(), 135, yPosition);
+          doc.text((row.note || "-").substring(0, 20), 165, yPosition);
+
+          yPosition += 8;
+        });
+      }
+
+      // Add professional footer
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+
+        // Footer background
+        doc.setFillColor(245, 245, 245);
+        doc.rect(
+          0,
+          doc.internal.pageSize.height - 20,
+          doc.internal.pageSize.width,
+          20,
+          "F"
+        );
+
+        // Footer text
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        doc.text(
+          `Page ${i} of ${totalPages}`,
+          14,
+          doc.internal.pageSize.height - 8
+        );
+        doc.text(
+          `Generated: ${new Date().toLocaleDateString()} | Total Reports: ${
+            completedWorkReports.length
+          }`,
+          doc.internal.pageSize.width - 100,
+          doc.internal.pageSize.height - 8
+        );
+      }
+
+      doc.save("completed_reports.pdf");
       toast.success("PDF exported successfully!");
     } catch (error) {
+      console.error("PDF export error:", error);
       toast.error("Failed to export PDF: " + error.message);
     }
   };
@@ -269,15 +690,24 @@ const StaffReporting = () => {
   const workReportColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
+      dataIndex: "reportID",
+      key: "reportID",
+      sorter: (a, b) =>
+        (a.reportID || "")
+          .toString()
+          .localeCompare((b.reportID || "").toString()),
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      render: (bookingID) => bookingID || "-",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
     },
     {
       title: "Appointment Time",
@@ -291,10 +721,25 @@ const StaffReporting = () => {
       key: "status",
       render: (status) => {
         let color = "default";
-        if (status === "Approved" || status === "Resolved") color = "green";
-        if (status === "Pending") color = "orange";
-        if (status === "Rejected") color = "red";
-        return <Tag color={color}>{status}</Tag>;
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
       },
     },
     {
@@ -302,6 +747,18 @@ const StaffReporting = () => {
       dataIndex: "note",
       key: "note",
       render: (note) => note || "-",
+    },
+    {
+      title: "Assigned ID",
+      dataIndex: "assignedID",
+      key: "assignedID",
+      render: (assignedID) => assignedID || "-",
+    },
+    {
+      title: "Manager ID",
+      dataIndex: "managerID",
+      key: "managerID",
+      render: (managerID) => managerID || "-",
     },
   ];
 
@@ -348,7 +805,7 @@ const StaffReporting = () => {
                 components={{ body: { cell: EditableCell } }}
                 columns={columns}
                 dataSource={todayReports}
-                rowKey="id"
+                rowKey="reportID"
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
@@ -401,7 +858,7 @@ const StaffReporting = () => {
               loading={loading}
               columns={workReportColumns} // Reusing the same columns for simplicity
               dataSource={futureReports}
-              rowKey="id"
+              rowKey="reportID"
               pagination={{
                 ...futureReportsPagination,
                 showSizeChanger: true,
@@ -468,7 +925,7 @@ const StaffReporting = () => {
               loading={loading}
               columns={workReportColumns}
               dataSource={completedWorkReports}
-              rowKey="id"
+              rowKey="reportID"
               pagination={{
                 ...completedReportsPagination,
                 showSizeChanger: true,

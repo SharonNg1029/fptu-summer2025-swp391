@@ -214,11 +214,14 @@ const CustomerFeedbackPage = () => {
           <Col xs={24} sm={6} lg={7}>
             <Select
               placeholder="Filter by rating"
-              value={ratingFilter}
-              onChange={setRatingFilter}
+              value={ratingFilter === null ? undefined : ratingFilter}
+              onChange={(value) => {
+                // Khi clear (value === undefined), set về null để hiển thị tất cả
+                setRatingFilter(value === undefined ? null : value);
+              }}
               style={{ width: "100%" }}
               allowClear>
-              <Option value={null}>All Ratings</Option>
+              <Option value={undefined}>All Ratings</Option>
               {[5, 4, 3, 2, 1].map((r) => (
                 <Option key={r} value={r}>
                   {r} Star{r > 1 ? "s" : ""}

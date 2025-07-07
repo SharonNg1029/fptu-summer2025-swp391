@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectManagerID } from "../../../redux/features/userSlice";
 import {
   Tabs,
   Table,
@@ -44,14 +45,14 @@ const { RangePicker } = DatePicker;
 const ViewReports = () => {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState([]);
-  const [unassignedBookings, setUnassignedBookings] = useState([]);
+  // const [unassignedBookings, setUnassignedBookings] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [activeTab, setActiveTab] = useState("assign");
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [staffFilter, setStaffFilter] = useState("");
-  const [dateRange, setDateRange] = useState([]);
-  const { managerID } = useParams();
+  // Đã xóa lọc theo ngày, không cần dateRange
+  const managerID = useSelector(selectManagerID);
 
   // Assign Staff Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -72,38 +73,44 @@ const ViewReports = () => {
 
   // --- Data Fetching Functions ---
 
-  const fetchUnassignedBookings = useCallback(async () => {
-    if (!managerID) return;
-    setLoading(true);
-    try {
-      const response = await api.get(
-        `/manager/unassigned-bookings/${managerID}`
-      );
-      setUnassignedBookings(response.data?.data || response.data || []);
-    } catch (error) {
-      toast.error(
-        "Failed to fetch unassigned bookings: " +
-          (error.response?.data?.message || error.message)
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [managerID]);
+  // Removed fetchUnassignedBookings and setUnassignedBookings as per new API usage
 
   const fetchAllReports = useCallback(async () => {
-    if (!managerID) return;
+    console.log("managerID in fetchAllReports:", managerID);
+    if (!managerID) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const response = await api.get(`/manager/report/${managerID}`);
       const fetchedData = response.data?.data || response.data || [];
-      setReports(fetchedData);
+      // Chuẩn hóa dữ liệu để khớp với table columns
+      const normalized = fetchedData.map((item) => ({
+        id: item.reportID,
+        reportID: item.reportID,
+        bookingId: item.bookingID,
+        bookingID: item.bookingID,
+        appointmentTime: item.appointmentTime,
+        customerName: item.customerName,
+        note: item.note,
+        status: item.status,
+        assignedId: item.assignedID,
+        assignedID: item.assignedID,
+        managerID: item.managerID,
+        staffID: item.staffID,
+        staffId: item.staffID,
+        staffName: item.staffID, // Nếu có tên staff thì thay bằng tên, còn không thì để staffID
+        createdAt: item.createdAt,
+      }));
+      setReports(normalized);
 
-      // Dynamically generate staff list from all reports
+      // Staff list: chỉ lấy unique staffID
       const uniqueStaff = Array.from(
         new Map(
-          fetchedData
-            .filter((r) => r.staffId && r.staffName)
-            .map((r) => [r.staffId, { id: r.staffId, name: r.staffName }])
+          normalized
+            .filter((r) => r.staffID)
+            .map((r) => [r.staffID, { id: r.staffID, name: r.staffID }])
         ).values()
       );
       setStaffList(uniqueStaff);
@@ -118,12 +125,10 @@ const ViewReports = () => {
   }, [managerID]);
 
   useEffect(() => {
-    if (activeTab === "assign") {
-      fetchUnassignedBookings();
-    } else if (activeTab === "all") {
-      fetchAllReports();
-    }
-  }, [activeTab, fetchUnassignedBookings, fetchAllReports]);
+    console.log("managerID in useEffect:", managerID);
+    fetchAllReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managerID]);
 
   // --- Staff Assignment Functions ---
 
@@ -145,17 +150,17 @@ const ViewReports = () => {
     }
     setAssignLoading(true);
     try {
-      await api.patch(`/manager/assign-staff/${selectedBooking.bookingId}`, {
+      await api.patch(`/manager/assign-staff/${selectedBooking.assignedID}`, {
         staffId: selectedStaff,
       });
       toast.success(
-        `Successfully assigned staff to booking ${selectedBooking.bookingId}`
+        `Successfully assigned staff to report ${selectedBooking.reportID}`
       );
       setIsModalVisible(false);
       setSelectedBooking(null);
       setSelectedStaff(null);
-      // Refresh unassigned bookings list
-      fetchUnassignedBookings();
+      // Refresh all reports
+      fetchAllReports();
     } catch (error) {
       toast.error(
         "Failed to assign staff: " +
@@ -219,33 +224,34 @@ const ViewReports = () => {
   const baseReportColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
+      dataIndex: "reportID",
+      key: "reportID",
+      sorter: (a, b) =>
+        (a.reportID || "")
+          .toString()
+          .localeCompare((b.reportID || "").toString()),
       width: 100,
     },
     {
-      title: "Staff Name",
-      dataIndex: "staffName",
-      key: "staffName",
-      sorter: (a, b) => (a.staffName || "").localeCompare(b.staffName || ""),
-      render: (name) => name || <Tag color="volcano">Unassigned</Tag>,
+      title: "Staff ID",
+      dataIndex: "staffID",
+      key: "staffID",
+      sorter: (a, b) => (a.staffID || "").localeCompare(b.staffID || ""),
+      render: (id) => id || <Tag color="volcano">Unassigned</Tag>,
       width: 120,
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      render: (bookingID) => bookingID || "-",
       width: 100,
     },
     {
       title: "Appointment Time",
       dataIndex: "appointmentTime",
       key: "appointmentTime",
-      render: (time) => (time ? dayjs(time).format("HH:mm DD/MM/YYYY") : "-"),
-      sorter: (a, b) =>
-        dayjs(a.appointmentTime).unix() - dayjs(b.appointmentTime).unix(),
+      render: (time) => time || "-",
       width: 150,
     },
     {
@@ -255,25 +261,18 @@ const ViewReports = () => {
       render: (status) => {
         let color = "default";
         let icon = null;
-        if (status === "Completed" || status === "Resolved") {
+        if (status === "Completed") {
           color = "green";
           icon = <CheckCircleOutlined />;
-        }
-        if (status === "Pending") {
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
           color = "orange";
           icon = <ClockCircleOutlined />;
-        }
-        if (status === "Delay") {
-          color = "orange";
-          icon = <ClockCircleOutlined />;
-        }
-        if (status === "Cancel" || status === "Rejected") {
+        } else if (status === "Cancel") {
           color = "red";
           icon = <CloseCircleOutlined />;
-        }
-        if (status === "Approved") {
-          color = "blue";
-          icon = <CheckCircleOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
@@ -306,31 +305,36 @@ const ViewReports = () => {
 
   const assignBookingColumns = [
     {
-      title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
+      title: "Report ID",
+      dataIndex: "reportID",
+      key: "reportID",
       width: 100,
     },
     {
-      title: "Customer Name",
-      dataIndex: "customerName",
-      key: "customerName",
-      width: 150,
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      width: 100,
     },
     {
       title: "Appointment Time",
       dataIndex: "appointmentTime",
       key: "appointmentTime",
-      render: (time) => (time ? dayjs(time).format("HH:mm DD/MM/YYYY") : "-"),
-      sorter: (a, b) =>
-        dayjs(a.appointmentTime).unix() - dayjs(b.appointmentTime).unix(),
+      render: (time) => time || "-",
       width: 180,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: () => <Tag color="volcano">Unassigned</Tag>,
+      render: (status) => {
+        let color = "blue";
+        if (status === "Delay") color = "orange";
+        else if (status === "Pending") color = "blue";
+        else if (status === "Completed") color = "green";
+        else if (status === "Cancel") color = "red";
+        return <Tag color={color}>{status || "Pending"}</Tag>;
+      },
       width: 120,
     },
     {
@@ -370,11 +374,12 @@ const ViewReports = () => {
               marginBottom: 24,
             }}>
             <Title level={3} style={{ margin: 0 }}>
-              Bookings Awaiting Assignment ({unassignedBookings.length})
+              Reports Awaiting Assignment (
+              {reports.filter((r) => r.status === "Pending").length})
             </Title>
             <Button
               icon={<ReloadOutlined />}
-              onClick={fetchUnassignedBookings}
+              onClick={fetchAllReports}
               loading={loading}>
               Refresh
             </Button>
@@ -383,21 +388,23 @@ const ViewReports = () => {
             <Table
               loading={loading}
               columns={assignBookingColumns}
-              dataSource={unassignedBookings}
-              rowKey="bookingId"
+              dataSource={reports.filter((r) => r.status === "Pending")}
+              rowKey={(record) =>
+                record.id || record.bookingId || Math.random().toString()
+              }
               pagination={{
                 ...assignPagination,
                 showSizeChanger: true,
                 pageSizeOptions: [5, 10, 20, 50, 100],
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} bookings`,
+                  `${range[0]}-${range[1]} of ${total} reports`,
                 onShowSizeChange: (current, size) =>
                   setAssignPagination({ current: 1, pageSize: size }),
                 onChange: (page, pageSize) =>
                   setAssignPagination({ current: page, pageSize: pageSize }),
               }}
               locale={{
-                emptyText: "Hiện tại chưa có booking nào cần phân công",
+                emptyText: "Hiện tại chưa có report nào cần phân công",
               }}
               scroll={{ x: 800 }}
             />
@@ -419,7 +426,7 @@ const ViewReports = () => {
           <Row gutter={16} style={{ marginBottom: 24 }}>
             <Col span={8}>
               <Input
-                placeholder="Search by Report ID, Booking ID, Staff Name..."
+                placeholder="Search by Report ID, Booking ID, Staff ID"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 prefix={<SearchOutlined />}
@@ -431,11 +438,11 @@ const ViewReports = () => {
                 value={statusFilter}
                 onChange={(value) => setStatusFilter(value)}
                 style={{ width: "100%" }}
-                allowClear>
+                allowClear={true}>
                 <Option value="Pending">Pending</Option>
-                <Option value="Approved">Approved</Option>
-                <Option value="Resolved">Resolved</Option>
-                <Option value="Rejected">Rejected</Option>
+                <Option value="Completed">Completed</Option>
+                <Option value="Delay">Delay</Option>
+                <Option value="Cancel">Cancel</Option>
               </Select>
             </Col>
             <Col span={4}>
@@ -444,21 +451,13 @@ const ViewReports = () => {
                 value={staffFilter}
                 onChange={(value) => setStaffFilter(value)}
                 style={{ width: "100%" }}
-                allowClear
-                showSearch>
+                allowClear={true}>
                 {staffList.map((staff) => (
                   <Option key={staff.id} value={staff.id}>
                     {staff.name}
                   </Option>
                 ))}
               </Select>
-            </Col>
-            <Col span={6}>
-              <RangePicker
-                style={{ width: "100%" }}
-                value={dateRange}
-                onChange={(dates) => setDateRange(dates)}
-              />
             </Col>
           </Row>
           {/* Action Buttons */}
@@ -501,8 +500,29 @@ const ViewReports = () => {
             <Table
               loading={loading}
               columns={allReportColumns}
-              dataSource={reports}
-              rowKey="id"
+              dataSource={reports.filter((r) => {
+                let statusOk = true;
+                let staffOk = true;
+                let searchOk = true;
+                if (statusFilter) statusOk = r.status === statusFilter;
+                if (staffFilter) staffOk = r.staffID === staffFilter;
+                if (searchText) {
+                  const search = searchText.trim().toLowerCase();
+                  searchOk =
+                    (r.reportID &&
+                      r.reportID.toString().toLowerCase().includes(search)) ||
+                    (r.bookingID &&
+                      r.bookingID.toString().toLowerCase().includes(search)) ||
+                    (r.staffName &&
+                      r.staffName.toString().toLowerCase().includes(search)) ||
+                    (r.staffID &&
+                      r.staffID.toString().toLowerCase().includes(search));
+                }
+                return statusOk && staffOk && searchOk;
+              })}
+              rowKey={(record) =>
+                record.id || record.bookingId || Math.random().toString()
+              }
               pagination={{
                 ...allPagination,
                 showSizeChanger: true,
@@ -536,8 +556,8 @@ const ViewReports = () => {
 
       {/* Assign Staff Modal */}
       <Modal
-        title={`Assign Staff to Booking #${selectedBooking?.bookingId}`}
-        visible={isModalVisible}
+        title={`Assign Staff to Report #${selectedBooking?.id}`}
+        open={isModalVisible}
         onOk={handleAssignStaff}
         onCancel={handleCancel}
         confirmLoading={assignLoading}
@@ -554,7 +574,7 @@ const ViewReports = () => {
           </Button>,
         ]}>
         <p>
-          <strong>Customer:</strong> {selectedBooking?.customerName}
+          <strong>Booking ID:</strong> {selectedBooking?.bookingId}
         </p>
         <p>
           <strong>Appointment:</strong>{" "}

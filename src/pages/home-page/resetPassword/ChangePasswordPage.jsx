@@ -215,7 +215,6 @@ const ChangePasswordPage = () => {
       });
 
       setSuccess(true);
-      toast.success("Password changed successfully!");
 
       // Auto-hide success message and redirect after 2 seconds
       setTimeout(() => {
