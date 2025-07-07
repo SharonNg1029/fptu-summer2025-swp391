@@ -1807,7 +1807,7 @@ const regenerateAndDownloadPDF = async (bookingCode) => {
         <div style={{ marginBottom: '16px', fontSize: '16px' }}>
           {getSuccessMessage()}
         </div>
-        <div style={{ marginBottom: '8px' }}>Mã đặt lịch: <b>{paymentCode}</b></div>
+        
         <div style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
           Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.
         </div>
