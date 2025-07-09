@@ -46,6 +46,8 @@ const ServiceManagement = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [editForm] = Form.useForm();
+  // Filter by service type
+  const [serviceTypeFilter, setServiceTypeFilter] = useState(undefined);
 
   // Fetch services data from API
   const fetchServices = async () => {
@@ -77,7 +79,17 @@ const ServiceManagement = () => {
       service.type?.toLowerCase().includes(searchText.toLowerCase()) ||
       service.description?.toLowerCase().includes(searchText.toLowerCase()) ||
       service.serviceID?.toLowerCase().includes(searchText.toLowerCase());
-    return matchesSearch;
+    let matchesType = true;
+    if (serviceTypeFilter === "Legal") {
+      matchesType =
+        service.type &&
+        service.name.toLowerCase().includes("legal") &&
+        !service.name.toLowerCase().includes("non-legal");
+    } else if (serviceTypeFilter === "Non-Legal") {
+      matchesType =
+        service.name && service.name.toLowerCase().includes("non-legal");
+    }
+    return matchesSearch && matchesType;
   });
 
   // Calculate statistics
@@ -301,25 +313,34 @@ const ServiceManagement = () => {
         </Col>
       </Row>{" "}
       <Card style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle" justify="space-between">
+        <Row
+          gutter={[16, 16]}
+          align="middle"
+          style={{ flexWrap: "wrap", width: "100%" }}>
           <Col
             xs={24}
             sm={16}
             lg={16}
-            style={{
-              display: "flex",
-              justifyContent: "flex-start",
-              alignItems: "center",
-            }}>
+            style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Input
-              placeholder="Search by Service ID, Name, Type, ..."
+              placeholder="Search by Booking ID, Customer ID, Service ID, Kit ID, Type, ..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
-              style={{ maxWidth: 350, borderRadius: 6 }}
-              size="large"
+              style={{ maxWidth: 260, borderRadius: 6 }}
             />
+            <Select
+              placeholder="Filter by Service Type"
+              value={serviceTypeFilter}
+              onChange={(value) =>
+                setServiceTypeFilter(value === undefined ? undefined : value)
+              }
+              allowClear
+              style={{ minWidth: 180, borderRadius: 6 }}>
+              <Option value="Legal">Legal</Option>
+              <Option value="Non-Legal">Non-Legal</Option>
+            </Select>
           </Col>
           <Col
             xs={24}
@@ -347,7 +368,7 @@ const ServiceManagement = () => {
             </Space>
           </Col>
         </Row>
-      </Card>{" "}
+      </Card>
       <Card>
         <Table
           columns={serviceColumns}

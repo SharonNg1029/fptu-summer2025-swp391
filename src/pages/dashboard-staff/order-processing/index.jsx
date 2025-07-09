@@ -204,30 +204,49 @@ const OrderProcessing = () => {
       toast.error("Failed to export PDF: " + error.message);
     }
   };
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      (order.bookingID
-        ? order.bookingID.toString().toLowerCase()
-        : ""
-      ).includes(searchText.toLowerCase()) ||
-      (order.customerName ? order.customerName.toLowerCase() : "").includes(
-        searchText.toLowerCase()
-      ) ||
-      (order.service ? order.service.toLowerCase() : "").includes(
-        searchText.toLowerCase()
-      ) ||
-      (order.kitID ? order.kitID.toLowerCase() : "").includes(
-        searchText.toLowerCase()
-      );
+  const filteredOrders = orders
+    .filter((order) => {
+      const matchesSearch =
+        (order.bookingID
+          ? order.bookingID.toString().toLowerCase()
+          : ""
+        ).includes(searchText.toLowerCase()) ||
+        (order.customerName ? order.customerName.toLowerCase() : "").includes(
+          searchText.toLowerCase()
+        ) ||
+        (order.service ? order.service.toLowerCase() : "").includes(
+          searchText.toLowerCase()
+        ) ||
+        (order.kitID ? order.kitID.toLowerCase() : "").includes(
+          searchText.toLowerCase()
+        );
 
-    // Case-insensitive status filter
-    const matchesStatus =
-      !statusFilter ||
-      (order.status &&
-        order.status.toLowerCase() === statusFilter.toLowerCase());
+      // Case-insensitive status filter
+      const matchesStatus =
+        !statusFilter ||
+        (order.status &&
+          order.status.toLowerCase() === statusFilter.toLowerCase());
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    })
+    // Sắp xếp theo ngày và giờ mới nhất đến cũ nhất
+    .sort((a, b) => {
+      // Ưu tiên sort theo ngày (date), nếu giống thì sort theo timeRange nếu có
+      const dateA = a.date ? moment(a.date) : moment(0);
+      const dateB = b.date ? moment(b.date) : moment(0);
+      if (dateA.isSame(dateB, "day")) {
+        // Nếu cùng ngày, sort theo timeRange (lấy giờ bắt đầu)
+        const getStartHour = (timeRange) => {
+          if (!timeRange) return 0;
+          const match = timeRange.match(/(\d{1,2}):(\d{2})/);
+          if (match)
+            return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+          return 0;
+        };
+        return getStartHour(b.timeRange) - getStartHour(a.timeRange);
+      }
+      return dateB.diff(dateA);
+    });
 
   const columns = [
     {
@@ -435,7 +454,7 @@ const OrderProcessing = () => {
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} assignments`,
-            pageSizeOptions: ["5", "10", "20", "50", "100"],
+            pageSizeOptions: [5, 10, 20, 50, 100],
             showLessItems: false,
             onShowSizeChange: (current, size) => {
               setPageSize(size);

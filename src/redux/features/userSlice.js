@@ -42,9 +42,13 @@ export const userSlice = createSlice({
     updateUser: (state, action) => {
       // Cập nhật thông tin user
       if (state.currentUser) {
-        state.currentUser = { ...state.currentUser, ...action.payload }
+        state.currentUser = { ...state.currentUser, ...action.payload };
+        // Nếu payload có fullName thì cập nhật luôn state.fullName
+        if (action.payload.fullName !== undefined) {
+          state.fullName = action.payload.fullName;
+        }
         if (action.payload.customerID !== undefined) {
-          state.customerID = action.payload.customerID
+          state.customerID = action.payload.customerID;
         }
       }
     },

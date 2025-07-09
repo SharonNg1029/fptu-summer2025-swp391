@@ -9,6 +9,7 @@ import {
   Spin,
   Button,
   Divider,
+  Alert,
 } from "antd";
 import {
   DashboardOutlined,
@@ -20,7 +21,9 @@ import {
   PieChartOutlined,
   LineChartOutlined,
   TeamOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -47,6 +50,7 @@ import "react-toastify/dist/ReactToastify.css";
 const { Title } = Typography;
 
 const ManagerOverviewPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [overviewData, setOverviewData] = useState({
     totalTestsPerformed: 0,
@@ -66,6 +70,18 @@ const ManagerOverviewPage = () => {
   });
   // const [kitTransactions, setKitTransactions] = useState([]);
   const [assignedBookings, setAssignedBookings] = useState([]);
+
+  // --- Calculate reports needing assign/approve ---
+  // 1. Reports needing assign: status === "Awaiting confirm"
+  const reportsNeedAssign = assignedBookings.filter(
+    (b) => b.status === "Awaiting confirm"
+  ).length;
+  // 2. Reports needing approve: status !== "Completed" && isApproved !== true
+  // (We don't have isApproved in assignedBookings, so only use status if needed)
+  // But for demo, let's count all assignedBookings with status !== "Completed"
+  const reportsNeedApprove = assignedBookings.filter(
+    (b) => b.status !== "Completed"
+  ).length;
 
   // Generate chart data for 2 charts: Performance Metrics & Test Status Distribution
   const generateChartData = useCallback(() => {
@@ -205,6 +221,58 @@ const ManagerOverviewPage = () => {
 
   return (
     <div style={{ padding: "0 24px" }}>
+      {/* Notification for reports needing assign */}
+      <Row gutter={[0, 16]} style={{ marginBottom: 8 }}>
+        <Col span={24}>
+          <Alert
+            type="info"
+            showIcon
+            message={
+              <span>
+                There are currently <b>{reportsNeedAssign}</b> reports that need
+                staff assignment.{" "}
+                <Button
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() =>
+                    navigate("/manager-dashboard/view-staff-reports")
+                  }
+                  style={{ padding: 0 }}>
+                  View details
+                </Button>
+              </span>
+            }
+            style={{ background: "#e6f7ff", border: "1px solid #91d5ff" }}
+          />
+        </Col>
+      </Row>
+      {/* Notification for reports needing approve */}
+      <Row gutter={[0, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <span>
+                There are <b>{reportsNeedApprove}</b> reports that need approval
+                review.{" "}
+                <Button
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() =>
+                    navigate(
+                      "/manager-dashboard/view-staff-reports?tab=approve"
+                    )
+                  }
+                  style={{ padding: 0 }}>
+                  View details
+                </Button>
+              </span>
+            }
+            style={{ background: "#fffbe6", border: "1px solid #ffe58f" }}
+          />
+        </Col>
+      </Row>
       <div
         style={{
           display: "flex",

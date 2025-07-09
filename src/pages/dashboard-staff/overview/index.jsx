@@ -11,7 +11,9 @@ import {
   Button,
   Divider,
   Progress,
+  Alert,
 } from "antd";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarOutlined,
   ContainerOutlined,
@@ -23,6 +25,7 @@ import {
   LineChartOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 import {
   BarChart,
@@ -73,6 +76,7 @@ const STATUS_ORDER = [
 ];
 
 const StaffOverviewPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [overviewData, setOverviewData] = useState({
     totalAppointments: 0,
@@ -209,6 +213,29 @@ const StaffOverviewPage = () => {
 
   return (
     <div style={{ padding: "0 24px" }}>
+      {/* Notification for today's reports */}
+      <Row gutter={[0, 16]} style={{ marginBottom: 8 }}>
+        <Col span={24}>
+          <Alert
+            type="info"
+            showIcon
+            message={
+              <span>
+                There are <b>{overviewData.appointmentsToday}</b> reports to be
+                completed today.{" "}
+                <Button
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate("/staff-dashboard/staff-reporting")}
+                  style={{ padding: 0 }}>
+                  Go to reporting
+                </Button>
+              </span>
+            }
+            style={{ background: "#e6f7ff", border: "1px solid #91d5ff" }}
+          />
+        </Col>
+      </Row>
       <div
         style={{
           display: "flex",

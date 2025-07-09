@@ -13,6 +13,7 @@ import {
   DatePicker,
   Card,
   Tag,
+  Modal,
 } from "antd";
 import {
   SendOutlined,
@@ -20,6 +21,10 @@ import {
   ReloadOutlined,
   DownloadOutlined,
   CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios"; // Import axios instance
 import { toast, ToastContainer } from "react-toastify";
@@ -33,26 +38,50 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 const StaffReporting = () => {
+  // Modal state for editing report (must be inside component)
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [workReports, setWorkReports] = useState([]);
   const [editingKey, setEditingKey] = useState("");
   const [activeTab, setActiveTab] = useState("today");
 
+  // Helper: get date string (YYYY-MM-DD) from appointmentDate or appointmentTime
+  const getReportDate = (report) => {
+    if (report.appointmentDate) {
+      if (typeof report.appointmentDate === "string") {
+        return report.appointmentDate.slice(0, 10);
+      }
+      if (report.appointmentDate instanceof Date) {
+        return report.appointmentDate.toISOString().slice(0, 10);
+      }
+    }
+    if (report.appointmentTime) {
+      const match = report.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
   // Lấy ngày hôm nay (YYYY-MM-DD)
   const today = new Date().toISOString().slice(0, 10);
 
-  // Lọc báo cáo trong ngày
-  const todayReports = workReports.filter(
-    (r) => (r.appointmentTime || "").slice(0, 10) === today && !r.isSent
-  );
+  // Lọc báo cáo trong ngày - chỉ lấy những báo cáo có status là Pending và appointment date = hôm nay
+  const todayReports = workReports.filter((r) => {
+    const reportDate = getReportDate(r);
+    return reportDate === today && r.status === "Pending";
+  });
 
-  // Lọc báo cáo trong tương lai (chưa gửi)
-  const futureReports = workReports.filter(
-    (r) => (r.appointmentTime || "").slice(0, 10) > today && !r.isSent
-  );
+  // Lọc báo cáo trong tương lai - chỉ lấy những báo cáo có status là Pending và appointment date > hôm nay
+  const futureReports = workReports.filter((r) => {
+    const reportDate = getReportDate(r);
+    return reportDate && reportDate > today && r.status === "Pending";
+  });
 
-  // Lọc báo cáo đã gửi
-  const completedWorkReports = workReports.filter((r) => r.isSent);
+  // Lọc báo cáo đã hoàn thành - lấy những báo cáo có status khác Pending
+  const completedWorkReports = workReports.filter(
+    (r) => r.status && r.status !== "Pending"
+  );
 
   // Pagination state for Sent Reports
   const [completedReportsPagination, setCompletedReportsPagination] = useState({
@@ -102,16 +131,22 @@ const StaffReporting = () => {
   const handleSave = async (record) => {
     try {
       setLoading(true);
-      await api.patch(`/staff/my-report/${record.id}`, {
+      const payload = {
         status: record.status,
-        note: record.note,
-      });
+        note: record.note || "",
+      };
+
+      console.log("Sending payload:", payload);
+      console.log("Report ID:", record.reportID);
+
+      await api.patch(`/staff/my-report/${record.reportID}`, payload);
       toast.success("Update successfully!");
       fetchWorkReports();
     } catch (error) {
       toast.error(
         "Update failed: " + (error.response?.data?.message || error.message)
       );
+      console.error("Update error:", error);
     } finally {
       setLoading(false);
       setEditingKey("");
@@ -123,15 +158,25 @@ const StaffReporting = () => {
     let inputNode;
     if (dataIndex === "status") {
       inputNode = (
-        <Select style={{ minWidth: 100 }}>
+        <Select
+          style={{ minWidth: 100 }}
+          onChange={(value) => {
+            console.log("Status changed to:", value);
+          }}>
           <Option value="Pending">Pending</Option>
-          <Option value="Approved">Approved</Option>
-          <Option value="Rejected">Rejected</Option>
-          <Option value="Resolved">Resolved</Option>
+          <Option value="Completed">Completed</Option>
+          <Option value="Delay">Delay</Option>
+          <Option value="Cancel">Cancel</Option>
         </Select>
       );
     } else if (dataIndex === "note") {
-      inputNode = <Input />;
+      inputNode = (
+        <Input
+          onChange={(e) => {
+            console.log("Note changed to:", e.target.value);
+          }}
+        />
+      );
     } else {
       inputNode = <Input disabled />;
     }
@@ -142,8 +187,7 @@ const StaffReporting = () => {
             name={dataIndex}
             style={{ margin: 0 }}
             rules={[{ required: false }]}>
-            {" "}
-            {inputNode}{" "}
+            {inputNode}
           </Form.Item>
         ) : (
           children
@@ -153,38 +197,37 @@ const StaffReporting = () => {
   };
 
   const [form] = Form.useForm();
-  const isEditing = (record) => record.id === editingKey;
+  const isEditing = (record) => record.reportID === editingKey;
   const edit = (record) => {
-    form.setFieldsValue({ status: "", note: "", ...record });
-    setEditingKey(record.id);
+    // Open modal and set editing record only, do not change editingKey or table state
+    setEditingRecord(record);
+    setIsEditModalVisible(true);
+    form.setFieldsValue({
+      status: record.status || "",
+      note: record.note || "",
+    });
+    // Do NOT setEditingKey here
   };
-  const cancel = () => setEditingKey("");
+  // Remove unused cancel function
 
-  const save = async (id) => {
-    try {
-      const row = await form.validateFields();
-      const newData = [...workReports];
-      const index = newData.findIndex((item) => id === item.id);
-      if (index > -1) {
-        const item = newData[index];
-        newData.splice(index, 1, { ...item, ...row });
-        handleSave({ ...item, ...row });
-      }
-    } catch {
-      // ignore
-    }
-  };
+  // Remove unused save function
 
   const mergedColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "reportID",
+      key: "reportID",
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
+      dataIndex: "bookingID",
+      key: "bookingID",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
     },
     {
       title: "Appointment Time",
@@ -193,12 +236,45 @@ const StaffReporting = () => {
       render: (time) => time || "-",
     },
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        if (date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
       editable: true,
-      render: (text, record) =>
-        record.isSent ? <Tag color="blue">Đã gửi</Tag> : text,
+      render: (status) => {
+        let color = "default";
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
+      },
     },
     {
       title: "Note",
@@ -210,18 +286,22 @@ const StaffReporting = () => {
       title: "Actions",
       dataIndex: "actions",
       render: (_, record) => {
-        const editable = isEditing(record);
-        return record.isSent ? null : editable ? (
-          <span>
-            <a onClick={() => save(record.id)} style={{ marginRight: 8 }}>
-              Save
-            </a>
-            <a onClick={cancel}>Cancel</a>
-          </span>
-        ) : (
-          <a disabled={editingKey !== ""} onClick={() => edit(record)}>
+        return record.isSent ? null : (
+          <Button
+            key="submit"
+            type="primary"
+            disabled={editingKey !== ""}
+            onClick={() => edit(record)}
+            style={{
+              padding: "0 16px",
+              height: 28,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            icon={<EditOutlined />}>
             Edit
-          </a>
+          </Button>
         );
       },
     },
@@ -231,37 +311,219 @@ const StaffReporting = () => {
     if (!col.editable) return col;
     return {
       ...col,
-      onCell: (record) => ({
-        record,
-        inputType: col.dataIndex === "status" ? "select" : "text",
-        dataIndex: col.dataIndex,
-        title: col.title,
-        editing: isEditing(record),
-      }),
+      onCell: (record) => {
+        // Remove inputType to avoid React warning
+        return {
+          record,
+          dataIndex: col.dataIndex,
+          title: col.title,
+          editing: isEditing(record),
+        };
+      },
     };
   });
 
   const handleExportPDF = () => {
     try {
-      if (!jsPDF || !jsPDF.prototype.autoTable) {
-        toast.error(
-          "jsPDF autoTable plugin is not available. Please check your dependencies."
-        );
-        return;
-      }
       const doc = new jsPDF();
-      const columns = workReportColumns.map((col) => col.title);
-      const rows = workReports.map((row) => [
-        row.id,
-        row.bookingId || "-",
-        row.appointmentTime || "-",
-        row.status,
-        row.note || "-",
-      ]);
-      doc.autoTable({ head: [columns], body: rows });
-      doc.save("work_reports.pdf");
+
+      // Add professional header with background
+      doc.setFillColor(41, 128, 185); // Professional blue
+      doc.rect(0, 0, doc.internal.pageSize.width, 35, "F");
+
+      // Add title with enhanced styling
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255); // White text
+      doc.text("Staff Work Reports", 14, 20);
+
+      // Add subtitle
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Completed Reports Summary", 14, 28);
+
+      // Add date with different styling
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200); // Light gray text
+      const currentDate = new Date().toLocaleDateString();
+      doc.text(
+        `Generated on: ${currentDate}`,
+        doc.internal.pageSize.width - 55,
+        20
+      );
+
+      // Add report count
+      doc.text(
+        `Total Reports: ${completedWorkReports.length}`,
+        doc.internal.pageSize.width - 55,
+        28
+      );
+
+      // Reset text color for content
+      doc.setTextColor(51, 51, 51);
+
+      // Check if autoTable is available
+      if (doc.autoTable) {
+        const columns = ["ID", "Booking", "Customer", "Time", "Status", "Note"];
+        const rows = completedWorkReports.map((row) => [
+          row.reportID || "-",
+          row.bookingID || "-",
+          (row.customerName || "-").substring(0, 20),
+          (row.appointmentTime || "-").substring(0, 15),
+          row.status || "-",
+          (row.note || "-").substring(0, 25),
+        ]);
+
+        doc.autoTable({
+          head: [columns],
+          body: rows,
+          startY: 45,
+          styles: {
+            fontSize: 9,
+            cellPadding: 4,
+            overflow: "linebreak",
+            halign: "left",
+            lineColor: [200, 200, 200],
+            lineWidth: 0.3,
+            textColor: [51, 51, 51], // Dark gray text for better readability
+          },
+          headStyles: {
+            fillColor: [41, 128, 185], // Professional blue background
+            textColor: [255, 255, 255], // White text
+            fontStyle: "bold",
+            fontSize: 10,
+            halign: "center",
+            cellPadding: 5,
+            lineColor: [255, 255, 255],
+            lineWidth: 0.5,
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250], // Light gray for alternating rows
+          },
+          columnStyles: {
+            0: { halign: "center", cellWidth: 25 }, // ID column
+            1: { halign: "center", cellWidth: 25 }, // Booking column
+            2: { halign: "left", cellWidth: 35 }, // Customer column
+            3: { halign: "center", cellWidth: 30 }, // Time column
+            4: { halign: "center", cellWidth: 25 }, // Status column
+            5: { halign: "left", cellWidth: 40 }, // Note column
+          },
+          tableLineColor: [200, 200, 200],
+          tableLineWidth: 0.5,
+          margin: { left: 14, right: 14 },
+          theme: "grid", // Add grid theme for better structure
+        });
+      } else {
+        // Fallback: Enhanced text-based table with background styling
+        let yPosition = 50;
+
+        // Create header background rectangle
+        doc.setFillColor(41, 128, 185); // Professional blue background
+        doc.rect(14, yPosition - 8, 176, 12, "F"); // Filled rectangle for header
+
+        // Header text
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255); // White text for header
+
+        doc.text("ID", 20, yPosition);
+        doc.text("Booking", 35, yPosition);
+        doc.text("Customer", 65, yPosition);
+        doc.text("Time", 105, yPosition);
+        doc.text("Status", 135, yPosition);
+        doc.text("Note", 165, yPosition);
+
+        yPosition += 10;
+
+        // Reset text color for data rows
+        doc.setTextColor(51, 51, 51); // Dark gray text
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        // Data rows with alternating background colors
+        completedWorkReports.forEach((row, index) => {
+          if (yPosition > 280) {
+            doc.addPage();
+            yPosition = 20;
+
+            // Repeat styled header on new page
+            doc.setFillColor(41, 128, 185);
+            doc.rect(14, yPosition - 8, 176, 12, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+
+            doc.text("ID", 20, yPosition);
+            doc.text("Booking", 35, yPosition);
+            doc.text("Customer", 65, yPosition);
+            doc.text("Time", 105, yPosition);
+            doc.text("Status", 135, yPosition);
+            doc.text("Note", 165, yPosition);
+
+            yPosition += 10;
+            doc.setTextColor(51, 51, 51);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+          }
+
+          // Alternating row background
+          if (index % 2 === 0) {
+            doc.setFillColor(248, 249, 250); // Light gray for even rows
+            doc.rect(14, yPosition - 6, 176, 8, "F");
+          }
+
+          doc.text((row.reportID || "-").toString(), 20, yPosition);
+          doc.text((row.bookingID || "-").toString(), 35, yPosition);
+          doc.text((row.customerName || "-").substring(0, 15), 65, yPosition);
+          doc.text(
+            (row.appointmentTime || "-").substring(0, 12),
+            105,
+            yPosition
+          );
+          doc.text((row.status || "-").toString(), 135, yPosition);
+          doc.text((row.note || "-").substring(0, 20), 165, yPosition);
+
+          yPosition += 8;
+        });
+      }
+
+      // Add professional footer
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+
+        // Footer background
+        doc.setFillColor(245, 245, 245);
+        doc.rect(
+          0,
+          doc.internal.pageSize.height - 20,
+          doc.internal.pageSize.width,
+          20,
+          "F"
+        );
+
+        // Footer text
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        doc.text(
+          `Page ${i} of ${totalPages}`,
+          14,
+          doc.internal.pageSize.height - 8
+        );
+        doc.text(
+          `Generated: ${new Date().toLocaleDateString()} | Total Reports: ${
+            completedWorkReports.length
+          }`,
+          doc.internal.pageSize.width - 100,
+          doc.internal.pageSize.height - 8
+        );
+      }
+
+      doc.save("completed_reports.pdf");
       toast.success("PDF exported successfully!");
     } catch (error) {
+      console.error("PDF export error:", error);
       toast.error("Failed to export PDF: " + error.message);
     }
   };
@@ -269,15 +531,24 @@ const StaffReporting = () => {
   const workReportColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
+      dataIndex: "reportID",
+      key: "reportID",
+      sorter: (a, b) =>
+        (a.reportID || "")
+          .toString()
+          .localeCompare((b.reportID || "").toString()),
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      render: (bookingID) => bookingID || "-",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
     },
     {
       title: "Appointment Time",
@@ -286,22 +557,74 @@ const StaffReporting = () => {
       render: (time) => time || "-",
     },
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        // Ưu tiên lấy appointmentDate, nếu không có thì extract từ appointmentTime
+        if (date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status) => {
         let color = "default";
-        if (status === "Approved" || status === "Resolved") color = "green";
-        if (status === "Pending") color = "orange";
-        if (status === "Rejected") color = "red";
-        return <Tag color={color}>{status}</Tag>;
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
       },
+    },
+    {
+      title: "Approved",
+      dataIndex: "isApproved",
+      key: "isApproved",
+      render: (isApproved) =>
+        isApproved === true ? (
+          <Tag color="green">Approved</Tag>
+        ) : (
+          <Tag color="orange">Unapproved</Tag>
+        ),
     },
     {
       title: "Note",
       dataIndex: "note",
       key: "note",
       render: (note) => note || "-",
+    },
+    {
+      title: "Assigned ID",
+      dataIndex: "assignedID",
+      key: "assignedID",
+      render: (assignedID) => assignedID || "-",
+    },
+    {
+      title: "Manager ID",
+      dataIndex: "managerID",
+      key: "managerID",
+      render: (managerID) => managerID || "-",
     },
   ];
 
@@ -332,12 +655,7 @@ const StaffReporting = () => {
             <Button
               icon={<ReloadOutlined />}
               onClick={fetchWorkReports}
-              loading={loading}
-              style={{
-                background: "#1677ff",
-                color: "#fff",
-                border: "none",
-              }}>
+              loading={loading}>
               Refresh Reports
             </Button>
           </div>
@@ -348,13 +666,17 @@ const StaffReporting = () => {
                 components={{ body: { cell: EditableCell } }}
                 columns={columns}
                 dataSource={todayReports}
-                rowKey="id"
+                rowKey="reportID"
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
                   showQuickJumper: true,
+                  pageSizeOptions: [5, 10, 20, 50, 100],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} reports`,
+                  onShowSizeChange: () => {
+                    // No state for current page in today tab, so just reload page
+                  },
                 }}
               />
             </Form>
@@ -397,19 +719,19 @@ const StaffReporting = () => {
               loading={loading}
               columns={workReportColumns} // Reusing the same columns for simplicity
               dataSource={futureReports}
-              rowKey="id"
+              rowKey="reportID"
               pagination={{
                 ...futureReportsPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50],
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
-                onChange: (paginationConfig) => {
-                  setFutureReportsPagination({
-                    current: paginationConfig.current,
-                    pageSize: paginationConfig.pageSize,
-                  });
+                onShowSizeChange: (current, size) => {
+                  setFutureReportsPagination({ current: 1, pageSize: size });
+                },
+                onChange: (page, pageSize) => {
+                  setFutureReportsPagination({ current: page, pageSize });
                 },
               }}
               scroll={{ x: 1200 }}
@@ -464,20 +786,20 @@ const StaffReporting = () => {
               loading={loading}
               columns={workReportColumns}
               dataSource={completedWorkReports}
-              rowKey="id"
+              rowKey="reportID"
               pagination={{
                 ...completedReportsPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50, 100],
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
-              }}
-              onChange={(paginationConfig) => {
-                setCompletedReportsPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
+                onShowSizeChange: (current, size) => {
+                  setCompletedReportsPagination({ current: 1, pageSize: size });
+                },
+                onChange: (page, pageSize) => {
+                  setCompletedReportsPagination({ current: page, pageSize });
+                },
               }}
               scroll={{ x: 1200 }}
             />
@@ -486,6 +808,28 @@ const StaffReporting = () => {
       ),
     },
   ];
+
+  // Modal handlers moved here so they are accessible INSIDE the component
+  const handleEditModalOk = async () => {
+    if (!editingRecord) return;
+    try {
+      const row = await form.validateFields();
+      // Merge with current editingRecord
+      const updatedItem = { ...editingRecord, ...row };
+      await handleSave(updatedItem);
+      setIsEditModalVisible(false);
+      setEditingRecord(null);
+      setEditingKey(""); // Reset editingKey after save
+    } catch {
+      // Validation error, do nothing
+    }
+  };
+
+  const handleEditModalCancel = () => {
+    setIsEditModalVisible(false);
+    setEditingRecord(null);
+    // Do NOT reset editingKey here
+  };
 
   return (
     <div style={{ padding: "0 24px" }}>
@@ -500,6 +844,63 @@ const StaffReporting = () => {
         tabBarStyle={{ marginBottom: 32 }}
         items={tabItems}
       />
+      {/* Edit Report Modal */}
+      {isEditModalVisible && (
+        <Modal
+          title={
+            <span style={{ fontSize: 24, fontWeight: 600 }}>Edit Report</span>
+          }
+          open={isEditModalVisible}
+          onOk={handleEditModalOk}
+          onCancel={handleEditModalCancel}
+          confirmLoading={loading}
+          centered
+          footer={[
+            <Button key="back" onClick={handleEditModalCancel}>
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              loading={loading}
+              onClick={handleEditModalOk}>
+              Save
+            </Button>,
+          ]}
+          styles={{ body: { textAlign: "left" } }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 12,
+              minWidth: 320,
+            }}>
+            <div>
+              <strong>Report ID:</strong> {editingRecord?.reportID}
+            </div>
+            <div>
+              <strong>Booking ID:</strong> {editingRecord?.bookingID}
+            </div>
+            <Form
+              form={form}
+              layout="vertical"
+              style={{ marginTop: 16, width: "100%" }}>
+              <Form.Item label="Status" name="status" required>
+                <Select placeholder="Select status">
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Completed">Completed</Option>
+                  <Option value="Delay">Delay</Option>
+                  <Option value="Cancel">Cancel</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item label="Note" name="note">
+                <Input placeholder="Enter note" />
+              </Form.Item>
+            </Form>
+          </div>
+        </Modal>
+      )}
       <ToastContainer />
     </div>
   );

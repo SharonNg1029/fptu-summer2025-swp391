@@ -527,7 +527,7 @@ function Overview() {
               }}
             />
             <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
-              Unique users this period
+              Total users registered in the system
             </div>
           </Card>
         </Col>

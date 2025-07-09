@@ -99,23 +99,29 @@ const CustomerFeedbackPage = () => {
   };
 
   const filteredFeedback = feedbackList.filter((feedback) => {
-    const searchString = searchText.toLowerCase();
-    // Normalize data to prevent errors if some fields are null/undefined
-    const customerId = String(feedback.customerID || "").toLowerCase();
-    const bookingId = String(feedback.bookingID || "").toLowerCase();
-    const title = String(feedback.title || "").toLowerCase();
-    const content = String(feedback.content || "").toLowerCase();
+  const searchString = searchText.toLowerCase();
+  // Normalize data to prevent errors if some fields are null/undefined
+  const customerId = String(feedback.customerID || "").toLowerCase();
+  const bookingId = String(feedback.bookingID || "").toLowerCase();
+  const title = String(feedback.title || "").toLowerCase();
+  const content = String(feedback.content || "").toLowerCase();
 
-    const matchesSearch =
-      customerId.includes(searchString) ||
-      bookingId.includes(searchString) ||
-      title.includes(searchString) ||
-      content.includes(searchString);
+  const matchesSearch =
+    customerId.includes(searchString) ||
+    bookingId.includes(searchString) ||
+    title.includes(searchString) ||
+    content.includes(searchString);
 
-    const matchesRating =
-      ratingFilter === null || feedback.rating === ratingFilter;
+  const matchesRating =
+    ratingFilter === null || feedback.rating === ratingFilter;
 
-    return matchesSearch && matchesRating;
+  return matchesSearch && matchesRating;
+})
+// Sắp xếp theo ngày tạo mới nhất đến cũ nhất
+  .sort((a, b) => {
+    const dateA = a.createAt ? new Date(a.createAt) : new Date(0);
+    const dateB = b.createAt ? new Date(b.createAt) : new Date(0);
+    return dateB - dateA;
   });
 
   const columns = [
@@ -169,6 +175,9 @@ const CustomerFeedbackPage = () => {
     // Actions column is removed as it's no longer applicable
   ];
 
+  // State for page size
+  const [pageSize, setPageSize] = useState(10);
+
   return (
     <div style={{ padding: "0 24px" }}>
       <div
@@ -211,11 +220,14 @@ const CustomerFeedbackPage = () => {
           <Col xs={24} sm={6} lg={7}>
             <Select
               placeholder="Filter by rating"
-              value={ratingFilter}
-              onChange={setRatingFilter}
+              value={ratingFilter === null ? undefined : ratingFilter}
+              onChange={(value) => {
+                // Khi clear (value === undefined), set về null để hiển thị tất cả
+                setRatingFilter(value === undefined ? null : value);
+              }}
               style={{ width: "100%" }}
               allowClear>
-              <Option value={null}>All Ratings</Option>
+              <Option value={undefined}>All Ratings</Option>
               {[5, 4, 3, 2, 1].map((r) => (
                 <Option key={r} value={r}>
                   {r} Star{r > 1 ? "s" : ""}
@@ -233,11 +245,16 @@ const CustomerFeedbackPage = () => {
           dataSource={filteredFeedback}
           rowKey="bookingID" // Assuming bookingID is unique for each feedback
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
+            pageSizeOptions: [5, 10, 20, 50, 100],
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} feedback`,
+            onShowSizeChange: (current, size) => setPageSize(size),
+            onChange: (page, size) => {
+              if (size !== pageSize) setPageSize(size);
+            },
           }}
           scroll={{ x: 1000 }}
         />
