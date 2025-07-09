@@ -94,6 +94,10 @@ const AccountManagement = () => {
     try {
       const response = await api.get("/booking/bookings", {
         params: { customerID: accountId },
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json; charset=utf-8',
+        }
       });
       const bookings = response.data?.data || response.data || [];
       // Đếm số booking có status khác Completed và Cancel (không phân biệt hoa thường)
