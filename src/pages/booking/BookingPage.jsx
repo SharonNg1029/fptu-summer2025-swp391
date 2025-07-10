@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -16,24 +18,15 @@ const { Option } = Select;
 const relationshipPairs = {
   'Father-Child': ['Father', 'Child'],
   'Mother-Child': ['Mother', 'Child'], 
+  'Father-Mother': ['Father', 'Mother'],
   'Sibling-Sibling': ['Sibling', 'Sibling'],
   'Grandparent-Grandchild': ['Grandparent', 'Grandchild']
-};
-
-const relationshipVietnameseNames = {
-  'Father': 'Father',
-  'Mother': 'Mother', 
-  'Child': 'Child',
-  'Sibling': 'Sibling',
-  'Grandparent': 'Grandparent',
-  'Grandchild': 'Grandchild',
-  'Other': 'Other'
 };
 
 const serviceRelationshipMap = new Map([
   ['Paternity Testing', ['Father-Child']],
   ['Maternity Testing', ['Mother-Child']],
-  ['Non-Invasive Relationship Testing (NIPT)', ['Father-Child']],
+  ['Non-Invasive Relationship Testing (NIPT)', ['Father-Mother']],
   ['Sibling Testing', ['Sibling-Sibling']],
   ['Grandparent Testing', ['Grandparent-Grandchild']],
   ['DNA Testing for Birth Registration', ['Father-Child', 'Mother-Child']],
@@ -2063,6 +2056,22 @@ const BookingPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State để quản lý thông báo tập trung
+  const [currentNotification, setCurrentNotification] = useState(null);
+  
+  // Hàm hiển thị thông báo tập trung
+  const showNotification = useCallback((type, content, duration = 4000) => {
+    setCurrentNotification({ type, content, id: Date.now() });
+    setTimeout(() => {
+      setCurrentNotification(null);
+    }, duration);
+  }, []);
+  
+  // Hàm ẩn thông báo
+  const hideNotification = useCallback(() => {
+    setCurrentNotification(null);
+  }, []);
 
 
   const isServicePreSelected = Boolean(serviceID);
@@ -2513,15 +2522,7 @@ const BookingPage = () => {
     }
     
     if (checked) {
-      setSelectedMedicationMethod('express');
-      
-      message.success({
-        content: 'When using Express Service, all collection methods will be FREE (0 VND)',
-        duration: 5,
-        style: {
-          marginTop: '10vh',
-        }
-      });
+      showNotification('info', 'Express Service activated! Please select your preferred Collection Method below. All collection methods will be FREE (0 VND)', 6000);
     } else {
       if (selectedCollectionMethod?.name === 'At Facility') {
         setSelectedMedicationMethod('walk-in');
@@ -2529,13 +2530,7 @@ const BookingPage = () => {
         setSelectedMedicationMethod('staff-collection');
       }
       
-      message.info({
-        content: 'You have unchecked Express Service. Sample collection fee will be charged at original price.',
-        duration: 4,
-        style: {
-          marginTop: '10vh',
-        }
-      });
+      showNotification('info', 'You have unchecked Express Service. Sample collection fee will be charged at original price.', 5000);
     }
   };
   
@@ -2639,18 +2634,25 @@ const BookingPage = () => {
 
   useEffect(() => {
     if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
+      // Set facility collection method
       setSelectedCollectionMethod({name: 'At Facility', price: 0});
       setSelectedMedicationMethod('walk-in');
       
-      message.info({
-        content: 'NIPT service can only be performed at medical facilities.',
-        duration: 4,
-        style: {
-          marginTop: '10vh',
-        }
+      // For NIPT, limit relationships to only Father and Mother
+      const validRelationships = ['Father', 'Mother'];
+      setAvailableRelationships(validRelationships);
+      setAvailableSecondPersonRelationships(validRelationships);
+      
+      // Clear existing relationship selections
+      form.setFieldsValue({
+        firstPerson: { ...form.getFieldValue('firstPerson'), relationship: undefined },
+        secondPerson: { ...form.getFieldValue('secondPerson'), relationship: undefined }
       });
+      
+      showNotification('warning', ' NIPT service can only be performed at medical facilities. Collection method has been automatically set to "At Facility".', 5000);
+      showNotification('info', 'NIPT testing requires one Father (who can provide Blood, Buccal Swab, Hair, or Nail sample) and one Mother (who can only provide Amniotic Fluid sample).', 7000);
     }
-  }, [selectedService]);
+  }, [selectedService, showNotification, form]);
   
   useEffect(() => {
     if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
@@ -2674,81 +2676,114 @@ const BookingPage = () => {
     }
   }, [selectedService, form]);
   
+  // useEffect để tự động set sample type cho NIPT service
+  useEffect(() => {
+    if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
+      const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
+      const secondPersonRelationship = form.getFieldValue(['secondPerson', 'relationship']);
+      
+      // Tự động set Amniotic Fluid cho Mother hoặc Child trong NIPT
+      if (firstPersonRelationship === 'Mother') {
+        form.setFieldsValue({
+          firstPerson: {
+            ...form.getFieldValue('firstPerson'),
+            sampleType: 'Amniotic Fluid'
+          }
+        });
+      }
+      
+      if (secondPersonRelationship === 'Mother' || secondPersonRelationship === 'Child') {
+        form.setFieldsValue({
+          secondPerson: {
+            ...form.getFieldValue('secondPerson'),
+            sampleType: 'Amniotic Fluid'
+          }
+        });
+      }
+    }
+  }, [selectedService, form]);
+  
   const handleConfirmBooking = (values) => {
     const appointmentDateValue = form.getFieldValue('appointmentDate');
     const timeSlotValue = form.getFieldValue('timeSlot');
 
     if (!selectedService) {
-      message.error('Please select service!');
+      showNotification('error', 'Please select service!');
       return;
     }
     if (!selectedCollectionMethod) {
-      message.error('Please select sampling method!');
+      showNotification('error', 'Please select sampling method!');
       return;
     }
     if (!selectedMedicationMethod) {
-      message.error('Please select medication method!');
+      showNotification('error', 'Please select medication method!');
       return;
     }
     if (!selectedKitType) {
-      message.error('Please select kit type!');
+      showNotification('error', 'Please select kit type!');
+      return;
+    }
+
+    // Validation cho Express Service
+    if (isExpressService && !selectedCollectionMethod) {
+      showNotification('error', 'When using Express Service, you must choose a Collection Method!');
       return;
     }
 
     if (selectedMedicationMethod !== 'postal-delivery' && !appointmentDateValue) {
-      message.error('Please select an appointment date!');
+      showNotification('error', 'Please select an appointment date!');
       return;
     }
 
     if (selectedMedicationMethod !== 'postal-delivery' && appointmentDateValue && !timeSlotValue) {
-      message.error('Please select a time slot!');
+      showNotification('error', 'Please select a time slot!');
       return;
     }
 
     if ((selectedCollectionMethod?.name === 'At Home' || selectedMedicationMethod === 'postal-delivery') && (!homeAddress || homeAddress.trim() === '')) {
-      message.error('Please enter your home address when choosing home pickup or home delivery!');
+      showNotification('error', 'Please enter your home address when choosing home pickup or home delivery!');
       return;
     }
 
     if (!values.firstPerson?.fullName || values.firstPerson.fullName.trim() === '') {
-      message.error('Please enter the first and last name of the person!');
+      showNotification('error', 'Please enter the first and last name of the person!');
       return;
     }
     if (!values.firstPerson?.email || values.firstPerson.email.trim() === '') {
-      message.error('Please enter first email!');
+      showNotification('error', 'Please enter first email!');
       return;
     }
     if (!values.firstPerson?.gender) {
-      message.error('Please select first person gender!');
+      showNotification('error', 'Please select first person gender!');
       return;
     }
     if (!values.firstPerson?.relationship) {
-      message.error('Please select first person relationship!');
+      showNotification('error', 'Please select first person relationship!');
       return;
     }
     if (!values.firstPerson?.sampleType) {
-      message.error('Please select the first type of person!');
+      showNotification('error', 'Please select the first type of person!');
       return;
     }
     if (!values.firstPerson?.personalId) {
-      message.error('Please enter the first person iis ID card number!');
+      showNotification('error', 'Please enter the first person is Personal ID number!');
       return;
     }
 
     if (!values.secondPerson?.fullName || values.secondPerson.fullName.trim() === '') {
-      message.error('Please enter the second person is first and last name!');
+      showNotification('error', 'Please enter the second person is first and last name!');
       return;
     }
     if (!values.secondPerson?.dateOfBirth) {
-      message.error('Please select second person is date of birth!');
+      showNotification('error', 'Please select second person is date of birth!');
       return;
     }
     if (!values.secondPerson?.gender) {
-      message.error('Please select second person is gender!');
+      showNotification('error', 'Please select second person is gender!');
       return;
     }
     if (!values.secondPerson?.sampleType) {
-      message.error('Please select the second type of person!');
+      showNotification('error', 'Please select the second type of person!');
       return;
     }
     
@@ -2780,7 +2815,7 @@ const BookingPage = () => {
       setIsModalVisible(true);
     } catch (error) {
       console.error('❌ Error in handleConfirmBooking:', error);
-      message.error('An error occurred!');
+      showNotification('error', 'An error occurred!');
     } finally {
       setIsSubmitting(false);
     }
@@ -2870,7 +2905,7 @@ const BookingPage = () => {
     if (!response.data) {
       throw new Error('No data received from server');
     }
-    message.success(getSuccessMessage());
+    showNotification('success', getSuccessMessage(), 6000);
     // ✅ Thêm xuống dòng và dấu chấm phẩy
    setTimeout(() => {
   navigate('/'); // ✅ Đúng - dùng function
@@ -2895,7 +2930,7 @@ const BookingPage = () => {
         errorMessage = error.response.data.message;
       }
     }
-    message.error(errorMessage);
+    showNotification('error', errorMessage);
     console.error('Booking error:', error);
   } finally {
     setIsSubmitting(false);
@@ -2920,13 +2955,7 @@ const BookingPage = () => {
         window.history.replaceState({}, document.title, newUrl);
 
         if (vnpResponseCode === '00') {
-          message.success({
-            content: 'VNPAY payment successful! Schedule completed.',
-            duration: 3,
-            style: {
-              marginTop: '20vh',
-            },
-          });
+          showNotification('success', 'VNPAY payment successful! Schedule completed.', 5000);
           console.log('VNPAY payment success - Redirecting to home');
           setTimeout(() => {
             window.location.href = '/';
@@ -2947,34 +2976,96 @@ const BookingPage = () => {
         '99': 'Other errors'
           };
           const errorMessage = errorMessages[vnpResponseCode] || 'Thanh toán VNPAY thất bại hoặc bị hủy!';
-          message.error(errorMessage);
+          showNotification('error', errorMessage);
           console.warn('VNPAY payment failed:', errorMessage);
         }
       } catch (error) {
         console.error('Error processing VNPAY return:', error);
-        message.error('An error occurred while processing payment results!');
+        showNotification('error', 'An error occurred while processing payment results!');
       }
     } else {
       console.log('No VNPAY information on URL');
     }
-  }, []);
+  }, [showNotification]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-6">
-        <div className="flex items-center mb-2">
-          <button
-            onClick={() => navigate('/services')}
-            className="flex items-center text-white hover:text-blue-200 transition-colors mr-4"
+      {/* CSS Animation cho thông báo */}
+      <style jsx>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-slide-in {
+          animation: slideInRight 0.3s ease-out;
+        }
+      `}</style>
+      
+      {/* Thông báo tập trung */}
+      {currentNotification && (
+        <div 
+          className="fixed top-4 right-4 z-50 transform transition-all duration-300 ease-in-out animate-slide-in"
+          style={{ 
+            zIndex: 9999,
+            animation: 'slideInRight 0.3s ease-out'
+          }}
+        >
+          <div 
+            className={`px-4 py-3 rounded-lg shadow-lg max-w-sm min-w-0 flex items-center space-x-3 ${
+              currentNotification.type === 'success' 
+                ? 'bg-green-500 text-white border-l-4 border-green-700' 
+                : currentNotification.type === 'error'
+                ? 'bg-red-500 text-white border-l-4 border-red-700'
+                : currentNotification.type === 'warning'
+                ? 'bg-yellow-500 text-white border-l-4 border-yellow-700'
+                : 'bg-blue-500 text-white border-l-4 border-blue-700'
+            }`}
           >
-            <FaArrowLeft className="mr-2" />
-            Back to Services
-          </button>
+            <div className="flex-shrink-0 text-lg">
+              {currentNotification.type === 'success' && '✅'}
+              {currentNotification.type === 'error' && '❌'}
+              {currentNotification.type === 'warning' && '⚠️'}
+              {currentNotification.type === 'info' && 'ℹ️'}
+            </div>
+            <div className="flex-1 text-sm font-medium">
+              {currentNotification.content}
+            </div>
+            <button
+              onClick={hideNotification}
+              className="flex-shrink-0 text-white hover:text-gray-200 ml-2 text-lg font-bold"
+            >
+              ×
+            </button>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold">DNA Testing Booking</h1>
-        <p className="text-blue-100">Booking Bloodline DNA Testing</p>
-      </div>
+      )}
+      
+              {/* Header */}
+        <div 
+          className="text-white p-6"
+          style={{ 
+            background: 'linear-gradient(135deg, #002F5E 0%, #004494 50%, #1677FF 100%)'
+          }}
+        >
+          <div className="flex items-center mb-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center mr-4"
+              aria-label="Go back"
+            >
+              <FaArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-2xl font-bold">DNA Testing Booking</h1>
+          </div>
+          <p className="text-blue-100">Booking Bloodline DNA Testing</p>
+        </div>
       
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Service Information */}
@@ -3024,7 +3115,7 @@ const BookingPage = () => {
                 >
                   Non-Legal DNA Testing
                   {isServicePreSelected && selectedServiceType === 'non-legal' && (
-                    <span className="ml-2 text-xs bg-blue-800 px-2 py-1 rounded">Đã chọn</span>
+                    <span className="ml-2 text-xs bg-blue-800 px-2 py-1 rounded">Selected</span>
                   )}
                 </button>
               </div>
@@ -3037,7 +3128,12 @@ const BookingPage = () => {
                 {currentServicesData.map((service) => (
                   <div 
                     key={service.id}
-                    onClick={() => !isServicePreSelected && setSelectedService(service)}
+                    onClick={() => {
+                      if (!isServicePreSelected) {
+                        setSelectedService(service);
+                        showNotification('success', `Selected service: ${service.name}`, 3000);
+                      }
+                    }}
                     className={`p-4 border rounded-lg cursor-pointer transition-all ${
                       selectedService?.id === service.id
                         ? 'border-blue-500 bg-blue-50'
@@ -3110,17 +3206,11 @@ const BookingPage = () => {
                     </div>
                     {isExpressPreSelected && isExpressService && (
                       <div className="flex items-center text-orange-600">
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0 1 10 0v2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm8-2v2H7V7a3 3 0 0 1 6 0z" clipRule="evenodd" />
-                        </svg>
                         <span className="text-xs font-medium">Selected</span>
                       </div>
                     )}
                     {isStandardPreSelected && (
                       <div className="flex items-center text-orange-400">
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0 1 10 0v2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm8-2v2H7V7a3 3 0 0 1 6 0z" clipRule="evenodd" />
-                        </svg>
                         
                       </div>
                     )}
@@ -3134,18 +3224,26 @@ const BookingPage = () => {
             {/* Collection Method */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Collection Method *</label>
+              
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div
                   onClick={() => {
                     if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
-                      message.info('NIPT service can only be performed at medical facilities.');
+                      showNotification('warning', 'NIPT service can only be performed at medical facilities. Please select "At Facility" instead.', 4000);
                       return;
                     }
                     
                     setSelectedCollectionMethod({name: 'At Home', price: 0});
-                    if (selectedMedicationMethod === 'walk-in' || selectedMedicationMethod === 'express') {
+                    showNotification('success', 'Selected: At Home collection method', 3000);
+                    
+                    // Xử lý medication method dựa trên Express Service
+                    if (isExpressService) {
+                      setSelectedMedicationMethod('staff-collection');
+                    } else if (selectedMedicationMethod === 'walk-in' || selectedMedicationMethod === 'express') {
                       setSelectedMedicationMethod('staff-collection');
                     }
+                    
                     setTimeSlot('');
                     setAppointmentDate('');
                     form.setFieldsValue({ timeSlot: undefined, appointmentDate: undefined });
@@ -3158,6 +3256,10 @@ const BookingPage = () => {
                     selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)'
                       ? 'opacity-50 cursor-not-allowed bg-gray-100'
                       : 'cursor-pointer'
+                  } ${
+                    isExpressService && selectedCollectionMethod?.name !== 'At Home'
+                      ? 'border-orange-200 hover:border-orange-300 hover:bg-orange-50'
+                      : ''
                   }`}
                 >
                   <div className="flex items-center mb-2">
@@ -3165,6 +3267,12 @@ const BookingPage = () => {
                     <span className="font-medium">At Home</span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">Sample collection at your home</p>
+
+                  {isExpressService && (
+                    <p className="text-xs text-green-600 font-semibold mt-1">
+                      🎉 FREE with Express Service
+                    </p>
+                  )}
 
                   {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && (
                     <p className="text-xs text-red-500 mt-1">
@@ -3176,7 +3284,15 @@ const BookingPage = () => {
                 <div
                   onClick={() => {
                     setSelectedCollectionMethod({name: 'At Facility', price: 0});
-                    setSelectedMedicationMethod('walk-in');
+                    showNotification('success', 'Selected: At Facility collection method', 3000);
+                    
+                    // Xử lý medication method dựa trên Express Service
+                    if (isExpressService) {
+                      setSelectedMedicationMethod('walk-in');
+                    } else {
+                      setSelectedMedicationMethod('walk-in');
+                    }
+                    
                     // Reset timeSlot, appointmentDate khi chuyển collection method
                     setTimeSlot('');
                     setAppointmentDate('');
@@ -3186,6 +3302,10 @@ const BookingPage = () => {
                     selectedCollectionMethod?.name === 'At Facility'
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
+                  } ${
+                    isExpressService && selectedCollectionMethod?.name !== 'At Facility'
+                      ? 'border-orange-200 hover:border-orange-300 hover:bg-orange-50'
+                      : ''
                   }`}
                 >
                   <div className="flex items-center mb-2">
@@ -3193,6 +3313,12 @@ const BookingPage = () => {
                     <span className="font-medium">At Facility</span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">Visit our facility for sample collection</p>
+
+                  {isExpressService && (
+                    <p className="text-xs text-green-600 font-semibold mt-1">
+                      🎉 FREE with Express Service
+                    </p>
+                  )}
 
                 </div>
               </div>
@@ -3336,7 +3462,10 @@ const BookingPage = () => {
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => setSelectedKitType(kit.value)}
+                      onClick={() => {
+                        setSelectedKitType(kit.value);
+                        showNotification('success', `Selected kit: ${kit.label}`, 3000);
+                      }}
                     >
                       <div className="font-medium">{kit.label}</div>
                       <p className="text-sm text-gray-600 mb-2">
@@ -3535,7 +3664,7 @@ const BookingPage = () => {
                         { min: 2, message: 'First and last name must be at least 2 characters!' }
                       ]}
                     >
-                      <Input placeholder="Enter your first and last name" prefix={<UserOutlined />} />
+                      <Input placeholder="Enter your Full Name" prefix={<UserOutlined />} />
                     </Form.Item>
                   </Col>
                   
@@ -3558,7 +3687,7 @@ const BookingPage = () => {
                   <Col xs={24} md={12}>
                     <Form.Item
                       name={['firstPerson', 'gender']}
-                      label="Sex"
+                      label="Biological Sex"
                       rules={[{ required: true, message: 'Please select gender!' }]}
                     >
                       <Radio.Group
@@ -3594,7 +3723,7 @@ const BookingPage = () => {
                         { type: 'email', message: 'Invalid email!' }
                       ]}
                     >
-                      <Input placeholder="Enter email address" prefix={<MailOutlined />} />
+                      <Input placeholder="Enter your email" prefix={<MailOutlined />} />
                     </Form.Item>
                   </Col>
                   
@@ -3634,10 +3763,30 @@ const BookingPage = () => {
                               });
                             }
                           }
+                          
+                          // Automatically set sample type for NIPT service
+                          if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
+                            if (value === 'Mother') {
+                              form.setFieldsValue({
+                                firstPerson: {
+                                  ...form.getFieldValue('firstPerson'),
+                                  sampleType: 'Amniotic Fluid'
+                                }
+                              });
+                            } else if (value === 'Father' && !form.getFieldValue(['firstPerson', 'sampleType'])) {
+                              // For Father in NIPT, default to Blood if no sample type is set yet
+                              form.setFieldsValue({
+                                firstPerson: {
+                                  ...form.getFieldValue('firstPerson'),
+                                  sampleType: 'Blood'
+                                }
+                              });
+                            }
+                          }
                         }}
                       >
                         {availableRelationships.map(rel => (
-                          <Option key={rel} value={rel}>{rel} - {relationshipVietnameseNames[rel]}</Option>
+                          <Option key={rel} value={rel}>{rel}</Option>
                         ))}
                       </Select>
                     </Form.Item>
@@ -3649,21 +3798,41 @@ const BookingPage = () => {
                       label="Sample type"
                       rules={[{ required: true, message: 'Please select model type!' }]}
                     >
-                      <Select placeholder="Select template type">
-                        {sampleTypes.map(type => (
-                          <Option key={type} value={type}>{type}</Option>
-                        ))}
-                      </Select>
+                      {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
+                       form.getFieldValue(['firstPerson', 'relationship']) === 'Mother' ? (
+                        <Input 
+                          value="Amniotic Fluid" 
+                          disabled 
+                          suffix={
+                            <Tooltip title="Amniotic fluid samples are automatically used for NIPT testing when Mother is selected.">
+                              <InfoCircleOutlined style={{ color: 'rgba(0,0,0,.45)' }} />
+                            </Tooltip>
+                          }
+                        />
+                      ) : selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
+                         form.getFieldValue(['firstPerson', 'relationship']) === 'Father' ? (
+                        <Select placeholder="Select sample type">
+                          {['Blood', 'Buccal Swab', 'Hair', 'Nail'].map(type => (
+                            <Option key={type} value={type}>{type}</Option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <Select placeholder="Select template type">
+                          {sampleTypes.map(type => (
+                            <Option key={type} value={type}>{type}</Option>
+                          ))}
+                        </Select>
+                      )}
                     </Form.Item>
                   </Col>
                   
                   <Col xs={24} md={12}>
                     <Form.Item
                       name={['firstPerson', 'personalId']}
-                      label="ID card number"
+                      label="Personal ID"
                       rules={[{ validator: validatePersonalId }]}
                     >
-                      <Input placeholder="Enter CCCD/CMND number" prefix={<IdcardOutlined />} />
+                      <Input placeholder="Enter your Personal ID" prefix={<IdcardOutlined />} />
                     </Form.Item>
                   </Col>
                   
@@ -3692,7 +3861,7 @@ const BookingPage = () => {
                         { min: 2, message: 'First and last name must be at least 2 characters!' }
                       ]}
                     >
-                      <Input placeholder="Enter your first and last name" prefix={<UserOutlined />} />
+                      <Input placeholder="Enter your Full Name" prefix={<UserOutlined />} />
                     </Form.Item>
                   </Col>
                   
@@ -3715,7 +3884,7 @@ const BookingPage = () => {
                   <Col xs={24} md={12}>
                     <Form.Item
                       name={['secondPerson', 'gender']}
-                      label="Sex"
+                      label="Biological Sex"
                       rules={[{ required: true, message: 'Please select gender!' }]}
                     >
                       <Radio.Group
@@ -3742,15 +3911,35 @@ const BookingPage = () => {
                     >
                       <Select 
                         placeholder="Select relationship"
-                        onChange={() => {
+                        onChange={(value) => {
                           form.validateFields([
                             ['secondPerson', 'relationship'],
                             ['secondPerson', 'dateOfBirth'] 
                           ]);
+                          
+                          // Automatically set sample type for NIPT service
+                          if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
+                            if (value === 'Mother') {
+                              form.setFieldsValue({
+                                secondPerson: {
+                                  ...form.getFieldValue('secondPerson'),
+                                  sampleType: 'Amniotic Fluid'
+                                }
+                              });
+                            } else if (value === 'Father' && !form.getFieldValue(['secondPerson', 'sampleType'])) {
+                              // For Father in NIPT, default to Blood if no sample type is set yet
+                              form.setFieldsValue({
+                                secondPerson: {
+                                  ...form.getFieldValue('secondPerson'),
+                                  sampleType: 'Blood'
+                                }
+                              });
+                            }
+                          }
                         }}
                       >
                         {availableSecondPersonRelationships.map(rel => (
-                          <Option key={rel} value={rel}>{rel} - {relationshipVietnameseNames[rel]}</Option>
+                          <Option key={rel} value={rel}>{rel}</Option>
                         ))}
                       </Select>
                     </Form.Item>
@@ -3763,16 +3952,23 @@ const BookingPage = () => {
                       rules={[{ required: true, message: 'Please select model type!' }]}
                     >
                       {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
-                       form.getFieldValue(['secondPerson', 'relationship']) === 'Child' ? (
+                       form.getFieldValue(['secondPerson', 'relationship']) === 'Mother' ? (
                         <Input 
                           value="Amniotic Fluid" 
                           disabled 
                           suffix={
-                            <Tooltip title="Amniotic fluid samples are automatically used for NIPT testing.">
+                            <Tooltip title="Amniotic fluid samples are automatically used for NIPT testing when Mother is selected.">
                               <InfoCircleOutlined style={{ color: 'rgba(0,0,0,.45)' }} />
                             </Tooltip>
                           }
                         />
+                      ) : selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
+                         form.getFieldValue(['secondPerson', 'relationship']) === 'Father' ? (
+                        <Select placeholder="Select sample type">
+                          {['Blood', 'Buccal Swab', 'Hair', 'Nail'].map(type => (
+                            <Option key={type} value={type}>{type}</Option>
+                          ))}
+                        </Select>
                       ) : (
                         <Select placeholder="Select template type">
                           {sampleTypes.map(type => (
@@ -3885,17 +4081,11 @@ const BookingPage = () => {
               
               {selectedMedicationMethod === 'postal-delivery' && (
                 <div className="flex justify-between text-sm font-medium text-blue-600 bg-blue-50 p-2 rounded-md">
-                  <span>Phí gửi bưu điện (Postal Delivery):</span>
+                  <span>Postal Delivery:</span>
                   <span>{isExpressService ? 'Free' : '250,000 đ'}</span>
                 </div>
               )}
-              
-              {selectedMedicationMethod === 'express' && (
-                <div className="flex justify-between text-sm font-medium text-orange-600 bg-orange-50 p-2 rounded-md">
-                  <span>Express Service:</span>
-                  <span>{isExpressService ? 'Free' : '700,000 đ'}</span>
-                </div>
-              )}
+
               
               {isExpressService && (
                 <div className="flex justify-between text-sm text-orange-600">
