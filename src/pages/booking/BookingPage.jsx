@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -2154,6 +2153,13 @@ const BookingPage = () => {
     'Nail',
     'Amniotic Fluid' 
   ];
+  
+  const getNonAmnioticSampleTypes = () => [
+    'Blood',
+    'Buccal Swab',
+    'Hair',
+    'Nail'
+  ];
 
   const getValidRelationshipsForService = useCallback((serviceName) => {
     if (!serviceName) return [];    
@@ -2650,7 +2656,7 @@ const BookingPage = () => {
       });
       
       showNotification('warning', ' NIPT service can only be performed at medical facilities. Collection method has been automatically set to "At Facility".', 5000);
-      showNotification('info', 'NIPT testing requires one Father (who can provide Blood, Buccal Swab, Hair, or Nail sample) and one Mother (who can only provide Amniotic Fluid sample).', 7000);
+      showNotification('info', 'NIPT testing requires one Father and one Mother. For NIPT, only Mother can provide Amniotic Fluid sample, while Father must provide either Blood, Buccal Swab, Hair, or Nail sample.', 7000);
     }
   }, [selectedService, showNotification, form]);
   
@@ -2675,14 +2681,13 @@ const BookingPage = () => {
       setAvailableSecondPersonRelationships(validRelationships);
     }
   }, [selectedService, form]);
-  
-  // useEffect để tự động set sample type cho NIPT service
+
   useEffect(() => {
     if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
       const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
       const secondPersonRelationship = form.getFieldValue(['secondPerson', 'relationship']);
       
-      // Tự động set Amniotic Fluid cho Mother hoặc Child trong NIPT
+      // For NIPT service, Mother must always have Amniotic Fluid
       if (firstPersonRelationship === 'Mother') {
         form.setFieldsValue({
           firstPerson: {
@@ -2690,15 +2695,39 @@ const BookingPage = () => {
             sampleType: 'Amniotic Fluid'
           }
         });
+      } else if (firstPersonRelationship === 'Father' && !form.getFieldValue(['firstPerson', 'sampleType'])) {
+        // Default Father to Blood if not set
+        form.setFieldsValue({
+          firstPerson: {
+            ...form.getFieldValue('firstPerson'),
+            sampleType: 'Blood'
+          }
+        });
       }
       
-      if (secondPersonRelationship === 'Mother' || secondPersonRelationship === 'Child') {
+      // Same for the second person
+      if (secondPersonRelationship === 'Mother') {
+        // Mother must always use Amniotic Fluid
         form.setFieldsValue({
           secondPerson: {
             ...form.getFieldValue('secondPerson'),
             sampleType: 'Amniotic Fluid'
           }
         });
+        message.info('For NIPT service, Mother must use Amniotic Fluid sample.');
+      } else if (secondPersonRelationship === 'Father') {
+        // For Father, check if current sample type is Amniotic Fluid or not set
+        const currentSampleType = form.getFieldValue(['secondPerson', 'sampleType']);
+        if (!currentSampleType || currentSampleType === 'Amniotic Fluid') {
+          // Default Father to Blood and prevent Amniotic Fluid
+          form.setFieldsValue({
+            secondPerson: {
+              ...form.getFieldValue('secondPerson'),
+              sampleType: 'Blood'
+            }
+          });
+          message.info('For NIPT service, Father cannot use Amniotic Fluid. Sample type has been set to Blood.');
+        }
       }
     }
   }, [selectedService, form]);
@@ -2706,6 +2735,54 @@ const BookingPage = () => {
   const handleConfirmBooking = (values) => {
     const appointmentDateValue = form.getFieldValue('appointmentDate');
     const timeSlotValue = form.getFieldValue('timeSlot');
+
+    // For NIPT service - Validate that Father cannot have Amniotic Fluid sample
+    if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
+      if (values.firstPerson?.relationship === 'Father' && values.firstPerson?.sampleType === 'Amniotic Fluid') {
+        // Automatically correct the sample type for Father in NIPT
+        form.setFieldsValue({
+          firstPerson: {
+            ...form.getFieldValue('firstPerson'),
+            sampleType: 'Blood'
+          }
+        });
+        showNotification('warning', 'For NIPT service, Father cannot provide Amniotic Fluid sample. Sample type has been automatically changed to Blood.');
+        return;
+      }
+      // Also ensure Mother always has Amniotic Fluid for first person
+      if (values.firstPerson?.relationship === 'Mother' && values.firstPerson?.sampleType !== 'Amniotic Fluid') {
+        form.setFieldsValue({
+          firstPerson: {
+            ...form.getFieldValue('firstPerson'),
+            sampleType: 'Amniotic Fluid'
+          }
+        });
+        showNotification('info', 'For NIPT service, Mother must provide Amniotic Fluid sample. Sample type has been automatically corrected.');
+        return;
+      }
+      if (values.secondPerson?.relationship === 'Father' && values.secondPerson?.sampleType === 'Amniotic Fluid') {
+        // Automatically correct the sample type for Father in NIPT
+        form.setFieldsValue({
+          secondPerson: {
+            ...form.getFieldValue('secondPerson'),
+            sampleType: 'Blood'
+          }
+        });
+        showNotification('warning', 'For NIPT service, Father cannot provide Amniotic Fluid sample. Sample type has been automatically changed to Blood.');
+        return;
+      }
+      // Also ensure Mother always has Amniotic Fluid
+      if (values.secondPerson?.relationship === 'Mother' && values.secondPerson?.sampleType !== 'Amniotic Fluid') {
+        form.setFieldsValue({
+          secondPerson: {
+            ...form.getFieldValue('secondPerson'),
+            sampleType: 'Amniotic Fluid'
+          }
+        });
+        showNotification('info', 'For NIPT service, Mother must provide Amniotic Fluid sample. Sample type has been automatically corrected.');
+        return;
+      }
+    }
 
     if (!selectedService) {
       showNotification('error', 'Please select service!');
@@ -3767,20 +3844,28 @@ const BookingPage = () => {
                           // Automatically set sample type for NIPT service
                           if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
                             if (value === 'Mother') {
+                              // Mother must always use Amniotic Fluid for NIPT
                               form.setFieldsValue({
                                 firstPerson: {
                                   ...form.getFieldValue('firstPerson'),
                                   sampleType: 'Amniotic Fluid'
                                 }
                               });
-                            } else if (value === 'Father' && !form.getFieldValue(['firstPerson', 'sampleType'])) {
-                              // For Father in NIPT, default to Blood if no sample type is set yet
-                              form.setFieldsValue({
-                                firstPerson: {
-                                  ...form.getFieldValue('firstPerson'),
-                                  sampleType: 'Blood'
-                                }
-                              });
+                              showNotification('info', 'For NIPT service, Mother must use Amniotic Fluid sample.', 3000);
+                            } else if (value === 'Father') {
+                              // For Father in NIPT, force Blood sample type and prevent Amniotic Fluid
+                              const currentSampleType = form.getFieldValue(['firstPerson', 'sampleType']);
+                              
+                              // Always reset sample type for Father if it's Amniotic Fluid or not set
+                              if (!currentSampleType || currentSampleType === 'Amniotic Fluid') {
+                                form.setFieldsValue({
+                                  firstPerson: {
+                                    ...form.getFieldValue('firstPerson'),
+                                    sampleType: 'Blood'
+                                  }
+                                });
+                                showNotification('info', 'For NIPT service, Father cannot use Amniotic Fluid. Sample type has been set to Blood.', 3000);
+                              }
                             }
                           }
                         }}
@@ -3796,7 +3881,25 @@ const BookingPage = () => {
                     <Form.Item
                       name={['firstPerson', 'sampleType']}
                       label="Sample type"
-                      rules={[{ required: true, message: 'Please select model type!' }]}
+                      rules={[
+                        { 
+                          required: true, 
+                          message: 'Please select sample type!' 
+                        },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            const service = selectedService?.name;
+                            const relationship = getFieldValue(['firstPerson', 'relationship']);
+                            
+                            if (service === 'Non-Invasive Relationship Testing (NIPT)' && 
+                                relationship === 'Father' && 
+                                value === 'Amniotic Fluid') {
+                              return Promise.reject('For NIPT service, Father cannot provide Amniotic Fluid sample');
+                            }
+                            return Promise.resolve();
+                          },
+                        }),
+                      ]}
                     >
                       {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
                        form.getFieldValue(['firstPerson', 'relationship']) === 'Mother' ? (
@@ -3812,12 +3915,12 @@ const BookingPage = () => {
                       ) : selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
                          form.getFieldValue(['firstPerson', 'relationship']) === 'Father' ? (
                         <Select placeholder="Select sample type">
-                          {['Blood', 'Buccal Swab', 'Hair', 'Nail'].map(type => (
+                          {getNonAmnioticSampleTypes().map(type => (
                             <Option key={type} value={type}>{type}</Option>
                           ))}
                         </Select>
                       ) : (
-                        <Select placeholder="Select template type">
+                        <Select placeholder="Select sample type">
                           {sampleTypes.map(type => (
                             <Option key={type} value={type}>{type}</Option>
                           ))}
@@ -3920,20 +4023,28 @@ const BookingPage = () => {
                           // Automatically set sample type for NIPT service
                           if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
                             if (value === 'Mother') {
+                              // Mother must always use Amniotic Fluid for NIPT
                               form.setFieldsValue({
                                 secondPerson: {
                                   ...form.getFieldValue('secondPerson'),
                                   sampleType: 'Amniotic Fluid'
                                 }
                               });
-                            } else if (value === 'Father' && !form.getFieldValue(['secondPerson', 'sampleType'])) {
-                              // For Father in NIPT, default to Blood if no sample type is set yet
-                              form.setFieldsValue({
-                                secondPerson: {
-                                  ...form.getFieldValue('secondPerson'),
-                                  sampleType: 'Blood'
-                                }
-                              });
+                              showNotification('info', 'For NIPT service, Mother must use Amniotic Fluid sample.', 3000);
+                            } else if (value === 'Father') {
+                              // For Father in NIPT, force Blood sample type and prevent Amniotic Fluid
+                              const currentSampleType = form.getFieldValue(['secondPerson', 'sampleType']);
+                              
+                              // Always reset sample type for Father if it's Amniotic Fluid or not set
+                              if (!currentSampleType || currentSampleType === 'Amniotic Fluid') {
+                                form.setFieldsValue({
+                                  secondPerson: {
+                                    ...form.getFieldValue('secondPerson'),
+                                    sampleType: 'Blood'
+                                  }
+                                });
+                                showNotification('info', 'For NIPT service, Father cannot use Amniotic Fluid. Sample type has been set to Blood.', 3000);
+                              }
                             }
                           }
                         }}
@@ -3949,7 +4060,25 @@ const BookingPage = () => {
                     <Form.Item
                       name={['secondPerson', 'sampleType']}
                       label="Sample type"
-                      rules={[{ required: true, message: 'Please select model type!' }]}
+                      rules={[
+                        { 
+                          required: true, 
+                          message: 'Please select sample type!' 
+                        },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            const service = selectedService?.name;
+                            const relationship = getFieldValue(['secondPerson', 'relationship']);
+                            
+                            if (service === 'Non-Invasive Relationship Testing (NIPT)' && 
+                                relationship === 'Father' && 
+                                value === 'Amniotic Fluid') {
+                              return Promise.reject('For NIPT service, Father cannot provide Amniotic Fluid sample');
+                            }
+                            return Promise.resolve();
+                          },
+                        }),
+                      ]}
                     >
                       {selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
                        form.getFieldValue(['secondPerson', 'relationship']) === 'Mother' ? (
@@ -3965,12 +4094,12 @@ const BookingPage = () => {
                       ) : selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
                          form.getFieldValue(['secondPerson', 'relationship']) === 'Father' ? (
                         <Select placeholder="Select sample type">
-                          {['Blood', 'Buccal Swab', 'Hair', 'Nail'].map(type => (
+                          {getNonAmnioticSampleTypes().map(type => (
                             <Option key={type} value={type}>{type}</Option>
                           ))}
                         </Select>
                       ) : (
-                        <Select placeholder="Select template type">
+                        <Select placeholder="Select sample type">
                           {sampleTypes.map(type => (
                             <Option key={type} value={type}>{type}</Option>
                           ))}
