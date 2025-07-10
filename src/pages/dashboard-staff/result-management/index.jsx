@@ -75,20 +75,26 @@ const ResultManagementPage = () => {
         ? data.map((item) => {
             // Helper to convert [YYYY, MM, DD, HH, mm, ss, ms] to Date
             const convertArrayToDate = (arr) => {
-              if (!Array.isArray(arr) || arr.length < 6) return arr;
+              if (!Array.isArray(arr) || arr.length < 3) return arr;
               // Month in JS Date is 0-based
               return new Date(
                 arr[0],
                 arr[1] - 1,
                 arr[2],
-                arr[3],
-                arr[4],
-                arr[5],
+                arr[3] || 0,
+                arr[4] || 0,
+                arr[5] || 0,
                 arr[6] || 0
               );
             };
             return {
               ...item,
+              matchingPercentage:
+                item.matchingPercentage !== undefined &&
+                item.matchingPercentage !== null &&
+                item.matchingPercentage !== ""
+                  ? Number(item.matchingPercentage)
+                  : null,
               updateAt: Array.isArray(item.updateAt)
                 ? convertArrayToDate(item.updateAt)
                 : item.updateAt,
@@ -173,12 +179,13 @@ const ResultManagementPage = () => {
         bookingID: record.bookingID,
         relationship: record.relationship,
         conclusion: record.conclusion,
+        matchingPercentage: record.matchingPercentage, // Bổ sung trường này
         confidencePercentage: 99.99, // Always set to 99.99 when marking available
         pdfPath: record.pdfPath,
         updateAt: new Date().toISOString(),
         createAt: record.createAt,
         staffID: record.staffID,
-        available: true,
+        available: 1,
       };
 
       await api.patch(`/staff/update-result/${record.resultID}`, payload);
@@ -335,7 +342,7 @@ const ResultManagementPage = () => {
       dataIndex: "matchingPercentage",
       key: "matchingPercentage",
       render: (value, record) => {
-        if (value === undefined || value === null) return <span>N/A</span>;
+        if (typeof value !== "number" || isNaN(value)) return <span>N/A</span>;
         let color = "default";
         // Style theo relationship
         const rel = record.relationship;
@@ -355,7 +362,7 @@ const ResultManagementPage = () => {
           // fallback
           color = value >= 95 ? "green" : value < 5 ? "red" : "orange";
         }
-        return <Tag color={color}>{value.toFixed(2)}%</Tag>;
+        return <Tag color={color}>{Number(value).toFixed(2)}%</Tag>;
       },
       sorter: (a, b) =>
         (a.matchingPercentage || 0) - (b.matchingPercentage || 0),
@@ -424,14 +431,14 @@ const ResultManagementPage = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
             size="small"
-            type="primary">
+            type="default">
             Update
           </Button>
           <Button
             icon={<CheckCircleOutlined />}
             onClick={() => handleSetAvailable(record)}
             size="small"
-            type="default"
+            type="primary"
             style={
               record.available
                 ? {
@@ -444,9 +451,9 @@ const ResultManagementPage = () => {
             disabled={
               record.available ||
               !record.relationship ||
-              !record.conclusion ||
-              (record.confidencePercentage !== 99.99 &&
-                record.confidencePercentage !== 0.01)
+              record.matchingPercentage === undefined ||
+              record.matchingPercentage === null ||
+              !record.conclusion
             }
             loading={actionLoading === record.resultID}>
             Available
