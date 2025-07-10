@@ -176,6 +176,9 @@ const ServiceManagement = () => {
     {
       title: "Actions",
       key: "actions",
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Edit Price">

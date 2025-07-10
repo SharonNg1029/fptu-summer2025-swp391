@@ -246,7 +246,7 @@ const SystemLogs = () => {
           alignItems: "center",
           marginBottom: 24,
         }}>
-        <Title level={2}>System Logs & Monitoring</Title>
+        <Title level={2}>Monitoring System Logs</Title>
         <Space>
           <Dropdown
             menu={{

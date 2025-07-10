@@ -185,13 +185,8 @@ function Overview() {
 
     const fetchRecentBookings = async () => {
       try {
-        const params = {
-          limit: 1000, // lấy nhiều để filter FE
-          sort: "desc",
-          sortBy: "appointmentTime",
-        };
-        // Xoá log fetchRecentBookings params
-        const response = await api.get("/booking/bookings", { params });
+        // Không truyền limit, sort, sortBy nếu backend không hỗ trợ
+        const response = await api.get("/booking/bookings");
         let bookingsData = response.data?.data || response.data || [];
         // FE filter nếu cần
         bookingsData = filterBookingsByDateRange(bookingsData)
@@ -310,9 +305,8 @@ function Overview() {
 
     const fetchRevenue = async () => {
       try {
-        const params = { limit: 10000 };
-        // Xoá log fetchRevenue params
-        const response = await api.get("/booking/bookings", { params });
+        // Không truyền limit nếu backend không hỗ trợ
+        const response = await api.get("/booking/bookings");
         let bookings = response.data?.data || response.data || [];
         bookings = filterBookingsByDateRange(bookings);
         const totalRevenue = Array.isArray(bookings)
@@ -330,9 +324,8 @@ function Overview() {
 
     const fetchAllBookings = async () => {
       try {
-        const params = { limit: 10000 };
-        // Xoá log fetchAllBookings params
-        const response = await api.get("/booking/bookings", { params });
+        // Không truyền limit nếu backend không hỗ trợ
+        const response = await api.get("/booking/bookings");
         let bookings = response.data?.data || response.data || [];
         bookings = filterBookingsByDateRange(bookings);
         setAllBookings(bookings);

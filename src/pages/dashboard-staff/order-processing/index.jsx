@@ -285,7 +285,7 @@ const OrderProcessing = () => {
         let color = "default";
         let icon = <ClockCircleOutlined />;
         const statusLower = (status || "").toLowerCase();
-        if (statusLower === "awaiting confirmation") {
+        if (statusLower === "awaiting confirm") {
           color = "gold";
           icon = <ClockCircleOutlined />;
         }
@@ -363,6 +363,9 @@ const OrderProcessing = () => {
     {
       title: "Actions",
       key: "actions",
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
       render: (_, record) => (
         <Button
           type="primary"
@@ -387,7 +390,7 @@ const OrderProcessing = () => {
         }}>
         {" "}
         <Title level={2} style={{ margin: 0 }}>
-          Assignment Processing
+          Manage Assigned Progress
         </Title>{" "}
         <Space>
           <Button
@@ -418,24 +421,25 @@ const OrderProcessing = () => {
             />
           </Col>
           <Col xs={24} sm={6} lg={7}>
-            {" "}
+            {/* Filter by status: show only statuses that exist in current filteredOrders */}
             <Select
               placeholder="Filter by status"
               value={statusFilter}
               onChange={setStatusFilter}
               style={{ width: "100%" }}
-              allowClear>
+              allowClear
+              showSearch
+              optionFilterProp="children">
               <Option value="">All Statuses</Option>
-              <Option value="Awaiting confirmation">
-                Awaiting confirmation
-              </Option>
-              <Option value="Booking confirmed">Booking confirmed</Option>
-              <Option value="Awaiting Sample">Awaiting Sample</Option>
-              <Option value="In Progress">In Progress</Option>
-              <Option value="Ready">Ready</Option>
-              <Option value="Pending Payment">Pending Payment</Option>
-              <Option value="Completed">Completed</Option>
-              <Option value="Cancel">Cancel</Option>
+              {Array.from(
+                new Set(
+                  filteredOrders.map((order) => order.status).filter(Boolean)
+                )
+              ).map((status) => (
+                <Option value={status} key={status}>
+                  {status}
+                </Option>
+              ))}
             </Select>
           </Col>
         </Row>

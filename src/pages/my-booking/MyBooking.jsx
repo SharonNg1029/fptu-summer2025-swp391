@@ -73,9 +73,19 @@ const MyBooking = () => {
     setLoading(true);
     try {
         const res = await api.get(`/booking/my-bookings/${customerID}`);
-        setBookings(res.data || []);
+        // Ensure we always set an array
+        const data = res.data;
+        if (Array.isArray(data)) {
+          setBookings(data);
+        } else if (data && Array.isArray(data.bookings)) {
+          setBookings(data.bookings);
+        } else {
+          setBookings([]);
+        }
     } catch (err) {
+      console.error("Error fetching bookings:", err);
       toast.error("Failed to fetch your bookings.");
+      setBookings([]); // Ensure bookings is always an array even on error
     } finally {
       setLoading(false);
     }
@@ -100,7 +110,7 @@ const MyBooking = () => {
     link.click();
     link.remove();
   } catch (err) {
-    toast.error("Tải kết quả thất bại. Vui lòng thử lại!");
+    //toast.error("Tải kết quả thất bại. Vui lòng thử lại!");
   }
 };
 
@@ -226,7 +236,7 @@ const MyBooking = () => {
 ];
 
 
-  const filteredBookings = bookings.filter((booking) => {
+  const filteredBookings = Array.isArray(bookings) ? bookings.filter((booking) => {
     const matchesSearch =
       booking.bookingId?.toString().includes(searchText) ||
       booking.serviceID?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -234,9 +244,9 @@ const MyBooking = () => {
     const matchesService = serviceFilter ? booking.serviceID === serviceFilter : true;
     const matchesStatus = statusFilter ? booking.status === statusFilter : true;
     return matchesSearch && matchesService && matchesStatus;
-  });
+  }) : [];
 
-  const uniqueServices = [...new Set(bookings.map((b) => b.serviceID))];
+  const uniqueServices = Array.isArray(bookings) ? [...new Set(bookings.map((b) => b.serviceID))] : [];
 
   return (
     <div>
@@ -300,16 +310,23 @@ const MyBooking = () => {
       </Card>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredBookings}
-          rowKey="bookingId"
-          loading={loading}
-          bordered
-          scroll={{ x: true }}
-          locale={{ emptyText: <Empty description="No bookings found" /> }}
-          pagination={{ pageSize: 6 }}
-        />
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <LoadingOutlined style={{ fontSize: 24 }} />
+            <p>Loading your bookings...</p>
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredBookings}
+            rowKey="bookingId"
+            loading={loading}
+            bordered
+            scroll={{ x: true }}
+            locale={{ emptyText: <Empty description="No bookings found" /> }}
+            pagination={{ pageSize: 6 }}
+          />
+        )}
       </Card>
 
       <BookingDetailModal

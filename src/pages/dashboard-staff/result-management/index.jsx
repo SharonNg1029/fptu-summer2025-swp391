@@ -75,20 +75,26 @@ const ResultManagementPage = () => {
         ? data.map((item) => {
             // Helper to convert [YYYY, MM, DD, HH, mm, ss, ms] to Date
             const convertArrayToDate = (arr) => {
-              if (!Array.isArray(arr) || arr.length < 6) return arr;
+              if (!Array.isArray(arr) || arr.length < 3) return arr;
               // Month in JS Date is 0-based
               return new Date(
                 arr[0],
                 arr[1] - 1,
                 arr[2],
-                arr[3],
-                arr[4],
-                arr[5],
+                arr[3] || 0,
+                arr[4] || 0,
+                arr[5] || 0,
                 arr[6] || 0
               );
             };
             return {
               ...item,
+              matchingPercentage:
+                item.matchingPercentage !== undefined &&
+                item.matchingPercentage !== null &&
+                item.matchingPercentage !== ""
+                  ? Number(item.matchingPercentage)
+                  : null,
               updateAt: Array.isArray(item.updateAt)
                 ? convertArrayToDate(item.updateAt)
                 : item.updateAt,
@@ -136,6 +142,7 @@ const ResultManagementPage = () => {
         bookingID: editingResult.bookingID,
         relationship: values.relationship,
         conclusion: values.conclusion,
+        matchingPercentage: values.matchingPercentage, // Send as number
         confidencePercentage: 99.99, // Always send 99.99
         pdfPath: editingResult.pdfPath,
         updateAt: new Date().toISOString(),
@@ -172,12 +179,13 @@ const ResultManagementPage = () => {
         bookingID: record.bookingID,
         relationship: record.relationship,
         conclusion: record.conclusion,
+        matchingPercentage: record.matchingPercentage, // Bổ sung trường này
         confidencePercentage: 99.99, // Always set to 99.99 when marking available
         pdfPath: record.pdfPath,
         updateAt: new Date().toISOString(),
         createAt: record.createAt,
         staffID: record.staffID,
-        available: true,
+        available: 1,
       };
 
       await api.patch(`/staff/update-result/${record.resultID}`, payload);
@@ -269,22 +277,34 @@ const ResultManagementPage = () => {
 
   const filteredResults = results
     .filter((result) => {
+      // Ensure all fields are string before calling toLowerCase
+      const resultIDStr =
+        result.resultID !== undefined && result.resultID !== null
+          ? result.resultID.toString().toLowerCase()
+          : "";
+      const bookingIDStr =
+        result.bookingID !== undefined && result.bookingID !== null
+          ? result.bookingID.toString().toLowerCase()
+          : "";
+      const customerNameStr =
+        typeof result.customerName === "string"
+          ? result.customerName.toLowerCase()
+          : "";
+      const relationshipStr =
+        typeof result.relationship === "string"
+          ? result.relationship.toLowerCase()
+          : "";
+      const conclusionStr =
+        typeof result.conclusion === "string"
+          ? result.conclusion.toLowerCase()
+          : "";
+
       const matchesSearch =
-        (result.resultID?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.bookingID?.toString().toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.customerName?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.relationship?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.conclusion?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        );
+        resultIDStr.includes(searchText.toLowerCase()) ||
+        bookingIDStr.includes(searchText.toLowerCase()) ||
+        customerNameStr.includes(searchText.toLowerCase()) ||
+        relationshipStr.includes(searchText.toLowerCase()) ||
+        conclusionStr.includes(searchText.toLowerCase());
 
       const matchesStatus =
         !statusFilter ||
@@ -322,7 +342,7 @@ const ResultManagementPage = () => {
       dataIndex: "matchingPercentage",
       key: "matchingPercentage",
       render: (value, record) => {
-        if (value === undefined || value === null) return <span>N/A</span>;
+        if (typeof value !== "number" || isNaN(value)) return <span>N/A</span>;
         let color = "default";
         // Style theo relationship
         const rel = record.relationship;
@@ -342,7 +362,7 @@ const ResultManagementPage = () => {
           // fallback
           color = value >= 95 ? "green" : value < 5 ? "red" : "orange";
         }
-        return <Tag color={color}>{value.toFixed(2)}%</Tag>;
+        return <Tag color={color}>{Number(value).toFixed(2)}%</Tag>;
       },
       sorter: (a, b) =>
         (a.matchingPercentage || 0) - (b.matchingPercentage || 0),
@@ -402,6 +422,8 @@ const ResultManagementPage = () => {
       title: "Actions",
       key: "actions",
       fixed: "right",
+      align: "center",
+      responsive: ["md"],
       width: 180,
       render: (_, record) => (
         <Space>
@@ -409,14 +431,14 @@ const ResultManagementPage = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
             size="small"
-            type="primary">
+            type="default">
             Update
           </Button>
           <Button
             icon={<CheckCircleOutlined />}
             onClick={() => handleSetAvailable(record)}
             size="small"
-            type="default"
+            type="primary"
             style={
               record.available
                 ? {
@@ -429,9 +451,9 @@ const ResultManagementPage = () => {
             disabled={
               record.available ||
               !record.relationship ||
-              !record.conclusion ||
-              (record.confidencePercentage !== 99.99 &&
-                record.confidencePercentage !== 0.01)
+              record.matchingPercentage === undefined ||
+              record.matchingPercentage === null ||
+              !record.conclusion
             }
             loading={actionLoading === record.resultID}>
             Available
@@ -453,7 +475,7 @@ const ResultManagementPage = () => {
           gap: 16,
         }}>
         <Title level={2} style={{ margin: 0 }}>
-          Test Results Management
+          Managing Tests Result
         </Title>
         <Space>
           <Button

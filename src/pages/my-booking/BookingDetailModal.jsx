@@ -1,4 +1,5 @@
 import React from "react";
+import moment from 'moment';
 import {
   Modal,
   Card,
@@ -30,7 +31,7 @@ const BookingDetailModal = ({
   onClose,
   bookingDetail = {},
 }) => {
-  if (!bookingDetail) return null;
+  if (!bookingDetail) return null; 
   const {
     serviceType,
     service,
@@ -115,7 +116,7 @@ const BookingDetailModal = ({
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>TÊN DỊCH VỤ</Text>
-                        <Text strong style={{ fontSize: 14 }}>{service?.name}</Text>
+                        <Text strong style={{ fontSize: 14 }}>{service}</Text>
                       </div>
                     </Col>
                     <Col span={12}>
@@ -130,7 +131,7 @@ const BookingDetailModal = ({
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>KIT XÉT NGHIỆM</Text>
                         <Text strong style={{ fontSize: 14 }}>
-                          {selectedKitType ? (kitTypes.find(k => k.value === selectedKitType)?.label) : '—'}
+                          {selectedKitType ? (kitTypes.find(k => k.name === selectedKitType)?.name) : '—'}
                         </Text>
                       </div>
                     </Col>
@@ -271,7 +272,7 @@ const BookingDetailModal = ({
                           <div style={{ marginTop: 8 }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>SỐ ĐIỆN THOẠI</Text>
                             <br/>
-                            <Text style={{ fontSize: 13 }}>{firstPerson?.phoneNumber}</Text>
+                            <Text style={{ fontSize: 13 }}>{firstPerson?.phone}</Text>
                           </div>
                           <div style={{ marginTop: 8 }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>EMAIL</Text>
