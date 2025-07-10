@@ -296,25 +296,15 @@ const ProfilePage = () => {
           },
         });
         const profile = response.data.data || response.data[0] || response.data;
-        console.log("===> API profile", profile);
 
-        const fullName = getFieldValue(profile, "full_name", [
-          "fullName",
-          "fullname",
-        ]);
+
+        const fullName = getFieldValue(profile, "fullName", ["full_name", "fullname"]);
         const email = getFieldValue(profile, "email", ["Email"]);
         const phone = getFieldValue(profile, "phone", ["Phone"]);
         const address = getFieldValue(profile, "address", ["Address"]);
         const rawGender = getFieldValue(profile, "gender", ["Gender"]);
         const dobValue = getFieldValue(profile, "dob", ["DOB", "dateOfBirth"]);
 
-        console.log("===> Mapped values from API:");
-        console.log("fullName:", fullName);
-        console.log("email:", email);
-        console.log("phone:", phone);
-        console.log("address:", address);
-        console.log("gender (db):", rawGender);
-        console.log("dobValue:", dobValue);
 
         let dobForInput = "";
         if (dobValue) {
@@ -334,10 +324,9 @@ const ProfilePage = () => {
             }
           }
         }
-        console.log("dobForInput:", dobForInput);
+
 
         const genderForUI = convertDatabaseGenderToUI(rawGender);
-        console.log("genderForUI:", genderForUI);
 
         setUserProfile(profile);
 
@@ -350,14 +339,7 @@ const ProfilePage = () => {
           gender: genderForUI,
         });
 
-        console.log("===> Form setEditForm:", {
-          fullName: normalizeVietnamese(fullName, false) || "",
-          dob: dobForInput,
-          email: normalizeVietnamese(email, true) || "",
-          phone: normalizeVietnamese(phone, true) || "",
-          address: normalizeVietnamese(address, false) || "",
-          gender: genderForUI,
-        });
+ 
 
         setError(null);
       } catch (err) {
@@ -428,12 +410,7 @@ const ProfilePage = () => {
           return acc;
         }, {}
       );
-      console.log("💾 Saving profile data:", {
-        userRole,
-        userID,
-        updatePath,
-        cleanFormData,
-      });
+    
       await api.patch(updatePath, cleanFormData, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
@@ -613,8 +590,6 @@ const ProfilePage = () => {
     navigate(passwordResetPath);
   };
 
-  console.log("===> Render userProfile:", userProfile);
-  console.log("===> Render editForm:", editForm);
 
   if (loading) {
     return (

@@ -181,13 +181,6 @@ const ChangePasswordPage = () => {
         confirmPassword: formData.confirmPassword,
       };
 
-      console.log('🔐 Sending password reset request:', {
-        apiPath,
-        userRole,
-        userID,
-        currentTime: '2025-07-04 06:48:04',
-        currentUser: 'loclnx'
-      });
 
       const response = await api.patch(apiPath, requestData, {
         headers: {
@@ -217,10 +210,7 @@ const ChangePasswordPage = () => {
       setSuccess(true);
 
       // Auto-hide success message and redirect after 2 seconds
-      setTimeout(() => {
-        setSuccess(false);
-        navigate('/profile');
-      }, 2000);
+      
 
     } catch (err) {
       console.error("❌ Error resetting password:", err);
@@ -230,15 +220,7 @@ const ChangePasswordPage = () => {
       if (err.response) {
         const { status, data } = err.response;
         
-        console.log('🔍 Error Response:', {
-          status,
-          data,
-          userRole,
-          userID,
-          currentTime: '2025-07-04 06:48:04',
-          currentUser: 'loclnx'
-        });
-        
+     
         if (data?.message) {
           errorMessage = data.message;
         } else if (data?.error) {
