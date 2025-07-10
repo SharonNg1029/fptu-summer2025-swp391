@@ -73,10 +73,42 @@ const StaffReporting = () => {
   });
 
   // Lọc báo cáo trong tương lai - chỉ lấy những báo cáo có status là Pending và appointment date > hôm nay
-  const futureReports = workReports.filter((r) => {
-    const reportDate = getReportDate(r);
-    return reportDate && reportDate > today && r.status === "Pending";
-  });
+  const futureReports = workReports
+    .filter((r) => {
+      const reportDate = getReportDate(r);
+      return (
+        reportDate &&
+        new Date(reportDate).getTime() > new Date(today).getTime() &&
+        r.status === "Pending"
+      );
+    })
+    .sort((a, b) => {
+      // So sánh ngày gần nhất ở trên, nếu trùng ngày thì so sánh giờ gần nhất ở trên
+      const dateA = getReportDate(a);
+      const dateB = getReportDate(b);
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      const timeA = a.appointmentTime || "";
+      const timeB = b.appointmentTime || "";
+      const dA = new Date(dateA);
+      const dB = new Date(dateB);
+      if (dA.getTime() !== dB.getTime()) {
+        return dA.getTime() - dB.getTime(); // gần nhất ở trên
+      }
+      // Nếu cùng ngày, so sánh giờ (giả sử appointmentTime dạng "HH:mm - HH:mm" hoặc "HH:mm")
+      const extractStartTime = (t) => {
+        if (!t) return 0;
+        const match = t.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+        }
+        return 0;
+      };
+      const tA = extractStartTime(timeA);
+      const tB = extractStartTime(timeB);
+      return tA - tB; // giờ gần nhất ở trên
+    });
 
   // Lọc báo cáo đã hoàn thành - lấy những báo cáo có status khác Pending
   const completedWorkReports = workReports.filter(
@@ -111,7 +143,23 @@ const StaffReporting = () => {
     setLoading(true);
     try {
       const response = await api.get(`/staff/my-report/${staffID}`);
-      setWorkReports(response.data?.data || response.data || []);
+      const rawData = response.data?.data || response.data || [];
+      // Chuẩn hóa dữ liệu: appointmentDate luôn là string YYYY-MM-DD
+      const normalized = rawData.map((item) => {
+        let appointmentDate = item.appointmentDate;
+        if (Array.isArray(appointmentDate) && appointmentDate.length >= 3) {
+          // [YYYY, MM, DD] => 'YYYY-MM-DD'
+          const y = appointmentDate[0];
+          const m = String(appointmentDate[1]).padStart(2, "0");
+          const d = String(appointmentDate[2]).padStart(2, "0");
+          appointmentDate = `${y}-${m}-${d}`;
+        }
+        return {
+          ...item,
+          appointmentDate,
+        };
+      });
+      setWorkReports(normalized);
     } catch (error) {
       toast.error(
         "Failed to fetch work reports: " +
@@ -240,7 +288,14 @@ const StaffReporting = () => {
       dataIndex: "appointmentDate",
       key: "appointmentDate",
       render: (date, record) => {
-        if (date) return date;
+        // Nếu là mảng [YYYY, MM, DD] thì format lại
+        if (Array.isArray(date) && date.length >= 3) {
+          const y = date[0];
+          const m = String(date[1]).padStart(2, "0");
+          const d = String(date[2]).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+        if (typeof date === "string" && date) return date;
         if (record.appointmentTime) {
           const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
           return match ? match[1] : "-";
@@ -528,7 +583,8 @@ const StaffReporting = () => {
     }
   };
 
-  const workReportColumns = [
+  // Cột cho bảng Future Schedule (ẩn Note, Assigned ID, Manager ID, Approved)
+  const futureReportColumns = [
     {
       title: "Report ID",
       dataIndex: "reportID",
@@ -551,6 +607,47 @@ const StaffReporting = () => {
       render: (name) => name || "-",
     },
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        if (date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (time) => time || "-",
+    },
+
+    // Approved column is hidden as requested
+  ];
+
+  // Columns for Completed Reports table (similar to mergedColumns but without Actions column)
+  const workReportColumns = [
+    {
+      title: "Report ID",
+      dataIndex: "reportID",
+      key: "reportID",
+    },
+    {
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
+    },
+    {
       title: "Appointment Time",
       dataIndex: "appointmentTime",
       key: "appointmentTime",
@@ -561,8 +658,13 @@ const StaffReporting = () => {
       dataIndex: "appointmentDate",
       key: "appointmentDate",
       render: (date, record) => {
-        // Ưu tiên lấy appointmentDate, nếu không có thì extract từ appointmentTime
-        if (date) return date;
+        if (Array.isArray(date) && date.length >= 3) {
+          const y = date[0];
+          const m = String(date[1]).padStart(2, "0");
+          const d = String(date[2]).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+        if (typeof date === "string" && date) return date;
         if (record.appointmentTime) {
           const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
           return match ? match[1] : "-";
@@ -598,33 +700,9 @@ const StaffReporting = () => {
       },
     },
     {
-      title: "Approved",
-      dataIndex: "isApproved",
-      key: "isApproved",
-      render: (isApproved) =>
-        isApproved === true ? (
-          <Tag color="green">Approved</Tag>
-        ) : (
-          <Tag color="orange">Unapproved</Tag>
-        ),
-    },
-    {
       title: "Note",
       dataIndex: "note",
       key: "note",
-      render: (note) => note || "-",
-    },
-    {
-      title: "Assigned ID",
-      dataIndex: "assignedID",
-      key: "assignedID",
-      render: (assignedID) => assignedID || "-",
-    },
-    {
-      title: "Manager ID",
-      dataIndex: "managerID",
-      key: "managerID",
-      render: (managerID) => managerID || "-",
     },
   ];
 
@@ -717,7 +795,7 @@ const StaffReporting = () => {
           <Card>
             <Table
               loading={loading}
-              columns={workReportColumns} // Reusing the same columns for simplicity
+              columns={futureReportColumns}
               dataSource={futureReports}
               rowKey="reportID"
               pagination={{

@@ -101,8 +101,8 @@ const ViewReports = () => {
     }
     setApprovingReport(reportId);
     try {
-      // Gửi đúng kiểu dữ liệu cho backend: isApproved: true (boolean) theo DTO, truyền qua query string
-      await api.patch(`/manager/${reportId}/report?isApproved=true`);
+      // Gửi đúng kiểu dữ liệu cho backend: isApproved: true (boolean) theo DTO, truyền qua body (nếu backend yêu cầu)
+      await api.patch(`/manager/${reportId}/report`, { isApproved: true });
       // Refetch both reports and bookingAssigned immediately after approve
       await fetchAllReports();
       // Luôn hiển thị toast thành công nếu không có lỗi, không kiểm tra phản hồi nữa
@@ -209,6 +209,8 @@ const ViewReports = () => {
       title: "Action",
       key: "action",
       fixed: "right",
+      align: "center",
+      responsive: ["md"],
       width: 120,
       render: (_, record) => (
         <Button
@@ -262,13 +264,32 @@ const ViewReports = () => {
             : item.isApproved,
       }));
       setReports(normalized);
-      // Staff list: chỉ lấy unique staffID
+      // Lấy danh sách staff từ API riêng (nếu có), nếu không thì lấy từ tất cả các report và bookingAssigned
+      let allStaff = [];
+      try {
+        const staffRes = await api.get("/manager/all-staff");
+        // Giả sử API trả về mảng staff có id và name
+        if (Array.isArray(staffRes.data)) {
+          allStaff = staffRes.data.map((s) => ({
+            id: s.staffID || s.id,
+            name: s.name || s.staffName || s.staffID || s.id,
+          }));
+        } else if (Array.isArray(staffRes.data?.data)) {
+          allStaff = staffRes.data.data.map((s) => ({
+            id: s.staffID || s.id,
+            name: s.name || s.staffName || s.staffID || s.id,
+          }));
+        }
+      } catch {
+        // Nếu không có API riêng, fallback lấy từ report và bookingAssigned
+        const staffFromReports = normalized
+          .filter((r) => r.staffID)
+          .map((r) => ({ id: r.staffID, name: r.staffID }));
+        allStaff = staffFromReports;
+      }
+      // Loại bỏ trùng lặp staff theo id
       const uniqueStaff = Array.from(
-        new Map(
-          normalized
-            .filter((r) => r.staffID)
-            .map((r) => [r.staffID, { id: r.staffID, name: r.staffID }])
-        ).values()
+        new Map(allStaff.filter((s) => s.id).map((s) => [s.id, s])).values()
       );
       setStaffList(uniqueStaff);
     } catch (error) {
@@ -299,6 +320,7 @@ const ViewReports = () => {
         bookingID: item.bookingID,
         bookingId: item.bookingID,
         appointmentTime: item.appointmentTime,
+        appointmentDate: item.appointmentDate, // <-- Ensure appointmentDate is included
         status: item.status,
         assignedId: item.assignedID,
         assignedID: item.assignedID,
@@ -558,8 +580,8 @@ const ViewReports = () => {
       title: "Appointment Date",
       dataIndex: "appointmentDate",
       key: "appointmentDate",
-      width: 140,
       render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
+      width: 120,
     },
     {
       title: "Appointment Time",
@@ -587,6 +609,8 @@ const ViewReports = () => {
       title: "Action",
       key: "action",
       fixed: "right",
+      align: "center",
+      responsive: ["md"],
       width: 120,
       render: (_, record) => (
         <Button
@@ -884,7 +908,6 @@ const ViewReports = () => {
       ),
     },
   ];
-
   return (
     <div style={{ padding: "0 24px" }}>
       <Title level={2} style={{ margin: 0, marginBottom: 24 }}>
@@ -923,16 +946,10 @@ const ViewReports = () => {
           </Button>,
         ]}
         styles={{ body: { textAlign: "left" } }}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 12,
-            minWidth: 320,
-          }}>
+        <div>
           <div>
-            <strong>Report ID:</strong> {selectedBooking?.id}
+            <strong>Assigned ID:</strong>{" "}
+            {selectedBooking?.assignedID || selectedBooking?.assignedId}
           </div>
           <div>
             <strong>Booking ID:</strong> {selectedBooking?.bookingId}

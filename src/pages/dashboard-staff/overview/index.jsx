@@ -101,6 +101,7 @@ const StaffOverviewPage = () => {
     }
     setLoading(true);
     try {
+      // Lấy assignments như cũ
       const response = await api.get(`/staff/my-assignment/${staffID}`);
       const assignments = response.data || [];
       // Tổng số booking
@@ -110,46 +111,74 @@ const StaffOverviewPage = () => {
           (a.status || "").trim().toLowerCase() ===
           "awaiting sample".toLowerCase()
       ).length;
-      // Số booking hôm nay
-      const today = new Date().toISOString().slice(0, 10);
-      const appointmentsToday = assignments.filter(
-        (a) => a.date === today
-      ).length;
       // Số booking đã hoàn thành
       const totalAppointmentFinished = assignments.filter(
         (a) =>
           (a.status || "").trim().toLowerCase() === "completed".toLowerCase()
       ).length;
-      // Phân bố trạng thái: chuẩn hóa status, gom nhóm đúng tên, không trùng lặp
+      // Phân bố trạng thái: gom nhóm status động và gán màu hợp lý
       const statusCounts = {};
       assignments.forEach((a) => {
         let status = (a.status || "Unknown").trim();
-        // Chuẩn hóa về đúng tên status (case-insensitive)
-        const found = STATUS_ORDER.find(
-          (std) => std.toLowerCase() === status.toLowerCase()
-        );
-        status = found || status;
         statusCounts[status] = (statusCounts[status] || 0) + 1;
       });
-      // Đảm bảo đủ các status, kể cả khi không có dữ liệu
-      const orderStatusDistribution = STATUS_ORDER.map((name) => ({
+      // Danh sách màu động cho status
+      const statusColors = [
+        "#52c41a",
+        "#faad14",
+        "#ff4d4f",
+        "#1890ff",
+        "#722ed1",
+        "#13c2c2",
+        "#eb2f96",
+        "#b37feb",
+        "#fa8c16",
+        "#a0d911",
+      ];
+      const statusNames = Object.keys(statusCounts);
+      const orderStatusDistribution = statusNames.map((name, idx) => ({
         name,
-        value: statusCounts[name] || 0,
-        color: STATUS_COLORS[name],
-      })).filter((item) => item.value > 0); // chỉ hiển thị status có dữ liệu
+        value: statusCounts[name],
+        color: statusColors[idx % statusColors.length],
+      }));
       // Thống kê theo timeRange (sáng, chiều, tối)
       const timeRangeStats = [
         { period: "Morning", count: 0 },
         { period: "Afternoon", count: 0 },
-        { period: "Evening", count: 0 },
       ];
       assignments.forEach((a) => {
         if (!a.timeRange) return;
         const hour = parseInt(a.timeRange.split(":")[0]);
         if (hour < 12) timeRangeStats[0].count++;
         else if (hour < 18) timeRangeStats[1].count++;
-        else timeRangeStats[2].count++;
+        // Bỏ Evening
       });
+      // Lấy số lượng báo cáo hôm nay từ API /staff/my-report/{staffID}
+      let appointmentsToday = 0;
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const reportRes = await api.get(`/staff/my-report/${staffID}`);
+        const reports = reportRes.data?.data || reportRes.data || [];
+        // Chuẩn hóa appointmentDate nếu là mảng
+        const normalized = reports.map((item) => {
+          let appointmentDate = item.appointmentDate;
+          if (Array.isArray(appointmentDate) && appointmentDate.length >= 3) {
+            const y = appointmentDate[0];
+            const m = String(appointmentDate[1]).padStart(2, "0");
+            const d = String(appointmentDate[2]).padStart(2, "0");
+            appointmentDate = `${y}-${m}-${d}`;
+          }
+          return { ...item, appointmentDate };
+        });
+        appointmentsToday = normalized.filter(
+          (r) =>
+            r.status === "Pending" &&
+            r.appointmentDate &&
+            r.appointmentDate.slice(0, 10) === today
+        ).length;
+      } catch {
+        // Nếu lỗi thì giữ appointmentsToday = 0
+      }
       // Task summary
       const dailyTasks = [
         { name: "Total Assignments", count: totalAppointments },
@@ -192,7 +221,6 @@ const StaffOverviewPage = () => {
         timeRangeStats: [
           { period: "Morning", count: 0 },
           { period: "Afternoon", count: 0 },
-          { period: "Evening", count: 0 },
         ],
       });
     } finally {

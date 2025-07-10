@@ -136,6 +136,7 @@ const ResultManagementPage = () => {
         bookingID: editingResult.bookingID,
         relationship: values.relationship,
         conclusion: values.conclusion,
+        matchingPercentage: values.matchingPercentage, // Send as number
         confidencePercentage: 99.99, // Always send 99.99
         pdfPath: editingResult.pdfPath,
         updateAt: new Date().toISOString(),
@@ -269,22 +270,34 @@ const ResultManagementPage = () => {
 
   const filteredResults = results
     .filter((result) => {
+      // Ensure all fields are string before calling toLowerCase
+      const resultIDStr =
+        result.resultID !== undefined && result.resultID !== null
+          ? result.resultID.toString().toLowerCase()
+          : "";
+      const bookingIDStr =
+        result.bookingID !== undefined && result.bookingID !== null
+          ? result.bookingID.toString().toLowerCase()
+          : "";
+      const customerNameStr =
+        typeof result.customerName === "string"
+          ? result.customerName.toLowerCase()
+          : "";
+      const relationshipStr =
+        typeof result.relationship === "string"
+          ? result.relationship.toLowerCase()
+          : "";
+      const conclusionStr =
+        typeof result.conclusion === "string"
+          ? result.conclusion.toLowerCase()
+          : "";
+
       const matchesSearch =
-        (result.resultID?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.bookingID?.toString().toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.customerName?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.relationship?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        ) ||
-        (result.conclusion?.toLowerCase() || "").includes(
-          searchText.toLowerCase()
-        );
+        resultIDStr.includes(searchText.toLowerCase()) ||
+        bookingIDStr.includes(searchText.toLowerCase()) ||
+        customerNameStr.includes(searchText.toLowerCase()) ||
+        relationshipStr.includes(searchText.toLowerCase()) ||
+        conclusionStr.includes(searchText.toLowerCase());
 
       const matchesStatus =
         !statusFilter ||
@@ -402,6 +415,8 @@ const ResultManagementPage = () => {
       title: "Actions",
       key: "actions",
       fixed: "right",
+      align: "center",
+      responsive: ["md"],
       width: 180,
       render: (_, record) => (
         <Space>

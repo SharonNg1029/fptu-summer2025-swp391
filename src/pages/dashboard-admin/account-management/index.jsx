@@ -99,16 +99,15 @@ const AccountManagement = () => {
   // Kiểm tra customer có booking nào chưa hoàn thành (status khác Completed/Cancel)
   const checkActiveOrders = async (accountId) => {
     try {
-      const response = await api.get("/booking/bookings", {
-        params: { customerID: accountId },
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Accept': 'application/json; charset=utf-8',
-        }
-      });
+      // Lấy tất cả booking, không truyền customerID
+      const response = await api.get("/booking/bookings");
       const bookings = response.data?.data || response.data || [];
+      // Lọc booking theo customerID ở FE
+      const customerBookings = bookings.filter(
+        (b) => b.customerID === accountId
+      );
       // Đếm số booking có status khác Completed và Cancel (không phân biệt hoa thường)
-      const hasActive = bookings.some((b) => {
+      const hasActive = customerBookings.some((b) => {
         const status = String(b.status || "").toLowerCase();
         return (
           status !== "completed" &&
@@ -707,7 +706,10 @@ const AccountManagement = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 200,
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
+      width: 160,
       render: (_, record) => (
         <Space size="small">
           {/* Edit Button */}

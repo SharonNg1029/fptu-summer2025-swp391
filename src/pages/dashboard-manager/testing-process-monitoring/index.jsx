@@ -31,11 +31,39 @@ const { Title } = Typography;
 const { Option } = Select;
 
 // Helper to format date from array or string
-const formatDate = (date) => {
+// Format array [YYYY,MM,DD] to dd/MM/yyyy
+const formatDateArray = (arr) => {
+  if (!Array.isArray(arr) || arr.length < 3) return "-";
+  const [year, month, day] = arr;
+  return `${day.toString().padStart(2, "0")}/${month
+    .toString()
+    .padStart(2, "0")}/${year}`;
+};
+
+// Format time range string (e.g. "13:15-14:15") or array [h,m] to HH:mm
+const formatTime = (val) => {
+  if (!val) return "-";
+  if (typeof val === "string") {
+    // If string is a time range (e.g. "13:15-14:15"), show as is
+    if (/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(val)) return val;
+    // If string is a single time (e.g. "13:15"), show as is
+    if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+    return val;
+  }
+  if (Array.isArray(val) && val.length >= 2) {
+    const [hour, minute] = val;
+    return `${hour.toString().padStart(2, "0")}:${minute
+      .toString()
+      .padStart(2, "0")}`;
+  }
+  return "-";
+};
+
+// Fallback for lastUpdate (array or string)
+const formatDateTime = (date) => {
   if (!date) return "N/A";
   if (Array.isArray(date) && date.length >= 3) {
     const [year, month, day, hour = 0, minute = 0] = date;
-    // JS Date month is 0-based, API is 1-based.
     const dateObj = new Date(year, month - 1, day, hour, minute);
     return dateObj.toLocaleString();
   }
@@ -54,7 +82,14 @@ const TestingProcessMonitoringPage = () => {
     try {
       const response = await api.get("/manager/booking-assigned");
       // Chuẩn hóa dữ liệu theo mẫu API mới
-      const data = response.data?.data || response.data || [];
+      let data = response.data;
+      // Nếu response có dạng { data: [...] } thì lấy data.data
+      if (data && Array.isArray(data.data)) {
+        data = data.data;
+      } else if (!Array.isArray(data)) {
+        // Nếu không phải mảng, trả về mảng rỗng
+        data = [];
+      }
       setTests(
         data.map((item) => ({
           assignedID: item.assignedID,
@@ -64,9 +99,10 @@ const TestingProcessMonitoringPage = () => {
           lastUpdate: item.lastUpdate,
           serviceType: item.serviceType,
           status: item.status,
-          // Use appointmentTime from API, fallback to timeRange if needed
-          appointmentTime: item.appointmentTime || item.timeRange || null,
-          appointmentDate: item.appointmentDate || null, // catch appointmentDate from API
+          // appointmentTime là string, không cần fallback
+          appointmentTime: item.appointmentTime || null,
+          // appointmentDate là array, nếu không có thì null
+          appointmentDate: item.appointmentDate || null,
         }))
       );
     } catch (error) {
@@ -154,13 +190,13 @@ const TestingProcessMonitoringPage = () => {
       title: "Appointment Date",
       dataIndex: "appointmentDate",
       key: "appointmentDate",
-      render: (date) => (date ? date : "-"),
+      render: (date) => formatDateArray(date),
     },
     {
       title: "Appointment Time",
       dataIndex: "appointmentTime",
       key: "appointmentTime",
-      render: (appointmentTime) => formatDate(appointmentTime),
+      render: (appointmentTime) => formatTime(appointmentTime),
     },
     {
       title: "Status",
@@ -223,15 +259,22 @@ const TestingProcessMonitoringPage = () => {
       title: "Last Update Status",
       dataIndex: "lastUpdate",
       key: "lastUpdate",
-      render: (lastUpdate) => formatDate(lastUpdate),
+      render: (lastUpdate) => formatDateTime(lastUpdate),
       sorter: (a, b) => {
-        const dateA = Array.isArray(a.lastUpdate)
-          ? new Date(a.lastUpdate[0], a.lastUpdate[1] - 1, a.lastUpdate[2])
-          : new Date(a.lastUpdate || 0);
-        const dateB = Array.isArray(b.lastUpdate)
-          ? new Date(b.lastUpdate[0], b.lastUpdate[1] - 1, b.lastUpdate[2])
-          : new Date(b.lastUpdate || 0);
-        return dateA.getTime() - dateB.getTime();
+        const getDate = (val) => {
+          if (Array.isArray(val) && val.length >= 3) {
+            return new Date(
+              val[0],
+              val[1] - 1,
+              val[2],
+              val[3] || 0,
+              val[4] || 0
+            );
+          }
+          if (val) return new Date(val);
+          return new Date(0);
+        };
+        return getDate(a.lastUpdate) - getDate(b.lastUpdate);
       },
     },
   ];
@@ -256,10 +299,10 @@ const TestingProcessMonitoringPage = () => {
         test.assignedID,
         test.customerName,
         test.staffName,
-        formatDate(test.appointmentTime), // Use formatter
+        formatTime(test.appointmentTime),
         test.serviceType,
         test.status,
-        formatDate(test.lastUpdate), // Use formatter
+        formatDateTime(test.lastUpdate),
       ]);
       autoTable(doc, {
         head: [tableColumn],
@@ -328,7 +371,7 @@ const TestingProcessMonitoringPage = () => {
               onChange={(value) => setStatusFilter(value)}
               style={{ width: "100%" }}
               allowClear={true}>
-              <Option value={undefined}>All Statuses</Option>
+              <Option value="">All Statuses</Option>
               <Option value="Awaiting confirm">Awaiting confirm</Option>
               <Option value="Booking confirmed">Booking confirmed</Option>
               <Option value="Awaiting Sample">Awaiting Sample</Option>

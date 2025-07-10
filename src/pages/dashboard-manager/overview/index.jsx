@@ -125,6 +125,7 @@ const ManagerOverviewPage = () => {
     // 2. Test Status Distribution chart: đếm số lượng booking theo status thực tế
     const statusCountMap = {};
     assignedBookings.forEach((b) => {
+      if (b.status === "Is paid") return; // Skip 'Is paid' status
       if (!statusCountMap[b.status]) statusCountMap[b.status] = 0;
       statusCountMap[b.status] += 1;
     });
