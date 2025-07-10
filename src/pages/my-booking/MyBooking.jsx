@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   Typography,
@@ -24,6 +25,7 @@ import {
   EyeOutlined,
   ExperimentOutlined,
   DownloadOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import api from "../../configs/axios";
@@ -34,6 +36,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const MyBooking = () => {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -111,6 +114,9 @@ const MyBooking = () => {
   }
 };
 
+  const handleNavigateToFeedback = (bookingId) => {
+    navigate(`/feedback?bookingId=${bookingId}`);
+  };
 
   const getStatusTag = (status) => {
     let color = "default";
@@ -205,13 +211,24 @@ const MyBooking = () => {
       </Button>
       
       {record.status === "Completed" && (
-        <Button
-          icon={<DownloadOutlined />}
-          type="primary"
-          onClick={() => handleDownloadResult(record)}
-        >
-          Tải kết quả
-        </Button>
+        <>
+          <Button
+            icon={<DownloadOutlined />}
+            type="primary"
+            onClick={() => handleDownloadResult(record)}
+          >
+            Tải kết quả
+          </Button>
+          
+          <Button
+            icon={<CommentOutlined />}
+            type="default"
+            style={{ backgroundColor: '#13c2c2', color: 'white' }}
+            onClick={() => handleNavigateToFeedback(record.bookingId)}
+          >
+            Feedback
+          </Button>
+        </>
       )}
     </Space>
   ),

@@ -91,26 +91,32 @@ const ViewReports = () => {
 
   const handleApproveReport = async (record) => {
     setApproveLoading(true);
-    // Defensive: try both assignedID and assignedId, fallback to id
-    const assignId = record.assignedID || record.assignedId || record.id;
-    if (!assignId) {
-      toast.error("Cannot approve: missing assignedID.");
+    // Defensive: try both reportID and id
+    const reportId = record.reportID || record.id;
+    if (!reportId) {
+      toast.error("Cannot approve: missing reportID.");
       setApproveLoading(false);
       setApprovingReport(null);
       return;
     }
-    setApprovingReport(assignId);
+    setApprovingReport(reportId);
     try {
-      await api.patch(`/manager/assign-staff/${assignId}`, {
-        isApproved: true,
-      });
+      // Gửi đúng kiểu dữ liệu cho backend: isApproved: true (boolean) theo DTO, truyền qua body (nếu backend yêu cầu)
+      await api.patch(`/manager/${reportId}/report`, { isApproved: true });
+      // Refetch both reports and bookingAssigned immediately after approve
+      await fetchAllReports();
+      // Luôn hiển thị toast thành công nếu không có lỗi, không kiểm tra phản hồi nữa
       toast.success(`Report #${record.reportID} approved successfully!`);
-      fetchAllReports();
     } catch (error) {
-      toast.error(
-        "Failed to approve report: " +
-          (error.response?.data?.message || error.message)
-      );
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to approve report: " + error.message);
+      }
     } finally {
       setApproveLoading(false);
       setApprovingReport(null);
@@ -203,6 +209,8 @@ const ViewReports = () => {
       title: "Action",
       key: "action",
       fixed: "right",
+      align: "center",
+      responsive: ["md"],
       width: 120,
       render: (_, record) => (
         <Button
@@ -247,23 +255,53 @@ const ViewReports = () => {
         staffId: item.staffID,
         staffName: item.staffID,
         createdAt: item.createdAt,
-        isApproved: item.isApproved,
+        // Chuyển đổi isApproved: 0 -> false, 1 -> true, còn lại giữ nguyên (fix: parseInt để tránh lỗi kiểu string)
+        isApproved:
+          parseInt(item.isApproved) === 1
+            ? true
+            : parseInt(item.isApproved) === 0
+            ? false
+            : item.isApproved,
       }));
       setReports(normalized);
-      // Staff list: chỉ lấy unique staffID
+      // Lấy danh sách staff từ API riêng (nếu có), nếu không thì lấy từ tất cả các report và bookingAssigned
+      let allStaff = [];
+      try {
+        const staffRes = await api.get("/manager/all-staff");
+        // Giả sử API trả về mảng staff có id và name
+        if (Array.isArray(staffRes.data)) {
+          allStaff = staffRes.data.map((s) => ({
+            id: s.staffID || s.id,
+            name: s.name || s.staffName || s.staffID || s.id,
+          }));
+        } else if (Array.isArray(staffRes.data?.data)) {
+          allStaff = staffRes.data.data.map((s) => ({
+            id: s.staffID || s.id,
+            name: s.name || s.staffName || s.staffID || s.id,
+          }));
+        }
+      } catch {
+        // Nếu không có API riêng, fallback lấy từ report và bookingAssigned
+        const staffFromReports = normalized
+          .filter((r) => r.staffID)
+          .map((r) => ({ id: r.staffID, name: r.staffID }));
+        allStaff = staffFromReports;
+      }
+      // Loại bỏ trùng lặp staff theo id
       const uniqueStaff = Array.from(
-        new Map(
-          normalized
-            .filter((r) => r.staffID)
-            .map((r) => [r.staffID, { id: r.staffID, name: r.staffID }])
-        ).values()
+        new Map(allStaff.filter((s) => s.id).map((s) => [s.id, s])).values()
       );
       setStaffList(uniqueStaff);
     } catch (error) {
-      toast.error(
-        "Failed to fetch all reports: " +
-          (error.response?.data?.message || error.message)
-      );
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to fetch all reports: " + error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -282,6 +320,7 @@ const ViewReports = () => {
         bookingID: item.bookingID,
         bookingId: item.bookingID,
         appointmentTime: item.appointmentTime,
+        appointmentDate: item.appointmentDate, // <-- Ensure appointmentDate is included
         status: item.status,
         assignedId: item.assignedID,
         assignedID: item.assignedID,
@@ -290,10 +329,15 @@ const ViewReports = () => {
       }));
       setBookingAssigned(normalized);
     } catch (error) {
-      toast.error(
-        "Failed to fetch booking assigned: " +
-          (error.response?.data?.message || error.message)
-      );
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to fetch booking assigned: " + error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -336,18 +380,31 @@ const ViewReports = () => {
         managerID: managerID,
       });
       toast.success(
-        `Successfully assigned staff to report ${selectedBooking.reportID}`
+        `Successfully assigned ${selectedStaff} to report ${
+          selectedBooking?.reportID || selectedBooking?.id
+        }`
       );
       setIsModalVisible(false);
       setSelectedBooking(null);
       setSelectedStaff(null);
-      // Refresh all reports
+      // Refresh all reports and bookingAssigned after assign
       fetchAllReports();
+      fetchBookingAssigned();
     } catch (error) {
-      toast.error(
-        "Failed to assign staff: " +
-          (error.response?.data?.message || error.message)
-      );
+      if (
+        error.response &&
+        error.response.data &&
+        (typeof error.response.data === "string" || error.response.data.message)
+      ) {
+        // Nếu response.data là string thì show trực tiếp, nếu có message thì show message
+        toast.error(
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message
+        );
+      } else {
+        toast.error("Failed to assign staff: " + error.message);
+      }
     } finally {
       setAssignLoading(false);
     }
@@ -523,8 +580,8 @@ const ViewReports = () => {
       title: "Appointment Date",
       dataIndex: "appointmentDate",
       key: "appointmentDate",
-      width: 140,
       render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
+      width: 120,
     },
     {
       title: "Appointment Time",
@@ -552,6 +609,8 @@ const ViewReports = () => {
       title: "Action",
       key: "action",
       fixed: "right",
+      align: "center",
+      responsive: ["md"],
       width: 120,
       render: (_, record) => (
         <Button
@@ -586,11 +645,16 @@ const ViewReports = () => {
             }}>
             <Title level={3} style={{ margin: 0 }}>
               Reports Awaiting Assignment (
-              {reports.filter((r) => r.status === "Pending").length})
+              {
+                bookingAssigned.filter((b) => b.status === "Awaiting confirm")
+                  .length
+              }
+              )
             </Title>
             <Button
               icon={<ReloadOutlined />}
               onClick={fetchAllReports}
+              type="primary"
               loading={loading}>
               Refresh
             </Button>
@@ -599,9 +663,42 @@ const ViewReports = () => {
             <Table
               loading={loading}
               columns={assignBookingColumns}
-              dataSource={bookingAssigned.filter(
-                (b) => b.status === "Awaiting confirm"
-              )}
+              dataSource={bookingAssigned
+                .filter((b) => b.status === "Awaiting confirm")
+                .sort((a, b) => {
+                  // 1. Sort by appointmentDate (closest first)
+                  const dateA = a.appointmentDate
+                    ? new Date(a.appointmentDate)
+                    : new Date(0);
+                  const dateB = b.appointmentDate
+                    ? new Date(b.appointmentDate)
+                    : new Date(0);
+                  if (dateA.getTime() !== dateB.getTime()) {
+                    return dateA - dateB;
+                  }
+                  // 2. If same date, sort by appointmentTime (closest first)
+                  const timeA = a.appointmentTime || "";
+                  const timeB = b.appointmentTime || "";
+                  const getMinutes = (t) => {
+                    if (!t) return 0;
+                    const match = t.match(/(\d{1,2}):(\d{2})/);
+                    if (match) {
+                      return (
+                        parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+                      );
+                    }
+                    return 0;
+                  };
+                  const minA = getMinutes(timeA);
+                  const minB = getMinutes(timeB);
+                  if (minA !== minB) {
+                    return minA - minB;
+                  }
+                  // 3. If same time, sort by bookingID (ascending)
+                  const bookingA = a.bookingID || a.bookingId || 0;
+                  const bookingB = b.bookingID || b.bookingId || 0;
+                  return bookingA.toString().localeCompare(bookingB.toString());
+                })}
               rowKey={(record) =>
                 record.assignedID ||
                 record.id ||
@@ -661,6 +758,7 @@ const ViewReports = () => {
             <Button
               icon={<ReloadOutlined />}
               onClick={fetchAllReports}
+              type="primary"
               loading={loading}>
               Refresh
             </Button>
@@ -669,13 +767,48 @@ const ViewReports = () => {
             <Table
               loading={loading}
               columns={approveColumns}
-              dataSource={reports.filter(
-                (r) =>
-                  r.isApproved === false ||
-                  r.isApproved === 0 ||
-                  r.isApproved === null ||
-                  typeof r.isApproved === "undefined"
-              )}
+              dataSource={reports
+                .filter(
+                  (r) =>
+                    r.isApproved === false ||
+                    r.isApproved === 0 ||
+                    r.isApproved === null ||
+                    typeof r.isApproved === "undefined"
+                )
+                .sort((a, b) => {
+                  // 1. Sort by appointmentDate (closest first)
+                  const dateA = a.appointmentDate
+                    ? new Date(a.appointmentDate)
+                    : new Date(0);
+                  const dateB = b.appointmentDate
+                    ? new Date(b.appointmentDate)
+                    : new Date(0);
+                  if (dateA.getTime() !== dateB.getTime()) {
+                    return dateA - dateB;
+                  }
+                  // 2. If same date, sort by appointmentTime (closest first)
+                  const timeA = a.appointmentTime || "";
+                  const timeB = b.appointmentTime || "";
+                  const getMinutes = (t) => {
+                    if (!t) return 0;
+                    const match = t.match(/(\d{1,2}):(\d{2})/);
+                    if (match) {
+                      return (
+                        parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+                      );
+                    }
+                    return 0;
+                  };
+                  const minA = getMinutes(timeA);
+                  const minB = getMinutes(timeB);
+                  if (minA !== minB) {
+                    return minA - minB;
+                  }
+                  // 3. If same time, sort by bookingID (ascending)
+                  const bookingA = a.bookingID || a.bookingId || 0;
+                  const bookingB = b.bookingID || b.bookingId || 0;
+                  return bookingA.toString().localeCompare(bookingB.toString());
+                })}
               rowKey={(record) =>
                 record.id || record.bookingId || Math.random().toString()
               }
@@ -772,15 +905,12 @@ const ViewReports = () => {
                     "all_reports.pdf"
                   )
                 }
-                style={{
-                  background: "#1677ff",
-                  color: "#fff",
-                  border: "none",
-                }}>
+                type="default">
                 Export PDF
               </Button>
               <Button
                 icon={<ReloadOutlined />}
+                type="primary"
                 onClick={fetchAllReports}
                 loading={loading}>
                 Refresh
@@ -849,7 +979,6 @@ const ViewReports = () => {
       ),
     },
   ];
-
   return (
     <div style={{ padding: "0 24px" }}>
       <Title level={2} style={{ margin: 0, marginBottom: 24 }}>
@@ -888,16 +1017,10 @@ const ViewReports = () => {
           </Button>,
         ]}
         styles={{ body: { textAlign: "left" } }}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 12,
-            minWidth: 320,
-          }}>
+        <div>
           <div>
-            <strong>Report ID:</strong> {selectedBooking?.id}
+            <strong>Assigned ID:</strong>{" "}
+            {selectedBooking?.assignedID || selectedBooking?.assignedId}
           </div>
           <div>
             <strong>Booking ID:</strong> {selectedBooking?.bookingId}

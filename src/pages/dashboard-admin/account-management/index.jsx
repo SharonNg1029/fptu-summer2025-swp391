@@ -99,16 +99,15 @@ const AccountManagement = () => {
   // Kiểm tra customer có booking nào chưa hoàn thành (status khác Completed/Cancel)
   const checkActiveOrders = async (accountId) => {
     try {
-      const response = await api.get("/booking/bookings", {
-        params: { customerID: accountId },
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Accept': 'application/json; charset=utf-8',
-        }
-      });
+      // Lấy tất cả booking, không truyền customerID
+      const response = await api.get("/booking/bookings");
       const bookings = response.data?.data || response.data || [];
+      // Lọc booking theo customerID ở FE
+      const customerBookings = bookings.filter(
+        (b) => b.customerID === accountId
+      );
       // Đếm số booking có status khác Completed và Cancel (không phân biệt hoa thường)
-      const hasActive = bookings.some((b) => {
+      const hasActive = customerBookings.some((b) => {
         const status = String(b.status || "").toLowerCase();
         return (
           status !== "completed" &&
@@ -130,27 +129,27 @@ const AccountManagement = () => {
    */
   const fetchActiveOrdersStatus = useCallback(async (accountsData) => {
     try {
-      const customerAccounts = accountsData.filter(
-        (acc) => acc.role === "CUSTOMER"
+      // Lấy tất cả booking một lần
+      const response = await api.get("/booking/bookings");
+      const bookings = response.data?.data || response.data || [];
+      // Lọc ra các booking đang active (status khác Completed/Cancel, không phân biệt hoa thường)
+      const activeBookings = bookings.filter(
+        (b) =>
+          String(b.status).toLowerCase() !== "completed" &&
+          String(b.status).toLowerCase() !== "cancel"
       );
-      const activeOrdersPromises = customerAccounts.map(async (account) => {
-        try {
-          const hasActiveOrders = await checkActiveOrders(account.id);
-          return { accountId: account.id, hasActiveOrders };
-        } catch (error) {
-          console.error(
-            `Error checking active orders for account ${account.id}:`,
-            error
-          );
-          return { accountId: account.id, hasActiveOrders: false };
-        }
-      });
-
-      const results = await Promise.all(activeOrdersPromises);
+      // Lấy danh sách customerID có active booking
+      const customerIDsWithActive = new Set(
+        activeBookings.map((b) => b.customerID)
+      );
+      // Lọc accounts là customer và có active booking
+      const customerAccounts = accountsData.filter(
+        (acc) => String(acc.role).toUpperCase() === "CUSTOMER"
+      );
       const accountsWithOrders = new Set(
-        results
-          .filter((result) => result.hasActiveOrders)
-          .map((result) => result.accountId)
+        customerAccounts
+          .filter((acc) => customerIDsWithActive.has(acc.id))
+          .map((acc) => acc.id)
       );
       setAccountsWithActiveOrders(accountsWithOrders);
     } catch (error) {
@@ -253,15 +252,14 @@ const AccountManagement = () => {
 
     // Cannot delete if customer has active orders
     if (
-      account.role === "CUSTOMER" &&
+      String(account.role).toUpperCase() === "CUSTOMER" &&
       accountsWithActiveOrders.has(account.id)
     ) {
       return {
         canDelete: false,
-        reason: "Account has active orders that need to be completed first",
+        reason: "This customer has active orders and cannot be deleted.",
       };
     }
-
     return { canDelete: true, reason: null };
   };
 
@@ -343,8 +341,13 @@ const AccountManagement = () => {
     } catch (error) {
       console.error("Error deleting account:", error);
       let errorMessage = "Failed to delete account";
+      // Ưu tiên lấy message từ API response nếu có
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+      } else if (typeof error.response?.data === "string") {
+        errorMessage = error.response.data;
+      } else if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
       } else if (error.response?.status === 403) {
         errorMessage = "You don't have permission to delete this account";
       } else if (error.response?.status === 404) {
@@ -644,9 +647,11 @@ const AccountManagement = () => {
           {text}
         </Space>
       ),
+      width: 260,
+      ellipsis: true,
     },
     {
-      title: "Phone",
+      title: "Phone Number",
       dataIndex: "phone",
       key: "phone",
       render: (text) => (
@@ -655,6 +660,8 @@ const AccountManagement = () => {
           {text || "N/A"}
         </Space>
       ),
+      width: 140,
+      ellipsis: true,
     },
     {
       title: "Role",
@@ -707,7 +714,10 @@ const AccountManagement = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 200,
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
+      width: 160,
       render: (_, record) => (
         <Space size="small">
           {/* Edit Button */}

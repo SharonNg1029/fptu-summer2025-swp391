@@ -98,10 +98,7 @@ const LegalServices = () => {
   const isAuthenticated = userState?.isAuthenticated;
   const currentUser = userState?.currentUser;
 
-  console.log('👤 Current user:', 'loclnx');
-  console.log('📅 Current UTC Time:', '2025-07-02 12:16:28');
-  console.log('🔐 Is Authenticated:', isAuthenticated);
-  console.log('⚖️ Legal Services Page Access');
+
 
   const formatToVND = (price) =>
     new Intl.NumberFormat("vi-VN", {

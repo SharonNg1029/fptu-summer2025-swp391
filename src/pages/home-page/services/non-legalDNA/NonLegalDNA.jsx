@@ -126,9 +126,7 @@ const NonLegalServices = () => {
   const isAuthenticated = userState?.isAuthenticated;
   const currentUser = userState?.currentUser;
 
-  console.log('👤 Current user:', 'loclnx');
-  console.log('📅 Current UTC Time:', '2025-07-02 12:12:38');
-  console.log('🔐 Is Authenticated:', isAuthenticated);
+
 
   const formatToVND = (price) =>
     new Intl.NumberFormat("vi-VN", {

@@ -1,4 +1,3 @@
-import axios from "axios"
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -40,14 +39,11 @@ const ProfilePage = () => {
   const fileInputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // Ưu tiên lấy đúng ID theo role
   let userID = null;
   if (userRole === "customer") userID = customerID;
   else if (userRole === "staff") userID = staffID;
   else if (userRole === "manager") userID = managerID;
   else if (userRole === "admin") userID = adminID;
-
-  // Nếu vẫn không có userID, fallback lấy từ currentUser
   if (!userID && currentUser) {
     userID =
       currentUser?.customerID ||
@@ -60,8 +56,6 @@ const ProfilePage = () => {
       currentUser?.adminId;
   }
 
-  // Hiển thị thông báo lỗi nếu không tìm thấy userID
-  // (Không nên gọi setTimeout trong render, nên chuyển vào useEffect)
   useEffect(() => {
     if (!userID && currentUser) {
       setTimeout(() => {
@@ -87,13 +81,11 @@ const ProfilePage = () => {
     gender: "",
   });
 
-  // ✅ Thêm state cho DOB validation
   const [dobValidation, setDobValidation] = useState({
     isValid: true,
     message: "",
   });
 
-  // ✅ Helper function để get max date (ngày hiện tại)
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -102,57 +94,44 @@ const ProfilePage = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // ✅ Helper function để get min date (100 năm trước)
   const getMinDate = () => {
     const today = new Date();
     const minYear = today.getFullYear() - 100;
     return `${minYear}-01-01`;
   };
 
-  // ✅ Validation function cho DOB
   const validateDateOfBirth = (dateValue) => {
     if (!dateValue) return { isValid: true, message: "" };
-
     const selectedDate = new Date(dateValue);
     const today = new Date();
     const hundredYearsAgo = new Date();
     hundredYearsAgo.setFullYear(today.getFullYear() - 100);
-
-    // Reset time to compare only dates
     today.setHours(23, 59, 59, 999);
     selectedDate.setHours(0, 0, 0, 0);
-
     if (selectedDate > today) {
       return {
         isValid: false,
         message: "Date of birth cannot be in the future",
       };
     }
-
     if (selectedDate < hundredYearsAgo) {
       return {
         isValid: false,
         message: "Please enter a valid date of birth",
       };
     }
-
     return { isValid: true, message: "" };
   };
 
-  // ✅ UTF-8 Encoding Fix Functions
   const fixVietnameseEncoding = (text) => {
     if (!text || typeof text !== "string") return text;
-
     try {
-      // Method 1: Try decoding if it's URL encoded
       if (text.includes("%")) {
         const decoded = decodeURIComponent(text);
         if (decoded !== text) {
           return decoded;
         }
       }
-
-      // Method 2: Fix common Vietnamese encoding issues
       const replacements = {
         "Nguy?n": "Nguyễn",
         "Tr?n": "Trần",
@@ -173,16 +152,13 @@ const ProfilePage = () => {
         ả: "ả",
         ã: "ã",
         ạ: "ạ",
-        // Add more mappings as needed
       };
-
       let fixed = text;
       Object.entries(replacements).forEach(([wrong, correct]) => {
         if (fixed.includes(wrong)) {
           fixed = fixed.replace(new RegExp(wrong, "g"), correct);
         }
       });
-
       return fixed;
     } catch (error) {
       console.error("❌ Error fixing Vietnamese encoding:", error);
@@ -190,51 +166,37 @@ const ProfilePage = () => {
     }
   };
 
-  // ✅ Enhanced normalize Vietnamese function
   const normalizeVietnamese = (text, shouldTrim = false) => {
     if (!text) return text;
-
-    // First fix encoding issues
     let fixed = fixVietnameseEncoding(text);
-
-    // Then normalize Unicode
     fixed = fixed.normalize("NFD").normalize("NFC");
-
     if (shouldTrim) {
       fixed = fixed.trim();
     }
-
     return fixed;
   };
 
-  // ✅ FIXED: Gender conversion functions với 1073741824 support
   const convertDatabaseGenderToUI = (dbGender) => {
-    // Database: 0 = Male, 1 = Female, 1073741824 = Not specified
-    // UI: 1 = Male, 2 = Female, "" = Not specified
     if (dbGender === 0 || dbGender === "0") {
-      return "1"; // Male
+      return "1";
     }
     if (dbGender === 1 || dbGender === "1") {
-      return "2"; // Female
+      return "2";
     }
     if (dbGender === 1073741824) {
-      return ""; // Not specified
+      return "";
     }
-
-    return ""; // Unknown
+    return "";
   };
 
   const convertUIGenderToDatabase = (uiGender) => {
-    // UI: 1 = Male, 2 = Female, "" = Not specified
-    // Database: 0 = Male, 1 = Female, null = Not specified
     if (uiGender === "1" || uiGender === 1) {
-      return 0; // Male
+      return 0;
     }
     if (uiGender === "2" || uiGender === 2) {
-      return 1; // Female
+      return 1;
     }
-
-    return null; // Not specified
+    return null;
   };
 
   const getGenderDisplayText = (dbGender) => {
@@ -244,7 +206,6 @@ const ProfilePage = () => {
     return "Not provided";
   };
 
-  // ✅ Updated helper function để clean placeholder values
   const cleanPlaceholderValue = (value) => {
     if (!value) return "";
     const placeholders = [
@@ -264,12 +225,11 @@ const ProfilePage = () => {
     return value;
   };
 
-  // ✅ Helper function để lấy tất cả fields từ database
-  const getFieldValue = (profile, fieldName, fallbackFields = []) => {
-    // Thử lấy từ field chính
-    let value = profile?.[fieldName];
 
-    // Nếu không có, thử các fallback fields
+  // ✅ Helper function để lấy tất cả fields từ database
+
+  const getFieldValue = (profile, fieldName, fallbackFields = []) => {
+    let value = profile?.[fieldName];
     if (
       (value === null || value === undefined || value === "") &&
       fallbackFields.length > 0
@@ -285,25 +245,19 @@ const ProfilePage = () => {
         }
       }
     }
-
-    // Thử lấy từ account nested object nếu có
     if (
       (value === null || value === undefined || value === "") &&
       profile?.account?.[fieldName]
     ) {
       value = profile.account[fieldName];
     }
-
     return cleanPlaceholderValue(value);
   };
 
-  // ✅ Sửa lại function formatMemberSince để xử lý array date
   const formatMemberSince = (dateValue) => {
     if (!dateValue) return "Unknown";
-
     try {
       let date;
-
       if (Array.isArray(dateValue) && dateValue.length >= 3) {
         const [year, month, day] = dateValue;
         date = new Date(year, month - 1, day);
@@ -314,9 +268,7 @@ const ProfilePage = () => {
       } else {
         return "Unknown";
       }
-
       if (isNaN(date.getTime())) return "Unknown";
-
       return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
@@ -335,35 +287,28 @@ const ProfilePage = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         let apiPath = `/customer/my-info/${userID}`;
         if (userRole === "staff") apiPath = `/staff/my-info/${userID}`;
         if (userRole === "manager") apiPath = `/manager/my-info/${userID}`;
         if (userRole === "admin") apiPath = `/admin/my-info/${userID}`;
-
         const response = await api.get(apiPath, {
           headers: {
             Accept: "application/json; charset=utf-8",
           },
         });
-
         const profile = response.data.data || response.data[0] || response.data;
-        setUserProfile(profile);
 
-        // ✅ Get all database fields với fallbacks
-        const fullName = getFieldValue(profile, "full_name", [
-          "fullName",
-          "fullname",
-        ]);
+
+        const fullName = getFieldValue(profile, "fullName", ["full_name", "fullname"]);
         const email = getFieldValue(profile, "email", ["Email"]);
         const phone = getFieldValue(profile, "phone", ["Phone"]);
         const address = getFieldValue(profile, "address", ["Address"]);
         const rawGender = getFieldValue(profile, "gender", ["Gender"]);
         const dobValue = getFieldValue(profile, "dob", ["DOB", "dateOfBirth"]);
 
-        // ✅ Handle DOB conversion
+
         let dobForInput = "";
         if (dobValue) {
           if (Array.isArray(dobValue) && dobValue.length >= 3) {
@@ -383,8 +328,10 @@ const ProfilePage = () => {
           }
         }
 
-        // ✅ FIXED: Convert gender từ Database sang UI
+
         const genderForUI = convertDatabaseGenderToUI(rawGender);
+
+        setUserProfile(profile);
 
         setEditForm({
           fullName: normalizeVietnamese(fullName, false) || "",
@@ -395,6 +342,8 @@ const ProfilePage = () => {
           gender: genderForUI,
         });
 
+ 
+
         setError(null);
       } catch (err) {
         console.error("❌ Error fetching user profile:", err);
@@ -403,19 +352,15 @@ const ProfilePage = () => {
         setLoading(false);
       }
     };
-
     fetchUserProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userID, userRole]);
 
-  // ✅ Updated handleInputChange với DOB validation
   const handleInputChange = useCallback((field, value) => {
-    // ✅ Validate DOB khi thay đổi
     if (field === "dob") {
       const validation = validateDateOfBirth(value);
       setDobValidation(validation);
     }
-
     setEditForm((prev) => ({
       ...prev,
       [field]:
@@ -423,92 +368,63 @@ const ProfilePage = () => {
           ? normalizeVietnamese(value, false)
           : normalizeVietnamese(value, true),
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Updated handleSaveProfile với UTF-8 headers và DOB validation
   const handleSaveProfile = async () => {
     if (!userID) return;
-
-    // ✅ Validate DOB trước khi save
     const dobValidationResult = validateDateOfBirth(editForm.dob);
     if (!dobValidationResult.isValid) {
       setError(dobValidationResult.message);
       toast.error(dobValidationResult.message);
       return;
     }
-
     setSaving(true);
     setError(null);
-
     try {
-
-      // ✅ Correct update paths
       let updatePath = `/customer/my-account/${userID}`;
       if (userRole === "staff") updatePath = `/staff/my-account/${userID}`;
       if (userRole === "manager") updatePath = `/manager/my-account/${userID}`;
       if (userRole === "admin") updatePath = `/admin/my-account/${userID}`;
-
-      // ✅ FIXED: Convert gender từ UI sang Database
       const genderForDatabase = convertUIGenderToDatabase(editForm.gender);
-
-      // ✅ FIXED: Convert DOB string to array format [year, month, day]
       let dobForDatabase = null;
       if (editForm.dob) {
         const dobParts = editForm.dob.split("-");
         if (dobParts.length === 3) {
           dobForDatabase = [
-            parseInt(dobParts[0]), // year
-            parseInt(dobParts[1]), // month
-            parseInt(dobParts[2]), // day
+            parseInt(dobParts[0]),
+            parseInt(dobParts[1]),
+            parseInt(dobParts[2]),
           ];
         }
       }
-
       const formData = {
         fullName: normalizeVietnamese(editForm.fullName, false) || null,
-        // ✅ REMOVED: email field - không được phép thay đổi
         phone: normalizeVietnamese(editForm.phone, true) || null,
         address: normalizeVietnamese(editForm.address, false) || null,
-        dob: dobForDatabase, // ✅ FIXED: Use array format
+        dob: dobForDatabase,
         gender: genderForDatabase,
         avatar: editForm.avatar || null
       };
-
-      // Remove null/empty values
       const cleanFormData = Object.entries(formData).reduce(
         (acc, [key, value]) => {
           if (value !== null && value !== "" && value !== undefined) {
             acc[key] = value;
           }
           return acc;
-        },
-        {}
+        }, {}
       );
-
-      console.log("💾 Saving profile data:", {
-        userRole,
-        userID,
-        updatePath,
-        cleanFormData,
-      });
-
+    
       await api.patch(updatePath, cleanFormData, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           Accept: "application/json; charset=utf-8",
         },
       });
-
-      // ✅ CORRECT refresh paths với UTF-8 headers
       let refreshPath = `/customer/my-info/${userID}`;
       if (userRole === "staff") refreshPath = `/staff/my-info/${userID}`;
       if (userRole === "manager") refreshPath = `/manager/my-info/${userID}`;
       if (userRole === "admin") refreshPath = `/admin/my-info/${userID}`;
-
-      // Wait for server to commit
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const refreshResponse = await api.get(refreshPath, {
         headers: {
           Accept: "application/json; charset=utf-8",
@@ -519,16 +435,11 @@ const ProfilePage = () => {
           _t: Date.now(),
         },
       });
-
       const refreshedProfile =
         refreshResponse.data.data ||
         refreshResponse.data[0] ||
         refreshResponse.data;
-
-      // ✅ Update states
       setUserProfile(refreshedProfile);
-
-      // ✅ Re-extract all fields
       const refreshedFullName = getFieldValue(refreshedProfile, "full_name", [
         "fullName",
         "fullname",
@@ -549,8 +460,6 @@ const ProfilePage = () => {
         "DOB",
         "dateOfBirth",
       ]);
-
-      // ✅ FIXED: Handle DOB conversion
       let refreshedDobForInput = "";
       if (refreshedDob) {
         if (Array.isArray(refreshedDob) && refreshedDob.length >= 3) {
@@ -565,11 +474,7 @@ const ProfilePage = () => {
           refreshedDobForInput = refreshedDob;
         }
       }
-
-      // ✅ FIXED: Convert gender từ Database sang UI
-
       const refreshedGenderForUI = convertDatabaseGenderToUI(refreshedRawGender);
-
       const updatedEditForm = {
         fullName: normalizeVietnamese(refreshedFullName, false) || "",
         dob: refreshedDobForInput,
@@ -577,12 +482,9 @@ const ProfilePage = () => {
         phone: normalizeVietnamese(refreshedPhone, true) || "",
         address: normalizeVietnamese(refreshedAddress, false) || "",
         gender: refreshedGenderForUI,
-        avatar:getFieldValue(refreshedProfile, "avatar", ["avatarPath"]) || ""
+        avatar: getFieldValue(refreshedProfile, "avatar", ["avatarPath"]) || ""
       };
-
       setEditForm(updatedEditForm);
-
-      // Đảm bảo cập nhật fullName mới vào redux (ưu tiên trường fullName chuẩn hóa)
       let newFullName = normalizeVietnamese(refreshedFullName, false) || "";
       dispatch(
         updateUser({
@@ -591,13 +493,9 @@ const ProfilePage = () => {
           fullName: newFullName,
         })
       );
-
       setIsEditing(false);
       setSuccess(true);
-
-      // ✅ Reset DOB validation sau khi save thành công
       setDobValidation({ isValid: true, message: "" });
-
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       console.error("❌ Error updating profile:", err);
@@ -610,7 +508,6 @@ const ProfilePage = () => {
   };
 
   const handleCancelEdit = () => {
-    // ✅ Reset với extracted data từ userProfile
     const fullName = getFieldValue(userProfile, "full_name", [
       "fullName",
       "fullname",
@@ -620,7 +517,6 @@ const ProfilePage = () => {
     const address = getFieldValue(userProfile, "address", ["Address"]);
     const rawGender = getFieldValue(userProfile, "gender", ["Gender"]);
     const dobValue = getFieldValue(userProfile, "dob", ["DOB", "dateOfBirth"]);
-
     let dobForInput = "";
     if (dobValue) {
       if (Array.isArray(dobValue) && dobValue.length >= 3) {
@@ -632,10 +528,8 @@ const ProfilePage = () => {
         dobForInput = dobValue;
       }
     }
-
-    // ✅ FIXED: Convert gender từ Database sang UI
     const genderForUI = convertDatabaseGenderToUI(rawGender);
-    const avatarPath = getFieldValue(profile, "avatar", ["avatarPath"]);
+    const avatarPath = getFieldValue(userProfile, "avatar", ["avatarPath"]);
     setEditForm({
       fullName: normalizeVietnamese(fullName, false) || "",
       dob: dobForInput,
@@ -645,8 +539,6 @@ const ProfilePage = () => {
       gender: genderForUI,
       avatar: avatarPath || "",
     });
-
-    // ✅ Reset DOB validation khi cancel
     setDobValidation({ isValid: true, message: "" });
     setIsEditing(false);
     setError(null);
@@ -659,32 +551,22 @@ const ProfilePage = () => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
     try {
       const formData = new FormData();
       formData.append("file", file);
-  
-      // Gọi API upload ảnh
       const response = await api.post("/files/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-  
       const uploadedPath = response?.data?.path || response?.data?.data || response?.data;
-  
       if (!uploadedPath) {
         throw new Error("Upload succeeded but no path returned.");
       }
-  
-      // Tạo preview cho giao diện
       const preview = URL.createObjectURL(file);
       setPreviewUrl(preview);
-  
-      //Lưu vào form để khi Save gửi cùng thông tin
       setEditForm((prev) => ({
         ...prev,
         avatar: uploadedPath.startsWith("/media") ? uploadedPath : `/media/${uploadedPath}`,
       }));
-  
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Upload failed. Please try again.");
@@ -699,7 +581,6 @@ const ProfilePage = () => {
 
   const handleChangePassword = () => {
     let passwordResetPath = "/reset-password";
-
     if (userRole === "admin" && userID) {
       passwordResetPath = `/admin/reset-password/${userID}`;
     } else if (userRole === "staff" && userID) {
@@ -709,9 +590,9 @@ const ProfilePage = () => {
     } else if (userRole === "customer" && userID) {
       passwordResetPath = `/customer/reset-password/${userID}`;
     }
-
     navigate(passwordResetPath);
   };
+
 
   if (loading) {
     return (
@@ -1157,8 +1038,8 @@ const ProfilePage = () => {
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 font-medium vietnamese-text">
-                      Member Since
+                    <span className="text-gray-600 font-mono vietnamese-text">
+                      Member Since&nbsp; 
                     </span>
                     <span className="text-gray-800 font-semibold vietnamese-text">
                       {formatMemberSince(

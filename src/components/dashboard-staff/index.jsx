@@ -10,7 +10,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
-  HistoryOutlined, // Added for Staff Reporting
+  HistoryOutlined,
+  FileTextOutlined, // Added for Staff Reporting
 } from "@ant-design/icons";
 import {
   Layout,
@@ -44,8 +45,9 @@ function getItem(label, key, icon, children) {
 
 const items = [
   getItem("Dashboard", "overview", <DashboardOutlined />),
-  getItem("Assigned Progress", "order-processing", <FormOutlined />), // Combined page
-  getItem("Reporting Today", "staff-reporting", <HistoryOutlined />), // Combined page
+  getItem("Assigned Progress", "order-processing", <FormOutlined />),
+  getItem("Result Management", "result-management", <FileTextOutlined />),
+  getItem("Reporting Today", "staff-reporting", <HistoryOutlined />),
 ];
 
 const StaffDashboard = () => {
@@ -183,14 +185,8 @@ const StaffDashboard = () => {
               showIcon={true}
               showConfirmation={true}
               style={{ height: 40 }}
-              onLogoutSuccess={() => {
-                // Callback khi logout thành công (tùy chọn)
-                console.log("Logout completed successfully");
-              }}
-              onLogoutError={(error) => {
-                // Callback khi logout lỗi (tùy chọn)
-                console.log("Logout error:", error);
-              }}
+              onLogoutSuccess={() => {}}
+              onLogoutError={() => {}}
             />
           </div>
         </Header>
