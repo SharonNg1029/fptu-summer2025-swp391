@@ -131,6 +131,7 @@ const FeedbackPage = () => {
             await api.post(
               `/customer/feedback/${bookingID}/${customerID}`,
               {
+                title: "We appreciate your trust\nPlease provide your feedback on our service.",
                 content: values.content,
                 rating: values.rating,
                 createAt: createAt,
