@@ -154,6 +154,39 @@ const ConfirmBookingModal = ({
     };
     return collectionTranslations[collectionMethod] || collectionMethod;
   };
+  
+  // Hàm dịch mối quan hệ sang tiếng Việt cho PDF
+  const translateRelationshipToPDF = (relationship) => {
+    const relationshipTranslations = {
+      "Father": "Cha",
+      "Mother": "Mẹ",
+      "Child": "Con",
+      "Sibling": "Anh/Chị/Em",
+      "Brother": "Anh/Em trai",
+      "Sister": "Chị/Em gái",
+      "Grandparent": "Ông/Bà",
+      "Grandchild": "Cháu",
+      "Uncle": "Chú/Bác",
+      "Aunt": "Cô/Dì",
+      "Nephew": "Cháu trai",
+      "Niece": "Cháu gái",
+      "Cousin": "Anh/Chị/Em họ"
+    };
+    return relationshipTranslations[relationship] || relationship;
+  };
+
+  // Hàm dịch loại mẫu sang tiếng Việt cho PDF
+  const translateSampleTypeToPDF = (sampleType) => {
+    const sampleTypeTranslations = {
+      "Blood": "Máu",
+      "Buccal Swab": "Tế bào niêm mạc má",
+      "Hair": "Tóc",
+      "Saliva": "Nước bọt",
+      "Tissue": "Mô",
+      "Other": "Khác"
+    };
+    return sampleTypeTranslations[sampleType] || sampleType;
+  };
 
   // ...existing code...
 
@@ -193,18 +226,18 @@ const ConfirmBookingModal = ({
     if (bookingData.collectionMethod?.name === "At Home") {
       return bookingData.homeAddress || "—";
     } else if (bookingData.collectionMethod?.name === "At Facility") {
-      return "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City";
+      return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
     }
-    return "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City";
+    return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
   };
 
-  const getExpressService = () => (bookingData.isExpressService ? "Yes" : "No");
+  const getExpressService = () => (bookingData.isExpressService ? "Có" : "Không");
 
   const getMediationLabel = (method) => {
-    if (method === "postal-delivery") return "Gửi bưu điện";
+    if (method === "postal-delivery") return "Gửi qua bưu điện";
     if (method === "staff-collection") return "Nhân viên thu thập";
-    if (method === "walk-in") return "Dịch vụ tại cơ sở";
-    if (method === "express") return "Dịch vụ Express";
+    if (method === "walk-in") return "Dịch vụ tại quầy";
+    if (method === "express") return "Dịch vụ nhanh";
     return method;
   };
 
@@ -543,7 +576,7 @@ const ConfirmBookingModal = ({
         setIsGeneratingPDF(false);
         return;
       }
-      const processingMsg = message.loading("Đang tạo file PDF...", 0);
+      const processingMsg = message.loading("Creating PDF file...", 0);
 
       try {
         await generatePDF(true);
@@ -600,23 +633,23 @@ const ConfirmBookingModal = ({
   const generatePDF = async (shouldDownload = true) => {
     let loadingMessage;
     try {
-      console.log("=== BẮT ĐẦU TẠO PDF ===");
-      loadingMessage = message.loading("Đang tạo file PDF...", 0);
+      console.log("=== START CREATING PDF ===");
+      loadingMessage = message.loading("Creating PDF file...", 0);
       if (!bookingData) {
-        throw new Error("Không có dữ liệu booking!");
+        throw new Error("No booking data!");
       }
 
       try {
-        console.log("Đang tải thư viện pdfmake...");
+        console.log("Loading pdfmake library...");
         const pdfMakeModule = await import("pdfmake/build/pdfmake");
         const pdfFonts = await import("pdfmake/build/vfs_fonts");
         const pdfMake = pdfMakeModule.default;
         pdfMake.vfs =
           pdfFonts && pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
-        console.log("Đã tải thư viện pdfmake thành công");
+        console.log("pdfmake library loaded successfully");
       } catch (error) {
         console.error("Error loading pdfmake library:", error);
-        throw new Error("Không thể tải thư viện PDF. Vui lòng thử lại!");
+        throw new Error("Unable to load PDF library. Please try again!");
       }
 
       const { firstPerson, secondPerson, appointmentDate, totalCost } =
@@ -657,20 +690,38 @@ const ConfirmBookingModal = ({
       const formatDate = (d) => {
         try {
           if (!d) return "";
-          if (typeof d === "string" && d.includes("/")) return d;
+          
+          // Nếu đã là định dạng DD/MM/YYYY thì trả về luôn
+          if (typeof d === "string" && d.includes("/") && d.length === 10) return d;
+          
+          // Xử lý string có định dạng ISO hoặc khác
           if (typeof d === "string") {
+            // Nếu là ISO string (có chứa T hoặc Z)
+            if (d.includes("T") || d.includes("Z")) {
+              const date = new Date(d);
+              return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+            }
+            
+            // Nếu là định dạng YYYY-MM-DD
             const parts = d.split("-");
             if (parts.length === 3) {
               return `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
             return d;
           }
+          
+          // Nếu là moment object hoặc có method format
           if (d && typeof d.format === "function")
             return d.format("DD/MM/YYYY");
-          if (d instanceof Date) return d.toLocaleDateString("vi-VN");
+            
+          // Nếu là Date object
+          if (d instanceof Date) {
+            return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getFullYear()}`;
+          }
+          
           return String(d);
         } catch (dateError) {
-          console.warn("Error formatting date:", dateError);
+          console.warn("Error formatting date:", dateError, "Input:", d);
           return "";
         }
       };
@@ -877,7 +928,7 @@ const ConfirmBookingModal = ({
                 text:
                   bookingData?.collectionMethod?.name === "At Home"
                     ? bookingData?.homeAddress || firstPerson?.address || ""
-                    : "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City",
+                    : "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh",
                 color: "#e91e63",
                 bold: true,
               },
@@ -1004,12 +1055,12 @@ const ConfirmBookingModal = ({
                     bold: true,
                   },
                   {
-                    text: firstPerson?.relationship || "",
+                    text: translateRelationshipToPDF(firstPerson?.relationship) || "",
                     color: "#e91e63",
                     bold: true,
                   },
                   {
-                    text: firstPerson?.sampleType || "",
+                    text: translateSampleTypeToPDF(firstPerson?.sampleType) || "",
                     color: "#e91e63",
                     bold: true,
                   },
@@ -1047,12 +1098,12 @@ const ConfirmBookingModal = ({
                     bold: true,
                   },
                   {
-                    text: secondPerson?.relationship || "",
+                    text: translateRelationshipToPDF(secondPerson?.relationship) || "",
                     color: "#e91e63",
                     bold: true,
                   },
                   {
-                    text: secondPerson?.sampleType || "",
+                    text: translateSampleTypeToPDF(secondPerson?.sampleType) || "",
                     color: "#e91e63",
                     bold: true,
                   },
@@ -1340,7 +1391,7 @@ const ConfirmBookingModal = ({
         const sampleAddress =
           bookingData?.collectionMethod?.name === "At Home"
             ? bookingData?.homeAddress || ""
-            : "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City";
+            : "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
         docDefinition.content.push(
           { text: "", pageBreak: "before" },
           {
@@ -1403,14 +1454,14 @@ const ConfirmBookingModal = ({
               "CCCD: ",
               { text: firstPerson?.personalId || "", bold: true },
               "            Loại mẫu: ",
-              { text: firstPerson?.sampleType || "", bold: true },
+              { text: translateSampleTypeToPDF(firstPerson?.sampleType) || "", bold: true },
             ],
             margin: [0, 0, 0, 5],
           },
           {
             text: [
               "Mối quan hệ: ",
-              { text: firstPerson?.relationship || "", bold: true },
+              { text: translateRelationshipToPDF(firstPerson?.relationship) || "", bold: true },
             ],
             margin: [0, 0, 0, 20],
           },
@@ -1429,14 +1480,14 @@ const ConfirmBookingModal = ({
               "CCCD (nếu có): ",
               { text: secondPerson?.personalId || "", bold: true },
               "            Loại mẫu: ",
-              { text: secondPerson?.sampleType || "", bold: true },
+              { text: translateSampleTypeToPDF(secondPerson?.sampleType) || "", bold: true },
             ],
             margin: [0, 0, 0, 5],
           },
           {
             text: [
               "Mối quan hệ: ",
-              { text: secondPerson?.relationship || "", bold: true },
+              { text: translateRelationshipToPDF(secondPerson?.relationship) || "", bold: true },
             ],
             margin: [0, 0, 0, 40],
           },
@@ -1502,7 +1553,7 @@ const ConfirmBookingModal = ({
               console.log("PDF created successfully, size:", buffer.length);
               resolve();
             } else {
-              reject(new Error("Không thể tạo buffer PDF"));
+              reject(new Error("Unable to create PDF buffer"));
             }
           });
         });
@@ -1511,30 +1562,30 @@ const ConfirmBookingModal = ({
           pdfDocGenerator.download(
             `DonYeuCauXetNghiemADN_${paymentCode || "DNA"}.pdf`
           );
-          message.success("Tải file PDF thành công!");
+          message.success("PDF file downloaded successfully!");
         } else {
-          message.success("Tạo file PDF thành công!");
+          message.success("PDF file created successfully!");
         }
         if (loadingMessage) loadingMessage();
-        console.log("✓ PDF đã tạo thành công");
+        console.log("✓ PDF created successfully");
 
         return pdfDocGenerator;
       } catch (pdfError) {
         console.error("Error creating or downloading PDF:", pdfError);
         throw new Error(
-          `Không thể tạo hoặc tải xuống PDF: ${pdfError.message}`
+          `Unable to create or download PDF: ${pdfError.message}`
         );
       }
     } catch (error) {
-      console.error("=== LỖI TẠO PDF ===");
+      console.error("=== PDF CREATION ERROR ===");
       console.error("Error details:", error);
       console.error("Error stack:", error.stack);
       if (loadingMessage) loadingMessage();
       if (error.message?.includes("vfs") || error.message?.includes("fonts")) {
-        message.error("Lỗi tải font PDF. Đang thử lại với font mặc định...");
+        message.error("Error loading PDF font. Trying again with default font...");
       } else if (error.message?.includes("Timeout")) {
         message.error(
-          "Hết thời gian tải thư viện PDF. Vui lòng kiểm tra kết nối mạng!"
+          "Timed out loading PDF library. Please check your network connection!"
         );
       } else if (
         error.message?.includes("import") ||
@@ -1542,19 +1593,19 @@ const ConfirmBookingModal = ({
         error.message?.includes("library")
       ) {
         message.error(
-          "Lỗi tải thư viện PDF. Vui lòng tải lại trang và thử lại!"
+          "Error loading PDF library. Please reload the page and try again!"
         );
       } else if (
         error.message?.includes("signature") ||
         error.message?.includes("signature") ||
         error.message?.includes("canvas")
       ) {
-        message.error("Lỗi xử lý chữ ký. Vui lòng ký lại!");
+        message.error("Error processing signature. Please sign again!");
       } else if (error.message?.includes("Missing information")) {
-        message.error(`Thiếu thông tin cần thiết: ${error.message}`);
+        message.error(`Missing necessary information: ${error.message}`);
       } else {
         message.error(
-          `Có lỗi xảy ra khi tạo file PDF: ${error.message}. Vui lòng thử lại!`
+          `An error occurred while creating the PDF file: ${error.message}. Please try again!`
         );
       }
 
@@ -1564,7 +1615,7 @@ const ConfirmBookingModal = ({
 
   const handleClose = () => {
     if (isRedirectingToVNPAY) {
-      message.warning("Vui lòng đợi chuyển hướng thanh toán hoàn thành!");
+      message.warning("Please wait for the payment redirection to complete!");
       return;
     }
 
@@ -1584,7 +1635,7 @@ const ConfirmBookingModal = ({
   };
 
   const forceClose = () => {
-    console.log("forceClose được gọi - đang đóng modal bắt buộc");
+    console.log("forceClose called - closing the modal is forced");
 
     try {
       // Reset tất cả trạng thái
@@ -1605,7 +1656,7 @@ const ConfirmBookingModal = ({
         signatureRef.current.clear();
       }
 
-      console.log("Tất cả state đã được reset, gọi onCancel");
+      console.log("All state has been reset, call onCancel");
 
       // Gọi hàm onCancel để đóng modal
       if (typeof onCancel === "function") {
@@ -1651,8 +1702,7 @@ const ConfirmBookingModal = ({
         <Alert
           message={
             <span style={{ fontWeight: 600 }}>
-              ⚠️ Thông tin không thể thay đổi sau khi booking thành công, vui
-              lòng kiểm tra cẩn thận!
+               Information cannot be changed after successful booking, please check carefully!
             </span>
           }
           type="warning"
@@ -1809,7 +1859,7 @@ const ConfirmBookingModal = ({
                 <Text strong style={{ fontSize: 14, color: "#52c41a" }}>
                   {collectionMethod?.name === "At Home"
                     ? homeAddress || "—"
-                    : "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City"}
+                    : "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh"}
                 </Text>
               </div>
             </Col>
@@ -1859,7 +1909,7 @@ const ConfirmBookingModal = ({
                     color: isExpressService ? "#fa8c16" : "#666",
                   }}
                 >
-                  {isExpressService ? "⚡ Yes" : "❌ No"}
+                  {isExpressService ? "⚡ Có" : "❌ Không"}
                 </Text>
               </div>
             </Col>
@@ -2153,6 +2203,15 @@ const ConfirmBookingModal = ({
                       </Text>
                     </Col>
                   </Row>
+                  <div style={{ marginTop: 8 }}>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      Personal ID
+                    </Text>
+                    <br />
+                    <Text style={{ fontSize: 13 }}>
+                      {secondPerson?.personalId || "—"}
+                    </Text>
+                  </div>
                 </div>
               </div>
             </Col>
@@ -2919,9 +2978,7 @@ const ConfirmBookingModal = ({
           <Button key="back" onClick={() => setCurrentStep(1)}>
             Back
           </Button>,
-          <Button key="next" type="primary" onClick={() => setCurrentStep(3)}>
-            Continue to Sign
-          </Button>,
+ 
         ];
       case 3: // Sign
         return [
@@ -2946,7 +3003,7 @@ const ConfirmBookingModal = ({
             loading={isProcessingSignature}
             disabled={isProcessingSignature}
           >
-            Sign and Continue
+          Continue
           </Button>,
         ];
       case 4: // PDF Options
@@ -4310,10 +4367,10 @@ const BookingPage = () => {
         data.collectionMethod?.name === "At Facility" ||
         data.medicationMethod === "walk-in"
       ) {
-        return "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City";
+        return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
       }
       // Mặc định trả về địa chỉ cơ sở
-      return "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City";
+      return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
     };
 
     return {
@@ -4451,7 +4508,7 @@ const BookingPage = () => {
           console.log("✅ VNPay payment successful - Processing...");
           showNotification(
             "success",
-            "✅ Thanh toán VNPay thành công! Đang chuyển đến bước ký tên...",
+            "VNPay payment successful! Moving to signature step...",
             5000
           );
 
@@ -4520,30 +4577,30 @@ const BookingPage = () => {
               setIsModalVisible(true);
             }, 500);
           } else {
-            console.warn("Không tìm thấy booking data cho VNPay response");
+            console.warn("Booking data not found for VNPay response");
             showNotification(
               "error",
-              "Không tìm thấy thông tin booking. Vui lòng thử lại!"
+              "Booking information not found. Please try again!"
             );
           }
         } else {
           const errorMessages = {
-            "07": "Trừ tiền thành công. Giao dịch đáng ngờ.",
-            "09": "Chưa đăng ký dịch vụ InternetBanking.",
-            10: "Xác thực thông tin sai quá 3 lần.",
-            11: "Hết thời gian chờ thanh toán.",
-            12: "Thẻ/Tài khoản bị khóa.",
-            13: "Sai mật khẩu xác thực giao dịch (OTP).",
-            24: "Khách hàng hủy giao dịch.",
-            51: "Tài khoản không đủ số dư để thực hiện giao dịch.",
-            65: "Tài khoản đã vượt quá hạn mức giao dịch trong ngày.",
-            75: "Ngân hàng thanh toán đang bảo trì.",
-            79: "Nhập sai mật khẩu thanh toán quá số lần quy định.",
-            99: "Các lỗi khác",
+            "07": "Deduction successful. Suspicious transaction.",
+            "09": "Not registered for Internet Banking service.",
+            10: "Incorrect information authentication more than 3 times.",
+            11: "Payment waiting timeout.",
+            12: "Card/Account locked.",
+            13: "Incorrect transaction authentication password (OTP).",
+            24: "Customer canceled transaction.",
+            51: "Account does not have enough balance to make transaction.",
+            65: "Account has exceeded daily transaction limit.",
+            75: "Paying bank is under maintenance.",
+            79: "Incorrect payment password entered more than the specified number of times.",
+            99: "Other errors",
           };
           const errorMessage =
             errorMessages[vnpResponseCode] ||
-            "Thanh toán VNPAY thất bại hoặc bị hủy!";
+            "VNPAY payment failed or canceled!";
           showNotification("error", `❌ ${errorMessage}`);
           console.warn("VNPAY payment failed:", errorMessage);
         }
@@ -4551,7 +4608,7 @@ const BookingPage = () => {
         console.error("Error processing VNPAY return:", error);
         showNotification(
           "error",
-          "Có lỗi xảy ra khi xử lý kết quả thanh toán!"
+          "An error occurred while processing payment results!"
         );
       }
     } else {
@@ -4993,8 +5050,7 @@ const BookingPage = () => {
                       </label>
                       <div className="p-3 bg-white border border-green-200 rounded-lg">
                         <p className="text-sm font-medium text-green-700 mb-1">
-                          7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi
-                          Minh City
+                          Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh
                         </p>
                         <p className="text-xs text-green-600">
                           📍 Please come to the above address to collect samples
