@@ -33,12 +33,13 @@ const serviceRelationshipMap = new Map([
   ['DNA Testing for Inheritance or Asset Division', ['Father-Child', 'Mother-Child', 'Grandparent-Grandchild', 'Sibling-Sibling']]
 ]);
 
-const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymentMethod: paymentMethodProp }) => {
-  const [currentStep, setCurrentStep] = useState(1);
+const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymentMethod: paymentMethodProp, initialStep }) => {
+  const [currentStep, setCurrentStep] = useState(initialStep || 1);
   const [paymentMethod, setPaymentMethod] = useState(paymentMethodProp || 'cash');
   const [setQrCodeData] = useState(null);
   const [paymentCode, setPaymentCode] = useState('');
-  const [showPDFOption, setShowPDFOption] = useState(false);
+  // We still need setShowPDFOption but showPDFOption is now used directly in renderStepContent
+  const [_, setShowPDFOption] = useState(false);
   const [isPDFConfirmStep, setIsPDFConfirmStep] = useState(false); 
   const [finalBookingData, setFinalBookingData] = useState(null); 
   const [isProcessingSignature, setIsProcessingSignature] = useState(false);
@@ -75,11 +76,26 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   // ...existing code...
 
   useEffect(() => {
-    if (visible && paymentMethodProp) {
-      setPaymentMethod(paymentMethodProp);
-      setCurrentStep(1);
+    console.log('ConfirmBookingModal useEffect:', { visible, paymentMethodProp, initialStep, 'bookingData.status': bookingData?.status });
+    
+    if (visible) {
+      if (paymentMethodProp) {
+        setPaymentMethod(paymentMethodProp);
+      }
+      
+      // Ưu tiên sử dụng initialStep từ props
+      if (initialStep && initialStep >= 1 && initialStep <= 4) {
+        console.log('Setting currentStep from initialStep:', initialStep);
+        setCurrentStep(initialStep);
+      } else if (bookingData?.status === 'paid' && bookingData?.paymentMethod === 'vnpay') {
+        console.log('Setting currentStep to 3 for paid VNPay booking');
+        setCurrentStep(3);
+      } else {
+        console.log('Setting currentStep to default: 1');
+        setCurrentStep(1);
+      }
     }
-  }, [visible, paymentMethodProp]);
+  }, [visible, paymentMethodProp, bookingData, initialStep]);
   if (!bookingData) return null;
   const formatCurrency = (amount) => amount ? `${Number(amount).toLocaleString()} đ` : '0 đ';
   const getCollectionAddress = () => {
@@ -153,7 +169,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   const handleConfirm = async () => {
     Modal.confirm({
       title: <span style={{ fontWeight: 'bold' }}>Are you sure?</span>,
-      content: 'Sau khi booking được xác nhận, sẽ không thể thay đổi.',
+      content: 'Once a booking is confirmed, changes cannot be made.',
       okText: 'Yes',
       cancelText: 'No',
       centered: true,
@@ -216,7 +232,8 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       
       setFinalBookingData(bookingDataWithSignature);
       
-      setIsPDFConfirmStep(true);
+      // Chuyển đến bước PDF Options (bước 4)
+      setCurrentStep(4);
       setShowPDFOption(true);
       
       message.success('Signature successful!');
@@ -241,15 +258,24 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       await new Promise(resolve => setTimeout(resolve, 800));
       
       const tempBookingData = {
-        ...finalBookingData,
+        ...bookingData,  // Sử dụng bookingData thay vì finalBookingData
         paymentMethod,
         paymentCode,
         status: 'pending_payment'
       };
       
+      // Debug: Log booking data được lưu
+      console.log('💾 Saving booking data to localStorage:', {
+        paymentCode,
+        customerID: tempBookingData.customerID,
+        totalData: tempBookingData
+      });
+      
       const pendingBookings = JSON.parse(localStorage.getItem('pending_vnpay_bookings') || '[]');
       pendingBookings.push(tempBookingData);
       localStorage.setItem('pending_vnpay_bookings', JSON.stringify(pendingBookings));
+      
+      console.log('💾 Updated localStorage with bookings:', pendingBookings);
       
       let firstPersonBirthDate;
       if (bookingData.firstPerson?.dateOfBirth) {
@@ -381,7 +407,6 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     setIsGeneratingPDF(true);
     
     try {
-
       if (!finalBookingData?.signature && (!signatureRef.current || signatureRef.current.isEmpty())) {
         message.error('Không tìm thấy chữ ký. Vui lòng ký lại!');
         setIsGeneratingPDF(false);
@@ -392,21 +417,25 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       try {
         await generatePDF(true);
         processingMsg();
-        message.success('Tải file PDF thành công!');
-        if (paymentMethod === 'cash') {
-          const updatedBookingData = {
-            ...finalBookingData,
-            pdfGenerated: true,
-            pdfGeneratedAt: new Date().toISOString()
-          };
-          
-          onConfirm(updatedBookingData);
-          setCurrentStep(4);
-          setIsPDFConfirmStep(false);
-        } else {
-          message.info('Đang chuyển hướng đến thanh toán VNPAY...', 1);
-          await handleVNPAYPayment();
-        }
+        message.success('PDF file downloaded successfully!', 2);
+        
+        const updatedBookingData = {
+          ...finalBookingData,
+          pdfGenerated: true,
+          pdfGeneratedAt: new Date().toISOString()
+        };
+        
+        onConfirm(updatedBookingData);
+        setCurrentStep(4);
+        setIsPDFConfirmStep(false);
+        
+        // Hiển thị thông báo chuyển hướng
+        message.info('Returning to homepage in 2 seconds...', 2);
+        
+        // Chuyển về trang home sau 2 giây
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
         
       } catch (pdfError) {
         processingMsg();
@@ -421,15 +450,19 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     }
   };
   const handleSkipPDF = async () => {
-    if (paymentMethod === 'cash') {
-      onConfirm(finalBookingData);
-      setCurrentStep(4);
-      setIsPDFConfirmStep(false);
-      setShowPDFOption(false);
-    } else {
-      message.info('Đang chuyển hướng đến thanh toán VNPAY...', 1);
-      await handleVNPAYPayment();
-    }
+    onConfirm(finalBookingData);
+    setCurrentStep(4);
+    setIsPDFConfirmStep(false);
+    setShowPDFOption(false);
+    
+    // Hiển thị thông báo hoàn thành và chuyển hướng
+    message.success('Booking completed successfully!', 2);
+    message.info('Returning to homepage in 2 seconds...', 2);
+    
+    // Chuyển về trang home sau 2 giây
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 2000);
   };
 
 const generatePDF = async (shouldDownload = true) => {
@@ -1694,6 +1727,24 @@ const generatePDF = async (shouldDownload = true) => {
       justifyContent: 'center',
       minHeight: '400px'
     }}>
+      {/* Hiển thị thông báo VNPay thành công nếu có */}
+      {bookingData?.status === 'paid' && bookingData?.paymentMethod === 'vnpay' && (
+        <div style={{ 
+          padding: '16px', 
+          backgroundColor: '#f6ffed', 
+          border: '1px solid #b7eb8f', 
+          borderRadius: '8px',
+          marginBottom: '24px',
+          maxWidth: '500px',
+          width: '100%'
+        }}>
+          <CheckCircleOutlined style={{ fontSize: '24px', color: '#52c41a', marginRight: '8px' }} />
+          <Text style={{ color: '#52c41a', fontWeight: 'bold' }}>
+            VNPay payment successful!
+          </Text>
+        </div>
+      )}
+      
       <Title level={3} style={{ 
         marginBottom: '30px', 
         color: '#1890ff',
@@ -1781,236 +1832,204 @@ const generatePDF = async (shouldDownload = true) => {
     </div>
   );
 
-const regenerateAndDownloadPDF = async () => {
-  try {
-    setIsGeneratingPDF(true);
-    const processingMsg = message.loading('Regenerating PDF file...', 0);
-    
-    try {
-      await generatePDF(true);
-      processingMsg();
-      message.success('PDF file successfully redownloaded!');
-    } catch (pdfError) {
-      processingMsg();
-      console.error('Error while regenerating PDF:', pdfError);
-      message.error(`Unable to recreate PDF: ${pdfError.message}. Please try again!`);
-    }
-  } catch (error) {
-    console.error('Error regenerating PDF:', error);
-    message.error('The PDF could not be reloaded. Please try again!');
-  } finally {
-    setIsGeneratingPDF(false);
-  }
-};
-  const renderSuccess = () => {
-    const getSuccessMessage = () => {
-      const { collectionMethod, appointmentDate, timeSlot } = bookingData;
-      const location = collectionMethod?.name === 'At Home' ? 'at home' : 'at medical facility';
-      const appointmentInfo = appointmentDate && timeSlot ? 
-        `on time ${moment(appointmentDate).format('DD/MM/YYYY')} at the time ${timeSlot}` : 
-        'on time';
-      
-      if (paymentMethod === 'cash') {
-        return `Appointment successful! Please be there! ${location} ${appointmentInfo} and pay upon receipt of service.`;
-      } else {
-        return `Appointment successful! Please be there! ${location} ${appointmentInfo}.`;
-      }
-    };
-
-    return (
-      <div className="text-center">
-        <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
-        <Title level={3} style={{ color: '#52c41a', marginBottom: '16px' }}>Scheduled successfully!</Title>
-        <div style={{ marginBottom: '16px', fontSize: '16px' }}>
-          {getSuccessMessage()}
-        </div>
-        
-        <div style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
-        We will contact you to confirm as soon as possible.
-        </div>
-        
-        {/* PDF Export Option */}
-        {showPDFOption && (
-          <div style={{ 
-            padding: '20px', 
-            backgroundColor: '#f6ffed', 
-            border: '1px solid #b7eb8f', 
-            borderRadius: '8px',
-            marginBottom: '16px'
-          }}>
-            <FileTextOutlined style={{ fontSize: '24px', color: '#52c41a', marginBottom: '8px' }} />
-            <div style={{ marginBottom: '12px', fontSize: '16px', fontWeight: 'bold' }}>
-            Submit DNA test application
-            </div>
-            <div style={{ marginBottom: '16px', color: '#666' }}>
-            Would you like to download the application form PDF before completing your booking?
-            </div>
-            <Space>
-              <Button 
-                type="primary" 
-                icon={<DownloadOutlined />}
-                onClick={handleDownloadPDF}
-                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-              >
-               Download PDF
-              </Button>
-              <Button onClick={handleSkipPDF}>
-               Skip
-              </Button>
-            </Space>
-          </div>
-        )}
-        
-        {/* Thêm option tải lại PDF */}
-        <div style={{ 
-          marginTop: '20px',
-          padding: '16px',
-          backgroundColor: '#f0f9ff',
-          borderRadius: '8px',
-          border: '1px solid #bae7ff'
-        }}>
-          <Text style={{ display: 'block', marginBottom: '12px' }}>
-            📄 You can redownload the PDF file at any time.
-          </Text>
-          <Button 
-            type="link" 
-            icon={<DownloadOutlined />}
-            onClick={() => regenerateAndDownloadPDF()}
-            loading={isGeneratingPDF}
-            disabled={isGeneratingPDF}
-          >
-            {isGeneratingPDF ?'Creating PDF...' : 'Reload PDF'}
-          </Button>
-        </div>
-      </div>
-    );
-  };
+// Function removed as it's no longer used
+  // Success message function removed as it's no longer used
 
   const renderStepContent = () => {
-    if (isPDFConfirmStep || isRedirectingToVNPAY) {
-      return (
-        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <CheckCircleOutlined style={{ fontSize: '64px', color: '#52c41a', marginBottom: '24px' }} />
-          <Title level={3} style={{ color: '#52c41a', marginBottom: '16px' }}>
-          Signed successfully!
-          </Title>
-          <Text style={{ fontSize: '16px', color: '#666', display: 'block', marginBottom: '32px' }}>
-          Would you like to download the application form PDF before completing your booking?
-          </Text>
+    console.log('renderStepContent - currentStep:', currentStep, 'bookingData status:', bookingData?.status, 'paymentMethod:', bookingData?.paymentMethod);
+    
+    switch (currentStep) {
+      case 1: // Confirm Information
+        return renderSummary();
+      case 2: // Payment & Completion
+        if (paymentMethod === 'vnpay') {
+          // Nếu đã thanh toán VNPay thành công, tự động chuyển sang step 3
+          if (bookingData?.status === 'paid' && bookingData?.paymentMethod === 'vnpay') {
+            console.log('VNPay payment detected as paid, switching to step 3 (Sign)');
+            setTimeout(() => setCurrentStep(3), 100); // Sử dụng setTimeout để tránh vấn đề re-render
+            return (
+              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <CheckCircleOutlined style={{ fontSize: '64px', color: '#52c41a', marginBottom: '24px' }} />
+                <Title level={3} style={{ color: '#52c41a', marginBottom: '16px' }}>
+                  VNPay Payment Successful!
+                </Title>
+                <Text style={{ fontSize: '16px', color: '#666', display: 'block', marginBottom: '32px' }}>
+                  Chuyển đến bước ký tên...
+                </Text>
+              </div>
+            );
+          }
           
-          {/* PDF Export Option */}
-          <div style={{ 
-            padding: '24px', 
-            backgroundColor: '#f6ffed', 
-            border: '1px solid #b7eb8f', 
-            borderRadius: '12px',
-            marginBottom: '24px',
-            maxWidth: '500px',
-            margin: '0 auto 24px auto'
-          }}>
-            <FileTextOutlined style={{ fontSize: '32px', color: '#52c41a', marginBottom: '12px' }} />
-            <div style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 'bold', color: '#52c41a' }}>
-            Submit DNA test application
+          // VNPAY Payment component
+          return (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ 
+                padding: '24px', 
+                backgroundColor: '#f6ffed', 
+                border: '1px solid #b7eb8f', 
+                borderRadius: '12px',
+                marginBottom: '24px',
+                maxWidth: '500px',
+                margin: '0 auto 24px auto'
+              }}>
+                <QrcodeOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }} />
+                <Title level={3} style={{ marginBottom: '16px' }}>
+                  VNPAY Payment
+                </Title>
+                <Text style={{ fontSize: '16px', color: '#666', display: 'block', marginBottom: '24px' }}>
+                  You will be redirected to VNPAY to complete your payment.
+                </Text>
+                
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleVNPAYPayment}
+                  loading={isRedirectingToVNPAY}
+                  disabled={isRedirectingToVNPAY}
+                  style={{ 
+                    backgroundColor: '#1890ff', 
+                    borderColor: '#1890ff',
+                    height: '48px',
+                    padding: '0 32px',
+                    fontSize: '16px'
+                  }}
+                >
+                  {isRedirectingToVNPAY ? 'Processing...' : 'Pay with VNPAY'}
+                </Button>
+                
+                {isRedirectingToVNPAY && (
+                  <div style={{ 
+                    marginTop: '16px',
+                    padding: '16px',
+                    backgroundColor: '#e6f7ff',
+                    borderRadius: '8px',
+                    border: '1px solid #91d5ff'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '12px',
+                      marginBottom: '8px'
+                    }}>
+                      <div 
+                        className="vnpay-loading-spinner"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          border: '2px solid #1890ff',
+                          borderTopColor: 'transparent',
+                          borderRadius: '50%'
+                        }}
+                      ></div>
+                      <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>
+                        Processing VNPAY payment...
+                      </Text>
+                    </div>
+                    <Text type="secondary" style={{ fontSize: '14px' }}>
+                      Please wait a moment, you will be redirected to the payment page.
+                    </Text>
+                  </div>
+                )}
+              </div>
             </div>
-            <div style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-            The PDF file will contain your full registration information and signature.
-            </div>
-            <Space size="large">
+          );
+        } else {
+          return (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <CheckCircleOutlined style={{ fontSize: '64px', color: '#52c41a', marginBottom: '24px' }} />
+              <Title level={3} style={{ color: '#52c41a', marginBottom: '16px' }}>
+                Payment Completed!
+              </Title>
+              <Text style={{ fontSize: '16px', color: '#666', display: 'block', marginBottom: '32px' }}>
+                Please proceed to sign your application.
+              </Text>
+              
               <Button 
                 type="primary" 
                 size="large"
-                icon={<DownloadOutlined />}
-                onClick={handleDownloadPDF}
-                loading={isGeneratingPDF || isRedirectingToVNPAY}
-                disabled={isGeneratingPDF || isRedirectingToVNPAY}
+                onClick={() => setCurrentStep(3)}
                 style={{ 
-                  backgroundColor: '#52c41a', 
-                  borderColor: '#52c41a',
+                  backgroundColor: '#1890ff', 
+                  borderColor: '#1890ff',
                   height: '48px',
                   padding: '0 32px',
                   fontSize: '16px'
                 }}
               >
-                {isGeneratingPDF 
-                  ? 'Creating PDF...' 
-                  : (isRedirectingToVNPAY 
-                    ? 'Processing VNPAY payment...' 
-                    : 'Download PDF'
-                  )
-                }
+                Continue to Sign
               </Button>
-              <Button 
-                size="large"
-                onClick={handleSkipPDF}
-                loading={isRedirectingToVNPAY}
-                disabled={isGeneratingPDF || isRedirectingToVNPAY}
-                style={{
-                  height: '48px',
-                  padding: '0 32px',
-                  fontSize: '16px'
-                }}
-              >
-                {isRedirectingToVNPAY 
-                  ? 'Processing VNPAY payment...' 
-                  : (paymentMethod === 'cash' ? 'Skip, complete booking' : 'Skip, pay VNPAY')
-                }
-              </Button>
-            </Space>
-          </div>
-          
-          {/* Hiển thị thông báo loading khi đang chuyển hướng VNPAY */}
-          {isRedirectingToVNPAY && (
-            <div style={{ 
-              marginTop: '16px',
-              padding: '16px',
-              backgroundColor: '#e6f7ff',
-              borderRadius: '8px',
-              border: '1px solid #91d5ff',
-              textAlign: 'center'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                gap: '12px',
-                marginBottom: '8px'
-              }}>
-                <div 
-                  className="vnpay-loading-spinner"
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid #1890ff',
-                    borderTopColor: 'transparent',
-                    borderRadius: '50%'
-                  }}
-                ></div>
-                <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>
-                Processing VNPAY payment...
-                </Text>
-              </div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>
-                🔄 Please wait a moment, you will be redirected to the payment page.
-              </Text>
             </div>
-          )}
-          
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            💡 You can download the PDF file later in the booking history section.
-          </Text>
-        </div>
-      );
-    }
-    
-    switch (currentStep) {
-      case 1:
-        return renderSummary();
-      case 2:
+          );
+        }
+      case 3: // Sign
         return renderSignature();
-      case 3:
-        return renderSuccess();
-      case 4:
-        return renderSuccess();
+      case 4: // PDF Options
+        // PDF Options component
+        return (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <CheckCircleOutlined style={{ fontSize: '64px', color: '#52c41a', marginBottom: '24px' }} />
+            <Title level={3} style={{ color: '#52c41a', marginBottom: '16px' }}>
+              Signed successfully!
+            </Title>
+            <Text style={{ fontSize: '16px', color: '#666', display: 'block', marginBottom: '32px' }}>
+              Would you like to download the application form PDF before completing your booking?
+            </Text>
+            
+            {/* PDF Export Option */}
+            <div style={{ 
+              padding: '24px', 
+              backgroundColor: '#f6ffed', 
+              border: '1px solid #b7eb8f', 
+              borderRadius: '12px',
+              marginBottom: '24px',
+              maxWidth: '500px',
+              margin: '0 auto 24px auto'
+            }}>
+              <FileTextOutlined style={{ fontSize: '32px', color: '#52c41a', marginBottom: '12px' }} />
+              <div style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 'bold', color: '#52c41a' }}>
+                Download DNA test application
+              </div>
+              <div style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
+                The PDF file will contain your full registration information and signature.
+              </div>
+              <Space size="large">
+                <Button 
+                  type="primary" 
+                  size="large"
+                  icon={<DownloadOutlined />}
+                  onClick={handleDownloadPDF}
+                  loading={isGeneratingPDF}
+                  disabled={isGeneratingPDF}
+                  style={{ 
+                    backgroundColor: '#52c41a', 
+                    borderColor: '#52c41a',
+                    height: '48px',
+                    padding: '0 32px',
+                    fontSize: '16px'
+                  }}
+                >
+                  {isGeneratingPDF ? 'Creating PDF...' : 'Download PDF'}
+                </Button>
+                <Button 
+                  size="large"
+                  onClick={handleSkipPDF}
+                  style={{
+                    height: '48px',
+                    padding: '0 32px',
+                    fontSize: '16px'
+                  }}
+                >
+                  Skip, complete booking
+                </Button>
+              </Space>
+            </div>
+            
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              💡 You can download the PDF file later in the booking history section.
+            </Text>
+          </div>
+        );
       default:
         return null;
     }
@@ -2018,12 +2037,12 @@ const regenerateAndDownloadPDF = async () => {
 
   // Render footer
   const renderFooter = () => {
-    if (isPDFConfirmStep || isRedirectingToVNPAY) {
+    if (isRedirectingToVNPAY) {
       return null;
     }
     
     switch (currentStep) {
-      case 1:
+      case 1: // Confirm Information
         return [
           <Button key="edit" onClick={handleEdit}>Edit</Button>,
           <Button 
@@ -2036,14 +2055,34 @@ const regenerateAndDownloadPDF = async () => {
             {isSubmittingPayment ? 'Processing...' : 'Confirm'}
           </Button>
         ];
-      case 2:
+      case 2: // Payment & Completion
         return [
-          <Button key="back" onClick={() => setCurrentStep(1)} disabled={isProcessingSignature}>Back</Button>,
-          <Button key="complete" type="primary" onClick={handleSignatureComplete} loading={isProcessingSignature} disabled={isProcessingSignature}>Sign</Button>
+          <Button key="back" onClick={() => setCurrentStep(1)}>Back</Button>,
+          <Button 
+            key="next" 
+            type="primary" 
+            onClick={() => setCurrentStep(3)}
+          >
+            Continue to Sign
+          </Button>
+        ];
+      case 3: // Sign
+        return [
+          <Button key="back" onClick={() => setCurrentStep(2)} disabled={isProcessingSignature}>Back</Button>,
+          <Button 
+            key="sign" 
+            type="primary" 
+            onClick={handleSignatureComplete} 
+            loading={isProcessingSignature} 
+            disabled={isProcessingSignature}
+          >
+            Sign and Continue
+          </Button>
         ];
       case 4:
         return [
-          <Button key="close" type="primary" onClick={handleClose}>Back</Button>
+          <Button key="back" onClick={() => setCurrentStep(3)}>Back</Button>,
+          <Button key="complete" type="primary" onClick={handleClose}>Complete</Button>
         ];
       default:
         return [];
@@ -2053,9 +2092,9 @@ const regenerateAndDownloadPDF = async () => {
   const getSteps = () => {
     return [
       { title: 'Confirm Information' },
+      { title: 'Payment & Completion' },
       { title: 'Sign' },
-      { title: 'PDF Options' },
-      { title: paymentMethod === 'cash' ? 'Complete' : 'Payment & Completion' }
+      { title: 'PDF Options' }
     ];
   };
 
@@ -2143,7 +2182,10 @@ const BookingPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [showSecondPersonPersonalId, setShowSecondPersonPersonalId] = useState(false);
+  const [showFirstPersonPersonalId, setShowFirstPersonPersonalId] = useState(false);
+  const [modalInitialStep, setModalInitialStep] = useState(1);
+
   // State để quản lý thông báo tập trung
   const [currentNotification, setCurrentNotification] = useState(null);
   
@@ -2159,6 +2201,52 @@ const BookingPage = () => {
   const hideNotification = useCallback(() => {
     setCurrentNotification(null);
   }, []);
+
+  // Hàm tính tuổi từ ngày sinh
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return null;
+    return moment().diff(moment(dateOfBirth), 'years');
+  };
+
+  // Hàm kiểm tra và cập nhật trạng thái hiển thị Personal ID cho người thứ nhất
+  const updateFirstPersonPersonalIdVisibility = (dateOfBirth) => {
+    const age = calculateAge(dateOfBirth);
+    const relationship = form.getFieldValue(['firstPerson', 'relationship']);
+    setShowFirstPersonPersonalId(age !== null && age > 15 && relationship === 'Child');
+  };
+
+  // Hàm kiểm tra và cập nhật trạng thái hiển thị Personal ID cho người thứ hai
+  const updateSecondPersonPersonalIdVisibility = (dateOfBirth) => {
+    if (!dateOfBirth) {
+      setShowSecondPersonPersonalId(false);
+      return;
+    }
+    
+    const age = calculateAge(dateOfBirth);
+    const relationship = form.getFieldValue(['secondPerson', 'relationship']);
+    console.log('Second person age:', age, 'relationship:', relationship);
+    
+    // Chỉ hiển thị và yêu cầu Personal ID khi là Child và trên 15 tuổi
+    const shouldShowPersonalId = relationship === 'Child' && age !== null && age > 15;
+    console.log('Should show personal ID:', shouldShowPersonalId);
+    
+    setShowSecondPersonPersonalId(shouldShowPersonalId);
+    
+    // Xóa giá trị Personal ID khi không được phép nhập (dưới 15 tuổi hoặc không phải Child)
+    if (!shouldShowPersonalId) {
+      form.setFieldsValue({
+        secondPerson: {
+          ...form.getFieldValue('secondPerson'),
+          personalId: ''
+        }
+      });
+    }
+    
+    // Force re-render để cập nhật UI
+    setTimeout(() => {
+      form.validateFields([['secondPerson', 'personalId']]).catch(() => {});
+    }, 50);
+  };
 
 
   const isServicePreSelected = Boolean(serviceID);
@@ -2448,9 +2536,15 @@ const BookingPage = () => {
   };
 
   const validatePersonalId = (_, value) => {
+    // If value is empty and not required (based on context), don't validate
+    if (!value && !showFirstPersonPersonalId && !showSecondPersonPersonalId) {
+      return Promise.resolve();
+    }
+    
     if (!value) {
       return Promise.reject(new Error('Please enter your ID number!'));
     }
+    
     const idRegex = /^[0-9]{9}$|^[0-9]{12}$/;
     if (!idRegex.test(value)) {
       return Promise.reject(new Error('The CCCD/ID number must have 9 or 12 digits!'));
@@ -2573,11 +2667,25 @@ const BookingPage = () => {
             sampleType: first.sampleType
           }
         });
+        
+        // Cập nhật trạng thái hiển thị Personal ID cho người thứ nhất và thứ hai
+        if (first.dateOfBirth) {
+          updateFirstPersonPersonalIdVisibility(first.dateOfBirth);
+          updateSecondPersonPersonalIdVisibility(first.dateOfBirth);
+        }
       }
     } catch (error) {
       console.warn('Form not ready yet:', error);
     }
   }, [form]);
+  
+  // Kiểm tra và cập nhật trạng thái Personal ID khi component được render
+  useEffect(() => {
+    const secondPersonDateOfBirth = form.getFieldValue(['secondPerson', 'dateOfBirth']);
+    if (secondPersonDateOfBirth) {
+      updateSecondPersonPersonalIdVisibility(secondPersonDateOfBirth);
+    }
+  }, []);
 
   useEffect(() => {
     if (serviceID) {
@@ -2718,6 +2826,18 @@ const BookingPage = () => {
       }
     } catch (error) {
       console.warn('Form not ready yet:', error);
+    }
+  }, [form]);
+  
+  // Theo dõi sự thay đổi của dateOfBirth của người thứ hai
+  useEffect(() => {
+    try {
+      const dateOfBirth = form.getFieldValue(['secondPerson', 'dateOfBirth']);
+      if (dateOfBirth) {
+        updateSecondPersonPersonalIdVisibility(dateOfBirth);
+      }
+    } catch (error) {
+      console.warn('Error updating Personal ID visibility:', error);
     }
   }, [form]);
 
@@ -3093,9 +3213,8 @@ const BookingPage = () => {
       throw new Error('No data received from server');
     }
     showNotification('success', getSuccessMessage(), 6000);
-   setTimeout(() => {
-  navigate('/'); 
-}, 2000);
+    // Không chuyển hướng về trang chủ sau khi hoàn thành đặt lịch
+    // Người dùng sẽ ở lại trang hiện tại để xem thông tin đặt lịch
     form.resetFields();
     setAppointmentDate('');
     setTimeSlot('');
@@ -3127,6 +3246,7 @@ const BookingPage = () => {
     console.log('handleModalCancel được gọi - đóng modal');
     setIsModalVisible(false);
     setBookingData(null);
+    setModalInitialStep(1); // Reset về step 1 khi đóng modal
   };
 
   useEffect(() => {
@@ -3134,41 +3254,99 @@ const BookingPage = () => {
     const vnpResponseCode = urlParams.get('vnp_ResponseCode');
     const vnpOrderInfo = urlParams.get('vnp_OrderInfo');
     
-    console.log('VNPAY Params:', { vnpResponseCode, vnpOrderInfo });
+    console.log('VNPAY Return Detected:', { vnpResponseCode, vnpOrderInfo });
 
     if (vnpResponseCode && vnpOrderInfo) {
       try {
+        // Xóa URL params nhưng giữ lại đường dẫn hiện tại
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
 
         if (vnpResponseCode === '00') {
-          showNotification('success', 'VNPAY payment successful! Schedule completed.', 5000);
-          console.log('VNPAY payment success - Redirecting to home');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
+          console.log('✅ VNPay payment successful - Processing...');
+          showNotification('success', '✅ Thanh toán VNPay thành công! Đang chuyển đến bước ký tên...', 5000);
+          
+          // Debug: Kiểm tra localStorage
+          const pendingBookings = JSON.parse(localStorage.getItem('pending_vnpay_bookings') || '[]');
+          console.log('📦 All pending bookings:', pendingBookings);
+          console.log('🔍 VNP Order Info:', vnpOrderInfo);
+          
+          const orderInfo = decodeURIComponent(vnpOrderInfo);
+          console.log('🔍 Decoded Order Info:', orderInfo);
+          
+          // Tìm kiếm booking bằng nhiều cách
+          let currentBooking = null;
+          
+          // Cách 1: Tìm theo paymentCode
+          currentBooking = pendingBookings.find(booking => {
+            const match = booking.paymentCode && orderInfo.includes(booking.paymentCode);
+            console.log(`🔎 Checking paymentCode: ${booking.paymentCode} - Match: ${match}`);
+            return match;
+          });
+          
+          // Cách 2: Tìm theo customerID nếu không tìm thấy
+          if (!currentBooking) {
+            currentBooking = pendingBookings.find(booking => {
+              const match = booking.customerID && orderInfo.includes(booking.customerID);
+              console.log(`🔎 Checking customerID: ${booking.customerID} - Match: ${match}`);
+              return match;
+            });
+          }
+          
+          // Cách 3: Nếu vẫn không tìm thấy, lấy booking mới nhất
+          if (!currentBooking && pendingBookings.length > 0) {
+            currentBooking = pendingBookings[pendingBookings.length - 1];
+            console.log('🔎 Using latest booking as fallback:', currentBooking);
+          }
+          
+          console.log('✅ Final found booking data:', currentBooking);
+          
+          if (currentBooking) {
+            const updatedBookingData = {
+              ...currentBooking,
+              paymentMethod: 'vnpay',
+              status: 'paid',
+              vnpOrderInfo: vnpOrderInfo,
+              paidAt: new Date().toISOString()
+            };
+            
+            console.log('Setting booking data and opening modal at step 3 (Sign)');
+            setBookingData(updatedBookingData);
+            setModalInitialStep(3); // Mở modal ở step 3 (Sign)
+            setPaymentMethod('vnpay');
+            
+            // Hiển thị modal ngay lập tức ở bước Sign
+            setTimeout(() => {
+              console.log('Opening modal for signature...');
+              setIsModalVisible(true);
+            }, 500);
+          } else {
+            console.warn('Không tìm thấy booking data cho VNPay response');
+            showNotification('error', 'Không tìm thấy thông tin booking. Vui lòng thử lại!');
+          }
+          
         } else {
           const errorMessages = {
-        '07': 'Deducted money successfully. Suspicious transaction.',
-        '09': 'Not registered for InternetBanking service.',
-        '10': 'Incorrect information verification more than 3 times.',
-        '11': 'Payment waiting period expired.',
-        '12': 'Card/Account locked.',
-        '13': 'Incorrect OTP entered.',
-        '24': 'Customer canceled transaction.',
-        '51': 'Insufficient balance.',
-        '65': 'Exceeded daily transaction limit.',
-        '75': 'Paying bank is under maintenance.',
-        '79': 'Incorrect payment password entered more than the specified number of times.',
-        '99': 'Other errors'
+        '07': 'Trừ tiền thành công. Giao dịch đáng ngờ.',
+        '09': 'Chưa đăng ký dịch vụ InternetBanking.',
+        '10': 'Xác thực thông tin sai quá 3 lần.',
+        '11': 'Hết thời gian chờ thanh toán.',
+        '12': 'Thẻ/Tài khoản bị khóa.',
+        '13': 'Sai mật khẩu xác thực giao dịch (OTP).',
+        '24': 'Khách hàng hủy giao dịch.',
+        '51': 'Tài khoản không đủ số dư để thực hiện giao dịch.',
+        '65': 'Tài khoản đã vượt quá hạn mức giao dịch trong ngày.',
+        '75': 'Ngân hàng thanh toán đang bảo trì.',
+        '79': 'Nhập sai mật khẩu thanh toán quá số lần quy định.',
+        '99': 'Các lỗi khác'
           };
           const errorMessage = errorMessages[vnpResponseCode] || 'Thanh toán VNPAY thất bại hoặc bị hủy!';
-          showNotification('error', errorMessage);
+          showNotification('error', `❌ ${errorMessage}`);
           console.warn('VNPAY payment failed:', errorMessage);
         }
       } catch (error) {
         console.error('Error processing VNPAY return:', error);
-        showNotification('error', 'An error occurred while processing payment results!');
+        showNotification('error', 'Có lỗi xảy ra khi xử lý kết quả thanh toán!');
       }
     } else {
       console.log('No VNPAY information on URL');
@@ -3178,22 +3356,24 @@ const BookingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* CSS Animation cho thông báo */}
-      <style jsx>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
+      <style>
+        {`
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
           }
-          to {
-            transform: translateX(0);
-            opacity: 1;
+          
+          .animate-slide-in {
+            animation: slideInRight 0.3s ease-out;
           }
-        }
-        
-        .animate-slide-in {
-          animation: slideInRight 0.3s ease-out;
-        }
-      `}</style>
+        `}
+      </style>
       
       {/* Thông báo tập trung */}
       {currentNotification && (
@@ -3872,7 +4052,9 @@ const BookingPage = () => {
                         placeholder="Enter date of birth"
                         format="DD/MM/YYYY"
                         disabledDate={(current) => current && current > moment().endOf('day')}
-                        
+                        onChange={(date) => {
+                          updateFirstPersonPersonalIdVisibility(date);
+                        }}
                       />
                     </Form.Item>
                   </Col>
@@ -3925,7 +4107,6 @@ const BookingPage = () => {
                       name={['firstPerson', 'relationship']}
                       label="Relationship"
                       rules={[
-
                         { validator: validateGenderRelationship }
                       ]}
                       dependencies={[['firstPerson', 'gender']]}
@@ -3933,8 +4114,13 @@ const BookingPage = () => {
                       <Select 
                         placeholder="Select relationship"
                         onChange={(value) => {
-
                           form.validateFields([['firstPerson', 'relationship'], ['secondPerson', 'relationship']]);
+
+                          // Check if we need to show personal ID based on relationship and age
+                          const dateOfBirth = form.getFieldValue(['firstPerson', 'dateOfBirth']);
+                          if (dateOfBirth) {
+                            updateFirstPersonPersonalIdVisibility(dateOfBirth);
+                          }
 
                           if (selectedService?.name && value) {
                             const validSecondRelationships = getValidRelationshipsForSecondPerson(
@@ -4044,10 +4230,21 @@ const BookingPage = () => {
                     <Form.Item
                       name={['firstPerson', 'personalId']}
                       label="Personal ID"
-                      rules={[{ validator: validatePersonalId }]}
+                      rules={[
+                        { 
+                          required: showFirstPersonPersonalId, 
+                          message: 'Please enter your Personal ID!' 
+                        },
+                        { validator: validatePersonalId }
+                      ]}
                     >
                       <Input placeholder="Enter your Personal ID" prefix={<IdcardOutlined />} />
                     </Form.Item>
+                    {showFirstPersonPersonalId && (
+                      <div className="text-xs text-red-500 mt-1">
+                        * Required for children over 15 years old
+                      </div>
+                    )}
                   </Col>
                   
 
@@ -4065,7 +4262,7 @@ const BookingPage = () => {
                 }
                 style={{ marginBottom: 24 }}
               >
-                <Row gutter={16}>
+                                <Row gutter={16}>
                   <Col xs={24} md={12}>
                     <Form.Item
                       name={['secondPerson', 'fullName']}
@@ -4091,6 +4288,13 @@ const BookingPage = () => {
                         placeholder="Select date of birth"
                         format="DD/MM/YYYY"
                         disabledDate={(current) => current && current > moment().endOf('day')}
+                        onChange={(date) => {
+                          // Ensure we update the Personal ID visibility when date changes
+                          console.log('Second person date changed to:', date);
+                          updateSecondPersonPersonalIdVisibility(date);
+                          // Force re-render
+                          form.validateFields([['secondPerson', 'personalId']]).catch(() => {});
+                        }}
                       />
                     </Form.Item>
                   </Col>
@@ -4099,7 +4303,7 @@ const BookingPage = () => {
                     <Form.Item
                       name={['secondPerson', 'gender']}
                       label="Biological Sex"
-                      rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                      rules={[{ required: true, message: 'Please select biological sex!' }]}
                     >
                       <Radio.Group
                         onChange={() => {
@@ -4130,6 +4334,14 @@ const BookingPage = () => {
                             ['secondPerson', 'relationship'],
                             ['secondPerson', 'dateOfBirth'] 
                           ]);
+                          
+                          // Check if we need to show personal ID based on relationship and age immediately
+                          const currentDateOfBirth = form.getFieldValue(['secondPerson', 'dateOfBirth']);
+                          console.log('Relationship changed to:', value, 'Date of birth:', currentDateOfBirth);
+                          
+                          if (currentDateOfBirth) {
+                            updateSecondPersonPersonalIdVisibility(currentDateOfBirth);
+                          }
                           
                           if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
                             if (value === 'Mother') {
@@ -4214,9 +4426,42 @@ const BookingPage = () => {
                     </Form.Item>
                   </Col>
                   
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      name={['secondPerson', 'personalId']}
+                      label="Personal ID"
+                      rules={[
+                        { 
+                          required: showSecondPersonPersonalId, 
+                          message: 'Please enter Personal ID!' 
+                        },
+                        { 
+                          pattern: /^[0-9]{9,12}$/, 
+                          message: 'Personal ID must have 9-12 digits!' 
+                        }
+                      ]}
+                    >
+                      <Input 
+                        placeholder="Enter Personal ID" 
+                        prefix={<IdcardOutlined />}
+                        disabled={!showSecondPersonPersonalId}
+                      />
+                    </Form.Item>
+                    {showSecondPersonPersonalId && (
+                      <div className="text-xs text-red-500 mt-1">
+                        * Required for children over 15 years old
+                      </div>
+                    )}
+                    {!showSecondPersonPersonalId && form.getFieldValue(['secondPerson', 'relationship']) === 'Child' && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Personal ID not required for children under 15 years old
+                      </div>
+                    )}
+                  </Col>
+                  
 
                 </Row>
-              </Card>
+              </Card>a
               
 
               
@@ -4420,6 +4665,7 @@ const BookingPage = () => {
         bookingData={bookingData}
         onConfirm={handleBookingComplete}
         paymentMethod={paymentMethod}
+        initialStep={modalInitialStep}
       />
     </div>
   );
