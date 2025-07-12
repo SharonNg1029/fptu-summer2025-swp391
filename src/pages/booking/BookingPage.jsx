@@ -4622,6 +4622,7 @@ const BookingPage = () => {
                       <span className="text-xs text-red-500 block mt-1 break-words">(Not available with Postal Delivery)</span>
                     )}
                   </div>
+                  
                 </div>
                 <div className="flex items-start max-w-full">
                   <input
