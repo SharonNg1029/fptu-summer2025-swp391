@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import moment from 'moment';
 import {
   Modal,
@@ -15,6 +15,7 @@ import {
   ClockCircleOutlined,
   CreditCardOutlined,
   QrcodeOutlined,
+  BankOutlined,
 } from "@ant-design/icons";
 
 const { Text } = Typography;
@@ -26,12 +27,60 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }) || "—";
 
+// Helper function to format date
+const formatDate = (dateValue) => {
+  if (!dateValue) return "—";
+  
+  // Handle array format [year, month, day]
+  if (Array.isArray(dateValue) && dateValue.length >= 3) {
+    const [year, month, day] = dateValue;
+    return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+  }
+  
+  // Handle string format
+  if (typeof dateValue === 'string') {
+    // If it's already in format YYYYMMDD
+    if (dateValue.length === 6 || dateValue.length === 8) {
+      const year = dateValue.substring(0, 4);
+      const month = dateValue.substring(4, 6);
+      const day = dateValue.length === 8 ? dateValue.substring(6, 8) : "";
+      return `${day}/${month}/${year}`;
+    }
+    return dateValue;
+  }
+  
+  // If it's a moment object
+  if (dateValue.format) {
+    return dateValue.format('DD/MM/YYYY');
+  }
+  
+  return String(dateValue);
+};
+
+// Helper function to convert gender code to text
+const formatGender = (gender) => {
+  if (gender === 1 || gender === "1") return "Nam";
+  if (gender === 2 || gender === "2") return "Nữ";
+  
+  return gender || "—"; // Return original if not 0 or 1
+};
+
 const BookingDetailModal = ({
   open,
   onClose,
   bookingDetail = {},
 }) => {
-  if (!bookingDetail) return null; 
+  if (!bookingDetail) return null;
+
+  // Debug log
+  useEffect(() => {
+    if (open) {
+      console.log("BookingDetailModal - bookingDetail:", bookingDetail);
+      console.log("BookingDetailModal - firstPerson:", bookingDetail.firstPerson);
+      console.log("BookingDetailModal - secondPerson:", bookingDetail.secondPerson);
+    }
+  }, [open, bookingDetail]);
+  
   const {
     serviceType,
     service,
@@ -51,6 +100,44 @@ const BookingDetailModal = ({
     totalCost,
     paymentMethod,
   } = bookingDetail;
+  
+  // Helper function to get payment method label and icon
+  const getPaymentMethodInfo = (method) => {
+    switch(method?.toLowerCase()) {
+      case 'cash':
+        return {
+          icon: <CreditCardOutlined style={{ fontSize: 24, color: '#52c41a' }} />,
+          label: '💵 Thanh toán tiền mặt khi nhận dịch vụ',
+          color: '#52c41a',
+          bgColor: '#f6ffed',
+          borderColor: '#d9f7be'
+        };
+      case 'bank':
+        return {
+          icon: <BankOutlined style={{ fontSize: 24, color: '#722ed1' }} />,
+          label: '🏦 Chuyển khoản ngân hàng',
+          color: '#722ed1',
+          bgColor: '#f9f0ff',
+          borderColor: '#d3adf7'
+        };
+      case 'vnpay':
+        return {
+          icon: <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
+          label: '📱 Thanh toán qua VNPAY',
+          color: '#1890ff',
+          bgColor: '#e6f7ff',
+          borderColor: '#91d5ff'
+        };
+      default:
+        return {
+          icon: <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
+          label: '📱 Quét mã QR để thanh toán',
+          color: '#1890ff',
+          bgColor: '#e6f7ff',
+          borderColor: '#91d5ff'
+        };
+    }
+  };
 
   const getMediationLabel = (value) => {
     const map = {
@@ -61,16 +148,33 @@ const BookingDetailModal = ({
     return map[value] || value || "—";
   };
 
+  // Helper function to safely get collection method name
+  const getCollectionMethodName = () => {
+    if (collectionMethod?.name) {
+      return collectionMethod.name;
+    }
+    return collectionMethod || "At Facility";
+  };
+
+  // Helper function to check if collection is at home
+  const isAtHome = () => {
+    if (collectionMethod?.name) {
+      return collectionMethod.name === 'At Home';
+    }
+    return collectionMethod === 'At Home';
+  };
+
   return (
     <Modal
       open={open}
       onCancel={onClose}
       footer={null}
       width={1000}
-      title={`Chi tiết lịch hẹn: #${bookingDetail?.bookingId || "—"}`}
+      centered
+      title={`Chi tiết lịch hẹn`}
     >
       {/* Include all cards in order, like your popup */}
-      {/* You can copy each Card component you’ve posted earlier and place here directly */}
+      {/* You can copy each Card component you've posted earlier and place here directly */}
       {/* For brevity, just placeholder: */}
 
       <div style={{ maxHeight: "80vh", overflowY: "auto", paddingRight: 8 }}>
@@ -123,7 +227,7 @@ const BookingDetailModal = ({
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>PHƯƠNG THỨC THU THẬP</Text>
                         <Text strong style={{ fontSize: 14 }}>
-                          {collectionMethod?.name === 'At Home' ? '🏠 ' : '🏥 '}{collectionMethod?.name}
+                          {isAtHome() ? '🏠 ' : '🏥 '}{getCollectionMethodName()}
                         </Text>
                       </div>
                     </Col>
@@ -145,7 +249,7 @@ const BookingDetailModal = ({
                       <div style={{ padding: '12px 16px', backgroundColor: '#f6ffed', borderRadius: 8, border: '1px solid #b7eb8f' }}>
                         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>📍 ĐỊA CHỈ THU THẬP</Text>
                         <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
-                          {collectionMethod?.name === 'At Home' ? homeAddress || '—' : '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City'}
+                          {isAtHome() ? homeAddress || '—' : '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City'}
                         </Text>
                       </div>
                     </Col>
@@ -255,18 +359,18 @@ const BookingDetailModal = ({
                           <div style={{ marginBottom: 8 }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>HỌ VÀ TÊN</Text>
                             <br/>
-                            <Text strong style={{ fontSize: 14 }}>{firstPerson?.fullName}</Text>
+                            <Text strong style={{ fontSize: 14 }}>{firstPerson?.fullname || '—'}</Text>
                           </div>
                           <Row gutter={8}>
                             <Col span={12}>
                               <Text type="secondary" style={{ fontSize: 11 }}>NGÀY SINH</Text>
                               <br/>
-                              <Text style={{ fontSize: 13 }}>{firstPerson?.dateOfBirth?.format ? firstPerson.dateOfBirth.format('DD/MM/YYYY') : firstPerson?.dateOfBirth}</Text>
+                              <Text style={{ fontSize: 13 }}>{formatDate(firstPerson?.dateOfBirth)}</Text>
                             </Col>
                             <Col span={12}>
                               <Text type="secondary" style={{ fontSize: 11 }}>GIỚI TÍNH</Text>
                               <br/>
-                              <Text style={{ fontSize: 13 }}>{firstPerson?.gender}</Text>
+                              <Text style={{ fontSize: 13 }}>{formatGender(firstPerson?.gender)}</Text>
                             </Col>
                           </Row>
                           <div style={{ marginTop: 8 }}>
@@ -294,7 +398,7 @@ const BookingDetailModal = ({
                           <div style={{ marginTop: 8 }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>SỐ CCCD/CMND</Text>
                             <br/>
-                            <Text style={{ fontSize: 13 }}>{firstPerson?.personalId}</Text>
+                            <Text style={{ fontSize: 13 }}>{firstPerson?.personalId || firstPerson?.idNumber || '—'}</Text>
                           </div>
                         </div>
                       </div>
@@ -326,18 +430,18 @@ const BookingDetailModal = ({
                           <div style={{ marginBottom: 8 }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>HỌ VÀ TÊN</Text>
                             <br/>
-                            <Text strong style={{ fontSize: 14 }}>{secondPerson?.fullName}</Text>
+                            <Text strong style={{ fontSize: 14 }}>{secondPerson?.fullname || '—'}</Text>
                           </div>
                           <Row gutter={8}>
                             <Col span={12}>
                               <Text type="secondary" style={{ fontSize: 11 }}>NGÀY SINH</Text>
                               <br/>
-                              <Text style={{ fontSize: 13 }}>{secondPerson?.dateOfBirth?.format ? secondPerson.dateOfBirth.format('DD/MM/YYYY') : secondPerson?.dateOfBirth}</Text>
+                              <Text style={{ fontSize: 13 }}>{formatDate(secondPerson?.dateOfBirth)}</Text>
                             </Col>
                             <Col span={12}>
                               <Text type="secondary" style={{ fontSize: 11 }}>GIỚI TÍNH</Text>
                               <br/>
-                              <Text style={{ fontSize: 13 }}>{secondPerson?.gender}</Text>
+                              <Text style={{ fontSize: 13 }}>{formatGender(secondPerson?.gender)}</Text>
                             </Col>
                           </Row>
                           <Row gutter={8} style={{ marginTop: 8 }}>
@@ -417,57 +521,53 @@ const BookingDetailModal = ({
                 </Card>
         
                 {/* Payment Method Card */}
-                <Card 
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {(() => {
+                  const paymentInfo = getPaymentMethodInfo(paymentMethod);
+                  
+                  return (
+                    <Card 
+                      title={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ 
+                            width: 32, 
+                            height: 32, 
+                            borderRadius: '50%', 
+                            backgroundColor: paymentInfo.color, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                          }}>
+                            {React.cloneElement(paymentInfo.icon, { style: { color: 'white', fontSize: 16 } })}
+                          </div>
+                          <span style={{ fontSize: 18, fontWeight: 600, color: paymentInfo.color }}>Phương thức thanh toán</span>
+                        </div>
+                      }
+                      style={{ 
+                        borderRadius: 12, 
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                        border: `1px solid ${paymentInfo.bgColor}`
+                      }}
+                      headStyle={{ 
+                        backgroundColor: paymentInfo.bgColor, 
+                        borderBottom: `1px solid ${paymentInfo.borderColor}`,
+                        borderRadius: '12px 12px 0 0'
+                      }}
+                    >
                       <div style={{ 
-                        width: 32, 
-                        height: 32, 
-                        borderRadius: '50%', 
-                        backgroundColor: paymentMethod === 'cash' ? '#52c41a' : '#1890ff', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center' 
+                        padding: '16px', 
+                        backgroundColor: paymentInfo.bgColor, 
+                        borderRadius: 8, 
+                        border: `2px solid ${paymentInfo.color}`,
+                        textAlign: 'center'
                       }}>
-                        {paymentMethod === 'cash' ? 
-                          <CreditCardOutlined style={{ color: 'white', fontSize: 16 }} /> : 
-                          <QrcodeOutlined style={{ color: 'white', fontSize: 16 }} />
-                        }
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                          {paymentInfo.icon}
+                          <Text strong style={{ fontSize: 16, color: paymentInfo.color }}>{paymentInfo.label}</Text>
+                        </div>
                       </div>
-                      <span style={{ fontSize: 18, fontWeight: 600, color: paymentMethod === 'cash' ? '#52c41a' : '#1890ff' }}>Phương thức thanh toán</span>
-                    </div>
-                  }
-                  style={{ 
-                    borderRadius: 12, 
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-                    border: `1px solid ${paymentMethod === 'cash' ? '#f6ffed' : '#e6f7ff'}`
-                  }}
-                  headStyle={{ 
-                    backgroundColor: paymentMethod === 'cash' ? '#f6ffed' : '#e6f7ff', 
-                    borderBottom: `1px solid ${paymentMethod === 'cash' ? '#d9f7be' : '#91d5ff'}`,
-                    borderRadius: '12px 12px 0 0'
-                  }}
-                >
-                  <div style={{ 
-                    padding: '16px', 
-                    backgroundColor: paymentMethod === 'cash' ? '#f6ffed' : '#e6f7ff', 
-                    borderRadius: 8, 
-                    border: `2px solid ${paymentMethod === 'cash' ? '#52c41a' : '#1890ff'}`,
-                    textAlign: 'center'
-                  }}>
-                    {paymentMethod === 'cash' ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                        <CreditCardOutlined style={{ fontSize: 24, color: '#52c41a' }} />
-                        <Text strong style={{ fontSize: 16, color: '#52c41a' }}>💵 Thanh toán tiền mặt khi nhận dịch vụ</Text>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                        <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-                        <Text strong style={{ fontSize: 16, color: '#1890ff' }}>📱 Quét mã QR để thanh toán</Text>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+                    </Card>
+                  );
+                })()}
       </div>
     </Modal>
   );

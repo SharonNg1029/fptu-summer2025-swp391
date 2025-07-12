@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaCalendar, FaUser, FaArrowRight, FaFilter, FaDna, FaFlask, FaGavel, FaBuilding } from "react-icons/fa";
 
-// Dữ liệu 9 bài viết mới với 4 chủ đề
+// Data for 9 new articles with 4 topics
 const articles = [
   {
     id: 1,
@@ -10,7 +10,7 @@ const articles = [
     category: "Knowledge",
     excerpt: "Discover the latest breakthroughs in DNA testing technology with 99.99% accuracy and rapid processing speed.",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop",
-    slug: "next-generation-dna-testing-technology-2024",
+    slug: "cong-nghe-xet-nghiem-adn-the-he-moi-2024",
     author: "Dr. Nguyen Minh Khoa",
     date: "2024-01-25",
     readTime: "8 min read",
@@ -22,7 +22,7 @@ const articles = [
     category: "Administration",
     excerpt: "A detailed guide to the required administrative procedures for conducting DNA tests as regulated by the Ministry of Health.",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&fit=crop",
-    slug: "administrative-procedures-dna-testing-vietnam",
+    slug: "quy-trinh-hanh-chinh-xet-nghiem-adn-tai-viet-nam",
     author: "Lawyer Tran Van Minh",
     date: "2024-01-23",
     readTime: "10 min read",
@@ -34,7 +34,7 @@ const articles = [
     category: "News",
     excerpt: "The new DNA testing law officially takes effect, bringing many positive changes for the public.",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
-    slug: "breaking-news-dna-law-2024-effective-march",
+    slug: "tin-moi-luat-adn-2024-co-hieu-luc-tu-thang-3",
     author: "Reporter Le Thi Hoa",
     date: "2024-01-22",
     readTime: "5 min read",
@@ -46,7 +46,7 @@ const articles = [
     category: "Civil",
     excerpt: "The crucial role of DNA testing in resolving family inheritance disputes.",
     image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=600&fit=crop",
-    slug: "resolving-inheritance-disputes-dna-testing",
+    slug: "giai-quyet-tranh-chap-thua-ke-bang-xet-nghiem-adn",
     author: "Judge Pham Thi Lan",
     date: "2024-01-20",
     readTime: "12 min read",
@@ -58,7 +58,7 @@ const articles = [
     category: "Knowledge",
     excerpt: "Explore the scientific principles behind DNA testing and how this technology operates.",
     image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&h=600&fit=crop",
-    slug: "how-dna-testing-works-scientific-principles",
+    slug: "nguyen-ly-hoat-dong-cua-xet-nghiem-adn",
     author: "Prof. Vu Thanh Son",
     date: "2024-01-18",
     readTime: "15 min read",
@@ -68,9 +68,9 @@ const articles = [
     id: 6,
     title: "How to Register for DNA Testing Online",
     category: "Administration",
-    excerpt: "Step-by-step guide to conveniently register for DNA testing online via the Ministry of Health’s electronic system.",
+    excerpt: "Step-by-step guide to conveniently register for DNA testing online via the Ministry of Health's electronic system.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    slug: "how-to-register-dna-testing-online",
+    slug: "thu-tuc-dang-ky-xet-nghiem-adn-online",
     author: "Specialist Nguyen Van Duc",
     date: "2024-01-16",
     readTime: "7 min read",
@@ -82,7 +82,7 @@ const articles = [
     category: "News",
     excerpt: "Great news! DNA testing centers nationwide are offering 30% discounts throughout February 2024.",
     image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop",
-    slug: "update-dna-test-price-cut-30-february",
+    slug: "cap-nhat-gia-xet-nghiem-adn-giam-30-trong-thang-2",
     author: "Reporter Hoang Minh Tuan",
     date: "2024-01-15",
     readTime: "4 min read",
@@ -94,7 +94,7 @@ const articles = [
     category: "Civil",
     excerpt: "Understand the legal rights and obligations of all parties involved in DNA testing under current laws.",
     image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800&h=600&fit=crop",
-    slug: "legal-rights-dna-testing",
+    slug: "quyen-loi-phap-ly-khi-thuc-hien-xet-nghiem-adn",
     author: "Lawyer Do Thi Mai",
     date: "2024-01-12",
     readTime: "9 min read",
@@ -106,14 +106,13 @@ const articles = [
     category: "Knowledge",
     excerpt: "Artificial intelligence is revolutionizing the analysis and processing of DNA test results.",
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-    slug: "ai-applications-dna-result-analysis",
+    slug: "ung-dung-ai-trong-phan-tich-ket-qua-adn",
     author: "Dr. Le Minh Hai",
     date: "2024-01-10",
     readTime: "11 min read",
     featured: false
   }
 ];
-
 
 // Component Blog
 const Blog = () => {
@@ -384,7 +383,7 @@ const Blog = () => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in-up {
           from {
             opacity: 0;
