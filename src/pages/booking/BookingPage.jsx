@@ -2809,6 +2809,7 @@ const ConfirmBookingModal = ({
     }
   };
 
+
   const getSteps = () => {
     return [
       { title: "Confirm Information" },
@@ -2818,11 +2819,10 @@ const ConfirmBookingModal = ({
   };
 
   const getCurrentStepIndex = () => {
-    // Map the current step to the appropriate step in the Steps component
     switch (currentStep) {
-      case 1: return 0; // Confirm Information
-      case 2: return 1; // Sign (previously step 3)
-      case 3: return 2; // PDF Options (previously step 4)
+      case 1: return 0;
+      case 2: return 1; 
+      case 3: return 2; 
       default: return 0;
     }
   };
