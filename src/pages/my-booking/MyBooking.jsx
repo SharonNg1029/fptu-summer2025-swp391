@@ -52,20 +52,18 @@ const MyBooking = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 6 });
 
   const statusList = [
-  "Waiting confirmed",
-  "Booking confirmed",
-  "Awaiting Sample",
-  "In Progress",
-  "Ready",
-  "Pending Payment",
-  "Completed",
-  "Cancel",
+    "Awaiting Confirmation", 
+    "Payment Confirmed", 
+    "Booking Confirmed", 
+    "Awaiting Sample", 
+    "In Progress", 
+    "Completed", 
+    "Cancelled"
   ];
 
   const paymentMethodList = [
   "Cash",
   "VNPAY",
-  "Bank"
   ];
 
   const serviceTypes = [
@@ -178,12 +176,12 @@ const MyBooking = () => {
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `KetQua_DNA_${record.bookingId}.pdf`);
+    link.setAttribute("download", `Result_DNA_${record.bookingId}.pdf`);
     document.body.appendChild(link);
     link.click();
     link.remove();
   } catch (err) {
-    //toast.error("Tải kết quả thất bại. Vui lòng thử lại!");
+    //toast.error("Download failed. Please try again!");
   }
 };
 
@@ -194,8 +192,8 @@ const MyBooking = () => {
   const getStatusTag = (status) => {
     let color = "default";
     let icon = <ClockCircleOutlined />;
-    if (status === "Waiting confirmed") color = "gold";
-    else if (status === "Booking confirmed") {
+    if (status === "Waiting confirmed" || status === "Awaiting Confirmation") color = "gold";
+    else if (status === "Booking confirmed" || status === "Booking Confirmed") {
       color = "blue";
       icon = <CheckCircleOutlined />;
     } else if (status === "Awaiting Sample") {
@@ -207,13 +205,13 @@ const MyBooking = () => {
     } else if (status === "Ready") {
       color = "lime";
       icon = <CheckCircleOutlined />;
-    } else if (status === "Pending Payment") {
+    } else if (status === "Pending Payment" || status === "Payment Confirmed") {
       color = "orange";
       icon = <ExclamationCircleOutlined />;
     } else if (status === "Completed") {
       color = "green";
       icon = <CheckCircleOutlined />;
-    } else if (status === "Cancel") {
+    } else if (status === "Cancel" || status === "Cancelled") {
       color = "red";
       icon = <ExclamationCircleOutlined />;
     }
@@ -234,10 +232,10 @@ const MyBooking = () => {
     },
   },
   {
-    title: "Service ID",
+    title: "Service Type",
     dataIndex: "serviceID",
-    key: "serviceID",
-    render: (text) => text || "N/A",
+    key: "serviceType",
+    render: (serviceID) => getServiceType(serviceID),
   },
   {
     title: "Service Name",
@@ -281,7 +279,7 @@ const MyBooking = () => {
     key: "totalCost",
     render: (cost) =>
       cost != null
-        ? cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " VNĐ"
+        ? cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " VND"
         : "",
   },
   {
@@ -303,7 +301,7 @@ const MyBooking = () => {
             type="primary"
             onClick={() => handleDownloadResult(record)}
           >
-            Tải kết quả
+            Download Result
           </Button>
           
           <Button
@@ -334,11 +332,37 @@ const MyBooking = () => {
 
 
   const filteredBookings = Array.isArray(bookings) ? bookings.filter((booking) => {
-    const matchesSearch =
-      booking.bookingId?.toString().includes(searchText) ||
-      booking.serviceID?.toLowerCase().includes(searchText.toLowerCase()) ||
-      booking.status?.toLowerCase().includes(searchText.toLowerCase());
+    // Convert search text to lowercase for case-insensitive search
+    const searchTextLower = searchText.toLowerCase();
     
+    // Format appointment date for search if it exists
+    let formattedAppointmentDate = "";
+    if (Array.isArray(booking.appointmentTime) && booking.appointmentTime.length === 3) {
+      const [year, month, day] = booking.appointmentTime;
+      formattedAppointmentDate = `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year}`;
+    }
+    
+    // Format total cost for search if it exists
+    let formattedCost = "";
+    if (booking.totalCost != null) {
+      formattedCost = booking.totalCost.toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+    }
+    
+    // Check if search text matches any field (all lowercase for case-insensitive comparison)
+    const matchesSearch = searchTextLower === '' || // Empty search matches all
+      booking.bookingId?.toString().toLowerCase().includes(searchTextLower) ||
+      booking.serviceID?.toLowerCase().includes(searchTextLower) ||
+      getServiceType(booking.serviceID).toLowerCase().includes(searchTextLower) ||
+      (serviceMap[booking.serviceID] || "").toLowerCase().includes(searchTextLower) ||
+      booking.status?.toLowerCase().includes(searchTextLower) ||
+      (booking.paymentMethod || "").toLowerCase().includes(searchTextLower) ||
+      formattedAppointmentDate.toLowerCase().includes(searchTextLower) ||
+      (booking.timeRange || "").toLowerCase().includes(searchTextLower) ||
+      formattedCost.toLowerCase().includes(searchTextLower) ||
+      (booking.firstPerson?.fullname || "").toLowerCase().includes(searchTextLower) ||
+      (booking.secondPerson?.fullname || "").toLowerCase().includes(searchTextLower);
+    
+    // Apply filters
     const serviceType = getServiceType(booking.serviceID);
     const matchesServiceType = serviceTypeFilter ? serviceType === serviceTypeFilter : true;
     const matchesStatus = statusFilter ? booking.status === statusFilter : true;
@@ -362,7 +386,11 @@ const MyBooking = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-6">
+      <div style={{
+        background: 'linear-gradient(135deg, #0046ad 0%, #0057d9 50%, #1677ff 100%)',
+        padding: '1.5rem',
+        color: 'white'
+      }}>
         <div className="flex items-center mb-2">
           <button
             onClick={() => navigate(-1)}

@@ -1615,6 +1615,54 @@ const BlogDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header Section - Updated to match services style */}
+      <div
+        className="relative text-white h-[400px] flex items-center justify-center"
+        style={{
+          backgroundImage:
+            "url('https://drugtesters.net/wp-content/uploads/2024/12/MDT-1-768x432.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div className="relative z-10 container mx-auto px-6 text-center">
+          <h1
+            className="text-4xl md:text-5xl font-bold mb-4"
+            style={{
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
+            }}
+          >
+            {article.title}
+          </h1>
+          
+          <div className="flex flex-wrap justify-center items-center gap-4 mb-4">
+            <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaUser className="mr-2" />
+              <span className="font-medium">{article.author}</span>
+            </div>
+            <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaCalendar className="mr-2" />
+              <span>{formatDate(article.date)}</span>
+            </div>
+            <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaClock className="mr-2" />
+              <span>{article.readTime}</span>
+            </div>
+            <div className={`flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm`}>
+              <FaTag className="mr-2" />
+              <span>{article.category}</span>
+            </div>
+          </div>
+          
+          <p className="text-lg max-w-3xl mx-auto text-white/90 mt-4">
+            {article.excerpt}
+          </p>
+        </div>
+      </div>
+
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-3">
@@ -1637,47 +1685,8 @@ const BlogDetail = () => {
           <div className="lg:col-span-3">
             {/* Article Header */}
             <article className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              {/* Article Meta */}
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${
-                    article.category === 'Knowledge' ? 'from-green-500 to-green-600' :
-                    article.category === 'Administration' ? 'from-red-500 to-red-600' :
-                    article.category === 'News' ? 'from-purple-500 to-purple-600' :
-                    'from-orange-500 to-orange-600'
-                  }`}>
-                    <FaTag className="inline mr-1" />
-                    {article.category}
-                  </span>
-                  {article.featured && (
-                    <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                      ⭐ Featured
-                    </span>
-                  )}
-                </div>
-                
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                  {article.title}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-6 text-gray-600 mb-6">
-                  <div className="flex items-center">
-                    <FaUser className="mr-2 text-blue-500" />
-                    <span className="font-medium">{article.author}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaCalendar className="mr-2 text-blue-500" />
-                    <span>{formatDate(article.date)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaClock className="mr-2 text-blue-500" />
-                    <span>{article.readTime}</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Featured Image */}
-              <div className="px-6">
+              <div className="px-6 pt-6">
                 <img
                   src={article.image}
                   alt={article.title}

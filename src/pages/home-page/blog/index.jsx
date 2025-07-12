@@ -171,53 +171,53 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header Section */}
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0" style={{
-            background: 'linear-gradient(135deg, #023670 0%, #2563eb 100%)'
-          }}></div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500"></div>
-
-        <div className="relative z-10 container mx-auto px-4 flex flex-col items-center justify-center text-center py-20">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white drop-shadow-xl mb-6 mt-8">
+      {/* Header Section - Updated to match services style */}
+      <div
+        className="relative text-white h-[600px] mt-10 flex items-center justify-center"
+        style={{
+          backgroundImage:
+            "url('https://drugtesters.net/wp-content/uploads/2024/12/MDT-1-768x432.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div className="relative max-w-7xl mx-auto px-6 text-center">
+          <h1
+            className="text-5xl font-bold mb-6"
+            style={{
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
+            }}
+          >
             DNA Testing News & Articles
           </h1>
-
-          <div className="flex flex-wrap justify-center items-center gap-4 mb-6">
-            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20 hover:bg-white/15 transition-colors duration-300">
-              <FaDna className="text-lg text-blue-200" />
-              <span className="text-sm font-medium text-white">Advanced Technology</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20 hover:bg-white/15 transition-colors duration-300">
-              <FaFlask className="text-lg text-blue-200" />
-              <span className="text-sm font-medium text-white">High Accuracy</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20 hover:bg-white/15 transition-colors duration-300">
-              <FaGavel className="text-lg text-blue-200" />
-              <span className="text-sm font-medium text-white">Legal Consultation</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20 hover:bg-white/15 transition-colors duration-300">
-              <FaBuilding className="text-lg text-blue-200" />
-              <span className="text-sm font-medium text-white">Administrative Procedures</span>
-            </div>
-          </div>
-
-          <p className="text-lg md:text-xl text-blue-100 max-w-3xl leading-relaxed mb-8 drop-shadow-md">
+          <p
+            className="text-base mb-8 max-w-3xl mx-auto leading-relaxed font-medium"
+            style={{
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
+            }}
+          >
             Explore in-depth articles on DNA testing, biotechnology, administrative procedures, and legal applications written by leading experts.
           </p>
-
-          <Link
-            to="/services"
-            className="group inline-flex items-center px-8 py-3 bg-white/15 backdrop-blur-sm text-white font-semibold text-base rounded-full hover:bg-white/20 transition-all duration-300 transform hover:scale-105 shadow-xl border border-white/30"
-          >
-            <span>Explore more</span>
-            <FaArrowRight className="ml-2 text-sm group-hover:translate-x-1 transition-transform duration-300" />
-          </Link>
+          <div className="flex flex-wrap justify-center items-center gap-4">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
+              <span className="font-semibold">✓ Advanced Technology</span>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
+              <span className="font-semibold">✓ High Accuracy</span>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
+              <span className="font-semibold">✓ Legal Consultation</span>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-2">
+              <span className="font-semibold">✓ Administrative Procedures</span>
+            </div>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Filter Toolbar */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">

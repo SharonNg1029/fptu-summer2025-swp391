@@ -59,8 +59,8 @@ const formatDate = (dateValue) => {
 
 // Helper function to convert gender code to text
 const formatGender = (gender) => {
-  if (gender === 1 || gender === "1") return "Nam";
-  if (gender === 2 || gender === "2") return "Nữ";
+  if (gender === 1 || gender === "1") return "Male";
+  if (gender === 2 || gender === "2") return "Female";
   
   return gender || "—"; // Return original if not 0 or 1
 };
@@ -107,7 +107,7 @@ const BookingDetailModal = ({
       case 'cash':
         return {
           icon: <CreditCardOutlined style={{ fontSize: 24, color: '#52c41a' }} />,
-          label: '💵 Thanh toán tiền mặt khi nhận dịch vụ',
+          label: '💵 Cash payment upon service delivery',
           color: '#52c41a',
           bgColor: '#f6ffed',
           borderColor: '#d9f7be'
@@ -115,7 +115,7 @@ const BookingDetailModal = ({
       case 'bank':
         return {
           icon: <BankOutlined style={{ fontSize: 24, color: '#722ed1' }} />,
-          label: '🏦 Chuyển khoản ngân hàng',
+          label: '🏦 Bank transfer',
           color: '#722ed1',
           bgColor: '#f9f0ff',
           borderColor: '#d3adf7'
@@ -123,7 +123,7 @@ const BookingDetailModal = ({
       case 'vnpay':
         return {
           icon: <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
-          label: '📱 Thanh toán qua VNPAY',
+          label: '📱 Payment via VNPAY',
           color: '#1890ff',
           bgColor: '#e6f7ff',
           borderColor: '#91d5ff'
@@ -131,7 +131,7 @@ const BookingDetailModal = ({
       default:
         return {
           icon: <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
-          label: '📱 Quét mã QR để thanh toán',
+          label: '📱 Scan QR code to pay',
           color: '#1890ff',
           bgColor: '#e6f7ff',
           borderColor: '#91d5ff'
@@ -141,9 +141,9 @@ const BookingDetailModal = ({
 
   const getMediationLabel = (value) => {
     const map = {
-      courier: "Chuyển phát nhanh",
-      pickup: "Tự đến lấy mẫu",
-      staff: "Nhân viên đến lấy",
+      courier: "Courier",
+      pickup: "Self Pickup",
+      staff: "Staff Collection",
     };
     return map[value] || value || "—";
   };
@@ -171,7 +171,7 @@ const BookingDetailModal = ({
       footer={null}
       width={1000}
       centered
-      title={`Chi tiết lịch hẹn`}
+      title={`Booking Details`}
     >
       {/* Include all cards in order, like your popup */}
       {/* You can copy each Card component you've posted earlier and place here directly */}
@@ -193,7 +193,7 @@ const BookingDetailModal = ({
                       }}>
                         <UserOutlined style={{ color: 'white', fontSize: 16 }} />
                       </div>
-                      <span style={{ fontSize: 18, fontWeight: 600, color: '#1890ff' }}>Thông tin dịch vụ</span>
+                      <span style={{ fontSize: 18, fontWeight: 600, color: '#1890ff' }}>Service Information</span>
                     </div>
                   }
                   style={{ 
@@ -211,7 +211,7 @@ const BookingDetailModal = ({
                   <Row gutter={[16, 16]}>
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>LOẠI DỊCH VỤ</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>SERVICE TYPE</Text>
                         <Text strong style={{ fontSize: 14, color: '#1890ff' }}>
                           {serviceType === 'legal' ? '🏛️ Legal DNA Testing' : '🧬 Non-Legal DNA Testing'}
                         </Text>
@@ -219,13 +219,13 @@ const BookingDetailModal = ({
                     </Col>
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>TÊN DỊCH VỤ</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>SERVICE NAME</Text>
                         <Text strong style={{ fontSize: 14 }}>{service}</Text>
                       </div>
                     </Col>
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>PHƯƠNG THỨC THU THẬP</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>COLLECTION METHOD</Text>
                         <Text strong style={{ fontSize: 14 }}>
                           {isAtHome() ? '🏠 ' : '🏥 '}{getCollectionMethodName()}
                         </Text>
@@ -233,7 +233,7 @@ const BookingDetailModal = ({
                     </Col>
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>KIT XÉT NGHIỆM</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>TEST KIT</Text>
                         <Text strong style={{ fontSize: 14 }}>
                           {selectedKitType ? (kitTypes.find(k => k.name === selectedKitType)?.name) : '—'}
                         </Text>
@@ -247,7 +247,7 @@ const BookingDetailModal = ({
                   <Row gutter={[16, 16]}>
                     <Col span={24}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#f6ffed', borderRadius: 8, border: '1px solid #b7eb8f' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>📍 ĐỊA CHỈ THU THẬP</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>📍 COLLECTION ADDRESS</Text>
                         <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
                           {isAtHome() ? homeAddress || '—' : '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City'}
                         </Text>
@@ -255,7 +255,7 @@ const BookingDetailModal = ({
                     </Col>
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>PHƯƠNG THỨC VẬN CHUYỂN</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>TRANSPORTATION METHOD</Text>
                         <Text strong style={{ fontSize: 14 }}>{getMediationLabel(medicationMethod)}</Text>
                       </div>
                     </Col>
@@ -263,7 +263,7 @@ const BookingDetailModal = ({
                       <div style={{ padding: '12px 16px', backgroundColor: isExpressService ? '#fff2e8' : '#fafafa', borderRadius: 8, border: `1px solid ${isExpressService ? '#ffbb96' : '#f0f0f0'}` }}>
                         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>EXPRESS SERVICE</Text>
                         <Text strong style={{ fontSize: 14, color: isExpressService ? '#fa8c16' : '#666' }}>
-                          {isExpressService ? '⚡ Có' : '❌ Không'}
+                          {isExpressService ? '⚡ Yes' : '❌ No'}
                         </Text>
                       </div>
                     </Col>
@@ -274,7 +274,7 @@ const BookingDetailModal = ({
                     <>
                       <Divider style={{ margin: '16px 0' }} />
                       <div style={{ padding: '16px', backgroundColor: '#e6f7ff', borderRadius: 8, border: '1px solid #91d5ff' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>📅 LỊCH HẸN</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>📅 APPOINTMENT</Text>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <CalendarOutlined style={{ color: '#1890ff', fontSize: 16 }} />
@@ -317,7 +317,7 @@ const BookingDetailModal = ({
                       }}>
                         <TeamOutlined style={{ color: 'white', fontSize: 16 }} />
                       </div>
-                      <span style={{ fontSize: 18, fontWeight: 600, color: '#52c41a' }}>Thông tin người xét nghiệm</span>
+                      <span style={{ fontSize: 18, fontWeight: 600, color: '#52c41a' }}>Test Participants Information</span>
                     </div>
                   }
                   style={{ 
@@ -353,28 +353,28 @@ const BookingDetailModal = ({
                           fontSize: 12,
                           fontWeight: 600
                         }}>
-                          👤 NGƯỜI ĐẠI DIỆN
+                          👤 PRIMARY PERSON
                         </div>
                         <div style={{ marginTop: 8 }}>
                           <div style={{ marginBottom: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>HỌ VÀ TÊN</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>FULL NAME</Text>
                             <br/>
                             <Text strong style={{ fontSize: 14 }}>{firstPerson?.fullname || '—'}</Text>
                           </div>
                           <Row gutter={8}>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>NGÀY SINH</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>DATE OF BIRTH</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{formatDate(firstPerson?.dateOfBirth)}</Text>
                             </Col>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>GIỚI TÍNH</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>GENDER</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{formatGender(firstPerson?.gender)}</Text>
                             </Col>
                           </Row>
                           <div style={{ marginTop: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>SỐ ĐIỆN THOẠI</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>PHONE NUMBER</Text>
                             <br/>
                             <Text style={{ fontSize: 13 }}>{firstPerson?.phone}</Text>
                           </div>
@@ -385,18 +385,18 @@ const BookingDetailModal = ({
                           </div>
                           <Row gutter={8} style={{ marginTop: 8 }}>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>MỐI QUAN HỆ</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>RELATIONSHIP</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{firstPerson?.relationship}</Text>
                             </Col>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>LOẠI MẪU</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>SAMPLE TYPE</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{firstPerson?.sampleType}</Text>
                             </Col>
                           </Row>
                           <div style={{ marginTop: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>SỐ CCCD/CMND</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>ID CARD/PASSPORT</Text>
                             <br/>
                             <Text style={{ fontSize: 13 }}>{firstPerson?.personalId || firstPerson?.idNumber || '—'}</Text>
                           </div>
@@ -424,38 +424,43 @@ const BookingDetailModal = ({
                           fontSize: 12,
                           fontWeight: 600
                         }}>
-                          👥 NGƯỜI THỨ HAI
+                          👥 SECOND PERSON
                         </div>
                         <div style={{ marginTop: 8 }}>
                           <div style={{ marginBottom: 8 }}>
-                            <Text type="secondary" style={{ fontSize: 11 }}>HỌ VÀ TÊN</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>FULL NAME</Text>
                             <br/>
                             <Text strong style={{ fontSize: 14 }}>{secondPerson?.fullname || '—'}</Text>
                           </div>
                           <Row gutter={8}>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>NGÀY SINH</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>DATE OF BIRTH</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{formatDate(secondPerson?.dateOfBirth)}</Text>
                             </Col>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>GIỚI TÍNH</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>GENDER</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{formatGender(secondPerson?.gender)}</Text>
                             </Col>
                           </Row>
                           <Row gutter={8} style={{ marginTop: 8 }}>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>MỐI QUAN HỆ</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>RELATIONSHIP</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{secondPerson?.relationship}</Text>
                             </Col>
                             <Col span={12}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>LOẠI MẪU</Text>
+                              <Text type="secondary" style={{ fontSize: 11 }}>SAMPLE TYPE</Text>
                               <br/>
                               <Text style={{ fontSize: 13 }}>{secondPerson?.sampleType}</Text>
                             </Col>
                           </Row>
+                          <div style={{ marginTop: 8 }}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>ID CARD/PASSPORT</Text>
+                            <br/>
+                            <Text style={{ fontSize: 13 }}>{secondPerson?.personalId || secondPerson?.idNumber || '—'}</Text>
+                          </div>
                         </div>
                       </div>
                     </Col>
@@ -477,7 +482,7 @@ const BookingDetailModal = ({
                       }}>
                         <CreditCardOutlined style={{ color: 'white', fontSize: 16 }} />
                       </div>
-                      <span style={{ fontSize: 18, fontWeight: 600, color: '#fa8c16' }}>Chi phí chi tiết</span>
+                      <span style={{ fontSize: 18, fontWeight: 600, color: '#fa8c16' }}>Cost Breakdown</span>
                     </div>
                   }
                   style={{ 
@@ -498,7 +503,7 @@ const BookingDetailModal = ({
                       <Text strong>{formatCurrency(serviceCost)}</Text>
                     </Row>
                     <Row justify="space-between" style={{ marginBottom: 12, padding: '8px 12px', backgroundColor: '#fafafa', borderRadius: 6 }}>
-                      <Text>🚚 Mediation Method Cost</Text>
+                      <Text>🚚 Transportation Cost</Text>
                       <Text strong>{formatCurrency(mediationCost)}</Text>
                     </Row>
                     {isExpressService && (
@@ -514,7 +519,7 @@ const BookingDetailModal = ({
                       borderRadius: 8, 
                       border: '2px solid #1890ff' 
                     }}>
-                      <Text strong style={{ fontSize: 16, color: '#1890ff' }}>💎 TỔNG CHI PHÍ</Text>
+                      <Text strong style={{ fontSize: 16, color: '#1890ff' }}>💎 TOTAL COST</Text>
                       <Text strong style={{ fontSize: 18, color: '#1890ff' }}>{formatCurrency(totalCost)}</Text>
                     </Row>
                   </div>
@@ -539,7 +544,7 @@ const BookingDetailModal = ({
                           }}>
                             {React.cloneElement(paymentInfo.icon, { style: { color: 'white', fontSize: 16 } })}
                           </div>
-                          <span style={{ fontSize: 18, fontWeight: 600, color: paymentInfo.color }}>Phương thức thanh toán</span>
+                          <span style={{ fontSize: 18, fontWeight: 600, color: paymentInfo.color }}>Payment Method</span>
                         </div>
                       }
                       style={{ 
