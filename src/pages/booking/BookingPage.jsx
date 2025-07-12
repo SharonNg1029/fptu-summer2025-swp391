@@ -174,15 +174,15 @@ const ConfirmBookingModal = ({
       }
 
       // Ưu tiên sử dụng initialStep từ props
-      if (initialStep && initialStep >= 1 && initialStep <= 4) {
+      if (initialStep && initialStep >= 1 && initialStep <= 3) {
         console.log("Setting currentStep from initialStep:", initialStep);
         setCurrentStep(initialStep);
       } else if (
         bookingData?.status === "paid" &&
         bookingData?.paymentMethod === "vnpay"
       ) {
-        console.log("Setting currentStep to 3 for paid VNPay booking");
-        setCurrentStep(3);
+        console.log("Setting currentStep to 2 for paid VNPay booking");
+        setCurrentStep(2);
       } else {
         console.log("Setting currentStep to default: 1");
         setCurrentStep(1);
@@ -271,7 +271,7 @@ const ConfirmBookingModal = ({
         const code = generatePaymentCode();
         setPaymentCode(code);
 
-        setCurrentStep(2);
+        setCurrentStep(2); // Skip payment step, go directly to signature
       },
     });
   };
@@ -324,8 +324,8 @@ const ConfirmBookingModal = ({
 
       setFinalBookingData(bookingDataWithSignature);
 
-      // Chuyển đến bước PDF Options (bước 4)
-      setCurrentStep(4);
+      // Chuyển đến bước PDF Options (bước 3)
+      setCurrentStep(3);
       setShowPDFOption(true);
 
       message.success("Signature successful!");
@@ -555,7 +555,7 @@ const ConfirmBookingModal = ({
         };
 
         onConfirm(updatedBookingData);
-        setCurrentStep(4);
+        setCurrentStep(3);
 
         // Display redirect notification
         message.info("Returning to homepage in 2 seconds...", 2);
@@ -580,7 +580,7 @@ const ConfirmBookingModal = ({
   };
   const handleSkipPDF = async () => {
     onConfirm(finalBookingData);
-    setCurrentStep(4);
+    setCurrentStep(3);
     setShowPDFOption(false);
 
     // Display completion notification and redirect
@@ -2644,177 +2644,9 @@ const ConfirmBookingModal = ({
     switch (currentStep) {
       case 1: // Confirm Information
         return renderSummary();
-      case 2: // Payment & Completion
-        if (paymentMethod === "vnpay") {
-          // Nếu đã thanh toán VNPay thành công, tự động chuyển sang step 3
-          if (
-            bookingData?.status === "paid" &&
-            bookingData?.paymentMethod === "vnpay"
-          ) {
-            console.log(
-              "VNPay payment detected as paid, switching to step 3 (Sign)"
-            );
-            setTimeout(() => setCurrentStep(3), 100); // Sử dụng setTimeout để tránh vấn đề re-render
-            return (
-              <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <CheckCircleOutlined
-                  style={{
-                    fontSize: "64px",
-                    color: "#52c41a",
-                    marginBottom: "24px",
-                  }}
-                />
-                <Title
-                  level={3}
-                  style={{ color: "#52c41a", marginBottom: "16px" }}
-                >
-                  VNPay Payment Successful!
-                </Title>
-                <Text
-                  style={{
-                    fontSize: "16px",
-                    color: "#666",
-                    display: "block",
-                    marginBottom: "32px",
-                  }}
-                >
-                  Chuyển đến bước ký tên...
-                </Text>
-              </div>
-            );
-          }
-
-          // VNPAY Payment component
-          return (
-            <div style={{ textAlign: "center", padding: "40px 20px" }}>
-              <div
-                style={{
-                  padding: "24px",
-                  backgroundColor: "#f6ffed",
-                  border: "1px solid #b7eb8f",
-                  borderRadius: "12px",
-                  marginBottom: "24px",
-                  maxWidth: "500px",
-                  margin: "0 auto 24px auto",
-                }}
-              >
-                <QrcodeOutlined
-                  style={{
-                    fontSize: "48px",
-                    color: "#1890ff",
-                    marginBottom: "16px",
-                  }}
-                />
-                <Title level={3} style={{ marginBottom: "16px" }}>
-                  VNPAY Payment
-                </Title>
-                <Text
-                  style={{
-                    fontSize: "16px",
-                    color: "#666",
-                    display: "block",
-                    marginBottom: "24px",
-                  }}
-                >
-                  You will be redirected to VNPAY to complete your payment.
-                </Text>
-
-                <Button
-                  type="primary"
-                  size="large"
-                  onClick={handleVNPAYPayment}
-                  loading={isRedirectingToVNPAY}
-                  disabled={isRedirectingToVNPAY}
-                  style={{
-                    backgroundColor: "#1890ff",
-                    borderColor: "#1890ff",
-                    height: "48px",
-                    padding: "0 32px",
-                    fontSize: "16px",
-                  }}
-                >
-                  {isRedirectingToVNPAY ? "Processing..." : "Pay with VNPAY"}
-                </Button>
-
-                {isRedirectingToVNPAY && (
-                  <div
-                    style={{
-                      marginTop: "16px",
-                      padding: "16px",
-                      backgroundColor: "#e6f7ff",
-                      borderRadius: "8px",
-                      border: "1px solid #91d5ff",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "12px",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      <div
-                        className="vnpay-loading-spinner"
-                        style={{
-                          width: "20px",
-                          height: "20px",
-                          border: "2px solid #1890ff",
-                          borderTopColor: "transparent",
-                          borderRadius: "50%",
-                        }}
-                      ></div>
-                      <Text
-                        strong
-                        style={{ color: "#1890ff", fontSize: "16px" }}
-                      >
-                        Processing VNPAY payment...
-                      </Text>
-                    </div>
-                    <Text type="secondary" style={{ fontSize: "14px" }}>
-                      Please wait a moment, you will be redirected to the
-                      payment page.
-                    </Text>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        } else {
-          return (
-            <div style={{ textAlign: "center", padding: "40px 20px" }}>
-              <CheckCircleOutlined
-                style={{
-                  fontSize: "64px",
-                  color: "#52c41a",
-                  marginBottom: "24px",
-                }}
-              />
-              <Title
-                level={3}
-                style={{ color: "#52c41a", marginBottom: "16px" }}
-              >
-                Payment Completed!
-              </Title>
-              <Text
-                style={{
-                  fontSize: "16px",
-                  color: "#666",
-                  display: "block",
-                  marginBottom: "32px",
-                }}
-              >
-                Please proceed to sign your application.
-              </Text>
-
- 
-            </div>
-          );
-        }
-      case 3: // Sign
+      case 2: // Sign (was previously step 3)
         return renderSignature();
-      case 4: // PDF Options
+      case 3: // PDF Options (was previously step 4)
         // PDF Options component
         return (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
@@ -2944,29 +2776,11 @@ const ConfirmBookingModal = ({
             {isSubmittingPayment ? "Processing..." : "Confirm"}
           </Button>,
         ];
-      case 2: // Payment & Completion
-        // For VNPAY payment, only show Back button, no Continue button
-        if (paymentMethod === "vnpay") {
-          return [
-            <Button key="back" onClick={() => setCurrentStep(1)}>
-              Back
-            </Button>
-          ];
-        }
-        // For other payment methods, show both Back and Continue buttons
-        return [
-          <Button key="back" onClick={() => setCurrentStep(1)}>
-            Back
-          </Button>,
-          <Button key="next" type="primary" onClick={() => setCurrentStep(3)}>
-            Continue 
-          </Button>,
-        ];
-      case 3: // Sign
+      case 2: // Sign (previously step 3)
         return [
           <Button
             key="back"
-            onClick={() => setCurrentStep(2)}
+            onClick={() => setCurrentStep(1)}
             disabled={isProcessingSignature}
           >
             Back
@@ -2981,9 +2795,9 @@ const ConfirmBookingModal = ({
             Sign and Continue
           </Button>,
         ];
-      case 4:
+      case 3: // PDF Options (previously step 4)
         return [
-          <Button key="back" onClick={() => setCurrentStep(3)}>
+          <Button key="back" onClick={() => setCurrentStep(2)}>
             Back
           </Button>,
           <Button key="complete" type="primary" onClick={handleClose}>
@@ -2998,7 +2812,6 @@ const ConfirmBookingModal = ({
   const getSteps = () => {
     return [
       { title: "Confirm Information" },
-      { title: "Cash Payment" },
       { title: "Sign" },
       { title: "PDF Options" },
     ];
@@ -3008,9 +2821,8 @@ const ConfirmBookingModal = ({
     // Map the current step to the appropriate step in the Steps component
     switch (currentStep) {
       case 1: return 0; // Confirm Information
-      case 2: return 1; // Cash Payment
-      case 3: return 2; // Sign
-      case 4: return 3; // PDF Options
+      case 2: return 1; // Sign (previously step 3)
+      case 3: return 2; // PDF Options (previously step 4)
       default: return 0;
     }
   };
