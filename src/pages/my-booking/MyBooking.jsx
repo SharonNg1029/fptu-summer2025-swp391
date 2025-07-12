@@ -26,14 +26,18 @@ import {
   ExperimentOutlined,
   DownloadOutlined,
   CommentOutlined,
+  StopOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import api from "../../configs/axios";
 import { toast } from "react-toastify";
 import BookingDetailModal from "./BookingDetailModal";
+import { FaArrowLeft } from "react-icons/fa";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { confirm } = Modal;
 
 const MyBooking = () => {
   const navigate = useNavigate();
@@ -42,8 +46,10 @@ const MyBooking = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [serviceFilter, setServiceFilter] = useState("");
+  const [serviceTypeFilter, setServiceTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("");
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 6 });
 
   const statusList = [
   "Waiting confirmed",
@@ -56,10 +62,47 @@ const MyBooking = () => {
   "Cancel",
   ];
 
+  const paymentMethodList = [
+  "Cash",
+  "VNPAY",
+  "Bank"
+  ];
+
+  const serviceTypes = [
+  { value: "Legal", label: "Legal" },
+  { value: "Non-Legal", label: "Non-Legal" }
+  ];
+
+  // Statuses that cannot be canceled
+  const nonCancelableStatuses = [
+    "Booking confirmed",
+    "Awaiting Sample",
+    "In Progress",
+    "Ready",
+    "Completed",
+    "Cancel",
+    "Cancelled"
+  ];
+
+  // Helper function to determine if a service is legal or non-legal based on service ID
+  const getServiceType = (serviceID) => {
+    if (serviceID?.startsWith('SL')) {
+      return 'Legal';
+    } else if (serviceID?.startsWith('SNL')) {
+      return 'Non-Legal';
+    }
+    return '';
+  };
+
   const serviceMap = {
-  SNL001: "Paternity DNA Test",
-  SNL002: "Bloodline DNA Test",
-  SNL003: "Maternity DNA Test",
+  SL001: "DNA Testing for Birth Registration",
+  SL002: "DNA Testing for Immigration Cases",
+  SL003: "DNA Testing for Inheritance or Asset Division",
+  SNL001: "Paternity Testing",
+  SNL002: "Maternity Testing",
+  SNL003: "Non-Invasive Relationship Testing (NIPT)",
+  SNL004: "Sibling Testing",
+  SNL005: "Grandparent Testing",
   };
 
   const user = useSelector((state) => state.user.currentUser);
@@ -92,8 +135,38 @@ const MyBooking = () => {
   };
 
   const handleViewDetail = (record) => {
-    setSelectedBooking(record);
+    console.log("Selected booking detail:", JSON.stringify(record, null, 2));
+    setSelectedBooking({
+      ...record,
+      collectionMethod: {
+        name: record.collectionMethod || "At Facility"
+      }
+    });
     setShowModal(true);
+  };
+
+  const handleCancelBooking = (record) => {
+    confirm({
+      title: 'Are you sure you want to cancel this booking?',
+      icon: <ExclamationCircleOutlined />,
+      content: 'This action cannot be undone.',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          setLoading(true);
+          await api.delete(`/customer/bookings/${record.bookingId}/cancel`);
+          toast.success('Booking cancelled successfully');
+          fetchMyBookings(); // Refresh the list after cancellation
+        } catch (error) {
+          console.error("Error cancelling booking:", error);
+          toast.error(error.response?.data?.message || 'Failed to cancel booking');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleDownloadResult = async (record) => {
@@ -152,12 +225,25 @@ const MyBooking = () => {
   };
 
   const columns = [
-  { title: "Booking ID", dataIndex: "bookingId", key: "bookingId" },
+  {
+    title: "No.",
+    key: "index",
+    render: (_, __, index) => {
+      // Calculate the sequential number based on pagination
+      return (pagination.current - 1) * pagination.pageSize + index + 1;
+    },
+  },
   {
     title: "Service ID",
     dataIndex: "serviceID",
     key: "serviceID",
     render: (text) => text || "N/A",
+  },
+  {
+    title: "Service Name",
+    dataIndex: "serviceID",
+    key: "serviceName",
+    render: (serviceID) => serviceMap[serviceID] || "N/A",
   },
   {
     title: "Appointment Date",
@@ -230,6 +316,17 @@ const MyBooking = () => {
           </Button>
         </>
       )}
+      
+      {!nonCancelableStatuses.includes(record.status) && (
+        <Button
+          icon={<StopOutlined />}
+          type="primary"
+          danger
+          onClick={() => handleCancelBooking(record)}
+        >
+          Cancel
+        </Button>
+      )}
     </Space>
   ),
 },
@@ -241,106 +338,149 @@ const MyBooking = () => {
       booking.bookingId?.toString().includes(searchText) ||
       booking.serviceID?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.status?.toLowerCase().includes(searchText.toLowerCase());
-    const matchesService = serviceFilter ? booking.serviceID === serviceFilter : true;
+    
+    const serviceType = getServiceType(booking.serviceID);
+    const matchesServiceType = serviceTypeFilter ? serviceType === serviceTypeFilter : true;
     const matchesStatus = statusFilter ? booking.status === statusFilter : true;
-    return matchesSearch && matchesService && matchesStatus;
-  }) : [];
+    const matchesPaymentMethod = paymentMethodFilter 
+      ? booking.paymentMethod?.toLowerCase() === paymentMethodFilter.toLowerCase() 
+      : true;
+    
+    return matchesSearch && matchesServiceType && matchesStatus && matchesPaymentMethod;
+  }).sort((a, b) => a.bookingId - b.bookingId) : [];
 
   const uniqueServices = Array.isArray(bookings) ? [...new Set(bookings.map((b) => b.serviceID))] : [];
+  
+  const handleTableChange = (pagination) => {
+    setPagination(pagination);
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="bg-blue-600 text-white p-6">
+        <div className="flex items-center mb-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center text-white hover:text-blue-200 transition-colors mr-4"
+          >
+            <FaArrowLeft className="mr-2" />
+            Back
+          </button>
+        </div>
         <h1 className="text-2xl font-bold">DNA Testing Booking</h1>
         <p className="text-blue-100">My Booking</p>
       </div>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={8}>
-            <Input
-              placeholder="Search bookings..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-              size="large"
-            />
-          </Col>
-          <Col xs={12} md={6}>
-            <Select
-              placeholder="Filter by service"
-              value={serviceFilter || undefined}
-              onChange={(val) => setServiceFilter(val)}
-              allowClear
-              style={{ width: "100%" }}
-              size="large"
-            >
-              {uniqueServices.map((s) => (
-                <Option key={s} value={s}>{s}</Option>
-              ))}
-            </Select>
-          </Col>
-          <Col xs={12} md={6}>
-            <Select
-            placeholder="Filter by status"
-            allowClear
-            onChange={(value) => setStatusFilter(value)}
-            style={{ minWidth: 180 }}
-            >
-            {statusList.map((status) => (
-                <Option key={status} value={status}>
-                {status}
-                </Option>
-            ))}
-            </Select>
-          </Col>
-          <Col>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchMyBookings}
-              type="primary"
+      <div className="max-w-7xl mx-auto p-4">
+        <Card style={{ marginBottom: 16 }}>
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} md={6}>
+              <Input
+                placeholder="Search bookings..."
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+                size="large"
+              />
+            </Col>
+            <Col xs={12} md={4}>
+              <Select
+                placeholder="Service Type"
+                value={serviceTypeFilter || undefined}
+                onChange={(val) => setServiceTypeFilter(val)}
+                allowClear
+                style={{ width: "100%" }}
+                size="large"
+              >
+                {serviceTypes.map((type) => (
+                  <Option key={type.value} value={type.value}>{type.label}</Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={12} md={4}>
+              <Select
+                placeholder="Payment Method"
+                value={paymentMethodFilter || undefined}
+                onChange={(val) => setPaymentMethodFilter(val)}
+                allowClear
+                style={{ width: "100%" }}
+                size="large"
+              >
+                {paymentMethodList.map((method) => (
+                  <Option key={method} value={method}>{method}</Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={12} md={4}>
+              <Select
+                placeholder="Filter by status"
+                allowClear
+                value={statusFilter || undefined}
+                onChange={(value) => setStatusFilter(value)}
+                style={{ width: "100%" }}
+                size="large"
+              >
+                {statusList.map((status) => (
+                  <Option key={status} value={status}>
+                    {status}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchMyBookings}
+                type="primary"
+                loading={loading}
+                size="large"
+              >
+                Refresh
+              </Button>
+            </Col>
+          </Row>
+        </Card>
+
+        <Card>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+              <LoadingOutlined style={{ fontSize: 24 }} />
+              <p>Loading your bookings...</p>
+            </div>
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={filteredBookings}
+              rowKey="bookingId"
               loading={loading}
-              size="large"
-            >
-              Refresh
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+              bordered
+              scroll={{ x: true }}
+              locale={{ emptyText: <Empty description="No bookings found" /> }}
+              pagination={pagination}
+              onChange={handleTableChange}
+            />
+          )}
+        </Card>
 
-      <Card>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '50px' }}>
-            <LoadingOutlined style={{ fontSize: 24 }} />
-            <p>Loading your bookings...</p>
-          </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={filteredBookings}
-            rowKey="bookingId"
-            loading={loading}
-            bordered
-            scroll={{ x: true }}
-            locale={{ emptyText: <Empty description="No bookings found" /> }}
-            pagination={{ pageSize: 6 }}
-          />
-        )}
-      </Card>
-
-      <BookingDetailModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        bookingDetail={selectedBooking}
-      >
-        {/* 👇 Paste nội dung các Card chi tiết tại đây 👇 */}
-        {/* <Card>Thông tin dịch vụ...</Card>
-            <Card>Thông tin người xét nghiệm...</Card>
-            <Card>Chi phí chi tiết...</Card>
-            <Card>Phương thức thanh toán...</Card> 
-        */}
-      </BookingDetailModal>
+        <BookingDetailModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          bookingDetail={selectedBooking}
+        >
+          {/* 👇 Paste nội dung các Card chi tiết tại đây 👇 */}
+          {/* <Card>Thông tin dịch vụ...</Card>
+              <Card>Thông tin người xét nghiệm...</Card>
+              <Card>Chi phí chi tiết...</Card>
+              <Card>Phương thức thanh toán...</Card> 
+          */}
+        </BookingDetailModal>
+      </div>
     </div>
   );
 };
