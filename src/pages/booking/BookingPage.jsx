@@ -47,6 +47,33 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   const [isRedirectingToVNPAY, setIsRedirectingToVNPAY] = useState(false); 
   const signatureRef = useRef();
 
+  // Hàm dịch tên dịch vụ sang tiếng Việt cho PDF
+  const translateServiceNameToPDF = (serviceName) => {
+    const serviceTranslations = {
+      'Paternity Testing': 'Xét nghiệm ADN Huyết thống Cha-Con',
+      'Maternity Testing': 'Xét nghiệm ADN Huyết thống Mẹ-Con',
+      'Non-Invasive Relationship Testing (NIPT)': 'Xét nghiệm ADN Huyết thống Không xâm lấn',
+      'Sibling Testing': 'Xét nghiệm ADN Huyết thống Anh-Em',
+      'Grandparent Testing': 'Xét nghiệm ADN Huyết thống Ông-Bà/Cháu',
+      'DNA Testing for Birth Registration': 'Xét nghiệm ADN cho Đăng ký Khai sinh',
+      'DNA Testing for Immigration Cases': 'Xét nghiệm ADN cho Vụ việc Nhập cư',
+      'DNA Testing for Inheritance or Asset Division': 'Xét nghiệm ADN cho Thừa kế hoặc Phân chia Tài sản'
+    };
+    return serviceTranslations[serviceName] || serviceName;
+  };
+
+  // Hàm dịch phương pháp thu thập sang tiếng Việt cho PDF
+  const translateCollectionMethodToPDF = (collectionMethod) => {
+    const collectionTranslations = {
+      'At Home': 'Tại nhà',
+      'At Facility': 'Tại cơ sở y tế',
+      'Walk-in Service': 'Dịch vụ tại quầy'
+    };
+    return collectionTranslations[collectionMethod] || collectionMethod;
+  };
+
+  // ...existing code...
+
   useEffect(() => {
     if (visible && paymentMethodProp) {
       setPaymentMethod(paymentMethodProp);
@@ -58,6 +85,8 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   const getCollectionAddress = () => {
     if (bookingData.collectionMethod?.name === 'At Home') {
       return bookingData.homeAddress || '—';
+    } else if (bookingData.collectionMethod?.name === 'At Facility') {
+      return '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City';
     }
     return '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City';
   };
@@ -66,23 +95,23 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
 
 
   const getMediationLabel = (method) => {
-    if (method === 'postal-delivery') return 'Postal Delivery';
-    if (method === 'staff-collection') return 'Staff Collection';
-    if (method === 'walk-in') return 'Walk-in Service';
-    if (method === 'express') return 'Express Service';
+    if (method === 'postal-delivery') return 'Gửi bưu điện';
+    if (method === 'staff-collection') return 'Nhân viên thu thập';
+    if (method === 'walk-in') return 'Dịch vụ tại cơ sở';
+    if (method === 'express') return 'Dịch vụ Express';
     return method;
   };
 
 
   const getPaymentLabel = (method) => {
-    if (method === 'cash') return 'Cash payment upon service delivery';
-    if (method === 'vnpay') return 'Payment via VNPAY';
+    if (method === 'cash') return 'Thanh toán tiền mặt khi nhận dịch vụ';
+    if (method === 'vnpay') return 'Thanh toán qua VNPAY';
     return method;
   };
 
 
   const getCostBreakdown = () => {
-    // Sử dụng dữ liệu từ bookingData đã được cập nhật
+
     const service = bookingData?.service || bookingData?.selectedService;
     const currentMedicationMethod = bookingData?.selectedMedicationMethod || bookingData?.medicationMethod;
     const currentExpressService = bookingData?.isExpressService || bookingData?.expressService;
@@ -123,7 +152,8 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
   
   const handleConfirm = async () => {
     Modal.confirm({
-      title: 'Are you sure this information is correct?',
+      title: <span style={{ fontWeight: 'bold' }}>Are you sure?</span>,
+      content: 'Sau khi booking được xác nhận, sẽ không thể thay đổi.',
       okText: 'Yes',
       cancelText: 'No',
       centered: true,
@@ -148,12 +178,12 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
 
   const handleSignatureComplete = async () => {
     if (!signatureRef.current) {
-      message.error('Signature area not found!');
+      message.error('Không tìm thấy vùng chữ ký!');
       return;
     }
     
     if (signatureRef.current.isEmpty()) {
-      message.error('Please sign before continuing!');
+      message.error('Vui lòng ký tên trước khi tiếp tục!');
       return;
     }
     
@@ -163,7 +193,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       const signatureData = signatureRef.current.toDataURL('image/png');
       
       if (!signatureData || signatureData.length < 100) {
-        message.error('Invalid signature. Please sign again!');
+        message.error('Chữ ký không hợp lệ. Vui lòng ký lại!');
         return;
       }
       
@@ -193,7 +223,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       
     } catch (error) {
       console.error('Error processing signature:', error);
-      message.error('An error occurred while processing the signature. Please try again!');
+      message.error('Có lỗi xảy ra khi xử lý chữ ký. Vui lòng thử lại!');
     } finally {
       setIsProcessingSignature(false);
     }
@@ -316,7 +346,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       } else {
         console.error('No vnpUrl received from API:', data);
         processingMsg();
-        message.error('Unable to create VNPAY payment link. Please try again!');
+        message.error('Không thể tạo liên kết thanh toán VNPAY. Vui lòng thử lại!');
         setIsSubmittingPayment(false);
         setIsRedirectingToVNPAY(false);
       }
@@ -330,7 +360,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
         if (typeof error.response.data === 'string' && 
             (error.response.data.includes('lazily initialize') || 
              error.response.data.includes('no Session'))) {
-          message.error('Database connection error from server. Please try again later!');
+          message.error('Lỗi kết nối cơ sở dữ liệu từ server. Vui lòng thử lại sau!');
         } else {
           message.error('Server error: ' + (typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)));
         }
@@ -339,7 +369,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
         message.error('No response received from server. Please check your network connection!');
       } else {
         console.error('Request configuration error:', error.message);
-        message.error('Error setting up request: ' + error.message);
+        message.error('Lỗi thiết lập yêu cầu: ' + error.message);
       }
       
       setIsSubmittingPayment(false);
@@ -353,16 +383,16 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
     try {
 
       if (!finalBookingData?.signature && (!signatureRef.current || signatureRef.current.isEmpty())) {
-        message.error('Signature not found. Please sign again!');
+        message.error('Không tìm thấy chữ ký. Vui lòng ký lại!');
         setIsGeneratingPDF(false);
         return;
       }
-      const processingMsg = message.loading('Creating PDF file...', 0);
+      const processingMsg = message.loading('Đang tạo file PDF...', 0);
       
       try {
         await generatePDF(true);
         processingMsg();
-        message.success('PDF file downloaded successfully!');
+        message.success('Tải file PDF thành công!');
         if (paymentMethod === 'cash') {
           const updatedBookingData = {
             ...finalBookingData,
@@ -374,18 +404,18 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
           setCurrentStep(4);
           setIsPDFConfirmStep(false);
         } else {
-          message.info('Redirecting to VNPAY payment...', 1);
+          message.info('Đang chuyển hướng đến thanh toán VNPAY...', 1);
           await handleVNPAYPayment();
         }
         
       } catch (pdfError) {
         processingMsg();
         console.error('Error creating PDF:', pdfError);
-        message.error(`Cannot create PDF: ${pdfError.message}. Please try again!`);
+        message.error(`Không thể tạo PDF: ${pdfError.message}. Vui lòng thử lại!`);
       }
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      message.error('Error creating PDF. Please try again!');
+      message.error('Lỗi tạo PDF. Vui lòng thử lại!');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -397,7 +427,7 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
       setIsPDFConfirmStep(false);
       setShowPDFOption(false);
     } else {
-      message.info('Redirecting to VNPAY payment...', 1);
+      message.info('Đang chuyển hướng đến thanh toán VNPAY...', 1);
       await handleVNPAYPayment();
     }
   };
@@ -405,36 +435,36 @@ const ConfirmBookingModal = ({ visible, onCancel, bookingData, onConfirm, paymen
 const generatePDF = async (shouldDownload = true) => {
   let loadingMessage;
   try {
-    console.log('=== START CREATING PDF ===');
-    loadingMessage = message.loading('Creating PDF file...', 0); 
+    console.log('=== BẮT ĐẦU TẠO PDF ===');
+    loadingMessage = message.loading('Đang tạo file PDF...', 0); 
     if (!bookingData) {
-      throw new Error('No booking data available!');
+      throw new Error('Không có dữ liệu booking!');
     }
 
     try {
-      console.log('Loading pdfmake library...');
+      console.log('Đang tải thư viện pdfmake...');
       const pdfMakeModule = await import("pdfmake/build/pdfmake");
       const pdfFonts = await import("pdfmake/build/vfs_fonts");
       const pdfMake = pdfMakeModule.default;
       pdfMake.vfs = pdfFonts && pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
-      console.log('Successfully loaded pdfmake library');
+      console.log('Đã tải thư viện pdfmake thành công');
     } catch (error) {
       console.error('Error loading pdfmake library:', error);
-      throw new Error('Cannot load PDF library. Please try again!');
+      throw new Error('Không thể tải thư viện PDF. Vui lòng thử lại!');
     }
 
     const { firstPerson, secondPerson, appointmentDate, totalCost } = bookingData;
 
     if (!firstPerson?.fullName || !secondPerson?.fullName) {
-      throw new Error('Missing name information');
+      throw new Error('Thiếu thông tin tên');
     }
 
     if (!appointmentDate) {
-      throw new Error('Missing appointment date');
+      throw new Error('Thiếu thông tin ngày hẹn');
     }
 
     if (!totalCost || totalCost <= 0) {
-      throw new Error('Invalid cost information');
+      throw new Error('Thông tin chi phí không hợp lệ');
     }
 
     let signatureImg = "";   
@@ -448,13 +478,13 @@ const generatePDF = async (shouldDownload = true) => {
         console.log('✓ Signature retrieved from signatureRef');
       } catch (sigError) {
         console.error('Error retrieving signature from canvas:', sigError);
-        throw new Error('Cannot retrieve signature from canvas');
+        throw new Error('Không thể lấy chữ ký từ canvas');
       }
     }
     
     if (!signatureImg || signatureImg.length < 100) {
       console.error('Error: Invalid signature');
-      throw new Error('Invalid signature or too short');
+      throw new Error('Chữ ký không hợp lệ hoặc quá ngắn');
     }
 
     console.log('Signature length:', signatureImg.length);
@@ -496,7 +526,7 @@ const generatePDF = async (shouldDownload = true) => {
     
     // Phí thu thập mẫu
     if (bookingData.collectionMethod) {
-      const collectionMethodName = bookingData.collectionMethod?.name || "Collection fee"; 
+      const collectionMethodName = translateCollectionMethodToPDF(bookingData.collectionMethod?.name || "Phí thu thập"); 
       costTableBody.push([
         { text: `Phí thu thập mẫu (${collectionMethodName})`, alignment: 'left' },
         { 
@@ -660,14 +690,14 @@ const generatePDF = async (shouldDownload = true) => {
             "Loại dịch vụ: ",
             { text: bookingData.serviceType === 'legal' ? 'Xét nghiệm ADN Pháp lý' : 'Xét nghiệm ADN Dân sự', color: "#2196f3", bold: true },
             "    Tên dịch vụ: ",
-            { text: bookingData.service?.name || "", color: "#2196f3", bold: true }
+            { text: translateServiceNameToPDF(bookingData.service?.name || ""), color: "#2196f3", bold: true }
           ],
           margin: [0, 3, 0, 3]
         },
         {
           text: [
             "Phương pháp thu thập: ",
-            { text: bookingData.collectionMethod?.name || "", color: "#2196f3", bold: true },
+            { text: translateCollectionMethodToPDF(bookingData.collectionMethod?.name || ""), color: "#2196f3", bold: true },
             "    Kit xét nghiệm: ",
             { text: bookingData.selectedKitType ? (kitTypes.find(k => k.value === bookingData.selectedKitType)?.label || bookingData.selectedKitType) : "", color: "#2196f3", bold: true }
           ],
@@ -974,7 +1004,7 @@ const generatePDF = async (shouldDownload = true) => {
         // Thông tin người thứ nhất
         {
           text: [
-            'Full name: ',
+            'Họ và tên: ',
             { text: firstPerson?.fullName || "", bold: true },
             '                Ngày sinh: ',
             { text: formatDate(firstPerson?.dateOfBirth) || "", bold: true }
@@ -992,7 +1022,7 @@ const generatePDF = async (shouldDownload = true) => {
         },
         {
           text: [
-            'Relationship: ',
+            'Mối quan hệ: ',
             { text: firstPerson?.relationship || "", bold: true }
           ],
           margin: [0, 0, 0, 20]
@@ -1000,7 +1030,7 @@ const generatePDF = async (shouldDownload = true) => {
         // Thông tin người thứ hai
         {
           text: [
-            'Full name: ',
+            'Họ và tên: ',
             { text: secondPerson?.fullName || "", bold: true },
             '               Ngày sinh: ',
             { text: formatDate(secondPerson?.dateOfBirth) || "", bold: true }
@@ -1018,7 +1048,7 @@ const generatePDF = async (shouldDownload = true) => {
         },
         {
           text: [
-            'Relationship: ',
+            'Mối quan hệ: ',
             { text: secondPerson?.relationship || "", bold: true }
           ],
           margin: [0, 0, 0, 40]
@@ -1064,43 +1094,43 @@ const generatePDF = async (shouldDownload = true) => {
             console.log('PDF created successfully, size:', buffer.length);
             resolve();
           } else {
-            reject(new Error('Unable to create PDF buffer'));
+            reject(new Error('Không thể tạo buffer PDF'));
           }
         });
       });
       
       if (shouldDownload) {
         pdfDocGenerator.download(`DonYeuCauXetNghiemADN_${paymentCode || 'DNA'}.pdf`);
-        message.success('PDF file downloaded successfully!');
+        message.success('Tải file PDF thành công!');
       } else {
-        message.success('PDF file created successfully!');
+        message.success('Tạo file PDF thành công!');
       }
       if (loadingMessage) loadingMessage();
-      console.log('✓ PDF created successfully');
+      console.log('✓ PDF đã tạo thành công');
       
       return pdfDocGenerator; 
     } catch (pdfError) {
       console.error('Error creating or downloading PDF:', pdfError);
-      throw new Error(`Unable to create or download PDF: ${pdfError.message}`);
+      throw new Error(`Không thể tạo hoặc tải xuống PDF: ${pdfError.message}`);
     }
     
   } catch (error) {
-    console.error('=== PDF CREATION ERROR ===');
+    console.error('=== LỖI TẠO PDF ===');
     console.error('Error details:', error);
     console.error('Error stack:', error.stack);   
     if (loadingMessage) loadingMessage();
     if (error.message?.includes('vfs') || error.message?.includes('fonts')) {
-      message.error('Error loading PDF fonts. Trying again with default fonts...');
+      message.error('Lỗi tải font PDF. Đang thử lại với font mặc định...');
     } else if (error.message?.includes('Timeout')) {
-      message.error('Timed out loading PDF library. Please check your network connection!');
+      message.error('Hết thời gian tải thư viện PDF. Vui lòng kiểm tra kết nối mạng!');
     } else if (error.message?.includes('import') || error.message?.includes('loading') || error.message?.includes('library')) {
-      message.error('Error loading PDF library. Please refresh the page and try again!');
+      message.error('Lỗi tải thư viện PDF. Vui lòng tải lại trang và thử lại!');
     } else if (error.message?.includes('signature') || error.message?.includes('signature') || error.message?.includes('canvas')) {
-      message.error('Error processing signature. Please sign again!');
+      message.error('Lỗi xử lý chữ ký. Vui lòng ký lại!');
     } else if (error.message?.includes('Missing information')) {
-      message.error(`Missing necessary information: ${error.message}`);
+      message.error(`Thiếu thông tin cần thiết: ${error.message}`);
     } else {
-      message.error(`An error occurred while creating the PDF file.: ${error.message}. Please try again!`);
+      message.error(`Có lỗi xảy ra khi tạo file PDF: ${error.message}. Vui lòng thử lại!`);
     }
     
     return null;
@@ -1109,7 +1139,7 @@ const generatePDF = async (shouldDownload = true) => {
 
   const handleClose = () => {
     if (isRedirectingToVNPAY) {
-      message.warning('Please wait for the payment redirection to complete!');
+      message.warning('Vui lòng đợi chuyển hướng thanh toán hoàn thành!');
       return;
     }
     
@@ -1127,6 +1157,45 @@ const generatePDF = async (shouldDownload = true) => {
     onCancel();
   };
 
+  const forceClose = () => {
+    console.log('forceClose được gọi - đang đóng modal bắt buộc');
+    
+    try {
+      // Reset tất cả trạng thái
+      setCurrentStep(1);
+      setPaymentMethod('cash');
+      setQrCodeData(null);
+      setPaymentCode('');
+      setShowPDFOption(false);
+      setIsPDFConfirmStep(false);
+      setFinalBookingData(null);
+      setIsProcessingSignature(false);
+      setIsGeneratingPDF(false);
+      setIsSubmittingPayment(false);
+      setIsRedirectingToVNPAY(false); // Quan trọng: luôn reset về false
+      
+      // Clear signature nếu có
+      if (signatureRef.current && signatureRef.current.clear) {
+        signatureRef.current.clear();
+      }
+      
+      console.log('Tất cả state đã được reset, gọi onCancel');
+      
+      // Gọi hàm onCancel để đóng modal
+      if (typeof onCancel === 'function') {
+        onCancel();
+      } else {
+        console.error('onCancel không phải là function');
+      }
+    } catch (error) {
+      console.error('Lỗi khi đóng modal:', error);
+      // Vẫn cố gắng đóng modal
+      if (typeof onCancel === 'function') {
+        onCancel();
+      }
+    }
+  };
+
   const kitTypes = [
     { value: 'K001', label: 'PowerPlex Fusion', price: 0 },
     { value: 'K002', label: 'Global Filer', price: 0 }
@@ -1140,7 +1209,7 @@ const generatePDF = async (shouldDownload = true) => {
       <div>
         {/* Header Warning */}
               <Alert
-        message={<span style={{ fontWeight: 600 }}>⚠️ Information cannot be changed after successful booking, please check carefully!</span>}
+        message={<span style={{ fontWeight: 600 }}>⚠️ Thông tin không thể thay đổi sau khi booking thành công, vui lòng kiểm tra cẩn thận!</span>}
         type="warning"
         showIcon
           style={{ 
@@ -1345,7 +1414,7 @@ const generatePDF = async (shouldDownload = true) => {
                     <Col span={12}>
                       <Text type="secondary" style={{ fontSize: 11 }}>GENDER</Text>
                       <br/>
-                      <Text style={{ fontSize: 13 }}>{firstPerson?.gender}</Text>
+                      <Text style={{ fontSize: 13 }}>{firstPerson?.gender ? firstPerson.gender.charAt(0).toUpperCase() + firstPerson.gender.slice(1) : ''}</Text>
                     </Col>
                   </Row>
                   <div style={{ marginTop: 8 }}>
@@ -1371,7 +1440,7 @@ const generatePDF = async (shouldDownload = true) => {
                     </Col>
                   </Row>
                   <div style={{ marginTop: 8 }}>
-                    <Text type="secondary" style={{ fontSize: 11 }}>ID NUMBER</Text>
+                    <Text type="secondary" style={{ fontSize: 11 }}>Personal ID</Text>
                     <br/>
                     <Text style={{ fontSize: 13 }}>{firstPerson?.personalId}</Text>
                   </div>
@@ -1416,7 +1485,7 @@ const generatePDF = async (shouldDownload = true) => {
                     <Col span={12}>
                       <Text type="secondary" style={{ fontSize: 11 }}>GENDER</Text>
                       <br/>
-                      <Text style={{ fontSize: 13 }}>{secondPerson?.gender}</Text>
+                      <Text style={{ fontSize: 13 }}>{secondPerson?.gender ? secondPerson.gender.charAt(0).toUpperCase() + secondPerson.gender.slice(1) : ''}</Text>
                     </Col>
                   </Row>
                   <Row gutter={8} style={{ marginTop: 8 }}>
@@ -1983,7 +2052,7 @@ const regenerateAndDownloadPDF = async () => {
 
   const getSteps = () => {
     return [
-      { title: 'Confirm information' },
+      { title: 'Confirm Information' },
       { title: 'Sign' },
       { title: 'PDF Options' },
       { title: paymentMethod === 'cash' ? 'Complete' : 'Payment & Completion' }
@@ -2004,16 +2073,35 @@ const regenerateAndDownloadPDF = async () => {
 
   return (
     <Modal
-      title="Confirm appointment"
+      title="Confirm Appointment"
       open={visible}
-      onCancel={handleClose}
+      onCancel={forceClose}
       footer={renderFooter()}
       width={1000}
       destroyOnClose
       centered
-      closable={!isRedirectingToVNPAY} 
-      maskClosable={!isRedirectingToVNPAY} 
-      keyboard={!isRedirectingToVNPAY} 
+      closable={true}
+      closeIcon={
+        <span 
+          onClick={forceClose}
+          style={{ 
+            cursor: 'pointer', 
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '22px',
+            height: '22px',
+            borderRadius: '2px'
+          }}
+          onMouseEnter={(e) => e.target.style.background = '#f0f0f0'}
+          onMouseLeave={(e) => e.target.style.background = 'transparent'}
+        >
+          ✕
+        </span>
+      }
+      maskClosable={!isRedirectingToVNPAY && !isSubmittingPayment} 
+      keyboard={!isRedirectingToVNPAY && !isSubmittingPayment} 
       styles={{
         body: {
           padding: '0',
@@ -2146,15 +2234,8 @@ const BookingPage = () => {
     return timeSlots.every(timeSlot => isTimeSlotDisabled(timeSlot));
   };
 
+  // Loại mẫu cơ bản không bao gồm Amniotic Fluid
   const sampleTypes = [
-    'Blood',
-    'Buccal Swab',
-    'Hair',
-    'Nail',
-    'Amniotic Fluid' 
-  ];
-  
-  const getNonAmnioticSampleTypes = () => [
     'Blood',
     'Buccal Swab',
     'Hair',
@@ -2387,6 +2468,19 @@ const BookingPage = () => {
     return Promise.resolve();
   };
 
+  // Hàm kiểm tra giới tính và mối quan hệ hợp lệ
+  const validateGenderRelationshipCompatibility = (gender, relationship) => {
+    // Quy tắc cơ bản: Mother phải là female, Father phải là male
+    if (relationship === 'Mother' && gender === 'male') {
+      return { isValid: false, message: 'Men can not be "Mother"!' };
+    }
+    
+    if (relationship === 'Father' && gender === 'female') {
+      return { isValid: false, message: 'Women can not be "Father"!' };
+    }
+    
+    return { isValid: true, message: '' };
+  };
 
   const validateGenderRelationship = (_, value) => {
     if (!value) {
@@ -2395,12 +2489,9 @@ const BookingPage = () => {
     
     const gender = form.getFieldValue(['firstPerson', 'gender']);
     
-    if (gender === 'male' && value === 'Mother') {
-      return Promise.reject(new Error('Men cannot choose the "Mother" relationship!'));
-    }
-    
-    if (gender === 'female' && value === 'Father') {
-      return Promise.reject(new Error('Women cannot choose the "Father" relationship!'));
+    const validation = validateGenderRelationshipCompatibility(gender, value);
+    if (!validation.isValid) {
+      return Promise.reject(new Error(validation.message));
     }
     
     return Promise.resolve();
@@ -2413,12 +2504,9 @@ const BookingPage = () => {
     
     const gender = form.getFieldValue(['secondPerson', 'gender']);
     
-    if (gender === 'male' && value === 'Mother') {
-      return Promise.reject(new Error('Men cannot choose the "Mother" relationship!'));
-    }
-    
-    if (gender === 'female' && value === 'Father') {
-      return Promise.reject(new Error('Women cannot choose the "Father" relationship!'));
+    const validation = validateGenderRelationshipCompatibility(gender, value);
+    if (!validation.isValid) {
+      return Promise.reject(new Error(validation.message));
     }
     
     const firstPersonRelationship = form.getFieldValue(['firstPerson', 'relationship']);
@@ -2524,11 +2612,15 @@ const BookingPage = () => {
     setIsExpressService(checked);
     
     if (checked && selectedMedicationMethod === 'postal-delivery') {
-      setSelectedMedicationMethod(null);
+      setSelectedMedicationMethod('express');
     }
     
     if (checked) {
       showNotification('info', 'Express Service activated! Please select your preferred Collection Method below. All collection methods will be FREE (0 VND)', 6000);
+      
+      if (selectedCollectionMethod?.name === 'At Home' && !selectedMedicationMethod) {
+        showNotification('warning', 'Please select a Medication Method for At Home collection with Express Service!', 5000);
+      }
     } else {
       if (selectedCollectionMethod?.name === 'At Facility') {
         setSelectedMedicationMethod('walk-in');
@@ -2681,6 +2773,13 @@ const BookingPage = () => {
       setAvailableSecondPersonRelationships(validRelationships);
     }
   }, [selectedService, form]);
+  
+  useEffect(() => {
+    if (selectedMedicationMethod === 'postal-delivery') {
+      setPaymentMethod('vnpay');
+      showNotification('info', 'Postal Delivery requires payment via VNPAY. Payment method has been automatically set.', 5000);
+    }
+  }, [selectedMedicationMethod, showNotification]);
 
   useEffect(() => {
     if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
@@ -2707,7 +2806,6 @@ const BookingPage = () => {
       
       // Same for the second person
       if (secondPersonRelationship === 'Mother') {
-        // Mother must always use Amniotic Fluid
         form.setFieldsValue({
           secondPerson: {
             ...form.getFieldValue('secondPerson'),
@@ -2716,10 +2814,8 @@ const BookingPage = () => {
         });
         message.info('For NIPT service, Mother must use Amniotic Fluid sample.');
       } else if (secondPersonRelationship === 'Father') {
-        // For Father, check if current sample type is Amniotic Fluid or not set
         const currentSampleType = form.getFieldValue(['secondPerson', 'sampleType']);
         if (!currentSampleType || currentSampleType === 'Amniotic Fluid') {
-          // Default Father to Blood and prevent Amniotic Fluid
           form.setFieldsValue({
             secondPerson: {
               ...form.getFieldValue('secondPerson'),
@@ -2736,10 +2832,8 @@ const BookingPage = () => {
     const appointmentDateValue = form.getFieldValue('appointmentDate');
     const timeSlotValue = form.getFieldValue('timeSlot');
 
-    // For NIPT service - Validate that Father cannot have Amniotic Fluid sample
     if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
       if (values.firstPerson?.relationship === 'Father' && values.firstPerson?.sampleType === 'Amniotic Fluid') {
-        // Automatically correct the sample type for Father in NIPT
         form.setFieldsValue({
           firstPerson: {
             ...form.getFieldValue('firstPerson'),
@@ -2749,7 +2843,6 @@ const BookingPage = () => {
         showNotification('warning', 'For NIPT service, Father cannot provide Amniotic Fluid sample. Sample type has been automatically changed to Blood.');
         return;
       }
-      // Also ensure Mother always has Amniotic Fluid for first person
       if (values.firstPerson?.relationship === 'Mother' && values.firstPerson?.sampleType !== 'Amniotic Fluid') {
         form.setFieldsValue({
           firstPerson: {
@@ -2761,7 +2854,6 @@ const BookingPage = () => {
         return;
       }
       if (values.secondPerson?.relationship === 'Father' && values.secondPerson?.sampleType === 'Amniotic Fluid') {
-        // Automatically correct the sample type for Father in NIPT
         form.setFieldsValue({
           secondPerson: {
             ...form.getFieldValue('secondPerson'),
@@ -2771,7 +2863,6 @@ const BookingPage = () => {
         showNotification('warning', 'For NIPT service, Father cannot provide Amniotic Fluid sample. Sample type has been automatically changed to Blood.');
         return;
       }
-      // Also ensure Mother always has Amniotic Fluid
       if (values.secondPerson?.relationship === 'Mother' && values.secondPerson?.sampleType !== 'Amniotic Fluid') {
         form.setFieldsValue({
           secondPerson: {
@@ -2793,7 +2884,7 @@ const BookingPage = () => {
       return;
     }
     if (!selectedMedicationMethod) {
-      showNotification('error', 'Please select medication method!');
+      showNotification('error', 'Please select medication method! This field is required.');
       return;
     }
     if (!selectedKitType) {
@@ -2801,9 +2892,13 @@ const BookingPage = () => {
       return;
     }
 
-    // Validation cho Express Service
     if (isExpressService && !selectedCollectionMethod) {
       showNotification('error', 'When using Express Service, you must choose a Collection Method!');
+      return;
+    }
+    
+    if (isExpressService && selectedCollectionMethod?.name === 'At Home' && !selectedMedicationMethod) {
+      showNotification('error', 'When using Express Service with At Home collection, you must select a Medication Method!');
       return;
     }
 
@@ -2870,11 +2965,11 @@ const BookingPage = () => {
         customerID,
         serviceType: selectedServiceType,
         service: selectedService,
-        selectedService: selectedService, // Thêm trường này để đảm bảo trong getCostBreakdown
+        selectedService: selectedService, 
         collectionMethod: selectedCollectionMethod,
-        selectedCollectionMethod: selectedCollectionMethod, // Thêm trường này
+        selectedCollectionMethod: selectedCollectionMethod, 
         medicationMethod: selectedMedicationMethod,
-        selectedMedicationMethod: selectedMedicationMethod, // Thêm trường này
+        selectedMedicationMethod: selectedMedicationMethod, 
         appointmentDate: appointmentDateValue ? appointmentDateValue.format('YYYY-MM-DD') : '',
         timeSlot: selectedMedicationMethod === 'postal-delivery' ? null : timeSlotValue,
         firstPerson: values.firstPerson,
@@ -2885,7 +2980,7 @@ const BookingPage = () => {
         homeAddress,
         selectedKitType,
         isExpressService,
-        expressService: isExpressService, // Thêm trường này để đảm bảo trong getCostBreakdown
+        expressService: isExpressService, 
       };
 
       setBookingData(bookingData); 
@@ -2911,43 +3006,58 @@ const BookingPage = () => {
       return genderValue === 'male' ? 1 : 2;
     };
 
+    // Xác định địa chỉ dựa trên collection method và medication method
+    const getAddress = () => {
+      // Nếu là At Home hoặc postal-delivery thì dùng địa chỉ nhà
+      if (data.collectionMethod?.name === 'At Home' || data.medicationMethod === 'postal-delivery') {
+        return data.homeAddress || '';
+      } 
+      // Nếu là At Facility hoặc walk-in thì dùng địa chỉ cơ sở
+      else if (data.collectionMethod?.name === 'At Facility' || data.medicationMethod === 'walk-in') {
+        return '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City';
+      }
+      // Mặc định trả về địa chỉ cơ sở
+      return '7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City';
+    };
+
     return {
       collectionMethod: data.collectionMethod?.name || "At Facility",
       paymentMethod: data.paymentMethod === 'vnpay' ? 'VNPAY' : 'Cash',
       appointmentTime: formatDate(data.appointmentDate),
       timeRange: data.timeSlot || '',
       status: "pending_payment",
-      note: '',
-      cost: 0,
-      mediationMethod: data.medicationMethod || '',
+      note: data.note || '',
+      cost: data.service?.basePrice || 0,
+      mediationMethod: data.medicationMethod || data.selectedMedicationMethod || '',
       additionalCost: 0,
       totalCost: data.totalCost || 0,
       expressService: !!data.isExpressService,
-      address: data.collectionMethod?.name === 'At Home' || data.medicationMethod === 'postal-delivery' ? data.homeAddress : '',
+      address: getAddress(),
       kitID: data.selectedKitType || '',
       serviceID: data.service?.serviceID || '',
       customerID: data.customerID || '',
       customerName: data.firstPerson?.fullName || '',
+      serviceType: data.serviceType || 'legal',
       testSubjects: [
         {
-          fullname: data.firstPerson.fullName || '',
-          dateOfBirth: formatDate(data.firstPerson.dateOfBirth),
-          gender: formatGender(data.firstPerson.gender),
-          phone: data.firstPerson.phoneNumber || '',
-          email: data.firstPerson.email || '',
-          relationship: data.firstPerson.relationship || '',
-          sampleType: data.firstPerson.sampleType || '',
-          idNumber: data.firstPerson.personalId || ''
+          fullname: data.firstPerson?.fullName || '',
+          dateOfBirth: formatDate(data.firstPerson?.dateOfBirth),
+          gender: formatGender(data.firstPerson?.gender),
+          phone: data.firstPerson?.phoneNumber || '',
+          email: data.firstPerson?.email || '',
+          relationship: data.firstPerson?.relationship || '',
+          sampleType: data.firstPerson?.sampleType || '',
+          idNumber: data.firstPerson?.personalId || ''
         },
         {
-          fullname: data.secondPerson.fullName || '',
-          dateOfBirth: formatDate(data.secondPerson.dateOfBirth),
-          gender: formatGender(data.secondPerson.gender),
-          phone: data.secondPerson.phoneNumber || '',
-          email: data.secondPerson.email || '',
-          relationship: data.secondPerson.relationship || '',
-          sampleType: data.secondPerson.sampleType || '',
-          idNumber: data.secondPerson.personalId || ''
+          fullname: data.secondPerson?.fullName || '',
+          dateOfBirth: formatDate(data.secondPerson?.dateOfBirth),
+          gender: formatGender(data.secondPerson?.gender),
+          phone: data.secondPerson?.phoneNumber || '',
+          email: data.secondPerson?.email || '',
+          relationship: data.secondPerson?.relationship || '',
+          sampleType: data.secondPerson?.sampleType || '',
+          idNumber: data.secondPerson?.personalId || ''
         }
       ]
     };
@@ -2983,9 +3093,8 @@ const BookingPage = () => {
       throw new Error('No data received from server');
     }
     showNotification('success', getSuccessMessage(), 6000);
-    // ✅ Thêm xuống dòng và dấu chấm phẩy
    setTimeout(() => {
-  navigate('/'); // ✅ Đúng - dùng function
+  navigate('/'); 
 }, 2000);
     form.resetFields();
     setAppointmentDate('');
@@ -3015,6 +3124,7 @@ const BookingPage = () => {
 };
 
   const handleModalCancel = () => {
+    console.log('handleModalCancel được gọi - đóng modal');
     setIsModalVisible(false);
     setBookingData(null);
   };
@@ -3316,7 +3426,11 @@ const BookingPage = () => {
                     
                     // Xử lý medication method dựa trên Express Service
                     if (isExpressService) {
-                      setSelectedMedicationMethod('staff-collection');
+                      if (!selectedMedicationMethod) {
+                        showNotification('warning', 'Please select a Medication Method for At Home collection with Express Service!', 5000);
+                      } else {
+                        setSelectedMedicationMethod('staff-collection');
+                      }
                     } else if (selectedMedicationMethod === 'walk-in' || selectedMedicationMethod === 'express') {
                       setSelectedMedicationMethod('staff-collection');
                     }
@@ -3363,14 +3477,11 @@ const BookingPage = () => {
                     setSelectedCollectionMethod({name: 'At Facility', price: 0});
                     showNotification('success', 'Selected: At Facility collection method', 3000);
                     
-                    // Xử lý medication method dựa trên Express Service
                     if (isExpressService) {
                       setSelectedMedicationMethod('walk-in');
                     } else {
                       setSelectedMedicationMethod('walk-in');
-                    }
-                    
-                    // Reset timeSlot, appointmentDate khi chuyển collection method
+                    }               
                     setTimeSlot('');
                     setAppointmentDate('');
                     form.setFieldsValue({ timeSlot: undefined, appointmentDate: undefined });
@@ -3443,7 +3554,12 @@ const BookingPage = () => {
             {/* Medication Method */}
             {selectedCollectionMethod && (
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Medication Method *</label>
+                <label className="block text-sm font-medium mb-2">
+                  Medication Method <span className="text-red-500">*</span>
+                  {!selectedMedicationMethod && (
+                    <span className="text-red-500 text-xs ml-2">(Required)</span>
+                  )}
+                </label>
                 <div className="space-y-3">
                   {/* Walk-in - Only for At Facility */}
                   {selectedCollectionMethod?.name === 'At Facility' && (
@@ -3765,7 +3881,7 @@ const BookingPage = () => {
                     <Form.Item
                       name={['firstPerson', 'gender']}
                       label="Biological Sex"
-                      rules={[{ required: true, message: 'Please select gender!' }]}
+                      rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
                     >
                       <Radio.Group
                         onChange={() => {
@@ -3841,10 +3957,8 @@ const BookingPage = () => {
                             }
                           }
                           
-                          // Automatically set sample type for NIPT service
                           if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
                             if (value === 'Mother') {
-                              // Mother must always use Amniotic Fluid for NIPT
                               form.setFieldsValue({
                                 firstPerson: {
                                   ...form.getFieldValue('firstPerson'),
@@ -3853,10 +3967,7 @@ const BookingPage = () => {
                               });
                               showNotification('info', 'For NIPT service, Mother must use Amniotic Fluid sample.', 3000);
                             } else if (value === 'Father') {
-                              // For Father in NIPT, force Blood sample type and prevent Amniotic Fluid
-                              const currentSampleType = form.getFieldValue(['firstPerson', 'sampleType']);
-                              
-                              // Always reset sample type for Father if it's Amniotic Fluid or not set
+                              const currentSampleType = form.getFieldValue(['firstPerson', 'sampleType']);                             
                               if (!currentSampleType || currentSampleType === 'Amniotic Fluid') {
                                 form.setFieldsValue({
                                   firstPerson: {
@@ -3915,7 +4026,7 @@ const BookingPage = () => {
                       ) : selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
                          form.getFieldValue(['firstPerson', 'relationship']) === 'Father' ? (
                         <Select placeholder="Select sample type">
-                          {getNonAmnioticSampleTypes().map(type => (
+                          {sampleTypes.map(type => (
                             <Option key={type} value={type}>{type}</Option>
                           ))}
                         </Select>
@@ -3988,7 +4099,7 @@ const BookingPage = () => {
                     <Form.Item
                       name={['secondPerson', 'gender']}
                       label="Biological Sex"
-                      rules={[{ required: true, message: 'Please select gender!' }]}
+                      rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
                     >
                       <Radio.Group
                         onChange={() => {
@@ -4020,10 +4131,8 @@ const BookingPage = () => {
                             ['secondPerson', 'dateOfBirth'] 
                           ]);
                           
-                          // Automatically set sample type for NIPT service
                           if (selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)') {
                             if (value === 'Mother') {
-                              // Mother must always use Amniotic Fluid for NIPT
                               form.setFieldsValue({
                                 secondPerson: {
                                   ...form.getFieldValue('secondPerson'),
@@ -4032,10 +4141,7 @@ const BookingPage = () => {
                               });
                               showNotification('info', 'For NIPT service, Mother must use Amniotic Fluid sample.', 3000);
                             } else if (value === 'Father') {
-                              // For Father in NIPT, force Blood sample type and prevent Amniotic Fluid
-                              const currentSampleType = form.getFieldValue(['secondPerson', 'sampleType']);
-                              
-                              // Always reset sample type for Father if it's Amniotic Fluid or not set
+                              const currentSampleType = form.getFieldValue(['secondPerson', 'sampleType']);                          
                               if (!currentSampleType || currentSampleType === 'Amniotic Fluid') {
                                 form.setFieldsValue({
                                   secondPerson: {
@@ -4094,7 +4200,7 @@ const BookingPage = () => {
                       ) : selectedService?.name === 'Non-Invasive Relationship Testing (NIPT)' && 
                          form.getFieldValue(['secondPerson', 'relationship']) === 'Father' ? (
                         <Select placeholder="Select sample type">
-                          {getNonAmnioticSampleTypes().map(type => (
+                          {sampleTypes.map(type => (
                             <Option key={type} value={type}>{type}</Option>
                           ))}
                         </Select>
@@ -4153,7 +4259,7 @@ const BookingPage = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Medication:</span>
                 <span className="font-medium capitalize">
-                  {selectedMedicationMethod.replace('-', ' ')}
+                  {selectedMedicationMethod ? selectedMedicationMethod.replace('-', ' ') : 'Not selected'}
                 </span>
               </div>
               
@@ -4254,29 +4360,40 @@ const BookingPage = () => {
             {/* Payment Method */}
             <div className="mt-4 pt-4 border-t">
               <label className="block text-sm font-medium mb-2">Payment Method</label>
-              <div className="space-y-2">
-                <label className="flex items-center">
+              <div className="space-y-3">
+                <div className={`flex items-start max-w-full ${selectedMedicationMethod === 'postal-delivery' ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <input
                     type="radio"
                     value="cash"
                     checked={paymentMethod === 'cash'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="mr-2"
+                    className="mr-3 flex-shrink-0 mt-1"
+                    disabled={selectedMedicationMethod === 'postal-delivery'}
                   />
-                  <FaCreditCard className="mr-2 text-green-600" />
-                  Cash Payment
-                </label>
-                <label className="flex items-center">
+                  <FaCreditCard className="mr-3 text-green-600 flex-shrink-0 mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium">Cash Payment</span>
+                    {selectedMedicationMethod === 'postal-delivery' && (
+                      <span className="text-xs text-red-500 block mt-1 break-words">(Not available with Postal Delivery)</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-start max-w-full">
                   <input
                     type="radio"
                     value="vnpay"
                     checked={paymentMethod === 'vnpay'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="mr-2"
+                    className="mr-3 flex-shrink-0 mt-1"
                   />
-                  <FaQrcode className="mr-2 text-blue-600" />
-                  VNPAY
-                </label>
+                  <FaQrcode className="mr-3 text-blue-600 flex-shrink-0 mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium">VNPAY</span>
+                    {selectedMedicationMethod === 'postal-delivery' && (
+                      <span className="text-xs text-green-500 block mt-1 break-words">(Required for Postal Delivery)</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
             
