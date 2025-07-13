@@ -240,15 +240,8 @@ const ConfirmBookingModal = ({
       bookingData?.selectedMedicationMethod || bookingData?.medicationMethod;
     const currentExpressService =
       bookingData?.isExpressService || bookingData?.expressService;
-    const currentCollectionMethod =
-      bookingData?.selectedCollectionMethod || bookingData?.collectionMethod;
 
     let serviceCost = service?.basePrice || 0;
-    let collectionCost = 0;
-    if (!currentExpressService) {
-      collectionCost = currentCollectionMethod?.price || 0;
-    }
-
     let mediationCost = 0;
 
     if (currentMedicationMethod === "staff-collection") {
@@ -262,10 +255,9 @@ const ConfirmBookingModal = ({
     let expressCost = 0;
     if (currentExpressService) {
       expressCost = service?.expressPrice || 1500000;
-      collectionCost = 0;
     }
 
-    return { serviceCost, collectionCost, mediationCost, expressCost };
+    return { serviceCost, mediationCost, expressCost };
   };
 
   const generatePaymentCode = () => `DNA${Date.now().toString().slice(-6)}`;
@@ -686,7 +678,7 @@ const ConfirmBookingModal = ({
         }
       };
       const { isExpressService } = bookingData;
-      const { serviceCost, collectionCost, mediationCost, expressCost } =
+      const { serviceCost, mediationCost, expressCost } =
         getCostBreakdown();
       const kitTypes = [
         { value: "K001", label: "PowerPlex Fusion", price: 0 },
@@ -695,9 +687,10 @@ const ConfirmBookingModal = ({
 
       const costTableBody = [];
 
+      // Service Fee
       if (serviceCost > 0) {
         costTableBody.push([
-          { text: "Phí dịch vụ xét nghiệm", alignment: "left", bold: true },
+          { text: "Phí dịch vụ", alignment: "left", bold: true },
           {
             text: `${serviceCost.toLocaleString()} VND`,
             alignment: "right",
@@ -706,109 +699,55 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      if (bookingData.collectionMethod) {
-        const collectionMethodName = translateCollectionMethodToPDF(
-          bookingData.collectionMethod?.name || "Phí thu thập"
-        );
-        costTableBody.push([
-          {
-            text: `Phí thu thập mẫu (${collectionMethodName})`,
-            alignment: "left",
-          },
-          {
-            text: isExpressService
-              ? "Miễn phí"
-              : `${collectionCost.toLocaleString()} VND`,
-            alignment: "right",
-            color: isExpressService ? "#52c41a" : undefined,
-          },
-        ]);
-      }
-
+      // Mediation Method Fee
       const medicationMethod =
         bookingData.selectedMedicationMethod || bookingData.medicationMethod;
-      if (medicationMethod === "staff-collection") {
-        costTableBody.push([
-          {
-            text: "Phí nhân viên thu thập tại nhà",
-            alignment: "left",
-            bold: true,
-          },
-          {
-            text: isExpressService ? "Miễn phí" : `500,000 VND`,
-            alignment: "right",
-            bold: true,
-            color: isExpressService ? "#52c41a" : undefined,
-          },
-        ]);
-      } else if (medicationMethod === "postal-delivery") {
-        costTableBody.push([
-          { text: "Phí gửi bưu điện", alignment: "left", bold: true },
-          {
-            text: isExpressService ? "Miễn phí" : `250,000 VND`,
-            alignment: "right",
-            bold: true,
-            color: isExpressService ? "#52c41a" : undefined,
-          },
-        ]);
-      } else if (medicationMethod === "express") {
-        costTableBody.push([
-          { text: "Phí dịch vụ Express", alignment: "left", bold: true },
-          {
-            text: isExpressService ? "Miễn phí" : `700,000 VND`,
-            alignment: "right",
-            bold: true,
-            color: isExpressService ? "#52c41a" : undefined,
-          },
-        ]);
-      } else if (medicationMethod === "walk-in") {
-        costTableBody.push([
-          { text: "Phí dịch vụ tại cơ sở (Walk-in)", alignment: "left" },
-          {
-            text: "Miễn phí",
-            alignment: "right",
-            color: "#52c41a",
-          },
-        ]);
-      }
-
-      if (isExpressService && expressCost > 0) {
-        costTableBody.push([
-          {
-            text: "Phí dịch vụ Express (Xử lý ưu tiên)",
-            alignment: "left",
-            color: "#fa8c16",
-            bold: true,
-          },
-          {
-            text: `${expressCost.toLocaleString()} VND`,
-            alignment: "right",
-            color: "#fa8c16",
-            bold: true,
-          },
-        ]);
-      }
-
-      const selectedKitType = bookingData.selectedKitType;
-      if (selectedKitType) {
-        const kit = kitTypes.find((k) => k.value === selectedKitType);
-        if (kit && kit.price > 0) {
-          costTableBody.push([
-            { text: `Phí Kit xét nghiệm (${kit.label})`, alignment: "left" },
-            { text: `${kit.price.toLocaleString()} VND`, alignment: "right" },
-          ]);
-        } else if (kit) {
-          costTableBody.push([
-            { text: `Kit xét nghiệm (${kit.label})`, alignment: "left" },
-            { text: "Miễn phí", alignment: "right", color: "#52c41a" },
-          ]);
+      
+      // Chỉ hiển thị phí trung gian nếu không phải là express
+      if (medicationMethod && medicationMethod !== "express") {
+        let mediationMethodText = "Phí phương thức trung gian";
+        
+        if (medicationMethod === "staff-collection") {
+          mediationMethodText = "Phí nhân viên thu thập tại nhà";
+        } else if (medicationMethod === "postal-delivery") {
+          mediationMethodText = "Phí gửi bưu điện";
+        } else if (medicationMethod === "walk-in") {
+          mediationMethodText = "Phí dịch vụ tại cơ sở";
         }
+        
+        costTableBody.push([
+          { text: mediationMethodText, alignment: "left", bold: true },
+          {
+            text: isExpressService ? "Miễn phí" : `${mediationCost.toLocaleString()} VND`,
+            alignment: "right",
+            bold: true,
+            color: isExpressService ? "#52c41a" : undefined,
+          },
+        ]);
       }
+
+      // Express Service Fee
+      costTableBody.push([
+        {
+          text: "Phí dịch vụ Express (Xử lý ưu tiên)",
+          alignment: "left",
+          color: isExpressService ? "#fa8c16" : undefined,
+          bold: true,
+        },
+        {
+          text: isExpressService ? `${expressCost.toLocaleString()} VND` : "Không áp dụng",
+          alignment: "right",
+          color: isExpressService ? "#fa8c16" : undefined,
+          bold: true,
+        },
+      ]);
+
+
 
       if (isExpressService) {
         costTableBody.push([
           {
-            text: "💡 Lưu ý: Khi sử dụng dịch vụ Express, tất cả phí vận chuyển và thu thập mẫu đều miễn phí",
+            text: "Lưu ý: Khi sử dụng dịch vụ Express, tất cả phí vận chuyển và thu thập mẫu đều miễn phí",
             alignment: "left",
             colSpan: 2,
             color: "#52c41a",
@@ -820,9 +759,8 @@ const ConfirmBookingModal = ({
       }
 
       const calculatedTotal =
-        serviceCost + collectionCost + mediationCost + expressCost;
+        serviceCost + mediationCost + expressCost;
       costTableBody.push(
-        [{ text: "", colSpan: 2, border: [false, false, false, false] }, {}],
         [
           { text: "TỔNG CHI PHÍ", bold: true, alignment: "left", fontSize: 14 },
           {
@@ -1585,7 +1523,7 @@ const ConfirmBookingModal = ({
     }
   };
 
-  const handleClose = () => {
+  const _handleClose = () => { // Unused but kept for future reference
     if (isRedirectingToVNPAY) {
       message.warning("Please wait for the payment redirection to complete!");
       return;
@@ -1658,7 +1596,7 @@ const ConfirmBookingModal = ({
       homeAddress,
       selectedKitType,
     } = bookingData;
-    const { serviceCost, collectionCost, mediationCost, expressCost } =
+    const { serviceCost, mediationCost, expressCost } =
       getCostBreakdown();
 
     return (
@@ -2195,6 +2133,7 @@ const ConfirmBookingModal = ({
             },
           }}>
           <div style={{ padding: "8px 0" }}>
+            {/* Service Fee */}
             <Row
               justify="space-between"
               style={{
@@ -2203,12 +2142,12 @@ const ConfirmBookingModal = ({
                 backgroundColor: "#fafafa",
                 borderRadius: 6,
               }}>
-              <Text>💰 Testing Service Fee</Text>
+              <Text>💰 Service Fee</Text>
               <Text strong>{formatCurrency(serviceCost)}</Text>
             </Row>
 
-            {/* Collection Method Cost - Always show with free label when Express Service is selected */}
-            {bookingData.collectionMethod && (
+            {/* Mediation Method Fee - Chỉ hiển thị nếu không phải là express */}
+            {medicationMethod && medicationMethod !== "express" && (
               <Row
                 justify="space-between"
                 style={{
@@ -2219,102 +2158,12 @@ const ConfirmBookingModal = ({
                   border: isExpressService ? "1px solid #b7eb8f" : "none",
                 }}>
                 <Text>
-                  🔬 Collection Fee ({bookingData.collectionMethod?.name})
+                  🚚 Mediation Method Fee
+                  {medicationMethod && ` (${getMediationLabel(medicationMethod)})`}
                 </Text>
                 {isExpressService ? (
                   <Text strong style={{ color: "#52c41a" }}>
-                    Free (0 VND)
-                  </Text>
-                ) : (
-                  <Text strong>{formatCurrency(collectionCost)}</Text>
-                )}
-              </Row>
-            )}
-
-            {/* Hiển thị phí vận chuyển theo loại */}
-            {medicationMethod === "staff-collection" && (
-              <Row
-                justify="space-between"
-                style={{
-                  marginBottom: 12,
-                  padding: "8px 12px",
-                  backgroundColor: "#f6ffed",
-                  borderRadius: 6,
-                  border: "1px solid #b7eb8f",
-                }}>
-                <Text>🏠 Home Collection Fee (Staff Collection)</Text>
-                {isExpressService ? (
-                  <Text strong style={{ color: "#52c41a" }}>
-                    Free (0 VND)
-                  </Text>
-                ) : (
-                  <Text strong style={{ color: "#52c41a" }}>
-                    500,000 VND
-                  </Text>
-                )}
-              </Row>
-            )}
-
-            {medicationMethod === "postal-delivery" && (
-              <Row
-                justify="space-between"
-                style={{
-                  marginBottom: 12,
-                  padding: "8px 12px",
-                  backgroundColor: "#e6f7ff",
-                  borderRadius: 6,
-                  border: "1px solid #91d5ff",
-                }}>
-                <Text>📮 Postal Delivery Fee</Text>
-                {isExpressService ? (
-                  <Text strong style={{ color: "#1890ff" }}>
-                    Free (0 VND)
-                  </Text>
-                ) : (
-                  <Text strong style={{ color: "#1890ff" }}>
-                    250,000 VND
-                  </Text>
-                )}
-              </Row>
-            )}
-
-            {medicationMethod === "express" && (
-              <Row
-                justify="space-between"
-                style={{
-                  marginBottom: 12,
-                  padding: "8px 12px",
-                  backgroundColor: "#fff7e6",
-                  borderRadius: 6,
-                  border: "1px solid #ffd591",
-                }}>
-                <Text>🚚 Express Service Fee</Text>
-                {isExpressService ? (
-                  <Text strong style={{ color: "#fa8c16" }}>
-                    Free (0 VND)
-                  </Text>
-                ) : (
-                  <Text strong style={{ color: "#fa8c16" }}>
-                    700,000 VND
-                  </Text>
-                )}
-              </Row>
-            )}
-
-            {medicationMethod === "walk-in" && (
-              <Row
-                justify="space-between"
-                style={{
-                  marginBottom: 12,
-                  padding: "8px 12px",
-                  backgroundColor: isExpressService ? "#f6ffed" : "#fafafa",
-                  borderRadius: 6,
-                  border: isExpressService ? "1px solid #b7eb8f" : "none",
-                }}>
-                <Text>🏢 Walk-in Service Fee</Text>
-                {isExpressService ? (
-                  <Text strong style={{ color: "#52c41a" }}>
-                    Free (0 VND)
+                  0 VND
                   </Text>
                 ) : (
                   <Text strong>{formatCurrency(mediationCost)}</Text>
@@ -2322,21 +2171,27 @@ const ConfirmBookingModal = ({
               </Row>
             )}
 
-            {isExpressService && expressCost > 0 && (
-              <Row
-                justify="space-between"
-                style={{
-                  marginBottom: 12,
-                  padding: "8px 12px",
-                  backgroundColor: "#fff2e8",
-                  borderRadius: 6,
-                }}>
-                <Text>⚡ Express Service Fee</Text>
+            {/* Express Service Fee */}
+            <Row
+              justify="space-between"
+              style={{
+                marginBottom: 12,
+                padding: "8px 12px",
+                backgroundColor: isExpressService ? "#fff2e8" : "#f6ffed",
+                borderRadius: 6,
+                border: isExpressService ? "1px solid #ffbb96" : "1px solid #b7eb8f",
+              }}>
+              <Text>⚡ Express Service Fee</Text>
+              {isExpressService ? (
                 <Text strong style={{ color: "#fa8c16" }}>
                   {formatCurrency(expressCost)}
                 </Text>
-              </Row>
-            )}
+              ) : (
+                <Text strong style={{ color: "#52c41a" }}>
+                  0đ
+                </Text>
+              )}
+            </Row>
 
             {/* Thông báo về miễn phí khi chọn Express Service */}
             {isExpressService && (
@@ -4411,8 +4266,7 @@ const BookingPage = () => {
           currentBooking = pendingBookings.find((booking) => {
             const match =
               booking.paymentCode && orderInfo.includes(booking.paymentCode);
-            console.log(
-              `🔎 Checking paymentCode: ${booking.paymentCode} - Match: ${match}`
+            console.log(`🔎 Checking paymentCode: ${booking.paymentCode} - Match: ${match}`
             );
             return match;
           });
