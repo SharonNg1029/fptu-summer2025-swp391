@@ -647,7 +647,8 @@ const ViewReports = () => {
                 bookingAssigned.filter(
                   (b) =>
                     b.status === "Awaiting Confirmation" ||
-                    b.status === "Awaiting confirm"
+                    b.status === "Awaiting confirm" ||
+                    b.status == "Payment Confirmed"
                 ).length
               }
               )
@@ -668,7 +669,8 @@ const ViewReports = () => {
                 .filter(
                   (b) =>
                     b.status === "Awaiting confirm" ||
-                    b.status === "Awaiting Confirmation"
+                    b.status === "Awaiting Confirmation" ||
+                    b.status == "Payment Confirmed"
                 )
                 .sort((a, b) => {
                   // 1. Sort by appointmentDate (closest first)

@@ -350,6 +350,7 @@ const OrderProcessing = () => {
       title: "Booking ID",
       dataIndex: "bookingID",
       key: "bookingID",
+      width: 110,
       sorter: (a, b) => (a.bookingID || "").localeCompare(b.bookingID || ""),
     },
     {
@@ -378,6 +379,7 @@ const OrderProcessing = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 200,
       render: (status) => getStatusTag(status),
       filters: [
         { text: "Awaiting Confirmation", value: "Awaiting Confirmation" },
@@ -435,6 +437,7 @@ const OrderProcessing = () => {
       title: "Booking ID",
       dataIndex: "bookingID",
       key: "bookingID",
+      width: 110,
       sorter: (a, b) => (a.bookingID || "").localeCompare(b.bookingID || ""),
     },
     {

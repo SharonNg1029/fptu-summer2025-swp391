@@ -322,8 +322,11 @@ function Overview() {
         const response = await api.get("/booking/bookings");
         let bookings = response.data?.data || response.data || [];
         bookings = filterBookingsByDateRange(bookings);
+        // Chỉ tính revenue từ các booking có status là 'Completed'
         const totalRevenue = Array.isArray(bookings)
-          ? bookings.reduce((sum, b) => sum + Number(b.totalCost || 0), 0)
+          ? bookings
+              .filter((b) => b.status === "Completed")
+              .reduce((sum, b) => sum + Number(b.totalCost || 0), 0)
           : 0;
         setStats((prev) => ({
           ...prev,

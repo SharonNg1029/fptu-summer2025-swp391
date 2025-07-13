@@ -68,6 +68,10 @@ const ManagerOverviewPage = () => {
     weeklyProgress: [],
     staffEfficiency: [],
   });
+  // State cho tổng revenue từ booking Completed
+  const [completedRevenue, setCompletedRevenue] = useState(0);
+  // State lưu tất cả bookings từ API /booking/bookings
+  const [allBookings, setAllBookings] = useState([]);
   // const [kitTransactions, setKitTransactions] = useState([]);
   const [assignedBookings, setAssignedBookings] = useState([]);
 
@@ -86,6 +90,11 @@ const ManagerOverviewPage = () => {
 
   // Generate chart data for 2 charts: Performance Metrics & Test Status Distribution
   const generateChartData = useCallback(() => {
+    // Tính tổng revenue từ các booking có status là 'Completed' từ allBookings
+    const revenue = allBookings
+      .filter((b) => b.status === "Completed")
+      .reduce((sum, b) => sum + Number(b.totalCost || 0), 0);
+    setCompletedRevenue(Math.round(revenue));
     // 1. Weekly Performance Metrics chart: mỗi tuần là số lượng booking thực tế theo tuần (dựa vào bookingAssigned)
     // Giả sử booking có trường createdAt dạng ISO date
     const weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4"];
@@ -170,20 +179,23 @@ const ManagerOverviewPage = () => {
       performanceMetrics,
       testStatusDistribution,
     });
-  }, [assignedBookings]);
+  }, [assignedBookings, allBookings]);
 
   const fetchManagerOverviewData = useCallback(async () => {
     setLoading(true);
     try {
-      // Gọi song song 2 API mới
-      const [kitRes, assignedRes] = await Promise.all([
+      // Gọi song song 3 API: kit, assigned, all bookings
+      const [kitRes, assignedRes, allBookingsRes] = await Promise.all([
         api.get("/manager/kit-transaction"),
         api.get("/manager/booking-assigned"),
+        api.get("/booking/bookings"),
       ]);
       const kitList = kitRes.data?.data || kitRes.data || [];
       const assignedList = assignedRes.data?.data || assignedRes.data || [];
-      // setKitTransactions(kitList);
+      const allBookingList =
+        allBookingsRes.data?.data || allBookingsRes.data || [];
       setAssignedBookings(assignedList);
+      setAllBookings(allBookingList);
 
       // Tổng số kit đã nhận
       const kitsReceived = kitList.filter((k) => k.received === true).length;
@@ -317,7 +329,7 @@ const ManagerOverviewPage = () => {
         <div>
           {/* Enhanced Stats Cards */}
           <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-            <Col xs={24} sm={12} lg={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{
                   borderRadius: 16,
@@ -356,7 +368,7 @@ const ManagerOverviewPage = () => {
                 </div>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{
                   borderRadius: 16,
@@ -388,7 +400,8 @@ const ManagerOverviewPage = () => {
                 </div>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={8}>
+
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{
                   borderRadius: 16,
@@ -415,6 +428,39 @@ const ManagerOverviewPage = () => {
                 />
                 <div style={{ marginTop: 8, fontSize: 12, color: "#999" }}>
                   Available for assignments
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card
+                style={{
+                  borderRadius: 16,
+                  minHeight: 140,
+                  boxShadow: "0 4px 20px rgba(250, 173, 20, 0.1)",
+                  border: "1px solid #fffbe6",
+                }}>
+                <Statistic
+                  title={
+                    <span
+                      style={{ fontWeight: 600, fontSize: 16, color: "#666" }}>
+                      Revenue
+                    </span>
+                  }
+                  value={
+                    completedRevenue >= 1000000
+                      ? `$${(completedRevenue / 1000000).toFixed(1)}M`
+                      : completedRevenue >= 1000
+                      ? `$${(completedRevenue / 1000).toFixed(1)}K`
+                      : `$${completedRevenue}`
+                  }
+                  valueStyle={{
+                    color: "#faad14",
+                    fontSize: 32,
+                    fontWeight: 700,
+                  }}
+                />
+                <div style={{ marginTop: 8, fontSize: 12, color: "#999" }}>
+                  Revenue from completed bookings
                 </div>
               </Card>
             </Col>
