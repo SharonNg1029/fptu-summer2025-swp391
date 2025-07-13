@@ -219,7 +219,7 @@ const BookingDetailModal = ({
                     </Col>
                     <Col span={12}>
                       <div style={{ padding: '12px 16px', backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>SERVICE NAME</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>SERVICE TYPE</Text>
                         <Text strong style={{ fontSize: 14 }}>{service}</Text>
                       </div>
                     </Col>

@@ -329,7 +329,7 @@ const Blog = () => {
                 </div>
                 
                 <div className="p-6 flex flex-col h-[280px]">
-                  <div>
+                  <div className="flex-grow overflow-hidden">
                     <h3 className="text-xl font-bold mb-3 text-gray-800 group-hover:text-blue-600 transition-colors duration-300 line-clamp-2">
                       <Link to={`/blog/${article.slug}`}>{article.title}</Link>
                     </h3>
