@@ -110,14 +110,14 @@ const ConfirmBookingModal = ({
   onConfirm,
   paymentMethod: paymentMethodProp,
   initialStep,
+  navigate,
 }) => {
   const [currentStep, setCurrentStep] = useState(initialStep || 1);
   const [paymentMethod, setPaymentMethod] = useState(
     paymentMethodProp || "cash"
   );
-  const [setQrCodeData] = useState(null);
+  const [qrCodeData, setQrCodeData] = useState(null);
   const [paymentCode, setPaymentCode] = useState("");
-  // We still need setShowPDFOption but showPDFOption is now used directly in renderStepContent
   const [_, setShowPDFOption] = useState(false);
   const [isPDFConfirmStep, setIsPDFConfirmStep] = useState(false);
   const [finalBookingData, setFinalBookingData] = useState(null);
@@ -127,7 +127,6 @@ const ConfirmBookingModal = ({
   const [isRedirectingToVNPAY, setIsRedirectingToVNPAY] = useState(false);
   const signatureRef = useRef();
 
-  // Hàm dịch tên dịch vụ sang tiếng Việt cho PDF
   const translateServiceNameToPDF = (serviceName) => {
     const serviceTranslations = {
       "Paternity Testing": "Xét nghiệm ADN Huyết thống Cha-Con",
@@ -145,7 +144,6 @@ const ConfirmBookingModal = ({
     return serviceTranslations[serviceName] || serviceName;
   };
 
-  // Hàm dịch phương pháp thu thập sang tiếng Việt cho PDF
   const translateCollectionMethodToPDF = (collectionMethod) => {
     const collectionTranslations = {
       "At Home": "Tại nhà",
@@ -154,67 +152,55 @@ const ConfirmBookingModal = ({
     };
     return collectionTranslations[collectionMethod] || collectionMethod;
   };
-  
-  // Hàm dịch mối quan hệ sang tiếng Việt cho PDF
+
   const translateRelationshipToPDF = (relationship) => {
     const relationshipTranslations = {
-      "Father": "Cha",
-      "Mother": "Mẹ",
-      "Child": "Con",
-      "Sibling": "Anh/Chị/Em",
-      "Brother": "Anh/Em trai",
-      "Sister": "Chị/Em gái",
-      "Grandparent": "Ông/Bà",
-      "Grandchild": "Cháu",
-      "Uncle": "Chú/Bác",
-      "Aunt": "Cô/Dì",
-      "Nephew": "Cháu trai",
-      "Niece": "Cháu gái",
-      "Cousin": "Anh/Chị/Em họ"
+      Father: "Cha",
+      Mother: "Mẹ",
+      Child: "Con",
+      Sibling: "Anh/Chị/Em",
+      Brother: "Anh/Em trai",
+      Sister: "Chị/Em gái",
+      Grandparent: "Ông/Bà",
+      Grandchild: "Cháu",
+      Uncle: "Chú/Bác",
+      Aunt: "Cô/Dì",
+      Nephew: "Cháu trai",
+      Niece: "Cháu gái",
+      Cousin: "Anh/Chị/Em họ",
     };
     return relationshipTranslations[relationship] || relationship;
   };
 
-  // Hàm dịch loại mẫu sang tiếng Việt cho PDF
   const translateSampleTypeToPDF = (sampleType) => {
     const sampleTypeTranslations = {
-      "Blood": "Máu",
-      "Buccal Swab": "Tế bào niêm mạc má",
-      "Hair": "Tóc",
-      "Saliva": "Nước bọt",
-      "Tissue": "Mô",
-      "Other": "Khác"
+      Blood: "Máu",
+      "Buccal Swab": "Niêm mạc miệng",
+      Hair: "Tóc",
+      Saliva: "Nước bọt",
+      Tissue: "Mô",
+      "Amniotic Fluid": "Dịch ối",
+      Other: "Khác",
     };
     return sampleTypeTranslations[sampleType] || sampleType;
   };
 
-  // ...existing code...
 
   useEffect(() => {
-    console.log("ConfirmBookingModal useEffect:", {
-      visible,
-      paymentMethodProp,
-      initialStep,
-      "bookingData.status": bookingData?.status,
-    });
 
     if (visible) {
       if (paymentMethodProp) {
         setPaymentMethod(paymentMethodProp);
       }
 
-      // Ưu tiên sử dụng initialStep từ props
       if (initialStep && initialStep >= 1 && initialStep <= 4) {
-        console.log("Setting currentStep from initialStep:", initialStep);
         setCurrentStep(initialStep);
       } else if (
         bookingData?.status === "paid" &&
         bookingData?.paymentMethod === "vnpay"
       ) {
-        console.log("Setting currentStep to 3 for paid VNPay booking");
         setCurrentStep(3);
       } else {
-        console.log("Setting currentStep to default: 1");
         setCurrentStep(1);
       }
     }
@@ -231,13 +217,14 @@ const ConfirmBookingModal = ({
     return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
   };
 
-  const getExpressService = () => (bookingData.isExpressService ? "Có" : "Không");
+  const getExpressService = () =>
+    bookingData.isExpressService ? "Có" : "Không";
 
   const getMediationLabel = (method) => {
-    if (method === "postal-delivery") return "Gửi qua bưu điện";
-    if (method === "staff-collection") return "Nhân viên thu thập";
-    if (method === "walk-in") return "Dịch vụ tại quầy";
-    if (method === "express") return "Dịch vụ nhanh";
+    if (method === "postal-delivery") return "Postal Delivery";
+    if (method === "staff-collection") return "Mediation Method";
+    if (method === "walk-in") return "Walk-in Service";
+    if (method === "express") return "Express Service";
     return method;
   };
 
@@ -301,11 +288,10 @@ const ConfirmBookingModal = ({
         const code = generatePaymentCode();
         setPaymentCode(code);
 
-        // Cash payment: skip to step 3 (Sign), VNPay: go to step 2 (Payment)
         if (paymentMethod === "cash") {
-          setCurrentStep(3); // Skip payment, go directly to signature
+          setCurrentStep(3); 
         } else {
-          setCurrentStep(2); // VNPay payment step
+          setCurrentStep(2); 
         }
       },
     });
@@ -356,13 +342,9 @@ const ConfirmBookingModal = ({
         status: "signed",
         signedAt: new Date().toISOString(),
       };
-
       setFinalBookingData(bookingDataWithSignature);
-
-      // Chuyển đến bước PDF Options (bước 4)
       setCurrentStep(4);
       setShowPDFOption(true);
-
       message.success("Signature successful!");
     } catch (error) {
       console.error("Error processing signature:", error);
@@ -371,10 +353,8 @@ const ConfirmBookingModal = ({
       setIsProcessingSignature(false);
     }
   };
-
   const handleVNPAYPayment = async () => {
     let processingMsg = null;
-
     try {
       setIsSubmittingPayment(true);
       setIsRedirectingToVNPAY(true);
@@ -387,19 +367,11 @@ const ConfirmBookingModal = ({
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       const tempBookingData = {
-        ...bookingData, // Sử dụng bookingData thay vì finalBookingData
+        ...bookingData,
         paymentMethod,
         paymentCode,
         status: "pending_payment",
       };
-
-      // Debug: Log booking data được lưu
-      console.log("💾 Saving booking data to localStorage:", {
-        paymentCode,
-        customerID: tempBookingData.customerID,
-        totalData: tempBookingData,
-      });
-
       const pendingBookings = JSON.parse(
         localStorage.getItem("pending_vnpay_bookings") || "[]"
       );
@@ -408,9 +380,6 @@ const ConfirmBookingModal = ({
         "pending_vnpay_bookings",
         JSON.stringify(pendingBookings)
       );
-
-      console.log("💾 Updated localStorage with bookings:", pendingBookings);
-
       let firstPersonBirthDate;
       if (bookingData.firstPerson?.dateOfBirth) {
         if (
@@ -476,10 +445,10 @@ const ConfirmBookingModal = ({
       const payload = {
         bookingID: null,
         collectionMethod: bookingData.collectionMethod?.name || "At Facility",
-        paymentMethod: paymentMethod,
+        paymentMethod: "VNPay", 
         appointmentTime: appointmentTime,
         timeRange: bookingData.timeSlot || "",
-        status: "pending_payment",
+        status: "pending_payment", 
         note: "",
         cost: 0,
         mediationMethod: bookingData.medicationMethod || "",
@@ -502,16 +471,26 @@ const ConfirmBookingModal = ({
         payload
       );
       const data = response.data;
-
-      console.log("API result:", data);
-
       if (data.vnpUrl) {
-        console.log("VNPAY URL received, redirecting to:", data.vnpUrl);
         processingMsg();
         message.success(
           "Payment creation successful! Redirecting to VNPAY...",
           2
         );
+        tempBookingData.vnpayBookingCreated = true;
+        tempBookingData.vnpayBookingId = data.bookingId || null; 
+        const updatedPendingBookings = JSON.parse(
+          localStorage.getItem("pending_vnpay_bookings") || "[]"
+        );
+        if (updatedPendingBookings.length > 0) {
+          updatedPendingBookings[updatedPendingBookings.length - 1] =
+            tempBookingData;
+          localStorage.setItem(
+            "pending_vnpay_bookings",
+            JSON.stringify(updatedPendingBookings)
+          );
+        }
+
         setTimeout(() => {
           window.location.href = data.vnpUrl;
         }, 1200);
@@ -587,19 +566,16 @@ const ConfirmBookingModal = ({
           ...finalBookingData,
           pdfGenerated: true,
           pdfGeneratedAt: new Date().toISOString(),
+          status: "Payment Confirmed", 
         };
-
-        onConfirm(updatedBookingData);
+        await onConfirm(updatedBookingData);
+        setFinalBookingData(updatedBookingData);
         setCurrentStep(4);
         setIsPDFConfirmStep(false);
-
-        // Hiển thị thông báo chuyển hướng
-        message.info("Returning to homepage in 2 seconds...", 2);
-
-        // Chuyển về trang home sau 2 giây
+        message.info("Redirecting to My Booking...", 1.5);
         setTimeout(() => {
-          window.location.href = "/";
-        }, 2000);
+          navigate("/my-booking");
+        }, 1500);
       } catch (pdfError) {
         processingMsg();
         console.error("Error creating PDF:", pdfError);
@@ -614,22 +590,6 @@ const ConfirmBookingModal = ({
       setIsGeneratingPDF(false);
     }
   };
-  const handleSkipPDF = async () => {
-    onConfirm(finalBookingData);
-    setCurrentStep(4);
-    setIsPDFConfirmStep(false);
-    setShowPDFOption(false);
-
-    // Hiển thị thông báo hoàn thành và chuyển hướng
-    message.success("Booking completed successfully!", 2);
-    message.info("Returning to homepage in 2 seconds...", 2);
-
-    // Chuyển về trang home sau 2 giây
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 2000);
-  };
-
   const generatePDF = async (shouldDownload = true) => {
     let loadingMessage;
     try {
@@ -646,7 +606,6 @@ const ConfirmBookingModal = ({
         const pdfMake = pdfMakeModule.default;
         pdfMake.vfs =
           pdfFonts && pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
-        console.log("pdfmake library loaded successfully");
       } catch (error) {
         console.error("Error loading pdfmake library:", error);
         throw new Error("Unable to load PDF library. Please try again!");
@@ -685,40 +644,41 @@ const ConfirmBookingModal = ({
         console.error("Error: Invalid signature");
         throw new Error("Chữ ký không hợp lệ hoặc quá ngắn");
       }
-
-      console.log("Signature length:", signatureImg.length);
       const formatDate = (d) => {
         try {
           if (!d) return "";
-          
-          // Nếu đã là định dạng DD/MM/YYYY thì trả về luôn
-          if (typeof d === "string" && d.includes("/") && d.length === 10) return d;
-          
-          // Xử lý string có định dạng ISO hoặc khác
+
+          if (typeof d === "string" && d.includes("/") && d.length === 10)
+            return d;
+
           if (typeof d === "string") {
-            // Nếu là ISO string (có chứa T hoặc Z)
             if (d.includes("T") || d.includes("Z")) {
               const date = new Date(d);
-              return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+              return `${date.getDate().toString().padStart(2, "0")}/${(
+                date.getMonth() + 1
+              )
+                .toString()
+                .padStart(2, "0")}/${date.getFullYear()}`;
             }
-            
-            // Nếu là định dạng YYYY-MM-DD
+
             const parts = d.split("-");
             if (parts.length === 3) {
               return `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
             return d;
           }
-          
-          // Nếu là moment object hoặc có method format
+
           if (d && typeof d.format === "function")
             return d.format("DD/MM/YYYY");
-            
-          // Nếu là Date object
+
           if (d instanceof Date) {
-            return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getFullYear()}`;
+            return `${d.getDate().toString().padStart(2, "0")}/${(
+              d.getMonth() + 1
+            )
+              .toString()
+              .padStart(2, "0")}/${d.getFullYear()}`;
           }
-          
+
           return String(d);
         } catch (dateError) {
           console.warn("Error formatting date:", dateError, "Input:", d);
@@ -735,7 +695,6 @@ const ConfirmBookingModal = ({
 
       const costTableBody = [];
 
-      // Phí dịch vụ cơ bản
       if (serviceCost > 0) {
         costTableBody.push([
           { text: "Phí dịch vụ xét nghiệm", alignment: "left", bold: true },
@@ -747,7 +706,6 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      // Phí thu thập mẫu
       if (bookingData.collectionMethod) {
         const collectionMethodName = translateCollectionMethodToPDF(
           bookingData.collectionMethod?.name || "Phí thu thập"
@@ -767,7 +725,6 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      // Phí phương thức vận chuyển
       const medicationMethod =
         bookingData.selectedMedicationMethod || bookingData.medicationMethod;
       if (medicationMethod === "staff-collection") {
@@ -815,7 +772,6 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      // Phí dịch vụ Express
       if (isExpressService && expressCost > 0) {
         costTableBody.push([
           {
@@ -833,7 +789,6 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      // Phí Kit Type (nếu có)
       const selectedKitType = bookingData.selectedKitType;
       if (selectedKitType) {
         const kit = kitTypes.find((k) => k.value === selectedKitType);
@@ -850,7 +805,6 @@ const ConfirmBookingModal = ({
         }
       }
 
-      // Thông báo miễn phí khi Express Service
       if (isExpressService) {
         costTableBody.push([
           {
@@ -865,7 +819,6 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      // Tổng cộng
       const calculatedTotal =
         serviceCost + collectionCost + mediationCost + expressCost;
       costTableBody.push(
@@ -965,8 +918,8 @@ const ConfirmBookingModal = ({
               {
                 text:
                   bookingData.serviceType === "legal"
-                    ? "Xét nghiệm ADN Pháp lý"
-                    : "Xét nghiệm ADN Dân sự",
+                    ? "Hành Chính"
+                    : "Dân sự",
                 color: "#2196f3",
                 bold: true,
               },
@@ -1055,12 +1008,15 @@ const ConfirmBookingModal = ({
                     bold: true,
                   },
                   {
-                    text: translateRelationshipToPDF(firstPerson?.relationship) || "",
+                    text:
+                      translateRelationshipToPDF(firstPerson?.relationship) ||
+                      "",
                     color: "#e91e63",
                     bold: true,
                   },
                   {
-                    text: translateSampleTypeToPDF(firstPerson?.sampleType) || "",
+                    text:
+                      translateSampleTypeToPDF(firstPerson?.sampleType) || "",
                     color: "#e91e63",
                     bold: true,
                   },
@@ -1098,12 +1054,15 @@ const ConfirmBookingModal = ({
                     bold: true,
                   },
                   {
-                    text: translateRelationshipToPDF(secondPerson?.relationship) || "",
+                    text:
+                      translateRelationshipToPDF(secondPerson?.relationship) ||
+                      "",
                     color: "#e91e63",
                     bold: true,
                   },
                   {
-                    text: translateSampleTypeToPDF(secondPerson?.sampleType) || "",
+                    text:
+                      translateSampleTypeToPDF(secondPerson?.sampleType) || "",
                     color: "#e91e63",
                     bold: true,
                   },
@@ -1439,7 +1398,6 @@ const ConfirmBookingModal = ({
             text: "Chúng tôi tiến hành lấy mẫu của những người đề nghị xét nghiệm ADN. Các mẫu của từng người được lấy riêng rẽ như sau:",
             margin: [0, 0, 0, 20],
           },
-          // Thông tin người thứ nhất
           {
             text: [
               "Họ và tên: ",
@@ -1454,18 +1412,24 @@ const ConfirmBookingModal = ({
               "CCCD: ",
               { text: firstPerson?.personalId || "", bold: true },
               "            Loại mẫu: ",
-              { text: translateSampleTypeToPDF(firstPerson?.sampleType) || "", bold: true },
+              {
+                text: translateSampleTypeToPDF(firstPerson?.sampleType) || "",
+                bold: true,
+              },
             ],
             margin: [0, 0, 0, 5],
           },
           {
             text: [
               "Mối quan hệ: ",
-              { text: translateRelationshipToPDF(firstPerson?.relationship) || "", bold: true },
+              {
+                text:
+                  translateRelationshipToPDF(firstPerson?.relationship) || "",
+                bold: true,
+              },
             ],
             margin: [0, 0, 0, 20],
           },
-          // Thông tin người thứ hai
           {
             text: [
               "Họ và tên: ",
@@ -1480,18 +1444,24 @@ const ConfirmBookingModal = ({
               "CCCD (nếu có): ",
               { text: secondPerson?.personalId || "", bold: true },
               "            Loại mẫu: ",
-              { text: translateSampleTypeToPDF(secondPerson?.sampleType) || "", bold: true },
+              {
+                text: translateSampleTypeToPDF(secondPerson?.sampleType) || "",
+                bold: true,
+              },
             ],
             margin: [0, 0, 0, 5],
           },
           {
             text: [
               "Mối quan hệ: ",
-              { text: translateRelationshipToPDF(secondPerson?.relationship) || "", bold: true },
+              {
+                text:
+                  translateRelationshipToPDF(secondPerson?.relationship) || "",
+                bold: true,
+              },
             ],
             margin: [0, 0, 0, 40],
           },
-          // Phần ký tên
           {
             columns: [
               {
@@ -1582,7 +1552,9 @@ const ConfirmBookingModal = ({
       console.error("Error stack:", error.stack);
       if (loadingMessage) loadingMessage();
       if (error.message?.includes("vfs") || error.message?.includes("fonts")) {
-        message.error("Error loading PDF font. Trying again with default font...");
+        message.error(
+          "Error loading PDF font. Trying again with default font..."
+        );
       } else if (error.message?.includes("Timeout")) {
         message.error(
           "Timed out loading PDF library. Please check your network connection!"
@@ -1635,8 +1607,6 @@ const ConfirmBookingModal = ({
   };
 
   const forceClose = () => {
-    console.log("forceClose called - closing the modal is forced");
-
     try {
       // Reset tất cả trạng thái
       setCurrentStep(1);
@@ -1649,16 +1619,12 @@ const ConfirmBookingModal = ({
       setIsProcessingSignature(false);
       setIsGeneratingPDF(false);
       setIsSubmittingPayment(false);
-      setIsRedirectingToVNPAY(false); // Quan trọng: luôn reset về false
+      setIsRedirectingToVNPAY(false);
 
-      // Clear signature nếu có
       if (signatureRef.current && signatureRef.current.clear) {
         signatureRef.current.clear();
       }
 
-      console.log("All state has been reset, call onCancel");
-
-      // Gọi hàm onCancel để đóng modal
       if (typeof onCancel === "function") {
         onCancel();
       } else {
@@ -1666,7 +1632,6 @@ const ConfirmBookingModal = ({
       }
     } catch (error) {
       console.error("Lỗi khi đóng modal:", error);
-      // Vẫn cố gắng đóng modal
       if (typeof onCancel === "function") {
         onCancel();
       }
@@ -1702,7 +1667,8 @@ const ConfirmBookingModal = ({
         <Alert
           message={
             <span style={{ fontWeight: 600 }}>
-               Information cannot be changed after successful booking, please check carefully!
+              Information cannot be changed after successful booking, please
+              check carefully!
             </span>
           }
           type="warning"
@@ -1728,8 +1694,7 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}
-              >
+                }}>
                 <UserOutlined style={{ color: "white", fontSize: 16 }} />
               </div>
               <span style={{ fontSize: 18, fontWeight: 600, color: "#1890ff" }}>
@@ -1743,12 +1708,13 @@ const ConfirmBookingModal = ({
             boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
             border: "1px solid #e8f4fd",
           }}
-          headStyle={{
-            backgroundColor: "#f8fcff",
-            borderBottom: "1px solid #e8f4fd",
-            borderRadius: "12px 12px 0 0",
-          }}
-        >
+          styles={{
+            header: {
+              backgroundColor: "#f8fcff",
+              borderBottom: "1px solid #e8f4fd",
+              borderRadius: "12px 12px 0 0",
+            },
+          }}>
           <Row gutter={[16, 16]}>
             <Col span={12}>
               <div
@@ -1757,12 +1723,10 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
                   SERVICE TYPE
                 </Text>
                 <Text strong style={{ fontSize: 14, color: "#1890ff" }}>
@@ -1779,12 +1743,10 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
                   SERVICE NAME
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1799,12 +1761,10 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
                   COLLECTION METHOD
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1820,12 +1780,10 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
                   TESTING KIT
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1848,18 +1806,16 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#f6ffed",
                   borderRadius: 8,
                   border: "1px solid #b7eb8f",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
                   📍 COLLECTION ADDRESS
                 </Text>
                 <Text strong style={{ fontSize: 14, color: "#52c41a" }}>
                   {collectionMethod?.name === "At Home"
                     ? homeAddress || "—"
-                    : "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh"}
+                    : "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City"}
                 </Text>
               </div>
             </Col>
@@ -1870,13 +1826,11 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
-                  TRANSPORTATION METHOD
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  MEDIATION METHOD
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
                   {getMediationLabel(
@@ -1894,12 +1848,10 @@ const ConfirmBookingModal = ({
                   border: `1px solid ${
                     isExpressService ? "#ffbb96" : "#f0f0f0"
                   }`,
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
                   EXPRESS SERVICE
                 </Text>
                 <Text
@@ -1907,9 +1859,8 @@ const ConfirmBookingModal = ({
                   style={{
                     fontSize: 14,
                     color: isExpressService ? "#fa8c16" : "#666",
-                  }}
-                >
-                  {isExpressService ? "⚡ Có" : "❌ Không"}
+                  }}>
+                  {isExpressService ? "⚡ Yes" : "❌ No"}
                 </Text>
               </div>
             </Col>
@@ -1925,12 +1876,10 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#e6f7ff",
                   borderRadius: 8,
                   border: "1px solid #91d5ff",
-                }}
-              >
+                }}>
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 8 }}
-                >
+                  style={{ fontSize: 12, display: "block", marginBottom: 8 }}>
                   📅 APPOINTMENT
                 </Text>
                 <div
@@ -1939,11 +1888,9 @@ const ConfirmBookingModal = ({
                     alignItems: "center",
                     gap: 16,
                     flexWrap: "wrap",
-                  }}
-                >
+                  }}>
                   <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <CalendarOutlined
                       style={{ color: "#1890ff", fontSize: 16 }}
                     />
@@ -1961,8 +1908,7 @@ const ConfirmBookingModal = ({
                         padding: "6px 12px",
                         borderRadius: 20,
                         border: "1px solid #b7eb8f",
-                      }}
-                    >
+                      }}>
                       <ClockCircleOutlined
                         style={{ color: "#52c41a", fontSize: 16 }}
                       />
@@ -1990,8 +1936,7 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}
-              >
+                }}>
                 <TeamOutlined style={{ color: "white", fontSize: 16 }} />
               </div>
               <span style={{ fontSize: 18, fontWeight: 600, color: "#52c41a" }}>
@@ -2005,12 +1950,13 @@ const ConfirmBookingModal = ({
             boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
             border: "1px solid #f6ffed",
           }}
-          headStyle={{
-            backgroundColor: "#f6ffed",
-            borderBottom: "1px solid #d9f7be",
-            borderRadius: "12px 12px 0 0",
-          }}
-        >
+          styles={{
+            header: {
+              backgroundColor: "#f6ffed",
+              borderBottom: "1px solid #d9f7be",
+              borderRadius: "12px 12px 0 0",
+            },
+          }}>
           <Row gutter={[16, 16]}>
             {/* Person 1 */}
             <Col span={12}>
@@ -2021,8 +1967,7 @@ const ConfirmBookingModal = ({
                   borderRadius: 8,
                   border: "2px solid #1890ff",
                   position: "relative",
-                }}
-              >
+                }}>
                 <div
                   style={{
                     position: "absolute",
@@ -2034,8 +1979,7 @@ const ConfirmBookingModal = ({
                     borderRadius: 12,
                     fontSize: 12,
                     fontWeight: 600,
-                  }}
-                >
+                  }}>
                   👤 REPRESENTATIVE
                 </div>
                 <div style={{ marginTop: 8 }}>
@@ -2131,8 +2075,7 @@ const ConfirmBookingModal = ({
                   borderRadius: 8,
                   border: "2px solid #52c41a",
                   position: "relative",
-                }}
-              >
+                }}>
                 <div
                   style={{
                     position: "absolute",
@@ -2144,8 +2087,7 @@ const ConfirmBookingModal = ({
                     borderRadius: 12,
                     fontSize: 12,
                     fontWeight: 600,
-                  }}
-                >
+                  }}>
                   👥 SECOND PERSON
                 </div>
                 <div style={{ marginTop: 8 }}>
@@ -2231,8 +2173,7 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}
-              >
+                }}>
                 <CreditCardOutlined style={{ color: "white", fontSize: 16 }} />
               </div>
               <span style={{ fontSize: 18, fontWeight: 600, color: "#fa8c16" }}>
@@ -2246,12 +2187,13 @@ const ConfirmBookingModal = ({
             boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
             border: "1px solid #fff2e8",
           }}
-          headStyle={{
-            backgroundColor: "#fff2e8",
-            borderBottom: "1px solid #ffbb96",
-            borderRadius: "12px 12px 0 0",
-          }}
-        >
+          styles={{
+            header: {
+              backgroundColor: "#fff2e8",
+              borderBottom: "1px solid #ffbb96",
+              borderRadius: "12px 12px 0 0",
+            },
+          }}>
           <div style={{ padding: "8px 0" }}>
             <Row
               justify="space-between"
@@ -2260,8 +2202,7 @@ const ConfirmBookingModal = ({
                 padding: "8px 12px",
                 backgroundColor: "#fafafa",
                 borderRadius: 6,
-              }}
-            >
+              }}>
               <Text>💰 Testing Service Fee</Text>
               <Text strong>{formatCurrency(serviceCost)}</Text>
             </Row>
@@ -2276,8 +2217,7 @@ const ConfirmBookingModal = ({
                   backgroundColor: isExpressService ? "#f6ffed" : "#fafafa",
                   borderRadius: 6,
                   border: isExpressService ? "1px solid #b7eb8f" : "none",
-                }}
-              >
+                }}>
                 <Text>
                   🔬 Collection Fee ({bookingData.collectionMethod?.name})
                 </Text>
@@ -2301,8 +2241,7 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#f6ffed",
                   borderRadius: 6,
                   border: "1px solid #b7eb8f",
-                }}
-              >
+                }}>
                 <Text>🏠 Home Collection Fee (Staff Collection)</Text>
                 {isExpressService ? (
                   <Text strong style={{ color: "#52c41a" }}>
@@ -2325,8 +2264,7 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#e6f7ff",
                   borderRadius: 6,
                   border: "1px solid #91d5ff",
-                }}
-              >
+                }}>
                 <Text>📮 Postal Delivery Fee</Text>
                 {isExpressService ? (
                   <Text strong style={{ color: "#1890ff" }}>
@@ -2349,8 +2287,7 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fff7e6",
                   borderRadius: 6,
                   border: "1px solid #ffd591",
-                }}
-              >
+                }}>
                 <Text>🚚 Express Service Fee</Text>
                 {isExpressService ? (
                   <Text strong style={{ color: "#fa8c16" }}>
@@ -2373,8 +2310,7 @@ const ConfirmBookingModal = ({
                   backgroundColor: isExpressService ? "#f6ffed" : "#fafafa",
                   borderRadius: 6,
                   border: isExpressService ? "1px solid #b7eb8f" : "none",
-                }}
-              >
+                }}>
                 <Text>🏢 Walk-in Service Fee</Text>
                 {isExpressService ? (
                   <Text strong style={{ color: "#52c41a" }}>
@@ -2394,8 +2330,7 @@ const ConfirmBookingModal = ({
                   padding: "8px 12px",
                   backgroundColor: "#fff2e8",
                   borderRadius: 6,
-                }}
-              >
+                }}>
                 <Text>⚡ Express Service Fee</Text>
                 <Text strong style={{ color: "#fa8c16" }}>
                   {formatCurrency(expressCost)}
@@ -2412,8 +2347,7 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#f6ffed",
                   borderRadius: 6,
                   border: "1px dashed #52c41a",
-                }}
-              >
+                }}>
                 <Text
                   style={{
                     color: "#389e0d",
@@ -2421,8 +2355,7 @@ const ConfirmBookingModal = ({
                     fontStyle: "italic",
                     width: "100%",
                     textAlign: "center",
-                  }}
-                >
+                  }}>
                   💡 When using Express Service, all collection methods and
                   transportation are free (0 VND)
                 </Text>
@@ -2437,8 +2370,7 @@ const ConfirmBookingModal = ({
                 backgroundColor: "#e6f7ff",
                 borderRadius: 8,
                 border: "2px solid #1890ff",
-              }}
-            >
+              }}>
               <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
                 💎 TOTAL COST
               </Text>
@@ -2463,8 +2395,7 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}
-              >
+                }}>
                 {paymentMethod === "cash" ? (
                   <CreditCardOutlined
                     style={{ color: "white", fontSize: 16 }}
@@ -2478,8 +2409,7 @@ const ConfirmBookingModal = ({
                   fontSize: 18,
                   fontWeight: 600,
                   color: paymentMethod === "cash" ? "#52c41a" : "#1890ff",
-                }}
-              >
+                }}>
                 Payment Method
               </span>
             </div>
@@ -2491,14 +2421,15 @@ const ConfirmBookingModal = ({
               paymentMethod === "cash" ? "#f6ffed" : "#e6f7ff"
             }`,
           }}
-          headStyle={{
-            backgroundColor: paymentMethod === "cash" ? "#f6ffed" : "#e6f7ff",
-            borderBottom: `1px solid ${
-              paymentMethod === "cash" ? "#d9f7be" : "#91d5ff"
-            }`,
-            borderRadius: "12px 12px 0 0",
-          }}
-        >
+          styles={{
+            header: {
+              backgroundColor: paymentMethod === "cash" ? "#f6ffed" : "#e6f7ff",
+              borderBottom: `1px solid ${
+                paymentMethod === "cash" ? "#d9f7be" : "#91d5ff"
+              }`,
+              borderRadius: "12px 12px 0 0",
+            },
+          }}>
           <div
             style={{
               padding: "16px",
@@ -2508,8 +2439,7 @@ const ConfirmBookingModal = ({
                 paymentMethod === "cash" ? "#52c41a" : "#1890ff"
               }`,
               textAlign: "center",
-            }}
-          >
+            }}>
             {paymentMethod === "cash" ? (
               <div
                 style={{
@@ -2517,8 +2447,7 @@ const ConfirmBookingModal = ({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 12,
-                }}
-              >
+                }}>
                 <CreditCardOutlined
                   style={{ fontSize: 24, color: "#52c41a" }}
                 />
@@ -2533,8 +2462,7 @@ const ConfirmBookingModal = ({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 12,
-                }}
-              >
+                }}>
                 <QrcodeOutlined style={{ fontSize: 24, color: "#1890ff" }} />
                 <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
                   📱 Payment via VNPAY
@@ -2557,8 +2485,7 @@ const ConfirmBookingModal = ({
         alignItems: "center",
         justifyContent: "center",
         minHeight: "400px",
-      }}
-    >
+      }}>
       {/* Hiển thị thông báo VNPay thành công nếu có */}
       {bookingData?.status === "paid" &&
         bookingData?.paymentMethod === "vnpay" && (
@@ -2571,8 +2498,7 @@ const ConfirmBookingModal = ({
               marginBottom: "24px",
               maxWidth: "500px",
               width: "100%",
-            }}
-          >
+            }}>
             <CheckCircleOutlined
               style={{ fontSize: "24px", color: "#52c41a", marginRight: "8px" }}
             />
@@ -2589,8 +2515,7 @@ const ConfirmBookingModal = ({
           color: "#1890ff",
           fontSize: "24px",
           fontWeight: "bold",
-        }}
-      >
+        }}>
         ✍️ Please sign to confirm
       </Title>
 
@@ -2605,8 +2530,7 @@ const ConfirmBookingModal = ({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-        }}
-      >
+        }}>
         <SignatureCanvas
           ref={signatureRef}
           canvasProps={{
@@ -2637,8 +2561,7 @@ const ConfirmBookingModal = ({
             display: "flex",
             alignItems: "center",
             gap: "8px",
-          }}
-        >
+          }}>
           🗑️ Clear signature
         </Button>
       </Space>
@@ -2653,8 +2576,7 @@ const ConfirmBookingModal = ({
             alignItems: "center",
             gap: "8px",
             marginBottom: "16px",
-          }}
-        >
+          }}>
           <span>⏳ Processing signature...</span>
         </div>
       )}
@@ -2670,8 +2592,7 @@ const ConfirmBookingModal = ({
           padding: "16px 24px",
           borderRadius: "8px",
           border: "1px solid #d9f7be",
-        }}
-      >
+        }}>
         💡 Draw your signature in the box above using your mouse or finger.
         <br />
         Your signature will be used to confirm your registration form.
@@ -2679,24 +2600,13 @@ const ConfirmBookingModal = ({
     </div>
   );
 
-  // Function removed as it's no longer used
-  // Success message function removed as it's no longer used
-
   const renderStepContent = () => {
-    console.log(
-      "renderStepContent - currentStep:",
-      currentStep,
-      "bookingData status:",
-      bookingData?.status,
-      "paymentMethod:",
-      bookingData?.paymentMethod
-    );
+    // ...removed debug log...
 
     switch (currentStep) {
-      case 1: // Confirm Information
+      case 1:
         return renderSummary();
-      case 2: // VNPay Payment (only for VNPay)
-        // If cash payment, this step should not be rendered
+      case 2:
         if (paymentMethod === "cash") {
           console.log("Cash payment detected, skipping step 2");
           setTimeout(() => setCurrentStep(3), 100);
@@ -2704,7 +2614,6 @@ const ConfirmBookingModal = ({
         }
 
         if (paymentMethod === "vnpay") {
-          // Nếu đã thanh toán VNPay thành công, tự động chuyển sang step 3
           if (
             bookingData?.status === "paid" &&
             bookingData?.paymentMethod === "vnpay"
@@ -2712,7 +2621,7 @@ const ConfirmBookingModal = ({
             console.log(
               "VNPay payment detected as paid, switching to step 3 (Sign)"
             );
-            setTimeout(() => setCurrentStep(3), 100); // Sử dụng setTimeout để tránh vấn đề re-render
+            setTimeout(() => setCurrentStep(3), 100);
             return (
               <div style={{ textAlign: "center", padding: "40px 20px" }}>
                 <CheckCircleOutlined
@@ -2724,8 +2633,7 @@ const ConfirmBookingModal = ({
                 />
                 <Title
                   level={3}
-                  style={{ color: "#52c41a", marginBottom: "16px" }}
-                >
+                  style={{ color: "#52c41a", marginBottom: "16px" }}>
                   VNPay Payment Successful!
                 </Title>
                 <Text
@@ -2734,8 +2642,7 @@ const ConfirmBookingModal = ({
                     color: "#666",
                     display: "block",
                     marginBottom: "32px",
-                  }}
-                >
+                  }}>
                   Chuyển đến bước ký tên...
                 </Text>
               </div>
@@ -2754,8 +2661,7 @@ const ConfirmBookingModal = ({
                   marginBottom: "24px",
                   maxWidth: "500px",
                   margin: "0 auto 24px auto",
-                }}
-              >
+                }}>
                 <QrcodeOutlined
                   style={{
                     fontSize: "48px",
@@ -2772,8 +2678,7 @@ const ConfirmBookingModal = ({
                     color: "#666",
                     display: "block",
                     marginBottom: "24px",
-                  }}
-                >
+                  }}>
                   You will be redirected to VNPAY to complete your payment.
                 </Text>
 
@@ -2789,8 +2694,7 @@ const ConfirmBookingModal = ({
                     height: "48px",
                     padding: "0 32px",
                     fontSize: "16px",
-                  }}
-                >
+                  }}>
                   {isRedirectingToVNPAY ? "Processing..." : "Pay with VNPAY"}
                 </Button>
 
@@ -2802,8 +2706,7 @@ const ConfirmBookingModal = ({
                       backgroundColor: "#e6f7ff",
                       borderRadius: "8px",
                       border: "1px solid #91d5ff",
-                    }}
-                  >
+                    }}>
                     <div
                       style={{
                         display: "flex",
@@ -2811,8 +2714,7 @@ const ConfirmBookingModal = ({
                         justifyContent: "center",
                         gap: "12px",
                         marginBottom: "8px",
-                      }}
-                    >
+                      }}>
                       <div
                         className="vnpay-loading-spinner"
                         style={{
@@ -2821,12 +2723,10 @@ const ConfirmBookingModal = ({
                           border: "2px solid #1890ff",
                           borderTopColor: "transparent",
                           borderRadius: "50%",
-                        }}
-                      ></div>
+                        }}></div>
                       <Text
                         strong
-                        style={{ color: "#1890ff", fontSize: "16px" }}
-                      >
+                        style={{ color: "#1890ff", fontSize: "16px" }}>
                         Processing VNPAY payment...
                       </Text>
                     </div>
@@ -2863,10 +2763,8 @@ const ConfirmBookingModal = ({
                 color: "#666",
                 display: "block",
                 marginBottom: "32px",
-              }}
-            >
-              Would you like to download the application form PDF before
-              completing your booking?
+              }}>
+              Please download the DNA testing application form to complete the scheduling.
             </Text>
 
             {/* PDF Export Option */}
@@ -2879,8 +2777,7 @@ const ConfirmBookingModal = ({
                 marginBottom: "24px",
                 maxWidth: "500px",
                 margin: "0 auto 24px auto",
-              }}
-            >
+              }}>
               <FileTextOutlined
                 style={{
                   fontSize: "32px",
@@ -2894,8 +2791,7 @@ const ConfirmBookingModal = ({
                   fontSize: "18px",
                   fontWeight: "bold",
                   color: "#52c41a",
-                }}
-              >
+                }}>
                 Download DNA test application
               </div>
               <div
@@ -2903,13 +2799,11 @@ const ConfirmBookingModal = ({
                   marginBottom: "20px",
                   color: "#666",
                   fontSize: "14px",
-                }}
-              >
+                }}>
                 The PDF file will contain your full registration information and
                 signature.
               </div>
-              <Space size="large">
-                <Button
+              <Button
                   type="primary"
                   size="large"
                   icon={<DownloadOutlined />}
@@ -2922,22 +2816,9 @@ const ConfirmBookingModal = ({
                     height: "48px",
                     padding: "0 32px",
                     fontSize: "16px",
-                  }}
-                >
-                  {isGeneratingPDF ? "Creating PDF..." : "Download PDF"}
+                  }}>
+                  {isGeneratingPDF ? "Creating PDF..." : "Download PDF and complete"}
                 </Button>
-                <Button
-                  size="large"
-                  onClick={handleSkipPDF}
-                  style={{
-                    height: "48px",
-                    padding: "0 32px",
-                    fontSize: "16px",
-                  }}
-                >
-                  Skip, complete booking
-                </Button>
-              </Space>
             </div>
 
             <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -2951,14 +2832,13 @@ const ConfirmBookingModal = ({
     }
   };
 
-  // Render footer
   const renderFooter = () => {
     if (isRedirectingToVNPAY) {
       return null;
     }
 
     switch (currentStep) {
-      case 1: // Confirm Information
+      case 1:
         return [
           <Button key="edit" onClick={handleEdit}>
             Edit
@@ -2968,32 +2848,28 @@ const ConfirmBookingModal = ({
             type="primary"
             onClick={handleConfirm}
             loading={isSubmittingPayment}
-            disabled={isSubmittingPayment}
-          >
+            disabled={isSubmittingPayment}>
             {isSubmittingPayment ? "Processing..." : "Confirm"}
           </Button>,
         ];
-      case 2: // VNPay Payment (only for VNPay)
+      case 2:
         return [
           <Button key="back" onClick={() => setCurrentStep(1)}>
             Back
           </Button>,
- 
         ];
-      case 3: // Sign
+      case 3:
         return [
           <Button
             key="back"
             onClick={() => {
-              // Cash payment: go back to step 1, VNPay: go back to step 2
               if (paymentMethod === "cash") {
                 setCurrentStep(1);
               } else {
                 setCurrentStep(2);
               }
             }}
-            disabled={isProcessingSignature}
-          >
+            disabled={isProcessingSignature}>
             Back
           </Button>,
           <Button
@@ -3001,18 +2877,14 @@ const ConfirmBookingModal = ({
             type="primary"
             onClick={handleSignatureComplete}
             loading={isProcessingSignature}
-            disabled={isProcessingSignature}
-          >
-          Continue
+            disabled={isProcessingSignature}>
+            Continue
           </Button>,
         ];
-      case 4: // PDF Options
+      case 4:
         return [
           <Button key="back" onClick={() => setCurrentStep(3)}>
             Back
-          </Button>,
-          <Button key="complete" type="primary" onClick={handleClose}>
-            Complete
           </Button>,
         ];
       default:
@@ -3021,7 +2893,6 @@ const ConfirmBookingModal = ({
   };
 
   const getSteps = () => {
-    // Cash payment: 3 steps, VNPay: 4 steps
     if (paymentMethod === "cash") {
       return [
         { title: "Confirm Information" },
@@ -3040,20 +2911,18 @@ const ConfirmBookingModal = ({
 
   const getCurrentStepIndex = () => {
     if (isPDFConfirmStep) {
-      return paymentMethod === "cash" ? 1 : 2; // Sign step index for cash/vnpay
+      return paymentMethod === "cash" ? 1 : 2;
     }
 
     if (paymentMethod === "cash") {
-      // Cash payment: 3 steps mapping
-      if (currentStep === 1) return 0; // Confirm Information
-      if (currentStep === 3) return 1; // Sign (skip payment step)
-      if (currentStep === 4) return 2; // PDF Options
+      if (currentStep === 1) return 0;
+      if (currentStep === 3) return 1;
+      if (currentStep === 4) return 2;
     } else {
-      // VNPay: 4 steps mapping
-      if (currentStep === 1) return 0; // Confirm Information
-      if (currentStep === 2) return 1; // VNPay Payment
-      if (currentStep === 3) return 2; // Sign
-      if (currentStep === 4) return 3; // PDF Options
+      if (currentStep === 1) return 0;
+      if (currentStep === 2) return 1;
+      if (currentStep === 3) return 2;
+      if (currentStep === 4) return 3;
     }
 
     return 0;
@@ -3066,7 +2935,7 @@ const ConfirmBookingModal = ({
       onCancel={forceClose}
       footer={renderFooter()}
       width={1000}
-      destroyOnClose
+      destroyOnHidden
       centered
       closable={true}
       closeIcon={
@@ -3083,8 +2952,7 @@ const ConfirmBookingModal = ({
             borderRadius: "2px",
           }}
           onMouseEnter={(e) => (e.target.style.background = "#f0f0f0")}
-          onMouseLeave={(e) => (e.target.style.background = "transparent")}
-        >
+          onMouseLeave={(e) => (e.target.style.background = "transparent")}>
           ✕
         </span>
       }
@@ -3096,13 +2964,7 @@ const ConfirmBookingModal = ({
           maxHeight: "80vh",
           overflowY: "auto",
         },
-      }}
-      bodyStyle={{
-        padding: "0",
-        maxHeight: "80vh",
-        overflowY: "auto",
-      }}
-    >
+      }}>
       <div style={{ padding: "32px" }}>
         <Steps
           current={getCurrentStepIndex()}
@@ -3142,28 +3004,18 @@ const BookingPage = () => {
   const [showFirstPersonPersonalId, setShowFirstPersonPersonalId] =
     useState(false);
   const [modalInitialStep, setModalInitialStep] = useState(1);
-  //khởi tạo giá trị ban đầu lưu trữ cho ngiời thứ 2 đhieenien personnalID
   const [isSecondPersonAdult, setIsSecondPersonAdult] = useState(false);
-
-  // State để quản lý thông báo tập trung
   const [currentNotification, setCurrentNotification] = useState(null);
-
-  //hàm sự kiện hiện personnalID cho người thứ 2 đủ 18 tuổi
   const handleSecondPersonDOBChange = (date) => {
     if (!date) {
       setIsSecondPersonAdult(false);
       return;
     }
-    // Phải chắc chắn date là dayjs object
     const today = dayjs();
     const age = today.diff(date, "year");
     const relationship = form.getFieldValue(["secondPerson", "relationship"]);
-    console.log("Second person age:", age, "relationship:", relationship);
-
     setIsSecondPersonAdult(age >= 18);
-    console.log("Should show personal ID:", age >= 18);
-
-    if (age < 18) {
+    if (age < 18 && relationship !== "Grandchild") {
       const secondPerson = form.getFieldValue("secondPerson") || {};
       form.setFieldsValue({
         secondPerson: { ...secondPerson, personalId: undefined },
@@ -3171,7 +3023,6 @@ const BookingPage = () => {
     }
   };
 
-  // Hàm hiển thị thông báo tập trung
   const showNotification = useCallback((type, content, duration = 4000) => {
     setCurrentNotification({ type, content, id: Date.now() });
     setTimeout(() => {
@@ -3179,18 +3030,15 @@ const BookingPage = () => {
     }, duration);
   }, []);
 
-  // Hàm ẩn thông báo
   const hideNotification = useCallback(() => {
     setCurrentNotification(null);
   }, []);
 
-  // Hàm tính tuổi từ ngày sinh
   const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return null;
     return moment().diff(moment(dateOfBirth), "years");
   };
 
-  // Hàm kiểm tra và cập nhật trạng thái hiển thị Personal ID cho người thứ nhất
   const updateFirstPersonPersonalIdVisibility = (dateOfBirth) => {
     const age = calculateAge(dateOfBirth);
     const relationship = form.getFieldValue(["firstPerson", "relationship"]);
@@ -3199,7 +3047,6 @@ const BookingPage = () => {
     );
   };
 
-  // Hàm kiểm tra và cập nhật trạng thái hiển thị Personal ID cho người thứ hai
   const updateSecondPersonPersonalIdVisibility = (dateOfBirth) => {
     if (!dateOfBirth) {
       setShowSecondPersonPersonalId(false);
@@ -3208,16 +3055,11 @@ const BookingPage = () => {
 
     const age = calculateAge(dateOfBirth);
     const relationship = form.getFieldValue(["secondPerson", "relationship"]);
-    console.log("Second person age:", age, "relationship:", relationship);
 
-    // Chỉ hiển thị và yêu cầu Personal ID khi là Child và trên 15 tuổi
     const shouldShowPersonalId =
-      relationship === "Child" && age !== null && age > 15;
-    console.log("Should show personal ID:", shouldShowPersonalId);
-
+      (relationship === "Child" || relationship === "Grandchild") && age !== null && age > 15;
     setShowSecondPersonPersonalId(shouldShowPersonalId);
 
-    // Xóa giá trị Personal ID khi không được phép nhập (dưới 15 tuổi hoặc không phải Child)
     if (!shouldShowPersonalId) {
       form.setFieldsValue({
         secondPerson: {
@@ -3226,8 +3068,6 @@ const BookingPage = () => {
         },
       });
     }
-
-    // Force re-render để cập nhật UI
     setTimeout(() => {
       form.validateFields([["secondPerson", "personalId"]]).catch(() => {});
     }, 50);
@@ -3262,28 +3102,22 @@ const BookingPage = () => {
       expressCost =
         selectedService && selectedService.expressPrice
           ? Number(selectedService.expressPrice)
-          : 1500000;
-      collectionCost = 0;
+          : 0;
     }
 
-    if (selectedMedicationMethod === "staff-collection") {
-      medicationCost = isExpressService ? 0 : 500000;
-    } else if (selectedMedicationMethod === "postal-delivery") {
-      medicationCost = isExpressService ? 0 : 250000;
-    } else if (selectedMedicationMethod === "express") {
-      medicationCost = isExpressService ? 0 : 700000;
+    if (!isExpressService) {
+      if (selectedMedicationMethod === "staff-collection") {
+        medicationCost = 500000;
+      } else if (selectedMedicationMethod === "postal-delivery") {
+        medicationCost = 250000;
+      } else if (selectedMedicationMethod === "express") {
+        medicationCost = 700000;
+      }
     }
 
-    const total =
-      (isNaN(serviceCost) ? 0 : serviceCost) +
-      (isNaN(collectionCost) ? 0 : collectionCost) +
-      (isNaN(medicationCost) ? 0 : medicationCost) +
-      (isNaN(expressCost) ? 0 : expressCost);
-
-    return total;
+    return serviceCost + collectionCost + medicationCost + expressCost;
   };
 
-  // Time slots available
   const timeSlots = [
     "8:15 - 9:15",
     "9:30 - 10:30",
@@ -3293,34 +3127,26 @@ const BookingPage = () => {
     "15:45 - 16:45",
   ];
 
-  const isTimeSlotDisabled = (timeSlot) => {
+  const isTimeSlotDisabled = (time) => {
     if (!appointmentDate) return false;
-    const today = new Date();
-    const selectedDate = new Date(appointmentDate);
-    if (selectedDate.toDateString() !== today.toDateString()) {
-      return false;
-    }
-
-    const currentHour = today.getHours();
-    const currentMinute = today.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute;
-    const startTime = timeSlot.split(" - ")[0];
-    const [hour, minute] = startTime.split(":").map(Number);
-    const slotTime = hour * 60 + minute;
-    return slotTime <= currentTime;
+    const today = moment().format("YYYY-MM-DD");
+    if (appointmentDate !== today) return false;
+    const [start] = time.split(" - ");
+    const [hour, minute] = start.split(":").map(Number);
+    const now = moment();
+    const slotTime = moment().hour(hour).minute(minute).second(0);
+    return slotTime.isBefore(now);
   };
 
   const areAllTimeSlotsDisabled = () => {
     if (!appointmentDate) return false;
-    const today = new Date();
-    const selectedDate = new Date(appointmentDate);
-    if (selectedDate.toDateString() !== today.toDateString()) {
+    const today = moment().format("YYYY-MM-DD");
+    if (appointmentDate !== today) {
       return false;
     }
     return timeSlots.every((timeSlot) => isTimeSlotDisabled(timeSlot));
   };
 
-  // Loại mẫu cơ bản không bao gồm Amniotic Fluid
   const sampleTypes = ["Blood", "Buccal Swab", "Hair", "Nail"];
 
   const getValidRelationshipsForService = useCallback((serviceName) => {
@@ -3514,7 +3340,7 @@ const BookingPage = () => {
       age--;
     }
 
-    if (relationship !== "Child" && age < 18) {
+    if (relationship !== "Child" && relationship !== "Grandchild" && age < 18) {
       return Promise.reject(
         new Error(
           `People with relationships "${relationship}" must be 18 years or older!`
@@ -3552,7 +3378,6 @@ const BookingPage = () => {
   };
 
   const validatePersonalId = (_, value) => {
-    // If value is empty and not required (based on context), don't validate
     if (!value && !showFirstPersonPersonalId && !showSecondPersonPersonalId) {
       return Promise.resolve();
     }
@@ -3580,9 +3405,7 @@ const BookingPage = () => {
     return Promise.resolve();
   };
 
-  // Hàm kiểm tra giới tính và mối quan hệ hợp lệ
   const validateGenderRelationshipCompatibility = (gender, relationship) => {
-    // Quy tắc cơ bản: Mother phải là female, Father phải là male
     if (relationship === "Mother" && gender === "male") {
       return { isValid: false, message: 'Men can not be "Mother"!' };
     }
@@ -3710,7 +3533,6 @@ const BookingPage = () => {
           },
         });
 
-        // Cập nhật trạng thái hiển thị Personal ID cho người thứ nhất và thứ hai
         if (first.dateOfBirth) {
           updateFirstPersonPersonalIdVisibility(first.dateOfBirth);
           updateSecondPersonPersonalIdVisibility(first.dateOfBirth);
@@ -3721,7 +3543,6 @@ const BookingPage = () => {
     }
   }, [form]);
 
-  // Kiểm tra và cập nhật trạng thái Personal ID khi component được render
   useEffect(() => {
     const secondPersonDateOfBirth = form.getFieldValue([
       "secondPerson",
@@ -3937,7 +3758,6 @@ const BookingPage = () => {
     }
   }, [form]);
 
-  // Theo dõi sự thay đổi của dateOfBirth của người thứ hai
   useEffect(() => {
     try {
       const dateOfBirth = form.getFieldValue(["secondPerson", "dateOfBirth"]);
@@ -3965,16 +3785,11 @@ const BookingPage = () => {
 
   useEffect(() => {
     if (selectedService?.name === "Non-Invasive Relationship Testing (NIPT)") {
-      // Set facility collection method
       setSelectedCollectionMethod({ name: "At Facility", price: 0 });
       setSelectedMedicationMethod("walk-in");
-
-      // For NIPT, limit relationships to only Father and Mother
       const validRelationships = ["Father", "Mother"];
       setAvailableRelationships(validRelationships);
       setAvailableSecondPersonRelationships(validRelationships);
-
-      // Clear existing relationship selections
       form.setFieldsValue({
         firstPerson: {
           ...form.getFieldValue("firstPerson"),
@@ -4050,8 +3865,6 @@ const BookingPage = () => {
         "secondPerson",
         "relationship",
       ]);
-
-      // For NIPT service, Mother must always have Amniotic Fluid
       if (firstPersonRelationship === "Mother") {
         form.setFieldsValue({
           firstPerson: {
@@ -4063,7 +3876,6 @@ const BookingPage = () => {
         firstPersonRelationship === "Father" &&
         !form.getFieldValue(["firstPerson", "sampleType"])
       ) {
-        // Default Father to Blood if not set
         form.setFieldsValue({
           firstPerson: {
             ...form.getFieldValue("firstPerson"),
@@ -4071,8 +3883,6 @@ const BookingPage = () => {
           },
         });
       }
-
-      // Same for the second person
       if (secondPersonRelationship === "Mother") {
         form.setFieldsValue({
           secondPerson: {
@@ -4348,34 +4158,27 @@ const BookingPage = () => {
       if (typeof dateValue === "string") return dateValue;
       return dateValue;
     };
-
     const formatGender = (genderValue) => {
       return genderValue === "male" ? 1 : 2;
     };
-
-    // Xác định địa chỉ dựa trên collection method và medication method
     const getAddress = () => {
-      // Nếu là At Home hoặc postal-delivery thì dùng địa chỉ nhà
       if (
         data.collectionMethod?.name === "At Home" ||
         data.medicationMethod === "postal-delivery"
       ) {
         return data.homeAddress || "";
-      }
-      // Nếu là At Facility hoặc walk-in thì dùng địa chỉ cơ sở
-      else if (
+      } else if (
         data.collectionMethod?.name === "At Facility" ||
         data.medicationMethod === "walk-in"
       ) {
         return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
       }
-      // Mặc định trả về địa chỉ cơ sở
       return "Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh";
     };
 
     return {
       collectionMethod: data.collectionMethod?.name || "At Facility",
-      paymentMethod: data.paymentMethod === "vnpay" ? "VNPAY" : "Cash",
+      paymentMethod: data.paymentMethod === "vnpay" ? "VNPay" : "Cash",
       appointmentTime: formatDate(data.appointmentDate),
       timeRange: data.timeSlot || "",
       status: "pending_payment",
@@ -4442,20 +4245,109 @@ const BookingPage = () => {
       if (!serviceID || !customerID) {
         throw new Error("Missing serviceID or customerID");
       }
+      const isVnpayPayment = finalBookingData.paymentMethod === "vnpay";
+      const vnpayBookingExists = finalBookingData.vnpayBookingCreated === true;
+      if (isVnpayPayment && vnpayBookingExists) {
+        console.log("🔄 VNPay booking already exists, updating status via API");
+        const bookingID = finalBookingData.vnpayBookingId;
+        if (!bookingID) {
+          console.warn(
+            "⚠️ Missing bookingID for VNPAY booking, fallback to localStorage only"
+          );
+          const pendingBookings = JSON.parse(
+            localStorage.getItem("pending_vnpay_bookings") || "[]"
+          );
 
-      const payload = buildBookingPayload(finalBookingData);
-      console.log("🔥 Final API Payload:", payload);
+          const updatedBookings = pendingBookings.map((booking) => {
+            if (booking.customerID === customerID) {
+              return {
+                ...booking,
+                signature: finalBookingData.signature,
+                signedAt: finalBookingData.signedAt,
+                status: "Payment Confirmed",
+              };
+            }
+            return booking;
+          });
 
-      const response = await axios.post(
-        `/booking/bookings/${serviceID}/${customerID}`,
-        payload
-      );
-      if (!response.data) {
-        throw new Error("No data received from server");
+          localStorage.setItem(
+            "pending_vnpay_bookings",
+            JSON.stringify(updatedBookings)
+          );
+
+          console.log("✅ Updated localStorage as fallback");
+        } else {
+          const updatePayload = {
+            status: "Payment Confirmed",
+            signature: finalBookingData.signature || null,
+            signedAt: finalBookingData.signedAt || new Date().toISOString(),
+          };
+          console.log("📤 Calling PATCH API with payload:", updatePayload);
+          console.log("📤 BookingID:", bookingID);
+          const response = await axios.patch(
+            `/booking/${bookingID}/status`,
+            updatePayload
+          );
+
+          if (!response.data) {
+            throw new Error("No data received from PATCH API");
+          }
+
+          console.log("✅ Successfully updated booking status via PATCH API");
+
+          const pendingBookings = JSON.parse(
+            localStorage.getItem("pending_vnpay_bookings") || "[]"
+          );
+
+          const updatedBookings = pendingBookings.map((booking) => {
+            if (booking.customerID === customerID) {
+              return {
+                ...booking,
+                signature: finalBookingData.signature,
+                signedAt: finalBookingData.signedAt,
+                status: "Payment Confirmed",
+              };
+            }
+            return booking;
+          });
+
+          localStorage.setItem(
+            "pending_vnpay_bookings",
+            JSON.stringify(updatedBookings)
+          );
+
+          console.log("✅ Updated localStorage after successful PATCH");
+        }
+      } else {
+        const payload = buildBookingPayload(finalBookingData);
+        console.log("🔥 Creating new Cash booking with payload:", payload);
+
+        payload.status = "Awaiting Confirmation"; 
+
+        const response = await axios.post(
+          `/booking/bookings/${serviceID}/${customerID}`,
+          payload
+        );
+        if (!response.data) {
+          throw new Error("No data received from server");
+        }
       }
+
+      if (isVnpayPayment) {
+        const pendingBookings = JSON.parse(
+          localStorage.getItem("pending_vnpay_bookings") || "[]"
+        );
+        const updatedBookings = pendingBookings.filter(
+          (booking) => booking.customerID !== customerID
+        );
+        localStorage.setItem(
+          "pending_vnpay_bookings",
+          JSON.stringify(updatedBookings)
+        );
+        console.log("🗑️ Cleaned up localStorage for customer:", customerID);
+      }
+
       showNotification("success", getSuccessMessage(), 6000);
-      // Không chuyển hướng về trang chủ sau khi hoàn thành đặt lịch
-      // Người dùng sẽ ở lại trang hiện tại để xem thông tin đặt lịch
       form.resetFields();
       setAppointmentDate("");
       setTimeSlot("");
@@ -4485,22 +4377,17 @@ const BookingPage = () => {
   };
 
   const handleModalCancel = () => {
-    console.log("handleModalCancel được gọi - đóng modal");
     setIsModalVisible(false);
     setBookingData(null);
-    setModalInitialStep(1); // Reset về step 1 khi đóng modal
+    setModalInitialStep(1); 
   };
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const vnpResponseCode = urlParams.get("vnp_ResponseCode");
     const vnpOrderInfo = urlParams.get("vnp_OrderInfo");
-
-    console.log("VNPAY Return Detected:", { vnpResponseCode, vnpOrderInfo });
-
     if (vnpResponseCode && vnpOrderInfo) {
       try {
-        // Xóa URL params nhưng giữ lại đường dẫn hiện tại
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
 
@@ -4511,8 +4398,6 @@ const BookingPage = () => {
             "VNPay payment successful! Moving to signature step...",
             5000
           );
-
-          // Debug: Kiểm tra localStorage
           const pendingBookings = JSON.parse(
             localStorage.getItem("pending_vnpay_bookings") || "[]"
           );
@@ -4522,10 +4407,7 @@ const BookingPage = () => {
           const orderInfo = decodeURIComponent(vnpOrderInfo);
           console.log("🔍 Decoded Order Info:", orderInfo);
 
-          // Tìm kiếm booking bằng nhiều cách
           let currentBooking = null;
-
-          // Cách 1: Tìm theo paymentCode
           currentBooking = pendingBookings.find((booking) => {
             const match =
               booking.paymentCode && orderInfo.includes(booking.paymentCode);
@@ -4534,8 +4416,6 @@ const BookingPage = () => {
             );
             return match;
           });
-
-          // Cách 2: Tìm theo customerID nếu không tìm thấy
           if (!currentBooking) {
             currentBooking = pendingBookings.find((booking) => {
               const match =
@@ -4547,7 +4427,6 @@ const BookingPage = () => {
             });
           }
 
-          // Cách 3: Nếu vẫn không tìm thấy, lấy booking mới nhất
           if (!currentBooking && pendingBookings.length > 0) {
             currentBooking = pendingBookings[pendingBookings.length - 1];
             console.log("🔎 Using latest booking as fallback:", currentBooking);
@@ -4562,16 +4441,21 @@ const BookingPage = () => {
               status: "paid",
               vnpOrderInfo: vnpOrderInfo,
               paidAt: new Date().toISOString(),
+              vnpayBookingId: currentBooking.vnpayBookingId || null,
+              vnpayBookingCreated: currentBooking.vnpayBookingCreated || true,
             };
 
+            console.log(
+              "🔄 Setting booking data with vnpayBookingId:",
+              updatedBookingData.vnpayBookingId
+            );
             console.log(
               "Setting booking data and opening modal at step 3 (Sign)"
             );
             setBookingData(updatedBookingData);
-            setModalInitialStep(3); // Mở modal ở step 3 (Sign)
+            setModalInitialStep(3); 
             setPaymentMethod("vnpay");
 
-            // Hiển thị modal ngay lập tức ở bước Sign
             setTimeout(() => {
               console.log("Opening modal for signature...");
               setIsModalVisible(true);
@@ -4612,7 +4496,7 @@ const BookingPage = () => {
         );
       }
     } else {
-      console.log("No VNPAY information on URL");
+      // ...removed debug log...
     }
   }, [showNotification]);
 
@@ -4645,8 +4529,7 @@ const BookingPage = () => {
           style={{
             zIndex: 9999,
             animation: "slideInRight 0.3s ease-out",
-          }}
-        >
+          }}>
           <div
             className={`px-4 py-3 rounded-lg shadow-lg max-w-sm min-w-0 flex items-center space-x-3 ${
               currentNotification.type === "success"
@@ -4656,8 +4539,7 @@ const BookingPage = () => {
                 : currentNotification.type === "warning"
                 ? "bg-yellow-500 text-white border-l-4 border-yellow-700"
                 : "bg-blue-500 text-white border-l-4 border-blue-700"
-            }`}
-          >
+            }`}>
             <div className="flex-shrink-0 text-lg">
               {currentNotification.type === "success" && "✅"}
               {currentNotification.type === "error" && "❌"}
@@ -4669,8 +4551,7 @@ const BookingPage = () => {
             </div>
             <button
               onClick={hideNotification}
-              className="flex-shrink-0 text-white hover:text-gray-200 ml-2 text-lg font-bold"
-            >
+              className="flex-shrink-0 text-white hover:text-gray-200 ml-2 text-lg font-bold">
               ×
             </button>
           </div>
@@ -4683,14 +4564,12 @@ const BookingPage = () => {
         style={{
           background:
             "linear-gradient(135deg, #002F5E 0%, #004494 50%, #1677FF 100%)",
-        }}
-      >
+        }}>
         <div className="flex items-center mb-2">
           <button
             onClick={() => navigate(-1)}
             className="p-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center mr-4"
-            aria-label="Go back"
-          >
+            aria-label="Go back">
             <FaArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold">DNA Testing Booking</h1>
@@ -4727,8 +4606,7 @@ const BookingPage = () => {
                     isServicePreSelected
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-blue-500 hover:text-white cursor-pointer"
-                  }`}
-                >
+                  }`}>
                   Legal DNA Testing
                   {isServicePreSelected && selectedServiceType === "legal" && (
                     <span className="ml-2 text-xs bg-blue-800 px-2 py-1 rounded">
@@ -4749,8 +4627,7 @@ const BookingPage = () => {
                     isServicePreSelected
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-blue-500 hover:text-white cursor-pointer"
-                  }`}
-                >
+                  }`}>
                   Non-Legal DNA Testing
                   {isServicePreSelected &&
                     selectedServiceType === "non-legal" && (
@@ -4789,8 +4666,7 @@ const BookingPage = () => {
                       isServicePreSelected && selectedService?.id !== service.id
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
-                  >
+                    }`}>
                     <div className="flex items-center">
                       <div className="mr-3 text-blue-600">{service.icon}</div>
                       <div>
@@ -4833,8 +4709,7 @@ const BookingPage = () => {
                   isStandardPreSelected
                     ? "border-orange-200 bg-orange-50"
                     : "border-orange-200 bg-orange-50"
-                }`}
-              >
+                }`}>
                 <input
                   type="checkbox"
                   id="expressService"
@@ -4900,8 +4775,6 @@ const BookingPage = () => {
                       "Selected: At Home collection method",
                       3000
                     );
-
-                    // Xử lý medication method dựa trên Express Service
                     if (isExpressService) {
                       if (!selectedMedicationMethod) {
                         showNotification(
@@ -4940,8 +4813,7 @@ const BookingPage = () => {
                     selectedCollectionMethod?.name !== "At Home"
                       ? "border-orange-200 hover:border-orange-300 hover:bg-orange-50"
                       : ""
-                  }`}
-                >
+                  }`}>
                   <div className="flex items-center mb-2">
                     <FaUser className="text-blue-600 mr-2" />
                     <span className="font-medium">At Home</span>
@@ -4997,8 +4869,7 @@ const BookingPage = () => {
                     selectedCollectionMethod?.name !== "At Facility"
                       ? "border-orange-200 hover:border-orange-300 hover:bg-orange-50"
                       : ""
-                  }`}
-                >
+                  }`}>
                   <div className="flex items-center mb-2">
                     <FaMapMarkerAlt className="text-blue-600 mr-2" />
                     <span className="font-medium">At Facility</span>
@@ -5050,7 +4921,8 @@ const BookingPage = () => {
                       </label>
                       <div className="p-3 bg-white border border-green-200 rounded-lg">
                         <p className="text-sm font-medium text-green-700 mb-1">
-                          Số 7 Đường D1, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh
+                          7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi
+                          Minh City
                         </p>
                         <p className="text-xs text-green-600">
                           📍 Please come to the above address to collect samples
@@ -5088,8 +4960,7 @@ const BookingPage = () => {
                           isExpressPreSelected
                             ? "opacity-50 cursor-not-allowed"
                             : "cursor-pointer"
-                        }`}
-                      >
+                        }`}>
                         <div className="flex items-center">
                           <FaUser className="text-blue-600 mr-2" />
                           <div>
@@ -5115,8 +4986,7 @@ const BookingPage = () => {
                           selectedMedicationMethod === "staff-collection"
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
+                        }`}>
                         <div className="flex items-center">
                           <FaUser className="text-blue-600 mr-2" />
                           <div>
@@ -5152,8 +5022,7 @@ const BookingPage = () => {
                             selectedMedicationMethod === "postal-delivery"
                               ? "border-blue-500 bg-blue-50"
                               : "border-gray-200 hover:border-gray-300"
-                          }`}
-                        >
+                          }`}>
                           <div className="flex items-center">
                             <FaEnvelope className="text-blue-600 mr-2" />
                             <div>
@@ -5206,8 +5075,7 @@ const BookingPage = () => {
                             `Selected kit: ${kit.label}`,
                             3000
                           );
-                        }}
-                      >
+                        }}>
                         <div className="font-medium">{kit.label}</div>
                         <p className="text-sm text-gray-600 mb-2">
                           {kit.value === "K001"
@@ -5224,8 +5092,7 @@ const BookingPage = () => {
                             <svg
                               className="w-4 h-4 mr-1"
                               fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
+                              viewBox="0 0 20 20">
                               <path
                                 fillRule="evenodd"
                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -5247,8 +5114,7 @@ const BookingPage = () => {
                         <svg
                           className="w-5 h-5 text-blue-600 mr-2 mt-0.5"
                           fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
+                          viewBox="0 0 20 20">
                           <path
                             fillRule="evenodd"
                             d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -5280,15 +5146,13 @@ const BookingPage = () => {
                     <span>Appointment</span>
                   </Space>
                 }
-                style={{ marginBottom: 24 }}
-              >
+                style={{ marginBottom: 24 }}>
                 {/* Date Selection */}
                 <div className="mb-6">
                   <Form.Item
                     name="appointmentDate"
                     label="Appointment date"
-                    rules={[{ validator: validateAppointmentDate }]}
-                  >
+                    rules={[{ validator: validateAppointmentDate }]}>
                     <DatePicker
                       style={{ width: "100%" }}
                       placeholder="Select appointment date"
@@ -5319,8 +5183,7 @@ const BookingPage = () => {
                             required: true,
                             message: "Please select a time slot!",
                           },
-                        ]}
-                      >
+                        ]}>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {timeSlots.map((time) => {
                             const isDisabled = isTimeSlotDisabled(time);
@@ -5342,8 +5205,7 @@ const BookingPage = () => {
                                     setTimeSlot(time);
                                     form.setFieldsValue({ timeSlot: time });
                                   }
-                                }}
-                              >
+                                }}>
                                 <span className="w-full text-base font-medium flex justify-center items-center">
                                   {time}
                                 </span>
@@ -5396,12 +5258,10 @@ const BookingPage = () => {
                 <TeamOutlined style={{ color: "#1890ff" }} />
                 <span>Test Subject Information</span>
               </Space>
-            }
-          >
+            }>
             <Text
               type="secondary"
-              style={{ display: "block", marginBottom: 16 }}
-            >
+              style={{ display: "block", marginBottom: 16 }}>
               📋 Please fill in the information completely and accurately to
               ensure test results.
             </Text>
@@ -5417,8 +5277,7 @@ const BookingPage = () => {
                 secondPerson: {
                   gender: "male",
                 },
-              }}
-            >
+              }}>
               {/* First Person */}
               <Card
                 type="inner"
@@ -5428,12 +5287,10 @@ const BookingPage = () => {
                     <span>First Person (Representative)</span>
                   </Space>
                 }
-                style={{ marginBottom: 24 }}
-              >
+                style={{ marginBottom: 24 }}>
                 <Text
                   type="warning"
-                  style={{ display: "block", marginBottom: 16 }}
-                >
+                  style={{ display: "block", marginBottom: 16 }}>
                   ⚠️ The representative must be over 18 years of age and will be
                   responsible for this booking.
                 </Text>
@@ -5453,8 +5310,7 @@ const BookingPage = () => {
                           message:
                             "First and last name must be at least 2 characters!",
                         },
-                      ]}
-                    >
+                      ]}>
                       <Input
                         placeholder="Enter your Full Name"
                         prefix={<UserOutlined />}
@@ -5466,8 +5322,7 @@ const BookingPage = () => {
                     <Form.Item
                       name={["firstPerson", "dateOfBirth"]}
                       label="Date of birth"
-                      rules={[{ validator: validateAge18 }]}
-                    >
+                      rules={[{ validator: validateAge18 }]}>
                       <DatePicker
                         style={{ width: "100%" }}
                         placeholder="Enter date of birth"
@@ -5488,8 +5343,7 @@ const BookingPage = () => {
                       label="Biological Sex"
                       rules={[
                         { required: true, message: "Vui lòng chọn giới tính!" },
-                      ]}
-                    >
+                      ]}>
                       <Radio.Group
                         onChange={() => {
                           setTimeout(() => {
@@ -5497,8 +5351,7 @@ const BookingPage = () => {
                               ["firstPerson", "relationship"],
                             ]);
                           }, 0);
-                        }}
-                      >
+                        }}>
                         <Radio value="male">Male</Radio>
                         <Radio value="female">Female</Radio>
                       </Radio.Group>
@@ -5509,8 +5362,7 @@ const BookingPage = () => {
                     <Form.Item
                       name={["firstPerson", "phoneNumber"]}
                       label="Phone number"
-                      rules={[{ validator: validatePhoneNumber }]}
-                    >
+                      rules={[{ validator: validatePhoneNumber }]}>
                       <Input
                         placeholder="0123456789 or +84123456789"
                         prefix={<PhoneOutlined />}
@@ -5525,8 +5377,7 @@ const BookingPage = () => {
                       rules={[
                         { required: true, message: "Please enter email!" },
                         { type: "email", message: "Invalid email!" },
-                      ]}
-                    >
+                      ]}>
                       <Input
                         placeholder="Enter your email"
                         prefix={<MailOutlined />}
@@ -5539,8 +5390,7 @@ const BookingPage = () => {
                       name={["firstPerson", "relationship"]}
                       label="Relationship"
                       rules={[{ validator: validateGenderRelationship }]}
-                      dependencies={[["firstPerson", "gender"]]}
-                    >
+                      dependencies={[["firstPerson", "gender"]]}>
                       <Select
                         placeholder="Select relationship"
                         onChange={(value) => {
@@ -5629,8 +5479,7 @@ const BookingPage = () => {
                               }
                             }
                           }
-                        }}
-                      >
+                        }}>
                         {availableRelationships.map((rel) => (
                           <Option key={rel} value={rel}>
                             {rel}
@@ -5670,8 +5519,7 @@ const BookingPage = () => {
                             return Promise.resolve();
                           },
                         }),
-                      ]}
-                    >
+                      ]}>
                       {selectedService?.name ===
                         "Non-Invasive Relationship Testing (NIPT)" &&
                       form.getFieldValue(["firstPerson", "relationship"]) ===
@@ -5720,8 +5568,7 @@ const BookingPage = () => {
                           message: "Please enter your Personal ID!",
                         },
                         { validator: validatePersonalId },
-                      ]}
-                    >
+                      ]}>
                       <Input
                         placeholder="Enter your Personal ID"
                         prefix={<IdcardOutlined />}
@@ -5745,8 +5592,7 @@ const BookingPage = () => {
                     <span>Second Person</span>
                   </Space>
                 }
-                style={{ marginBottom: 24 }}
-              >
+                style={{ marginBottom: 24 }}>
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
                     <Form.Item
@@ -5762,8 +5608,7 @@ const BookingPage = () => {
                           message:
                             "First and last name must be at least 2 characters!",
                         },
-                      ]}
-                    >
+                      ]}>
                       <Input
                         placeholder="Enter your Full Name"
                         prefix={<UserOutlined />}
@@ -5776,8 +5621,7 @@ const BookingPage = () => {
                       name={["secondPerson", "dateOfBirth"]}
                       label="Date of birth"
                       rules={[{ validator: validateSecondPersonAge }]}
-                      dependencies={[["secondPerson", "relationship"]]}
-                    >
+                      dependencies={[["secondPerson", "relationship"]]}>
                       <DatePicker
                         style={{ width: "100%" }}
                         placeholder="Select date of birth"
@@ -5799,8 +5643,7 @@ const BookingPage = () => {
                           required: true,
                           message: "Please select biological sex!",
                         },
-                      ]}
-                    >
+                      ]}>
                       <Radio.Group
                         onChange={() => {
                           setTimeout(() => {
@@ -5808,8 +5651,7 @@ const BookingPage = () => {
                               ["secondPerson", "relationship"],
                             ]);
                           }, 0);
-                        }}
-                      >
+                        }}>
                         <Radio value="male">Male</Radio>
                         <Radio value="female">Female</Radio>
                       </Radio.Group>
@@ -5826,8 +5668,7 @@ const BookingPage = () => {
                       dependencies={[
                         ["firstPerson", "relationship"],
                         ["secondPerson", "gender"],
-                      ]}
-                    >
+                      ]}>
                       <Select
                         placeholder="Select relationship"
                         onChange={(value) => {
@@ -5841,12 +5682,6 @@ const BookingPage = () => {
                             "secondPerson",
                             "dateOfBirth",
                           ]);
-                          console.log(
-                            "Relationship changed to:",
-                            value,
-                            "Date of birth:",
-                            currentDateOfBirth
-                          );
 
                           if (currentDateOfBirth) {
                             updateSecondPersonPersonalIdVisibility(
@@ -5893,8 +5728,7 @@ const BookingPage = () => {
                               }
                             }
                           }
-                        }}
-                      >
+                        }}>
                         {availableSecondPersonRelationships.map((rel) => (
                           <Option key={rel} value={rel}>
                             {rel}
@@ -5934,8 +5768,7 @@ const BookingPage = () => {
                             return Promise.resolve();
                           },
                         }),
-                      ]}
-                    >
+                      ]}>
                       {selectedService?.name ===
                         "Non-Invasive Relationship Testing (NIPT)" &&
                       form.getFieldValue(["secondPerson", "relationship"]) ===
@@ -5980,8 +5813,7 @@ const BookingPage = () => {
                       <Form.Item
                         name={["secondPerson", "personalId"]}
                         label="Personal ID"
-                        rules={[{ validator: validatePersonalId }]}
-                      >
+                        rules={[{ validator: validatePersonalId }]}>
                         <Input
                           placeholder="Enter Personal ID"
                           prefix={<IdcardOutlined />}
@@ -6158,8 +5990,7 @@ const BookingPage = () => {
                     selectedMedicationMethod === "postal-delivery"
                       ? "opacity-50 cursor-not-allowed"
                       : ""
-                  }`}
-                >
+                  }`}>
                   <input
                     type="radio"
                     value="cash"
@@ -6208,8 +6039,7 @@ const BookingPage = () => {
                 htmlType="submit"
                 loading={isSubmitting}
                 className="w-full h-12 text-lg font-semibold"
-                onClick={() => form.submit()}
-              >
+                onClick={() => form.submit()}>
                 {isSubmitting ? "Processing..." : "Confirm booking"}
               </Button>
             </div>
@@ -6225,6 +6055,7 @@ const BookingPage = () => {
         onConfirm={handleBookingComplete}
         paymentMethod={paymentMethod}
         initialStep={modalInitialStep}
+        navigate={navigate}
       />
     </div>
   );
