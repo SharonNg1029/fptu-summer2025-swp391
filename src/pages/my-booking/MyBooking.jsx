@@ -394,7 +394,7 @@ const MyBooking = () => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="flex items-center text-white hover:text-blue-200 transition-colors mr-4"
             >
               <FaArrowLeft className="mr-2" />
