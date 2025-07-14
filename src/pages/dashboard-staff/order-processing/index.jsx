@@ -138,24 +138,16 @@ const OrderProcessing = () => {
   const handleUpdateOrder = async (values) => {
     setLoading(true);
     try {
-      const { date, timeRange } = values;
-      if (date && timeRange) {
-        const now = moment();
-        if (date.isSame(now, "day")) {
-          const startHour = parseInt(timeRange.split(":")[0], 10);
-          const startMin = parseInt(timeRange.split(":")[1], 10);
-          const slotMoment = moment(date).hour(startHour).minute(startMin);
-          if (slotMoment.isBefore(now)) {
-            toast.error("Cannot select a time slot in the past for today.");
-            setLoading(false);
-            return;
-          }
-        }
-      }
+      const { date, timeRange, status } = values;
+      // Convert timeRange to use dash (no spaces) as per Swagger
+      let formattedTimeRange = timeRange
+        ? timeRange.replace(/\s*-\s*/, "-")
+        : undefined;
+      // Build payload as per Swagger
       const payload = {
-        status: values.status,
-        date: date ? date.format("YYYY-MM-DD") : undefined,
-        timeRange: timeRange,
+        status: status,
+        appointmentTime: date ? date.format("YYYY-MM-DD") : undefined,
+        timeRange: formattedTimeRange,
       };
       await api.patch(
         `/staff/updateBooking/${editingOrder.bookingID}`,
