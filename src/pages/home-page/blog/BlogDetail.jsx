@@ -2,477 +2,477 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaCalendar, FaUser, FaArrowLeft, FaClock, FaTag, FaChevronRight, FaHome } from 'react-icons/fa';
 
-// Dữ liệu tối ưu cho các bài viết (loại bỏ views, likes, comments)
+// Optimized data for articles (removed views, likes, comments)
 const articles = [
   {
     id: 1,
-    title: "Công Nghệ Xét Nghiệm ADN Thế Hệ Mới 2024",
-    category: "Kiến Thức",
-    excerpt: "Khám phá những đột phá mới nhất trong công nghệ xét nghiệm ADN với độ chính xác 99.99% và tốc độ xử lý nhanh chóng.",
+    title: "Next-Generation DNA Testing Technology in 2024",
+    category: "Knowledge",
+    excerpt: "Discover the latest breakthroughs in DNA testing technology with 99.99% accuracy and rapid processing speed.",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&h=800&fit=crop",
     slug: "cong-nghe-xet-nghiem-adn-the-he-moi-2024",
-    author: "TS. Nguyễn Minh Khoa",
+    author: "Dr. Nguyen Minh Khoa",
     date: "2024-01-25",
-    readTime: "15 phút đọc",
+    readTime: "15 min read",
     featured: true,
     tableOfContents: [
-      { id: "1", title: "Giới thiệu công nghệ mới", level: 1 },
-      { id: "2", title: "Công nghệ Next Generation Sequencing (NGS)", level: 1 },
-      { id: "3", title: "Ưu điểm vượt trội so với phương pháp truyền thống", level: 1 },
-      { id: "4", title: "Quy trình thực hiện chi tiết", level: 1 },
-      { id: "5", title: "Ứng dụng trong y học pháp y", level: 1 },
-      { id: "6", title: "Công nghệ AI và Machine Learning", level: 1 },
-      { id: "7", title: "Tiêu chuẩn quốc tế và chứng nhận chất lượng", level: 1 },
-      { id: "8", title: "So sánh chi phí và hiệu quả", level: 1 },
-      { id: "9", title: "Xu hướng phát triển tương lai", level: 1 },
-      { id: "10", title: "Kết luận và khuyến nghị", level: 1 }
+      { id: "1", title: "Introduction to New Technology", level: 1 },
+      { id: "2", title: "Next Generation Sequencing (NGS) Technology", level: 1 },
+      { id: "3", title: "Superior Advantages Over Traditional Methods", level: 1 },
+      { id: "4", title: "Detailed Implementation Process", level: 1 },
+      { id: "5", title: "Applications in Forensic Medicine", level: 1 },
+      { id: "6", title: "AI and Machine Learning Technology", level: 1 },
+      { id: "7", title: "International Standards and Quality Certification", level: 1 },
+      { id: "8", title: "Cost and Efficiency Comparison", level: 1 },
+      { id: "9", title: "Future Development Trends", level: 1 },
+      { id: "10", title: "Conclusion and Recommendations", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <h2 id="1">Giới thiệu công nghệ mới</h2>
-        <p>Công nghệ xét nghiệm ADN thế hệ mới năm 2024 đánh dấu một bước tiến vượt bậc trong lĩnh vực di truyền học và y học pháp y. Với sự phát triển của công nghệ sinh học phân tử, các phương pháp xét nghiệm ADN hiện đại đã vượt xa những giới hạn của các kỹ thuật truyền thống, mang lại độ chính xác cao hơn, tốc độ xử lý nhanh hơn và khả năng phân tích đa dạng hơn.</p>
+        <h2 id="1">Introduction to New Technology</h2>
+        <p>Next-generation DNA testing technology in 2024 marks a significant breakthrough in genetics and forensic medicine. With the development of molecular biotechnology, modern DNA testing methods have far exceeded the limitations of traditional techniques, providing higher accuracy, faster processing speeds, and more diverse analytical capabilities.</p>
         
-        <p>Những tiến bộ đáng kể trong công nghệ này bao gồm việc ứng dụng trí tuệ nhân tạo (AI), học máy (Machine Learning), và các kỹ thuật giải trình tự thế hệ mới (Next Generation Sequencing - NGS). Điều này không chỉ cải thiện chất lượng kết quả mà còn mở ra những khả năng ứng dụng mới trong nhiều lĩnh vực khác nhau.</p>
+        <p>Significant advances in this technology include the application of artificial intelligence (AI), machine learning, and next-generation sequencing (NGS) techniques. This not only improves the quality of results but also opens up new application possibilities in various fields.</p>
 
-        <h2 id="2">Công nghệ Next Generation Sequencing (NGS)</h2>
-        <p>Next Generation Sequencing (NGS) là một trong những công nghệ tiên tiến nhất được áp dụng trong xét nghiệm ADN thế hệ mới. NGS cho phép giải trình tự hàng triệu đoạn ADN cùng một lúc, thay vì phải xử lý từng đoạn một như các phương pháp truyền thống.</p>
+        <h2 id="2">Next Generation Sequencing (NGS) Technology</h2>
+        <p>Next Generation Sequencing (NGS) is one of the most advanced technologies applied in next-generation DNA testing. NGS allows sequencing millions of DNA fragments simultaneously, rather than processing one fragment at a time like traditional methods.</p>
         
-        <p><strong>Nguyên lý hoạt động của NGS:</strong></p>
+        <p><strong>Operating principles of NGS:</strong></p>
         <ul>
-          <li><strong>Chuẩn bị mẫu:</strong> ADN được tách chiết và cắt thành các đoạn nhỏ có kích thước phù hợp</li>
-          <li><strong>Khuếch đại:</strong> Sử dụng kỹ thuật PCR để tạo ra nhiều bản sao của mỗi đoạn ADN</li>
-          <li><strong>Giải trình tự:</strong> Các đoạn ADN được giải trình tự đồng thời bằng công nghệ quang học tiên tiến</li>
-          <li><strong>Phân tích dữ liệu:</strong> Sử dụng thuật toán AI để xử lý và phân tích dữ liệu trình tự</li>
+          <li><strong>Sample preparation:</strong> DNA is extracted and cut into small fragments of appropriate size</li>
+          <li><strong>Amplification:</strong> Using PCR technique to create multiple copies of each DNA fragment</li>
+          <li><strong>Sequencing:</strong> DNA fragments are sequenced simultaneously using advanced optical technology</li>
+          <li><strong>Data analysis:</strong> Using AI algorithms to process and analyze sequence data</li>
         </ul>
         
-        <p>Công nghệ NGS có thể xử lý hàng tỷ nucleotide trong một lần chạy, cho phép phân tích toàn bộ genome hoặc các vùng đặc hiệu với độ chính xác cực cao.</p>
+        <p>NGS technology can process billions of nucleotides in a single run, allowing analysis of the entire genome or specific regions with extreme accuracy.</p>
 
-        <h2 id="3">Ưu điểm vượt trội so với phương pháp truyền thống</h2>
-        <p>Công nghệ xét nghiệm ADN thế hệ mới mang lại nhiều ưu điểm vượt trội so với các phương pháp truyền thống:</p>
+        <h2 id="3">Superior Advantages Over Traditional Methods</h2>
+        <p>Next-generation DNA testing technology offers many outstanding advantages compared to traditional methods:</p>
         
-        <p><strong>1. Tốc độ xử lý nhanh chóng:</strong></p>
+        <p><strong>1. Rapid processing speed:</strong></p>
         <ul>
-          <li>Kết quả có thể có trong vòng 24-48 giờ thay vì 5-7 ngày như trước</li>
-          <li>Quy trình tự động hóa cao giảm thiểu thời gian thao tác thủ công</li>
-          <li>Xử lý đồng thời nhiều mẫu trong một lần chạy</li>
+          <li>Results can be available within 24-48 hours instead of 5-7 days as before</li>
+          <li>High automation process reduces manual operation time</li>
+          <li>Simultaneous processing of multiple samples in a single run</li>
         </ul>
         
-        <p><strong>2. Độ chính xác vượt trội:</strong></p>
+        <p><strong>2. Superior accuracy:</strong></p>
         <ul>
-          <li>Đạt độ chính xác 99.99% với công nghệ AI tiên tiến</li>
-          <li>Khả năng phát hiện các biến thể hiếm và đột biến điểm</li>
-          <li>Giảm thiểu tỷ lệ kết quả âm tính giả và dương tính giả</li>
+          <li>Achieves 99.99% accuracy with advanced AI technology</li>
+          <li>Ability to detect rare variants and point mutations</li>
+          <li>Minimizes false negative and false positive rates</li>
         </ul>
         
-        <p><strong>3. Chi phí tối ưu:</strong></p>
+        <p><strong>3. Optimized cost:</strong></p>
         <ul>
-          <li>Giảm 40-50% chi phí so với phương pháp cũ</li>
-          <li>Tận dụng tối đa nguồn lực và thiết bị</li>
-          <li>Giảm chi phí nhân công và vật tư tiêu hao</li>
+          <li>Reduces costs by 40-50% compared to old methods</li>
+          <li>Maximizes resource and equipment utilization</li>
+          <li>Reduces labor costs and consumables</li>
         </ul>
         
-        <p><strong>4. Quy trình đơn giản:</strong></p>
+        <p><strong>4. Simplified process:</strong></p>
         <ul>
-          <li>Chỉ cần mẫu nước bọt hoặc tế bào má</li>
-          <li>Không cần lấy máu hay các mẫu xâm lấn</li>
-          <li>Quy trình lấy mẫu đơn giản, an toàn</li>
-        </ul>
-
-        <h2 id="4">Quy trình thực hiện chi tiết</h2>
-        <p>Quy trình xét nghiệm ADN thế hệ mới được thực hiện theo các bước chuẩn quốc tế, đảm bảo tính chính xác và bảo mật thông tin khách hàng:</p>
-        
-        <p><strong>Bước 1: Tiếp nhận và xử lý mẫu</strong></p>
-        <ul>
-          <li>Kiểm tra tính toàn vẹn của mẫu và thông tin khách hàng</li>
-          <li>Mã hóa mẫu để đảm bảo tính bảo mật</li>
-          <li>Bảo quản mẫu trong điều kiện nhiệt độ và độ ẩm phù hợp</li>
-        </ul>
-        
-        <p><strong>Bước 2: Tách chiết ADN</strong></p>
-        <ul>
-          <li>Sử dụng kit tách chiết ADN chuyên dụng</li>
-          <li>Kiểm tra chất lượng và nồng độ ADN</li>
-          <li>Đánh giá độ tinh khiết của ADN tách chiết được</li>
-        </ul>
-        
-        <p><strong>Bước 3: Khuếch đại và phân tích</strong></p>
-        <ul>
-          <li>Sử dụng kỹ thuật PCR để khuếch đại các vùng đích</li>
-          <li>Áp dụng công nghệ NGS để giải trình tự</li>
-          <li>Phân tích dữ liệu bằng phần mềm chuyên dụng</li>
-        </ul>
-        
-        <p><strong>Bước 4: Kiểm tra chất lượng và báo cáo</strong></p>
-        <ul>
-          <li>Thực hiện kiểm tra chất lượng nội bộ</li>
-          <li>So sánh với mẫu chuẩn quốc tế</li>
-          <li>Lập báo cáo kết quả chi tiết và dễ hiểu</li>
+          <li>Only requires saliva or cheek cell samples</li>
+          <li>No need for blood or invasive samples</li>
+          <li>Simple, safe sampling process</li>
         </ul>
 
-        <h2 id="5">Ứng dụng trong y học pháp y</h2>
-        <p>Công nghệ xét nghiệm ADN thế hệ mới có nhiều ứng dụng quan trọng trong y học pháp y và các lĩnh vực liên quan:</p>
+        <h2 id="4">Detailed Implementation Process</h2>
+        <p>The next-generation DNA testing process is carried out according to international standard steps, ensuring accuracy and customer information security:</p>
         
-        <p><strong>1. Xác định quan hệ huyết thống:</strong></p>
+        <p><strong>Step 1: Sample reception and processing</strong></p>
         <ul>
-          <li>Xét nghiệm cha con với độ chính xác 99.99%</li>
-          <li>Xác định quan hệ anh chị em ruột</li>
-          <li>Xét nghiệm quan hệ ông bà - cháu</li>
-          <li>Xác định quan hệ họ hàng xa</li>
+          <li>Check sample integrity and customer information</li>
+          <li>Encode samples to ensure confidentiality</li>
+          <li>Store samples under appropriate temperature and humidity conditions</li>
         </ul>
         
-        <p><strong>2. Giải quyết tranh chấp pháp lý:</strong></p>
+        <p><strong>Step 2: DNA extraction</strong></p>
         <ul>
-          <li>Tranh chấp thừa kế tài sản</li>
-          <li>Xác định quyền nuôi con</li>
-          <li>Giải quyết các vụ việc dân sự</li>
-          <li>Hỗ trợ điều tra hình sự</li>
+          <li>Use specialized DNA extraction kits</li>
+          <li>Check DNA quality and concentration</li>
+          <li>Assess the purity of extracted DNA</li>
         </ul>
         
-        <p><strong>3. Nghiên cứu y học:</strong></p>
+        <p><strong>Step 3: Amplification and analysis</strong></p>
         <ul>
-          <li>Nghiên cứu di truyền học quần thể</li>
-          <li>Phát hiện các bệnh di truyền</li>
-          <li>Nghiên cứu dược lý di truyền</li>
-          <li>Phát triển liệu pháp gen</li>
-        </ul>
-
-        <h2 id="6">Công nghệ AI và Machine Learning</h2>
-        <p>Trí tuệ nhân tạo và học máy đóng vai trò quan trọng trong việc nâng cao chất lượng xét nghiệm ADN:</p>
-        
-        <p><strong>Ứng dụng AI trong phân tích dữ liệu:</strong></p>
-        <ul>
-          <li><strong>Nhận dạng pattern:</strong> AI có thể nhận diện các mẫu phức tạp trong dữ liệu ADN</li>
-          <li><strong>Dự đoán kết quả:</strong> Thuật toán học máy giúp dự đoán kết quả với độ chính xác cao</li>
-          <li><strong>Phát hiện lỗi:</strong> Tự động phát hiện và sửa chữa các lỗi trong quá trình phân tích</li>
-          <li><strong>Tối ưu hóa quy trình:</strong> AI giúp tối ưu hóa các bước trong quy trình xét nghiệm</li>
+          <li>Use PCR technique to amplify target regions</li>
+          <li>Apply NGS technology for sequencing</li>
+          <li>Analyze data using specialized software</li>
         </ul>
         
-        <p><strong>Thuật toán Deep Learning:</strong></p>
-        <p>Các mạng neural sâu được huấn luyện trên hàng triệu mẫu dữ liệu ADN để:</p>
+        <p><strong>Step 4: Quality check and reporting</strong></p>
         <ul>
-          <li>Cải thiện độ chính xác của việc so sánh ADN</li>
-          <li>Giảm thời gian phân tích từ giờ xuống phút</li>
-          <li>Phát hiện các mối quan hệ phức tạp không thể nhận biết bằng mắt thường</li>
-          <li>Dự đoán các đặc điểm di truyền từ dữ liệu ADN</li>
+          <li>Perform internal quality checks</li>
+          <li>Compare with international standard samples</li>
+          <li>Create detailed and easy-to-understand result reports</li>
         </ul>
 
-        <h2 id="7">Tiêu chuẩn quốc tế và chứng nhận chất lượng</h2>
-        <p>Công nghệ xét nghiệm ADN thế hệ mới tuân thủ nghiêm ngặt các tiêu chuẩn quốc tế:</p>
+        <h2 id="5">Applications in Forensic Medicine</h2>
+        <p>Next-generation DNA testing technology has many important applications in forensic medicine and related fields:</p>
         
-        <p><strong>Tiêu chuẩn ISO/IEC 17025:</strong></p>
+        <p><strong>1. Determining blood relationships:</strong></p>
         <ul>
-          <li>Đảm bảo năng lực của phòng thí nghiệm</li>
-          <li>Quản lý chất lượng toàn diện</li>
-          <li>Kiểm soát các yếu tố ảnh hưởng đến kết quả</li>
+          <li>Paternity testing with 99.99% accuracy</li>
+          <li>Identifying sibling relationships</li>
+          <li>Grandparent-grandchild relationship testing</li>
+          <li>Identifying distant family relationships</li>
         </ul>
         
-        <p><strong>Chuẩn AABB (American Association of Blood Banks):</strong></p>
+        <p><strong>2. Resolving legal disputes:</strong></p>
         <ul>
-          <li>Quy định về xét nghiệm quan hệ huyết thống</li>
-          <li>Đảm bảo độ tin cậy của kết quả</li>
-          <li>Kiểm tra chất lượng định kỳ</li>
+          <li>Inheritance disputes</li>
+          <li>Determining child custody rights</li>
+          <li>Resolving civil cases</li>
+          <li>Supporting criminal investigations</li>
         </ul>
         
-        <p><strong>Chứng nhận CAP (College of American Pathologists):</strong></p>
+        <p><strong>3. Medical research:</strong></p>
         <ul>
-          <li>Kiểm tra năng lực phòng thí nghiệm</li>
-          <li>Đánh giá quy trình và thiết bị</li>
-          <li>Đảm bảo tuân thủ các quy định quốc tế</li>
+          <li>Population genetics research</li>
+          <li>Detection of genetic diseases</li>
+          <li>Pharmacogenetic research</li>
+          <li>Gene therapy development</li>
         </ul>
 
-        <h2 id="8">So sánh chi phí và hiệu quả</h2>
-        <p>Phân tích chi phí - hiệu quả của công nghệ mới so với phương pháp truyền thống:</p>
+        <h2 id="6">AI and Machine Learning Technology</h2>
+        <p>Artificial intelligence and machine learning play important roles in improving DNA testing quality:</p>
+        
+        <p><strong>AI applications in data analysis:</strong></p>
+        <ul>
+          <li><strong>Pattern recognition:</strong> AI can identify complex patterns in DNA data</li>
+          <li><strong>Result prediction:</strong> Machine learning algorithms help predict results with high accuracy</li>
+          <li><strong>Error detection:</strong> Automatically detect and correct errors in the analysis process</li>
+          <li><strong>Process optimization:</strong> AI helps optimize steps in the testing process</li>
+        </ul>
+        
+        <p><strong>Deep Learning algorithms:</strong></p>
+        <p>Deep neural networks are trained on millions of DNA data samples to:</p>
+        <ul>
+          <li>Improve the accuracy of DNA comparison</li>
+          <li>Reduce analysis time from hours to minutes</li>
+          <li>Detect complex relationships that cannot be identified by the naked eye</li>
+          <li>Predict genetic characteristics from DNA data</li>
+        </ul>
+
+        <h2 id="7">International Standards and Quality Certification</h2>
+        <p>Next-generation DNA testing technology strictly adheres to international standards:</p>
+        
+        <p><strong>ISO/IEC 17025 standard:</strong></p>
+        <ul>
+          <li>Ensures laboratory competence</li>
+          <li>Comprehensive quality management</li>
+          <li>Control of factors affecting results</li>
+        </ul>
+        
+        <p><strong>AABB (American Association of Blood Banks) standard:</strong></p>
+        <ul>
+          <li>Regulations on blood relationship testing</li>
+          <li>Ensures reliability of results</li>
+          <li>Periodic quality checking</li>
+        </ul>
+        
+        <p><strong>CAP (College of American Pathologists) certification:</strong></p>
+        <ul>
+          <li>Laboratory proficiency testing</li>
+          <li>Process and equipment evaluation</li>
+          <li>Ensures compliance with international regulations</li>
+        </ul>
+
+        <h2 id="8">Cost and Efficiency Comparison</h2>
+        <p>Cost-effectiveness analysis of new technology compared to traditional methods:</p>
         
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr style="background-color: #f8f9fa;">
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Tiêu chí</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Phương pháp cũ</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Công nghệ mới</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Criteria</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Old Method</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">New Technology</th>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Thời gian xử lý</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 ngày</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">24-48 giờ</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Processing Time</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 days</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">24-48 hours</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Độ chính xác</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Accuracy</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">99.9%</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">99.99%</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Chi phí</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Cost</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">100%</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">60%</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Số mẫu xử lý/ngày</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Samples processed/day</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">50-100</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">500-1000</td>
           </tr>
         </table>
         
-        <p><strong>Lợi ích kinh tế:</strong></p>
+        <p><strong>Economic benefits:</strong></p>
         <ul>
-          <li>Giảm 40% chi phí vận hành</li>
-          <li>Tăng 10 lần năng suất xử lý</li>
-          <li>Giảm 60% thời gian chờ kết quả</li>
-          <li>Tiết kiệm 30% nhân lực</li>
+          <li>Reduces operating costs by 40%</li>
+          <li>Increases processing productivity 10-fold</li>
+          <li>Reduces waiting time for results by 60%</li>
+          <li>Saves 30% in manpower</li>
         </ul>
 
-        <h2 id="9">Xu hướng phát triển tương lai</h2>
-        <p>Công nghệ xét nghiệm ADN đang phát triển theo nhiều hướng đột phá:</p>
+        <h2 id="9">Future Development Trends</h2>
+        <p>DNA testing technology is developing in many breakthrough directions:</p>
         
-        <p><strong>1. Công nghệ Portable DNA Sequencing:</strong></p>
+        <p><strong>1. Portable DNA Sequencing Technology:</strong></p>
         <ul>
-          <li>Thiết bị xét nghiệm ADN di động</li>
-          <li>Kết quả nhanh chóng tại chỗ</li>
-          <li>Ứng dụng trong cấp cứu và thảm họa</li>
+          <li>Mobile DNA testing devices</li>
+          <li>Quick on-site results</li>
+          <li>Applications in emergency and disaster scenarios</li>
         </ul>
         
-        <p><strong>2. Quantum Computing trong phân tích ADN:</strong></p>
+        <p><strong>2. Quantum Computing in DNA analysis:</strong></p>
         <ul>
-          <li>Tăng tốc độ xử lý dữ liệu lên hàng triệu lần</li>
-          <li>Phân tích các mối quan hệ phức tạp</li>
-          <li>Mở ra khả năng nghiên cứu genome toàn diện</li>
+          <li>Increases data processing speed by millions of times</li>
+          <li>Analysis of complex relationships</li>
+          <li>Opens up possibilities for comprehensive genome research</li>
         </ul>
         
-        <p><strong>3. Blockchain trong bảo mật dữ liệu:</strong></p>
+        <p><strong>3. Blockchain in data security:</strong></p>
         <ul>
-          <li>Đảm bảo tính toàn vẹn của dữ liệu ADN</li>
-          <li>Bảo vệ quyền riêng tư cá nhân</li>
-          <li>Tạo hệ thống lưu trữ phi tập trung</li>
+          <li>Ensures integrity of DNA data</li>
+          <li>Protects personal privacy</li>
+          <li>Creates decentralized storage systems</li>
         </ul>
         
-        <p><strong>4. AI tiên tiến và Neural Networks:</strong></p>
+        <p><strong>4. Advanced AI and Neural Networks:</strong></p>
         <ul>
-          <li>Phát triển các mô hình AI chuyên biệt</li>
-          <li>Dự đoán các đặc điểm di truyền phức tạp</li>
-          <li>Cá nhân hóa y học dựa trên ADN</li>
+          <li>Development of specialized AI models</li>
+          <li>Prediction of complex genetic characteristics</li>
+          <li>Personalized medicine based on DNA</li>
         </ul>
 
-        <h2 id="10">Kết luận và khuyến nghị</h2>
-        <p>Công nghệ xét nghiệm ADN thế hệ mới năm 2024 đại diện cho một bước tiến quan trọng trong lĩnh vực y học pháp y và di truyền học. Với những ưu điểm vượt trội về tốc độ, độ chính xác và chi phí, công nghệ này không chỉ cải thiện chất lượng dịch vụ mà còn mở ra nhiều cơ hội ứng dụng mới.</p>
+        <h2 id="10">Conclusion and Recommendations</h2>
+        <p>Next-generation DNA testing technology in 2024 represents an important step forward in forensic medicine and genetics. With outstanding advantages in speed, accuracy, and cost, this technology not only improves service quality but also opens up many new application opportunities.</p>
         
-        <p><strong>Khuyến nghị cho người dân:</strong></p>
+        <p><strong>Recommendations for the public:</strong></p>
         <ul>
-          <li>Lựa chọn các trung tâm có chứng nhận quốc tế</li>
-          <li>Tìm hiểu kỹ về quy trình và công nghệ được sử dụng</li>
-          <li>Đảm bảo tính bảo mật thông tin cá nhân</li>
-          <li>Tham khảo ý kiến chuyên gia trước khi quyết định</li>
+          <li>Choose centers with international certification</li>
+          <li>Research thoroughly about the process and technology used</li>
+          <li>Ensure personal information security</li>
+          <li>Consult experts before making decisions</li>
         </ul>
         
-        <p><strong>Khuyến nghị cho các cơ sở y tế:</strong></p>
+        <p><strong>Recommendations for medical facilities:</strong></p>
         <ul>
-          <li>Đầu tư vào công nghệ và thiết bị hiện đại</li>
-          <li>Đào tạo nhân lực chuyên môn cao</li>
-          <li>Xây dựng hệ thống quản lý chất lượng toàn diện</li>
-          <li>Hợp tác với các tổ chức quốc tế</li>
+          <li>Invest in modern technology and equipment</li>
+          <li>Train highly specialized human resources</li>
+          <li>Build comprehensive quality management systems</li>
+          <li>Cooperate with international organizations</li>
         </ul>
         
-        <p>Với sự phát triển không ngừng của khoa học công nghệ, chúng ta có thể kỳ vọng vào những đột phá mới trong tương lai gần, mang lại lợi ích to lớn cho xã hội và con người.</p>
+        <p>With the continuous development of science and technology, we can expect new breakthroughs in the near future, bringing great benefits to society and people.</p>
       </div>
     `
   },
    {
     id: 2,
-    title: "Quy Trình Hành Chính Xét Nghiệm ADN Tại Việt Nam",
-    category: "Hành Chính",
-    excerpt: "Hướng dẫn chi tiết các thủ tục hành chính cần thiết khi thực hiện xét nghiệm ADN theo quy định của Bộ Y tế.",
+    title: "Administrative Procedures for DNA Testing in Vietnam",
+    category: "Administration",
+    excerpt: "A detailed guide to the required administrative procedures for conducting DNA tests as regulated by the Ministry of Health.",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&h=800&fit=crop",
     slug: "quy-trinh-hanh-chinh-xet-nghiem-adn-tai-viet-nam",
-    author: "Luật sư Trần Văn Minh",
+    author: "Lawyer Tran Van Minh",
     date: "2024-01-23",
-    readTime: "8 phút đọc",
+    readTime: "8 min read",
     featured: false,
     views: 1420,
     likes: 98,
     comments: 25,
     tableOfContents: [
-      { id: "", title: "Tư vấn và định hướng ban đầu", level: 1 },
-      { id: "1", title: "Chuẩn bị hồ sơ", level: 1 },
-      { id: "2", title: "Thực hiện xét nghiệm", level: 1 },
-      { id: "3", title: "Nhận kết quả", level: 1 },
-      { id: "4", title: "Xử lý và ứng dụng kết quả", level: 1 },
-      { id: "5", title: "Lưu ý quan trọng", level: 1 }
+      { id: "", title: "Initial Consultation and Guidance", level: 1 },
+      { id: "1", title: "Preparation of Documents", level: 1 },
+      { id: "2", title: "Testing Process", level: 1 },
+      { id: "3", title: "Receiving Results", level: 1 },
+      { id: "4", title: "Processing and Application of Results", level: 1 },
+      { id: "5", title: "Important Notes", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <h2 id="0">Bước 0: Tư vấn và định hướng ban đầu</h2>
-        <p>Tìm hiểu thông tin và nhận tư vấn chuyên môn trước khi quyết định thực hiện xét nghiệm:</p>    
-        <p><strong>Đánh giá nhu cầu và mục đích:</strong></p>
+        <h2 id="0">Step 0: Initial Consultation and Guidance</h2>
+        <p>Research information and receive professional consultation before deciding to proceed with testing:</p>    
+        <p><strong>Evaluating needs and purposes:</strong></p>
         <ul>
-          <li><strong>Mục đích cá nhân:</strong> Tìm hiểu quan hệ huyết thống trong gia đình</li>
-          <li><strong>Mục đích pháp lý:</strong> Phục vụ tranh chấp dân sự, thừa kế, nhận con</li>
-          <li><strong>Mục đích y tế:</strong> Chẩn đoán bệnh di truyền, ghép tạng</li>
-          <li><strong>Mục đích xuất nhập cảnh:</strong> Chứng minh quan hệ gia đình cho visa</li>
+          <li><strong>Personal purposes:</strong> Understanding family blood relationships</li>
+          <li><strong>Legal purposes:</strong> Supporting civil disputes, inheritance, child recognition</li>
+          <li><strong>Medical purposes:</strong> Diagnosing genetic diseases, organ transplantation</li>
+          <li><strong>Immigration purposes:</strong> Proving family relationships for visas</li>
         </ul>
         
-        <p><strong>Lựa chọn loại xét nghiệm phù hợp:</strong></p>
+        <p><strong>Selecting the appropriate test type:</strong></p>
         <ul>
-          <li><strong>Xét nghiệm cha-con:</strong> Xác định quan hệ cha và con</li>
-          <li><strong>Xét nghiệm mẹ-con:</strong> Xác định quan hệ mẹ và con</li>
-          <li><strong>Xét nghiệm anh chị em:</strong> Xác định quan hệ anh chị em ruột</li>
-          <li><strong>Xét nghiệm ông bà-cháu:</strong> Xác định quan hệ thế hệ thứ 2</li>
-        </ul>
-
-        <h2 id="1">Bước 1: Chuẩn bị hồ sơ</h2>
-        <p>Chuẩn bị đầy đủ các giấy tờ cần thiết theo quy định của Thông tư 15/2020/TT-BYT:</p>
-        
-        <p><strong>Hồ sơ bắt buộc:</strong></p>
-        <ul>
-          <li><strong>CMND/CCCD/Hộ chiếu:</strong> Bản chính để đối chiếu + bản sao có công chứng</li>
-          <li><strong>Giấy khai sinh:</strong> Đối với trẻ em dưới 14 tuổi</li>
-          <li><strong>Đơn đề nghị xét nghiệm ADN:</strong> Theo mẫu của cơ sở y tế</li>
-          <li><strong>Cam kết chịu trách nhiệm:</strong> Về tính chính xác thông tin</li>
-        </ul>
-        
-        <p><strong>Hồ sơ bổ sung (nếu có):</strong></p>
-        <ul>
-          <li>Giấy ủy quyền có công chứng (nếu có người đại diện)</li>
-          <li>Quyết định của Tòa án (trường hợp tranh chấp pháp lý)</li>
-          <li>Giấy chứng tử + giấy phép khai quật (xét nghiệm sau tử vong)</li>
-        </ul>
-        
-        <p><strong>Chi phí dự kiến:</strong></p>
-        <ul>
-          <li>Xét nghiệm cha-con: 2.500.000 - 4.000.000 VNĐ</li>
-          <li>Xét nghiệm cha-mẹ-con: 3.500.000 - 4.500.000 VNĐ</li>
-          <li>Giảm 20% cho người có BHYT, miễn phí cho hộ nghèo</li>
+          <li><strong>Father-child testing:</strong> Determining father and child relationship</li>
+          <li><strong>Mother-child testing:</strong> Determining mother and child relationship</li>
+          <li><strong>Sibling testing:</strong> Determining sibling relationships</li>
+          <li><strong>Grandparent-grandchild testing:</strong> Determining 2nd generation relationships</li>
         </ul>
 
-        <h2 id="2">Bước 2: Thực hiện xét nghiệm</h2>
-        <p>Quy trình thực hiện tại cơ sở y tế được cấp phép:</p>
+        <h2 id="1">Step 1: Preparation of Documents</h2>
+        <p>Prepare all necessary documents according to Circular 15/2020/TT-BYT regulations:</p>
         
-        <p><strong>Tiếp nhận hồ sơ (1-2 ngày):</strong></p>
+        <p><strong>Required documents:</strong></p>
         <ul>
-          <li>Nộp hồ sơ tại quầy tiếp nhận</li>
-          <li>Kiểm tra tính đầy đủ và hợp lệ</li>
-          <li>Xác minh danh tính các bên tham gia</li>
-          <li>Ký hợp đồng dịch vụ và thanh toán</li>
+          <li><strong>ID card/Passport:</strong> Original for verification + notarized copy</li>
+          <li><strong>Birth certificate:</strong> For children under 14 years old</li>
+          <li><strong>DNA testing request form:</strong> According to the medical facility's template</li>
+          <li><strong>Responsibility commitment:</strong> For the accuracy of information provided</li>
         </ul>
         
-        <p><strong>Lấy mẫu sinh học (30 phút):</strong></p>
+        <p><strong>Additional documents (if applicable):</strong></p>
         <ul>
-          <li>Tư vấn về phương pháp lấy mẫu phù hợp</li>
-          <li>Lấy mẫu nước bọt, tế bào má hoặc máu</li>
-          <li>Đóng gói và mã hóa mẫu đảm bảo bảo mật</li>
-          <li>Vận chuyển mẫu đến phòng thí nghiệm</li>
+          <li>Notarized power of attorney (if represented by someone else)</li>
+          <li>Court decision (for legal dispute cases)</li>
+          <li>Death certificate + exhumation permit (for posthumous testing)</li>
         </ul>
         
-        <p><strong>Xét nghiệm và phân tích (5-7 ngày):</strong></p>
+        <p><strong>Estimated costs:</strong></p>
         <ul>
-          <li>Tách chiết ADN từ mẫu sinh học</li>
-          <li>Khuếch đại vùng ADN đặc hiệu bằng PCR</li>
-          <li>Phân tích kết quả bằng thiết bị tự động</li>
-          <li>Kiểm tra chất lượng và xác nhận kết quả</li>
+          <li>Father-child testing: 2,500,000 - 4,000,000 VND</li>
+          <li>Father-mother-child testing: 3,500,000 - 4,500,000 VND</li>
+          <li>20% discount for health insurance cardholders, free for poor households</li>
         </ul>
 
-        <h2 id="3">Bước 3: Nhận kết quả</h2>
-        <p>Nhận kết quả xét nghiệm và hiểu rõ ý nghĩa:</p>
+        <h2 id="2">Step 2: Testing Process</h2>
+        <p>Process at an authorized medical facility:</p>
         
-        <p><strong>Thời gian và cách thức nhận kết quả:</strong></p>
+        <p><strong>Document reception (1-2 days):</strong></p>
         <ul>
-          <li><strong>Thời gian:</strong> 7-10 ngày làm việc kể từ khi lấy mẫu</li>
-          <li><strong>Nhận trực tiếp:</strong> Tại cơ sở y tế (thứ 2-6: 8h-16h30)</li>
-          <li><strong>Gửi bưu điện:</strong> Phí bổ sung 50.000-100.000 VNĐ</li>
-          <li><strong>Xét nghiệm khẩn cấp:</strong> 3-5 ngày (phụ phí 30-50%)</li>
+          <li>Submit documents at the reception counter</li>
+          <li>Check for completeness and validity</li>
+          <li>Verify identity of participating parties</li>
+          <li>Sign service contract and payment</li>
         </ul>
         
-        <p><strong>Hiểu kết quả xét nghiệm:</strong></p>
+        <p><strong>Biological sample collection (30 minutes):</strong></p>
         <ul>
-          <li><strong>Độ chính xác:</strong> 99.99% với công nghệ hiện đại</li>
-          <li><strong>Kết quả dương tính:</strong> Xác nhận có quan hệ huyết thống</li>
-          <li><strong>Kết quả âm tính:</strong> Loại trừ quan hệ huyết thống</li>
-          <li><strong>Tư vấn:</strong> Được giải thích chi tiết ý nghĩa kết quả</li>
+          <li>Consultation on appropriate sampling method</li>
+          <li>Collection of saliva, cheek cell, or blood samples</li>
+          <li>Packaging and coding samples to ensure confidentiality</li>
+          <li>Transport samples to the laboratory</li>
         </ul>
         
-        <p><strong>Giá trị pháp lý:</strong></p>
+        <p><strong>Testing and analysis (5-7 days):</strong></p>
         <ul>
-          <li>Kết quả có giá trị pháp lý khi được cơ sở có thẩm quyền thực hiện</li>
-          <li>Sử dụng trong các vụ việc dân sự, hình sự, thừa kế</li>
-          <li>Cần bản dịch công chứng nếu sử dụng ở nước ngoài</li>
-        </ul>
-
-        <h2 id="4">Bước 4: Xử lý và ứng dụng kết quả</h2>
-        <p>Sử dụng kết quả xét nghiệm cho các mục đích cụ thể và thực hiện các thủ tục liên quan:</p>
-        
-        <p><strong>Ứng dụng trong thủ tục pháp lý:</strong></p>
-        <ul>
-          <li><strong>Đăng ký khai sinh:</strong> Bổ sung thông tin cha/mẹ trên giấy khai sinh</li>
-          <li><strong>Thừa kế tài sản:</strong> Chứng minh quyền thừa kế hợp pháp</li>
-          <li><strong>Tranh chấp dân sự:</strong> Làm bằng chứng trong các vụ kiện tại tòa án</li>
-          <li><strong>Nhận con nuôi:</strong> Chứng minh không có quan hệ huyết thống</li>
-        </ul>
-        
-        <p><strong>Ứng dụng trong xuất nhập cảnh:</strong></p>
-        <ul>
-          <li><strong>Visa đoàn tụ gia đình:</strong> Chứng minh quan hệ gia đình</li>
-          <li><strong>Định cư nước ngoài:</strong> Hỗ trợ hồ sơ định cư theo diện gia đình</li>
-          <li><strong>Dịch thuật công chứng:</strong> Dịch kết quả sang ngôn ngữ nước đích</li>
-          <li><strong>Hợp pháp hóa lãnh sự:</strong> Xác nhận tại đại sứ quán/lãnh sự quán</li>
-        </ul>
-        
-        <p><strong>Bảo quản và lưu trữ kết quả:</strong></p>
-        <ul>
-          <li><strong>Lưu trữ bản gốc:</strong> Giữ ở nơi khô ráo, tránh ánh sáng trực tiếp</li>
-          <li><strong>Sao chép công chứng:</strong> Làm bản sao có công chứng khi cần sử dụng</li>
-          <li><strong>Lưu trữ điện tử:</strong> Scan và lưu trữ trên cloud an toàn</li>
-          <li><strong>Thời hạn hiệu lực:</strong> Không giới hạn thời gian (trừ khi pháp luật quy định)</li>
+          <li>DNA extraction from biological samples</li>
+          <li>Amplification of specific DNA regions using PCR</li>
+          <li>Analysis of results using automated equipment</li>
+          <li>Quality control and result verification</li>
         </ul>
 
-        <h2 id="5">Bước 5: Lưu ý quan trọng</h2>
-        <p>Những điều cần lưu ý để đảm bảo quyền lợi và tránh rủi ro:</p>
+        <h2 id="3">Step 3: Receiving Results</h2>
+        <p>Receive test results and understand their meaning:</p>
         
-        <p><strong>Lựa chọn cơ sở y tế uy tín:</strong></p>
+        <p><strong>Timing and methods of result delivery:</strong></p>
         <ul>
-          <li><strong>Kiểm tra giấy phép:</strong> Đảm bảo có giấy phép hoạt động hợp pháp</li>
-          <li><strong>Chứng nhận chất lượng:</strong> Có chứng nhận ISO/IEC 17025 hoặc AABB</li>
-          <li><strong>Thiết bị hiện đại:</strong> Sử dụng công nghệ xét nghiệm tiên tiến</li>
-          <li><strong>Đội ngũ chuyên môn:</strong> Kỹ thuật viên có chứng chỉ chuyên môn</li>
+          <li><strong>Timing:</strong> 7-10 working days from sampling</li>
+          <li><strong>In-person pickup:</strong> At the medical facility (Mon-Fri: 8am-4:30pm)</li>
+          <li><strong>Postal delivery:</strong> Additional fee of 50,000-100,000 VND</li>
+          <li><strong>Expedited testing:</strong> 3-5 days (30-50% surcharge)</li>
         </ul>
         
-        <p><strong>Bảo mật và quyền riêng tư:</strong></p>
+        <p><strong>Understanding test results:</strong></p>
         <ul>
-          <li><strong>Đồng ý tham gia:</strong> Đảm bảo có sự đồng ý của tất cả các bên</li>
-          <li><strong>Cam kết bảo mật:</strong> Yêu cầu cơ sở y tế ký cam kết bảo mật</li>
-          <li><strong>Quyền từ chối:</strong> Tôn trọng quyền từ chối tham gia xét nghiệm</li>
-          <li><strong>Hủy mẫu:</strong> Yêu cầu hủy mẫu sinh học sau khi có kết quả</li>
+          <li><strong>Accuracy:</strong> 99.99% with modern technology</li>
+          <li><strong>Positive result:</strong> Confirms blood relationship</li>
+          <li><strong>Negative result:</strong> Excludes blood relationship</li>
+          <li><strong>Consultation:</strong> Detailed explanation of result meaning</li>
         </ul>
         
-        <p><strong>Quyền và nghĩa vụ:</strong></p>
+        <p><strong>Legal value:</strong></p>
         <ul>
-          <li><strong>Quyền được thông tin:</strong> Được giải thích đầy đủ về quy trình</li>
-          <li><strong>Quyền khiếu nại:</strong> Khi có vi phạm trong quá trình thực hiện</li>
-          <li><strong>Nghĩa vụ cung cấp thông tin chính xác:</strong> Khai báo đúng sự thật</li>
-          <li><strong>Nghĩa vụ thanh toán:</strong> Chi trả đầy đủ phí dịch vụ</li>
+          <li>Results have legal value when performed by an authorized facility</li>
+          <li>Used in civil, criminal, inheritance cases</li>
+          <li>Requires certified translation if used abroad</li>
+        </ul>
+
+        <h2 id="4">Step 4: Processing and Application of Results</h2>
+        <p>Using test results for specific purposes and completing related procedures:</p>
+        
+        <p><strong>Applications in legal procedures:</strong></p>
+        <ul>
+          <li><strong>Birth registration:</strong> Adding father/mother information on birth certificates</li>
+          <li><strong>Inheritance:</strong> Proving legitimate inheritance rights</li>
+          <li><strong>Civil disputes:</strong> Providing evidence in court cases</li>
+          <li><strong>Adoption:</strong> Proving no blood relationship</li>
         </ul>
         
-        <p><strong>Hỗ trợ tâm lý và xã hội:</strong></p>
+        <p><strong>Applications in immigration:</strong></p>
         <ul>
-          <li><strong>Tư vấn tâm lý:</strong> Hỗ trợ khi kết quả không như mong đợi</li>
-          <li><strong>Dịch vụ hỗ trợ gia đình:</strong> Tư vấn về tác động đến mối quan hệ</li>
-          <li><strong>Nhóm hỗ trợ cộng đồng:</strong> Kết nối với những trường hợp tương tự</li>
-          <li><strong>Theo dõi sau xét nghiệm:</strong> Hỗ trợ trong 6 tháng đầu</li>
+          <li><strong>Family reunification visa:</strong> Proving family relationships</li>
+          <li><strong>Foreign residency:</strong> Supporting family-based immigration applications</li>
+          <li><strong>Certified translation:</strong> Translating results to destination country language</li>
+          <li><strong>Consular legalization:</strong> Verification at embassy/consulate</li>
         </ul>
         
-        <p><strong>Quyền khiếu nại và giải quyết tranh chấp:</strong></p>
+        <p><strong>Storage and preservation of results:</strong></p>
         <ul>
-          <li><strong>Khiếu nại về chất lượng:</strong> Gửi đến Sở Y tế địa phương</li>
-          <li><strong>Khiếu nại về chi phí:</strong> Liên hệ trực tiếp với cơ sở y tế</li>
-          <li><strong>Tranh chấp pháp lý:</strong> Thông qua tòa án có thẩm quyền</li>
-          <li><strong>Bồi thường thiệt hại:</strong> Theo quy định của pháp luật</li>
+          <li><strong>Original storage:</strong> Keep in dry place, away from direct light</li>
+          <li><strong>Certified copies:</strong> Make notarized copies when needed</li>
+          <li><strong>Digital storage:</strong> Scan and store on secure cloud</li>
+          <li><strong>Validity period:</strong> No time limit (unless legally specified)</li>
+        </ul>
+
+        <h2 id="5">Step 5: Important Notes</h2>
+        <p>Things to note to ensure rights and avoid risks:</p>
+        
+        <p><strong>Selecting a reputable medical facility:</strong></p>
+        <ul>
+          <li><strong>Checking licenses:</strong> Ensure legal operating permits</li>
+          <li><strong>Quality certification:</strong> ISO/IEC 17025 or AABB certification</li>
+          <li><strong>Modern equipment:</strong> Using advanced testing technology</li>
+          <li><strong>Professional team:</strong> Technicians with professional certifications</li>
         </ul>
         
-        <p><strong>Câu hỏi thường gặp:</strong></p>
+        <p><strong>Confidentiality and privacy:</strong></p>
+        <ul>
+          <li><strong>Consent to participate:</strong> Ensuring consent from all parties</li>
+          <li><strong>Confidentiality commitment:</strong> Request confidentiality agreement from facility</li>
+          <li><strong>Right to refuse:</strong> Respecting right to refuse testing</li>
+          <li><strong>Sample destruction:</strong> Request destruction of biological samples after results</li>
+        </ul>
+        
+        <p><strong>Rights and obligations:</strong></p>
+        <ul>
+          <li><strong>Right to information:</strong> Full explanation of the process</li>
+          <li><strong>Right to complaint:</strong> When violations occur during implementation</li>
+          <li><strong>Obligation to provide accurate information:</strong> Truthful declaration</li>
+          <li><strong>Payment obligation:</strong> Full payment for services</li>
+        </ul>
+        
+        <p><strong>Psychological and social support:</strong></p>
+        <ul>
+          <li><strong>Psychological counseling:</strong> Support when results are not as expected</li>
+          <li><strong>Family support services:</strong> Consultation on impact on relationships</li>
+          <li><strong>Community support groups:</strong> Connection with similar cases</li>
+          <li><strong>Post-test follow-up:</strong> Support for first 6 months</li>
+        </ul>
+        
+        <p><strong>Rights to complaint and dispute resolution:</strong></p>
+        <ul>
+          <li><strong>Quality complaints:</strong> Submit to local Department of Health</li>
+          <li><strong>Cost complaints:</strong> Contact medical facility directly</li>
+          <li><strong>Legal disputes:</strong> Through competent court</li>
+          <li><strong>Damage compensation:</strong> According to legal regulations</li>
+        </ul>
+        
+        <p><strong>Frequently asked questions:</strong></p>
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <p><strong>Q: Xét nghiệm ADN có đau không?</strong><br>
-          <strong>A:</strong> Hoàn toàn không đau. Chỉ cần lấy nước bọt hoặc chà nhẹ que cotton vào má.</p>
+          <p><strong>Q: Is DNA testing painful?</strong><br>
+          <strong>A:</strong> Not at all. It only requires saliva or gentle swabbing of the cheek with a cotton swab.</p>
           
-          <p><strong>Q: Có thể xét nghiệm khi mang thai không?</strong><br>
-          <strong>A:</strong> Có thể từ tuần thứ 9 thai kỳ thông qua xét nghiệm máu mẹ.</p>
+          <p><strong>Q: Can testing be done during pregnancy?</strong><br>
+          <strong>A:</strong> Yes, from the 9th week of pregnancy through maternal blood testing.</p>
           
-          <p><strong>Q: BHYT có chi trả không?</strong><br>
-          <strong>A:</strong> Hiện tại BHYT chưa chi trả, nhưng có chính sách giảm giá cho người có thẻ BHYT.</p>
+          <p><strong>Q: Does health insurance cover it?</strong><br>
+          <strong>A:</strong> Currently health insurance does not cover it, but there are discount policies for health insurance cardholders.</p>
         </div>
       </div>
     `
@@ -480,707 +480,696 @@ const articles = [
 // ... existing code ...
 {
   id: 3,
-  title: "Tin Mới: Luật ADN 2025 Có Hiệu Lực Từ Tháng 3",
-  category: "Tin Tức",
-  excerpt: "Luật mới về xét nghiệm ADN chính thức có hiệu lực, mang lại nhiều thay đổi tích cực cho người dân.",
+  title: "Breaking News: DNA Law 2025 Effective from March",
+  category: "News",
+  excerpt: "The new DNA testing law officially takes effect, bringing many positive changes for the public.",
   image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=800&fit=crop",
   slug: "tin-moi-luat-adn-2024-co-hieu-luc-tu-thang-3",
-  author: "Phóng viên Lê Thị Hoa",
+  author: "Reporter Le Thi Hoa",
   date: "2025-04-22",
-  readTime: "15 phút đọc",
+  readTime: "15 min read",
   featured: true,
   tableOfContents: [
-    { id: "1", title: "Bước 1: Tổng quan về Luật ADN 2025", level: 1 },
-    { id: "2", title: "Bước 2: Các quy định mới về thủ tục hành chính", level: 1 },
-    { id: "3", title: "Bước 3: Quyền và nghĩa vụ của các bên tham gia", level: 1 },
-    { id: "4", title: "Bước 4: Quy trình thực hiện xét nghiệm ADN", level: 1 },
-    { id: "5", title: "Bước 5: Giá trị pháp lý của kết quả xét nghiệm", level: 1 },
-    { id: "6", title: "Bước 6: Hướng dẫn thực hiện và lộ trình áp dụng", level: 1 }
+    { id: "1", title: "Step 1: Overview of DNA Law 2025", level: 1 },
+    { id: "2", title: "Step 2: New Administrative Procedure Regulations", level: 1 },
+    { id: "3", title: "Step 3: Rights and Obligations of Participating Parties", level: 1 },
+    { id: "4", title: "Step 4: DNA Testing Implementation Process", level: 1 },
+    { id: "5", title: "Step 5: Legal Value of Test Results", level: 1 },
+    { id: "6", title: "Step 6: Implementation Guidelines and Application Timeline", level: 1 }
   ],
   content: `
     <div class="blog-content">
       <div style="background-color: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #2196F3;">
-        <h3 style="color: #1976D2; margin-top: 0;">🏛️ THÔNG BÁO CHÍNH THỨC</h3>
-        <p style="margin-bottom: 0; font-weight: 500;">Luật số 15/2025/QH15 về Xét nghiệm ADN trong các hoạt động dân sự và hình sự chính thức có hiệu lực từ ngày 15 tháng 3 năm 2025, thay thế các quy định trước đây và tạo khung pháp lý thống nhất cho toàn quốc.</p>
+        <h3 style="color: #1976D2; margin-top: 0;">��️ OFFICIAL ANNOUNCEMENT</h3>
+        <p style="margin-bottom: 0; font-weight: 500;">Law No. 15/2025/QH15 on DNA testing in civil and criminal activities officially comes into effect from March 15, 2025, replacing previous regulations and establishing a unified legal framework for the whole country.</p>
       </div>
 
-      <h2 id="1">Bước 1: Tổng quan về Luật ADN 2025</h2>
-      <p>Luật ADN 2025 được Quốc hội khóa XV thông qua tại kỳ họp thứ 8 với 456/462 đại biểu tán thành, đánh dấu bước tiến quan trọng trong việc hoàn thiện hệ thống pháp luật Việt Nam về xét nghiệm ADN.</p>
+      <h2 id="1">Step 1: Overview of DNA Law 2025</h2>
+      <p>DNA Law 2025 was passed by the National Assembly of the 15th Legislature with 456/462 representatives in attendance, marking a significant step forward in improving the legal system of Vietnam on DNA testing.</p>
       
-      <p><strong>Mục tiêu của Luật:</strong></p>
+      <p><strong>Objectives of the Law:</strong></p>
       <ul>
-        <li><strong>Thống nhất quy trình:</strong> Tạo khung pháp lý thống nhất cho việc thực hiện xét nghiệm ADN trên toàn quốc</li>
-        <li><strong>Bảo vệ quyền lợi:</strong> Đảm bảo quyền lợi hợp pháp của công dân trong các hoạt động xét nghiệm ADN</li>
-        <li><strong>Nâng cao chất lượng:</strong> Đặt ra tiêu chuẩn cao về chất lượng dịch vụ xét nghiệm ADN</li>
-        <li><strong>Minh bạch hóa:</strong> Tăng cường tính minh bạch trong quy trình và kết quả xét nghiệm</li>
+        <li><strong>Unifying procedures:</strong> Establishing a unified legal framework for DNA testing across the country</li>
+        <li><strong>Protecting rights:</strong> Ensuring the legal rights of citizens in DNA testing activities</li>
+        <li><strong>Improving quality:</strong> Establishing high standards for DNA testing service quality</li>
+        <li><strong>Transparency:</strong> Enhancing transparency in the testing process and results</li>
       </ul>
       
-      <p><strong>Phạm vi điều chỉnh:</strong></p>
+      <p><strong>Scope of application:</strong></p>
       <ul>
-        <li>Xét nghiệm ADN phục vụ các thủ tục dân sự (xác định quan hệ huyết thống, thừa kế)</li>
-        <li>Xét nghiệm ADN trong điều tra, truy tố, xét xử các vụ án hình sự</li>
-        <li>Xét nghiệm ADN phục vụ mục đích y tế, nghiên cứu khoa học</li>
-        <li>Hoạt động của các cơ sở thực hiện xét nghiệm ADN</li>
+        <li>DNA testing for civil purposes (determining blood relationships, inheritance)</li>
+        <li>DNA testing in investigations, prosecutions, and trials</li>
+        <li>DNA testing for medical and scientific research purposes</li>
+        <li>Activities of entities conducting DNA testing</li>
       </ul>
       
-      <p><strong>Nguyên tắc cơ bản:</strong></p>
+      <p><strong>Basic principles:</strong></p>
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
         <ul>
-          <li><strong>Tự nguyện:</strong> Việc xét nghiệm ADN phải dựa trên cơ sở tự nguyện của các bên (trừ trường hợp pháp luật quy định khác)</li>
-          <li><strong>Chính xác:</strong> Đảm bảo độ chính xác cao nhất trong quy trình và kết quả</li>
-          <li><strong>Bảo mật:</strong> Bảo vệ thông tin cá nhân và kết quả xét nghiệm</li>
-          <li><strong>Công khai, minh bạch:</strong> Quy trình thực hiện phải công khai, minh bạch</li>
+          <li><strong>Voluntary:</strong> DNA testing must be based on the voluntary consent of all parties (except where the law specifies otherwise)</li>
+          <li><strong>Accuracy:</strong> Ensuring the highest accuracy in the testing process and results</li>
+          <li><strong>Confidentiality:</strong> Protecting personal information and test results</li>
+          <li><strong>Publicity, transparency:</strong> The testing process must be public and transparent</li>
         </ul>
       </div>
 
-      <h2 id="2">Bước 2: Các quy định mới về thủ tục hành chính</h2>
-      <p>Luật ADN 2025 đơn giản hóa đáng kể các thủ tục hành chính, giảm thời gian và chi phí cho người dân:</p>
+      <h2 id="2">Step 2: New Administrative Procedure Regulations</h2>
+      <p>DNA Law 2025 significantly simplifies administrative procedures, reducing time and costs for the public:</p>
       
-      <p><strong>Thủ tục đăng ký xét nghiệm:</strong></p>
+      <p><strong>Registration process:</strong></p>
       <ul>
-        <li><strong>Hồ sơ đơn giản:</strong> Chỉ cần CCCD/CMND và đơn đăng ký (mẫu thống nhất)</li>
-        <li><strong>Đăng ký trực tuyến:</strong> Có thể đăng ký qua Cổng dịch vụ công quốc gia</li>
-        <li><strong>Thời gian xử lý:</strong> Tối đa 3 ngày làm việc (giảm từ 7 ngày trước đây)</li>
-        <li><strong>Phí lệ phí:</strong> Giảm 25% so với quy định cũ, miễn phí cho hộ nghèo</li>
+        <li><strong>Simplified application:</strong> Only CCCD/CMND and simple registration form (uniform template)</li>
+        <li><strong>Online registration:</strong> Can be registered online through the national public service portal</li>
+        <li><strong>Processing time:</strong> Up to 3 working days (reduced from 7 days previously)</li>
+        <li><strong>Fee waiver:</strong> 25% reduction in fees, free for poor households</li>
       </ul>
       
-      <p><strong>Quy trình "một cửa":</strong></p>
+      <p><strong>One-stop service:</strong></p>
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background-color: #f8f9fa;">
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Bước</th>
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Thủ tục</th>
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Thời gian</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Step</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Procedure</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Time</th>
         </tr>
         <tr>
           <td style="border: 1px solid #dee2e6; padding: 12px;">1</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Nộp hồ sơ tại bộ phận một cửa</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">15 phút</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Submission of documents at the one-stop service counter</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">15 minutes</td>
         </tr>
         <tr style="background-color: #f8f9fa;">
           <td style="border: 1px solid #dee2e6; padding: 12px;">2</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Kiểm tra hồ sơ và cấp phiếu hẹn</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">30 phút</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Review of documents and issuance of appointment slip</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">30 minutes</td>
         </tr>
         <tr>
           <td style="border: 1px solid #dee2e6; padding: 12px;">3</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Lấy mẫu xét nghiệm</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">15 phút</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">DNA testing sample collection</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">15 minutes</td>
         </tr>
         <tr style="background-color: #f8f9fa;">
           <td style="border: 1px solid #dee2e6; padding: 12px;">4</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Nhận kết quả</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">24-48h</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Receiving results</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">24-48 hours</td>
         </tr>
       </table>
       
-      <p><strong>Dịch vụ số hóa:</strong></p>
+      <p><strong>Digital service:</strong></p>
       <ul>
-        <li><strong>Ứng dụng di động:</strong> Ra mắt app "ADN Việt Nam" để theo dõi tiến độ</li>
-        <li><strong>Thanh toán điện tử:</strong> Hỗ trợ thanh toán qua ví điện tử, internet banking</li>
-        <li><strong>Kết quả điện tử:</strong> Nhận kết quả qua email với chữ ký số</li>
-        <li><strong>Lưu trữ đám mây:</strong> Kết quả được lưu trữ an toàn trên hệ thống quốc gia</li>
+        <li><strong>Mobile application:</strong> Launch of "Vietnam DNA" app for tracking progress</li>
+        <li><strong>Online payment:</strong> Support for online payment through electronic wallets, internet banking</li>
+        <li><strong>Digital results:</strong> Receive results via email with digital signature</li>
+        <li><strong>Cloud storage:</strong> Results are securely stored on the national system</li>
       </ul>
 
-      <h2 id="3">Bước 3: Quyền và nghĩa vụ của các bên tham gia</h2>
-      <p>Luật ADN 2025 quy định rõ ràng quyền và nghĩa vụ của từng bên tham gia để đảm bảo tính công bằng và minh bạch:</p>
+      <h2 id="3">Step 3: Rights and Obligations of Participating Parties</h2>
+      <p>DNA Law 2025 clearly defines the rights and obligations of each party involved to ensure fairness and transparency:</p>
       
-      <p><strong>Quyền của người yêu cầu xét nghiệm:</strong></p>
+      <p><strong>Rights of the person requesting testing:</strong></p>
       <ul>
-        <li><strong>Quyền được thông tin:</strong> Được giải thích đầy đủ về quy trình, chi phí, thời gian</li>
-        <li><strong>Quyền lựa chọn:</strong> Tự do lựa chọn cơ sở xét nghiệm có đủ điều kiện</li>
-        <li><strong>Quyền bảo mật:</strong> Thông tin cá nhân và kết quả được bảo mật tuyệt đối</li>
-        <li><strong>Quyền khiếu nại:</strong> Khiếu nại khi có vi phạm trong quá trình thực hiện</li>
-        <li><strong>Quyền được bồi thường:</strong> Được bồi thường thiệt hại khi có sai sót</li>
+        <li><strong>Right to information:</strong> Being fully explained about the process, costs, and time</li>
+        <li><strong>Right to choose:</strong> Free choice of testing facility with sufficient conditions</li>
+        <li><strong>Right to confidentiality:</strong> Personal information and results are kept absolutely confidential</li>
+        <li><strong>Right to appeal:</strong> Appeal when violations occur during the process</li>
+        <li><strong>Right to compensation:</strong> Being compensated for damages when errors occur</li>
       </ul>
       
-      <p><strong>Nghĩa vụ của người yêu cầu xét nghiệm:</strong></p>
+      <p><strong>Obligations of the person requesting testing:</strong></p>
       <ul>
-        <li><strong>Cung cấp thông tin chính xác:</strong> Khai báo đúng sự thật về nhân thân</li>
-        <li><strong>Tuân thủ quy trình:</strong> Thực hiện đúng các bước theo hướng dẫn</li>
-        <li><strong>Thanh toán đầy đủ:</strong> Chi trả phí dịch vụ theo quy định</li>
-        <li><strong>Bảo mật thông tin:</strong> Không tiết lộ thông tin của người khác</li>
+        <li><strong>Providing accurate information:</strong> Declaring truthfully about personal background</li>
+        <li><strong>Following the procedure:</strong> Conducting the process correctly according to instructions</li>
+        <li><strong>Full payment:</strong> Paying for service fees according to regulations</li>
+        <li><strong>Confidentiality:</strong> Not disclosing the information of others</li>
       </ul>
       
-      <p><strong>Quyền của người tham gia xét nghiệm:</strong></p>
+      <p><strong>Rights of the testing participant:</strong></p>
       <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #4CAF50;">
         <ul>
-          <li><strong>Quyền từ chối:</strong> Có quyền từ chối tham gia xét nghiệm (trừ trường hợp bắt buộc theo pháp luật)</li>
-          <li><strong>Quyền được tư vấn:</strong> Được tư vấn về ý nghĩa và hậu quả của xét nghiệm</li>
-          <li><strong>Quyền biết kết quả:</strong> Được thông báo kết quả xét nghiệm (nếu đồng ý)</li>
-          <li><strong>Quyền yêu cầu hủy mẫu:</strong> Yêu cầu hủy mẫu sinh học sau khi có kết quả</li>
+          <li><strong>Right to refuse:</strong> Has the right to refuse to participate in testing (except in cases mandated by law)</li>
+          <li><strong>Right to consultation:</strong> Being consulted about the meaning and consequences of testing</li>
+          <li><strong>Right to know results:</strong> Being informed about test results (if consented)</li>
+          <li><strong>Right to request sample destruction:</strong> Requesting destruction of biological samples after results</li>
         </ul>
       </div>
       
-      <p><strong>Nghĩa vụ của cơ sở xét nghiệm:</strong></p>
+      <p><strong>Obligations of the testing facility:</strong></p>
       <ul>
-        <li><strong>Đảm bảo chất lượng:</strong> Tuân thủ nghiêm ngặt các tiêu chuẩn kỹ thuật</li>
-        <li><strong>Bảo mật thông tin:</strong> Xây dựng hệ thống bảo mật thông tin theo chuẩn quốc tế</li>
-        <li><strong>Báo cáo định kỳ:</strong> Báo cáo hoạt động với cơ quan quản lý</li>
-        <li><strong>Đào tạo nhân viên:</strong> Đảm bảo nhân viên có đủ trình độ chuyên môn</li>
-        <li><strong>Bồi thường thiệt hại:</strong> Chịu trách nhiệm bồi thường khi có sai sót</li>
+        <li><strong>Ensuring quality:</strong> Adhering to strict technical standards</li>
+        <li><strong>Confidentiality:</strong> Establishing a secure information system according to international standards</li>
+        <li><strong>Periodic reporting:</strong> Reporting activities to the management authority</li>
+        <li><strong>Training staff:</strong> Ensuring staff have the necessary professional skills</li>
+        <li><strong>Compensation for damages:</strong> Bearing responsibility for damages when errors occur</li>
       </ul>
 
-      <h2 id="4">Bước 4: Quy trình thực hiện xét nghiệm ADN</h2>
-      <p>Luật ADN 2025 quy định quy trình chuẩn hóa, đảm bảo tính nhất quán trên toàn quốc:</p>
+      <h2 id="4">Step 4: DNA Testing Implementation Process</h2>
+      <p>DNA Law 2025 specifies standardized procedures, ensuring consistency across the country:</p>
       
-      <p><strong>Giai đoạn chuẩn bị:</strong></p>
+      <p><strong>Preparation phase:</strong></p>
       <ul>
-        <li><strong>Tư vấn ban đầu:</strong> Giải thích về quy trình, chi phí, thời gian và ý nghĩa pháp lý</li>
-        <li><strong>Ký cam kết:</strong> Các bên ký cam kết tham gia và tuân thủ quy định</li>
-        <li><strong>Xác minh danh tính:</strong> Kiểm tra CCCD/CMND và chụp ảnh lưu hồ sơ</li>
-        <li><strong>Lập biên bản:</strong> Ghi nhận đầy đủ thông tin các bên tham gia</li>
+        <li><strong>Initial consultation:</strong> Explaining the process, costs, time, and legal significance</li>
+        <li><strong>Signing a commitment:</strong> All parties sign a commitment to abide by the regulations</li>
+        <li><strong>Identity verification:</strong> Verifying CCCD/CMND and taking photographs of the record</li>
+        <li><strong>Document preparation:</strong> Recording all information about the parties involved</li>
       </ul>
       
-      <p><strong>Giai đoạn lấy mẫu:</strong></p>
+      <p><strong>Sample collection phase:</strong></p>
       <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
-        <p><strong>⚠️ Lưu ý quan trọng:</strong> Việc lấy mẫu phải được thực hiện bởi nhân viên có chứng chỉ, trong sự chứng kiến của ít nhất 2 người và được ghi hình lưu trữ.</p>
+        <p><strong>⚠️ Important note:</strong> Sampling must be conducted by staff with certification, with at least 2 witnesses present and recorded.</p>
       </div>
       
       <ul>
-        <li><strong>Chuẩn bị dụng cụ:</strong> Sử dụng bộ kit lấy mẫu đã được kiểm định</li>
-        <li><strong>Lấy mẫu nước bọt:</strong> Phương pháp ưu tiên, không xâm lấn</li>
-        <li><strong>Lấy mẫu tế bào má:</strong> Sử dụng que cotton chuyên dụng</li>
-        <li><strong>Đóng gói mẫu:</strong> Bảo quản trong điều kiện nhiệt độ phù hợp</li>
-        <li><strong>Vận chuyển:</strong> Chuyển mẫu đến phòng thí nghiệm trong vòng 24h</li>
+        <li><strong>Equipment preparation:</strong> Using pre-certified sampling kits</li>
+        <li><strong>Saliva or cheek cell sampling:</strong> Preferred method, non-invasive</li>
+        <li><strong>Tissue culture sampling:</strong> Using cotton swabs for specific use</li>
+        <li><strong>Sample packaging:</strong> Storing in appropriate temperature conditions</li>
+        <li><strong>Transportation:</strong> Transporting samples to the laboratory within 24 hours</li>
       </ul>
       
-      <p><strong>Giai đoạn phân tích:</strong></p>
+      <p><strong>Analysis phase:</strong></p>
       <ul>
-        <li><strong>Tách chiết ADN:</strong> Sử dụng công nghệ tự động hóa</li>
-        <li><strong>Khuếch đại PCR:</strong> Nhân bản các đoạn ADN đích</li>
-        <li><strong>Điện di phân tích:</strong> Phân tích các marker di truyền</li>
-        <li><strong>So sánh dữ liệu:</strong> Sử dụng phần mềm chuyên dụng</li>
-        <li><strong>Kiểm tra chất lượng:</strong> Thực hiện kiểm tra chéo với mẫu chuẩn</li>
+        <li><strong>DNA extraction:</strong> Using automated technology</li>
+        <li><strong>PCR amplification:</strong> Amplifying target DNA segments</li>
+        <li><strong>Electrophoresis analysis:</strong> Analyzing genetic markers</li>
+        <li><strong>Data comparison:</strong> Using specialized software</li>
+        <li><strong>Quality control:</strong> Conducting cross-checks with standard samples</li>
       </ul>
       
-      <p><strong>Tiêu chuẩn kỹ thuật bắt buộc:</strong></p>
+      <p><strong>Technical requirements:</strong></p>
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background-color: #f8f9fa;">
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Tiêu chí</th>
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Yêu cầu tối thiểu</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Criteria</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Minimum Requirement</th>
         </tr>
         <tr>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Số lượng marker</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Tối thiểu 20 marker</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Number of markers</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">At least 20 markers</td>
         </tr>
         <tr style="background-color: #f8f9fa;">
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Độ chính xác</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Accuracy</td>
           <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≥ 99.99%</td>
         </tr>
         <tr>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Thời gian báo cáo</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≤ 5 ngày làm việc</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Report preparation time</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≤ 5 working days</td>
         </tr>
         <tr style="background-color: #f8f9fa;">
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Lưu trữ mẫu</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Tối thiểu 2 năm</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Sample storage</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">At least 2 years</td>
         </tr>
       </table>
 
-      <h2 id="5">Bước 5: Giá trị pháp lý của kết quả xét nghiệm</h2>
-      <p>Luật ADN 2025 nâng cao đáng kể giá trị pháp lý của kết quả xét nghiệm ADN trong các thủ tục pháp lý:</p>
+      <h2 id="5">Step 5: Legal Value of Test Results</h2>
+      <p>DNA Law 2025 significantly enhances the legal value of DNA test results in legal procedures:</p>
       
-      <p><strong>Giá trị làm bằng chứng:</strong></p>
+      <p><strong>Evidence of scientific validity:</strong></p>
       <ul>
-        <li><strong>Bằng chứng khoa học:</strong> Được công nhận là bằng chứng khoa học có giá trị cao</li>
-        <li><strong>Sức thuyết phục:</strong> Có sức thuyết phục mạnh trong các vụ việc dân sự và hình sự</li>
-        <li><strong>Độ tin cậy:</strong> Được tòa án chấp nhận với độ tin cậy cao</li>
-        <li><strong>Tính bắt buộc:</strong> Trong một số trường hợp, tòa án có thể yêu cầu bắt buộc thực hiện</li>
+        <li><strong>Scientific evidence:</strong> Accepted as scientifically valid high-value evidence</li>
+        <li><strong>Convincing power:</strong> Strong persuasive power in civil and criminal cases</li>
+        <li><strong>Reliability:</strong> Accepted by the court with high confidence</li>
+        <li><strong>Mandatory:</strong> In some cases, the court may require it to be conducted</li>
       </ul>
       
-      <p><strong>Ứng dụng trong các lĩnh vực:</strong></p>
+      <p><strong>Applications in various fields:</strong></p>
       
-      <p><strong>1. Dân sự:</strong></p>
+      <p><strong>1. Civil:</strong></p>
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
         <ul>
-          <li><strong>Xác định quan hệ cha con:</strong> Làm cơ sở cho việc đăng ký khai sinh</li>
-          <li><strong>Tranh chấp thừa kế:</strong> Xác định người thừa kế hợp pháp</li>
-          <li><strong>Ly hôn và nuôi con:</strong> Xác định quyền nuôi con sau ly hôn</li>
-          <li><strong>Nhận con nuôi:</strong> Chứng minh không có quan hệ huyết thống</li>
+          <li><strong>Determining father-child relationship:</strong> Providing basis for birth registration</li>
+          <li><strong>Inheritance disputes:</strong> Determining legitimate heirs</li>
+          <li><strong>Divorce and child custody:</strong> Determining post-divorce child custody</li>
+          <li><strong>Adoption:</strong> Proving no blood relationship</li>
         </ul>
       </div>
       
-      <p><strong>2. Hình sự:</strong></p>
+      <p><strong>2. Criminal:</strong></p>
       <ul>
-        <li><strong>Điều tra tội phạm:</strong> Xác định danh tính nghi phạm</li>
-        <li><strong>Bằng chứng tại tòa:</strong> Làm bằng chứng buộc tội hoặc minh oan</li>
-        <li><strong>Xác định nạn nhân:</strong> Trong các vụ tai nạn, thảm họa</li>
-        <li><strong>Tái thẩm:</strong> Cơ sở cho việc kháng nghị tái thẩm</li>
+        <li><strong>Investigation of crimes:</strong> Determining the identity of suspects</li>
+        <li><strong>Evidence at trial:</strong> Providing evidence to convict or exonerate</li>
+        <li><strong>Identifying victims:</strong> In cases of accidents, disasters</li>
+        <li><strong>Re-examination:</strong> Basis for appeal in criminal cases</li>
       </ul>
       
-      <p><strong>3. Hành chính:</strong></p>
+      <p><strong>3. Administrative:</strong></p>
       <ul>
-        <li><strong>Xuất nhập cảnh:</strong> Chứng minh quan hệ gia đình cho visa</li>
-        <li><strong>Định cư:</strong> Hỗ trợ thủ tục định cư theo diện gia đình</li>
-        <li><strong>Bảo hiểm:</strong> Xác định người thụ hưởng bảo hiểm</li>
-        <li><strong>Trợ cấp xã hội:</strong> Xác định đối tượng được hưởng trợ cấp</li>
+        <li><strong>Immigration:</strong> Providing evidence of family relationships for visas</li>
+        <li><strong>Residency:</strong> Supporting family-based immigration applications</li>
+        <li><strong>Insurance:</strong> Determining beneficiaries of insurance</li>
+        <li><strong>Social assistance:</strong> Determining eligible recipients of social assistance</li>
       </ul>
       
-      <p><strong>Điều kiện để kết quả có giá trị pháp lý:</strong></p>
+      <p><strong>Conditions for results to have legal value:</strong></p>
       <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #2196F3;">
         <ul>
-          <li><strong>Cơ sở có đủ điều kiện:</strong> Được cấp phép hoạt động theo quy định</li>
-          <li><strong>Quy trình đúng chuẩn:</strong> Tuân thủ nghiêm ngặt quy trình kỹ thuật</li>
-          <li><strong>Nhân viên có chứng chỉ:</strong> Thực hiện bởi nhân viên được đào tạo</li>
-          <li><strong>Có chứng kiến:</strong> Quá trình lấy mẫu có người chứng kiến</li>
-          <li><strong>Bảo quản đúng cách:</strong> Mẫu được bảo quản theo đúng quy định</li>
+          <li><strong>Facility meets the requirements:</strong> Operating under the approved scope</li>
+          <li><strong>Following the procedure:</strong> Strictly following the technical process</li>
+          <li><strong>Staff certification:</strong> Conducted by staff trained and certified</li>
+          <li><strong>Witnessed:</strong> Sampling process has witnesses</li>
+          <li><strong>Proper storage:</strong> Samples are stored according to regulations</li>
         </ul>
       </div>
 
-      <h2 id="6">Bước 6: Hướng dẫn thực hiện và lộ trình áp dụng</h2>
-      <p>Để đảm bảo việc triển khai Luật ADN 2025 hiệu quả, các cơ quan chức năng đã xây dựng lộ trình cụ thể:</p>
+      <h2 id="6">Step 6: Implementation Guidelines and Application Timeline</h2>
+      <p>To ensure the effective implementation of DNA Law 2025, relevant authorities have developed specific timelines:</p>
       
-      <p><strong>Giai đoạn 1 (Tháng 3-6/2025): Triển khai ban đầu</strong></p>
+      <p><strong>Phase 1 (March-June 2025): Initial rollout</strong></p>
       <ul>
-        <li><strong>Đào tạo cán bộ:</strong> Tập huấn cho 100% cán bộ liên quan</li>
-        <li><strong>Cập nhật hệ thống:</strong> Nâng cấp hệ thống thông tin quản lý</li>
-        <li><strong>Thí điểm tại 5 tỉnh/thành:</strong> Hà Nội, TP.HCM, Đà Nẵng, Cần Thơ, Hải Phòng</li>
-        <li><strong>Tuyên truyền:</strong> Phổ biến rộng rãi đến người dân</li>
+        <li><strong>Training staff:</strong> Training for 100% relevant staff</li>
+        <li><strong>System update:</strong> Upgrading the management information system</li>
+        <li><strong>Trial implementation in 5 provinces/cities:</strong> Hanoi, Ho Chi Minh City, Da Nang, Can Tho, Hai Phong</li>
+        <li><strong>Publicity:</strong> Widely disseminated to the public</li>
       </ul>
       
-      <p><strong>Giai đoạn 2 (Tháng 7-12/2025): Mở rộng triển khai</strong></p>
+      <p><strong>Phase 2 (July-December 2025): Expanding implementation</strong></p>
       <ul>
-        <li><strong>Triển khai toàn quốc:</strong> Áp dụng tại tất cả 63 tỉnh/thành</li>
-        <li><strong>Hoàn thiện quy trình:</strong> Điều chỉnh dựa trên kinh nghiệm thí điểm</li>
-        <li><strong>Kết nối liên ngành:</strong> Liên thông dữ liệu giữa các cơ quan</li>
-        <li><strong>Đánh giá hiệu quả:</strong> Thực hiện đánh giá tác động</li>
+        <li><strong>National-wide implementation:</strong> Applied to all 63 provinces/cities</li>
+        <li><strong>Improving procedures:</strong> Adjusting based on experience from trials</li>
+        <li><strong>Inter-sectoral data sharing:</strong> Sharing data between relevant authorities</li>
+        <li><strong>Impact assessment:</strong> Conducting impact assessments</li>
       </ul>
       
-      <p><strong>Giai đoạn 3 (Từ 2026): Hoàn thiện và phát triển</strong></p>
+      <p><strong>Phase 3 (From 2026): Completing and developing</strong></p>
       <ul>
-        <li><strong>Ứng dụng AI:</strong> Tích hợp trí tuệ nhân tạo vào quy trình</li>
-        <li><strong>Mở rộng dịch vụ:</strong> Phát triển thêm các dịch vụ mới</li>
-        <li><strong>Hợp tác quốc tế:</strong> Kết nối với cơ sở dữ liệu quốc tế</li>
-        <li><strong>Nghiên cứu phát triển:</strong> Đầu tư vào R&D công nghệ mới</li>
+        <li><strong>AI integration:</strong> Integrating artificial intelligence into the process</li>
+        <li><strong>Expanding services:</strong> Developing new services</li>
+        <li><strong>International cooperation:</strong> Establishing connections with international databases</li>
+        <li><strong>Research and development:</strong> Investing in new technology R&D</li>
       </ul>
       
-      <p><strong>Hướng dẫn cho người dân:</strong></p>
-      <p><strong>Chính sách hỗ trợ:</strong></p>
+      <p><strong>Guidelines for the public:</strong></p>
+      <p><strong>Supporting policies:</strong></p>
       <ul>
-        <li><strong>Miễn phí:</strong> Hộ nghèo, cận nghèo được miễn 100% phí</li>
-        <li><strong>Giảm 50%:</strong> Người có công với cách mạng</li>
-        <li><strong>Giảm 30%:</strong> Học sinh, sinh viên, người cao tuổi</li>
-        <li><strong>Trả góp:</strong> Cho phép thanh toán theo đợt với các trường hợp khó khăn</li>
+        <li><strong>Free of charge:</strong> Poor and near-poor households receive 100% exemption</li>
+        <li><strong>50% reduction:</strong> Individuals with contributions to the revolution</li>
+        <li><strong>30% reduction:</strong> Students, the elderly, and the disabled</li>
+        <li><strong>Installment payments:</strong> Allowing installment payments for difficult cases</li>
       </ul>
       
-      <p><strong>Cam kết chất lượng dịch vụ:</strong></p>
+      <p><strong>Quality commitment:</strong></p>
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background-color: #f8f9fa;">
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Tiêu chí</th>
-          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Cam kết</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Criteria</th>
+          <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Commitment</th>
         </tr>
         <tr>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Thời gian xử lý hồ sơ</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≤ 3 ngày làm việc</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Time to process application</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≤ 3 working days</td>
         </tr>
         <tr style="background-color: #f8f9fa;">
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Thời gian có kết quả</td>
-          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≤ 5 ngày làm việc</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Time to receive results</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≤ 5 working days</td>
         </tr>
         <tr>
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Độ chính xác</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Accuracy</td>
           <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≥ 99.99%</td>
         </tr>
         <tr style="background-color: #f8f9fa;">
-          <td style="border: 1px solid #dee2e6; padding: 12px;">Tỷ lệ hài lòng</td>
+          <td style="border: 1px solid #dee2e6; padding: 12px;">Customer satisfaction rate</td>
           <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">≥ 95%</td>
         </tr>
       </table>
-      <p><strong>Kết luận:</strong></p>
-      <p>Luật ADN 2025 đánh dấu bước tiến quan trọng trong việc hiện đại hóa hệ thống pháp luật Việt Nam, mang lại nhiều lợi ích thiết thực cho người dân. Với 6 bước triển khai cụ thể, Luật không chỉ đơn giản hóa thủ tục mà còn nâng cao chất lượng dịch vụ, đảm bảo quyền lợi của công dân và tạo môi trường pháp lý thuận lợi cho sự phát triển của ngành xét nghiệm ADN tại Việt Nam.</p>
+      <p><strong>Conclusion:</strong></p>
+      <p>DNA Law 2025 marks a significant step forward in modernizing the legal system of Vietnam, bringing many practical benefits to the public. With specific implementation phases, the law not only simplifies procedures but also improves service quality, ensuring the rights of citizens and creating a favorable legal environment for the development of DNA testing in Vietnam.</p>
       
-      <p>Người dân được khuyến khích tìm hiểu và tận dụng các quy định mới để bảo vệ quyền lợi hợp pháp của mình, đồng thời góp phần xây dựng xã hội văn minh, hiện đại.</p>
+      <p>The public is encouraged to understand and take advantage of the new regulations to protect their legal rights, while also contributing to the construction of a civilized, modern society. The law's clear guidelines provide a clear path for the public and medical facilities to navigate, ensuring that everyone's rights are respected and their interests are protected.</p>
     </div>
   `
 },
  // ... existing code ...
   {
     id: 4,
-    title: "Giải Quyết Tranh Chấp Thừa Kế Bằng Xét Nghiệm ADN",
-    category: "Dân Sự",
-    excerpt: "Hướng dẫn toàn diện về vai trò quan trọng của xét nghiệm ADN trong việc giải quyết các tranh chấp thừa kế tài sản gia đình một cách công bằng và minh bạch.",
+    title: "Resolving Inheritance Disputes through DNA Testing",
+    category: "Civil Law",
+    excerpt: "A comprehensive guide to the importance of DNA testing in resolving inheritance disputes in a fair and transparent manner.",
     image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&h=800&fit=crop",
     slug: "giai-quyet-tranh-chap-thua-ke-bang-xet-nghiem-adn",
-    author: "Thẩm phán Phạm Thị Lan",
+    author: "Judge Pham Thi Lan",
     date: "2024-01-20",
-    readTime: "12 phút đọc",
+    readTime: "12 min read",
     featured: false,
     views: 980,
     likes: 67,
     comments: 18,
     tableOfContents: [
-      { id: "1", title: "Khi nào cần xét nghiệm ADN trong tranh chấp thừa kế?", level: 1 },
-      { id: "2", title: "Xét nghiệm ADN pháp lý là gì?", level: 1 },
-      { id: "3", title: "Quy trình thực hiện chi tiết", level: 1 },
-      { id: "4", title: "Lợi ích của xét nghiệm ADN trong tranh chấp thừa kế", level: 1 },
-      { id: "5", title: "Chi phí và thời gian thực hiện", level: 1 },
-      { id: "6", title: "Những lưu ý quan trọng", level: 1 },
-      { id: "7", title: "Các trường hợp thường gặp", level: 1 },
-      { id: "8", title: "Kinh nghiệm thực tế từ các vụ việc", level: 1 }
+      { id: "1", title: "When is DNA testing needed in inheritance disputes?", level: 1 },
+      { id: "2", title: "What is legal DNA testing?", level: 1 },
+      { id: "3", title: "Detailed Implementation Process", level: 1 },
+      { id: "4", title: "Benefits of DNA testing in inheritance disputes", level: 1 },
+      { id: "5", title: "Time and Cost", level: 1 },
+      { id: "6", title: "Important Considerations", level: 1 },
+      { id: "7", title: "Common Scenarios", level: 1 },
+      { id: "8", title: "Practical Experience from Cases", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <p class="lead-paragraph">Tranh chấp thừa kế là một trong những vấn đề phức tạp nhất trong pháp luật dân sự, đặc biệt khi có nghi ngờ về mối quan hệ huyết thống giữa các bên. Xét nghiệm ADN đã trở thành công cụ khoa học đáng tin cậy, giúp tòa án và các bên liên quan giải quyết tranh chấp một cách công bằng, minh bạch và dứt khoát.</p>
+        <p class="lead-paragraph">Inheritance disputes are one of the most complex issues in civil law, especially when there is suspicion about the blood relationship between parties. DNA testing has become a reliable scientific tool, helping courts and parties involved to resolve disputes fairly, transparently, and decisively.</p>
         
-        <h2 id="1">Khi nào cần xét nghiệm ADN trong tranh chấp thừa kế?</h2>
-        <p>Xét nghiệm ADN được áp dụng trong các trường hợp tranh chấp thừa kế khi có nghi ngờ hoặc tranh cãi về mối quan hệ huyết thống giữa người để lại di sản và những người tự nhận là người thừa kế.</p>
+        <h2 id="1">When is DNA testing needed in inheritance disputes?</h2>
+        <p>DNA testing is applied in inheritance disputes when there is suspicion or dispute about the blood relationship between the deceased and potential heirs. The deceased leaves behind a will or intestate succession, and there are multiple potential heirs claiming their share.</p>
         
-        <p><strong>Các tình huống cụ thể:</strong></p>
+        <p><strong>Specific situations:</strong></p>
         <ul>
-          <li><strong>Tranh chấp về quan hệ cha-con:</strong> Khi có nghi ngờ về việc một người có phải là con ruột của người để lại di sản hay không</li>
-          <li><strong>Xác định quan hệ anh chị em ruột:</strong> Trong trường hợp nhiều người cùng tuyên bố là anh chị em ruột của nhau</li>
-          <li><strong>Quan hệ ông bà-cháu:</strong> Khi cần xác định mối quan hệ thế hệ thứ hai</li>
-          <li><strong>Quan hệ cô dì-cháu:</strong> Xác định mối quan hệ họ hàng bên ngoài</li>
-          <li><strong>Trường hợp con nuôi:</strong> Phân biệt giữa con nuôi và con ruột trong thừa kế</li>
-          <li><strong>Nhận con ngoài giá thú:</strong> Xác định quyền thừa kế của con ngoài hôn nhân</li>
+          <li><strong>Dispute over father-child relationship:</strong> When there is doubt about whether a person is the biological child of the deceased</li>
+          <li><strong>Identifying sibling relationships:</strong> In cases where multiple people claim to be siblings</li>
+          <li><strong>Grandparent-grandchild relationship:</strong> When there is a need to determine the relationship between the deceased's grandparents and grandchildren</li>
+          <li><strong>Relationship between cousins:</strong> Determining the relationship between distant relatives</li>
+          <li><strong>Stepchild situation:</strong> Distinguishing between stepchildren and biological children in inheritance</li>
+          <li><strong>Adoption situation:</strong> Determining the rights of children outside of marriage</li>
         </ul>
         
-        <p><strong>Vai trò của tòa án:</strong></p>
-        <p>Tòa án có thể yêu cầu thực hiện xét nghiệm ADN trong các trường hợp:</p>
+        <p><strong>Role of the court:</strong></p>
+        <p>The court may request DNA testing in cases where:</p>
         <ul>
-          <li>Có đơn yêu cầu từ một trong các bên tranh chấp</li>
-          <li>Tòa án thấy cần thiết để làm rõ sự thật</li>
-          <li>Các bằng chứng khác không đủ để xác định quan hệ huyết thống</li>
-          <li>Có sự mâu thuẫn trong các tài liệu, chứng từ</li>
+          <li>A party has requested it</li>
+          <li>The court believes it is necessary to clarify the truth</li>
+          <li>Other evidence is insufficient to determine blood relationship</li>
+          <li>There is conflict in documents and records</li>
         </ul>
         
         <div class="important-note">
-          <p><strong>Lưu ý pháp lý:</strong> Xét nghiệm ADN giúp đảm bảo rằng người thừa kế thật sự là người có quyền về mặt pháp luật, bảo vệ quyền lợi hợp pháp của tất cả các bên liên quan.</p>
+          <p><strong>Legal note:</strong> DNA testing helps ensure that the true heir is recognized legally, protecting the legal rights of all parties involved.</p>
         </div>
 
-        <h2 id="2">Xét nghiệm ADN pháp lý là gì?</h2>
-        <p>Xét nghiệm ADN pháp lý (Legal/Administrative DNA Test) là loại xét nghiệm được thực hiện theo quy trình nghiêm ngặt, đáp ứng các tiêu chuẩn pháp lý để kết quả có thể được sử dụng trong các thủ tục tư pháp và hành chính.</p>
+        <h2 id="2">What is legal DNA testing?</h2>
+        <p>Legal DNA testing (Legal/Administrative DNA Test) is a type of testing conducted under strict procedures, meeting legal standards to allow results to be used in legal and administrative procedures. The test is conducted by trained professionals and is kept secure to ensure confidentiality.</p>
         
-        <p><strong>Đặc điểm của xét nghiệm ADN pháp lý:</strong></p>
+        <p><strong>Features of legal DNA testing:</strong></p>
         <ul>
-          <li><strong>Quy trình chuẩn hóa:</strong> Tuân thủ nghiêm ngặt các quy định của pháp luật</li>
-          <li><strong>Xác minh danh tính:</strong> Kiểm tra chặt chẽ giấy tờ tùy thân của tất cả các bên</li>
-          <li><strong>Thu mẫu chuyên nghiệp:</strong> Do nhân viên được đào tạo chuyên môn thực hiện</li>
-          <li><strong>Niêm phong bảo mật:</strong> Mẫu được niêm phong và bảo quản theo quy trình an toàn</li>
-          <li><strong>Chuỗi bảo quản (Chain of Custody):</strong> Theo dõi mẫu từ lúc lấy đến khi có kết quả</li>
-          <li><strong>Chữ ký và cam kết:</strong> Tất cả các bên ký cam kết về tính chính xác thông tin</li>
+          <li><strong>Standardization:</strong> Following legal regulations</li>
+          <li><strong>Identity verification:</strong> Thoroughly checking personal documents of all parties</li>
+          <li><strong>Professional sampling:</strong> Conducted by trained personnel</li>
+          <li><strong>Security:</strong> Samples are sealed and stored securely</li>
+          <li><strong>Chain of custody:</strong> Tracking samples from collection to result</li>
+          <li><strong>Digital signature:</strong> All parties sign a commitment to the accuracy of the information</li>
         </ul>
         
-        <p><strong>Ứng dụng của xét nghiệm ADN pháp lý:</strong></p>
+        <p><strong>Applications of legal DNA testing:</strong></p>
         <ul>
-          <li>Tranh chấp thừa kế tài sản</li>
-          <li>Tranh tụng tại tòa án</li>
-          <li>Thủ tục ly hôn và phân chia tài sản</li>
-          <li>Đăng ký khai sinh muộn</li>
-          <li>Bảo lãnh nhập cư, đoàn tụ gia đình</li>
-          <li>Xác định danh tính nạn nhân tai nạn</li>
-          <li>Các vụ việc pháp y hình sự</li>
+          <li>Inheritance disputes</li>
+          <li>Legal disputes</li>
+          <li>Divorce and property division</li>
+          <li>Late birth registration</li>
+          <li>Immigration-related issues</li>
+          <li>Criminal investigations</li>
         </ul>
         
-        <p><strong>Giá trị pháp lý:</strong></p>
-        <p>Kết quả xét nghiệm ADN pháp lý được tòa án và các cơ quan có thẩm quyền chấp nhận làm bằng chứng trong các thủ tục tư pháp, với độ tin cậy cao và có thể quyết định kết quả của vụ việc.</p>
+        <p><strong>Legal value:</strong></p>
+        <p>The results of legal DNA testing are accepted as evidence in legal and administrative proceedings, with high reliability and the potential to determine the outcome of a case. The court may rely on the test results to make decisions.</p>
 
-        <h2 id="3">Quy trình thực hiện chi tiết</h2>
-        <p>Quy trình xét nghiệm ADN trong tranh chấp thừa kế được thực hiện theo các bước chuẩn mực, đảm bảo tính chính xác và giá trị pháp lý.</p>
+        <h2 id="3">Detailed Implementation Process</h2>
+        <p>The process of conducting legal DNA testing in inheritance disputes follows standardized procedures to ensure accuracy and legal value:</p>
         
-        <p><strong>Bước 1: Tòa án ra yêu cầu</strong></p>
+        <p><strong>Step 1: Court order</strong></p>
         <ul>
-          <li><strong>Văn bản chính thức:</strong> Tòa án ban hành quyết định hoặc văn bản yêu cầu xét nghiệm ADN</li>
-          <li><strong>Nội dung cụ thể:</strong> Xác định rõ các bên cần xét nghiệm và mục đích</li>
-          <li><strong>Thời hạn thực hiện:</strong> Quy định thời gian hoàn thành xét nghiệm</li>
-          <li><strong>Cơ sở thực hiện:</strong> Có thể chỉ định cơ sở xét nghiệm cụ thể</li>
+          <li><strong>Official document:</strong> The court issues a decision or request for DNA testing</li>
+          <li><strong>Specific content:</strong> Clearly identifying the parties involved and the purpose</li>
+          <li><strong>Timeframe:</strong> Specifying the time required to complete the test</li>
+          <li><strong>Conducting entity:</strong> The court may specify a particular facility to conduct the test</li>
         </ul>
         
-        <p><strong>Bước 2: Lựa chọn trung tâm xét nghiệm uy tín</strong></p>
-        <p>Các tiêu chí lựa chọn trung tâm xét nghiệm:</p>
+        <p><strong>Step 2: Selecting a reputable testing center</strong></p>
+        <p>Criteria for selecting a reputable testing center:</p>
         <ul>
-          <li><strong>Giấy phép hoạt động:</strong> Được Bộ Y tế cấp phép hoạt động</li>
-          <li><strong>Chứng nhận chất lượng:</strong> Có các chứng nhận quốc tế (ISO 17025, AABB, CAP)</li>
-          <li><strong>Kinh nghiệm và uy tín:</strong> Có nhiều năm kinh nghiệm trong lĩnh vực</li>
-          <li><strong>Công nghệ hiện đại:</strong> Sử dụng thiết bị và kỹ thuật tiên tiến</li>
-          <li><strong>Đội ngũ chuyên gia:</strong> Có bác sĩ, kỹ thuật viên được đào tạo chuyên sâu</li>
+          <li><strong>Operating permit:</strong> Issued by the Ministry of Health</li>
+          <li><strong>Quality certification:</strong> International standards (ISO 17025, AABB, CAP)</li>
+          <li><strong>Experience and reputation:</strong> Having a long track record in the field</li>
+          <li><strong>Advanced technology:</strong> Using modern equipment and techniques</li>
+          <li><strong>Expert team:</strong> Having experienced doctors and technicians</li>
         </ul>
         
-        <p><strong>Các trung tâm uy tín tại Việt Nam:</strong></p>
+        <p><strong>Required documents and procedures:</strong></p>
         <ul>
-          <li>Trung tâm Xét nghiệm ADN NOVAGEN</li>
-          <li>Công ty ADN Việt Nam</li>
-          <li>Trung tâm ADN TOPGEN</li>
-          <li>Phòng thí nghiệm GENFAMILY</li>
-          <li>Trung tâm Y tế VIETCARE</li>
+          <li><strong>ID card/Passport:</strong> Original for verification</li>
+          <li><strong>Birth certificate:</strong> For children under 14 years old</li>
+          <li><strong>Court decision:</strong> Official request for testing</li>
+          <li><strong>Power of attorney:</strong> If represented by someone else</li>
+          <li><strong>Other relevant documents:</strong> Death certificate, will (if applicable), notarized translations (if necessary)</li>
         </ul>
         
-        <p><strong>Bước 3: Chuẩn bị giấy tờ và lấy mẫu</strong></p>
-        <p><strong>Giấy tờ cần thiết:</strong></p>
+        <p><strong>Sampling process:</strong></p>
         <ul>
-          <li><strong>CMND/CCCD/Hộ chiếu:</strong> Bản chính để đối chiếu</li>
-          <li><strong>Giấy khai sinh:</strong> Đối với trẻ em dưới 14 tuổi</li>
-          <li><strong>Quyết định của tòa án:</strong> Văn bản yêu cầu xét nghiệm</li>
-          <li><strong>Giấy ủy quyền:</strong> Nếu có người đại diện</li>
-          <li><strong>Các giấy tờ liên quan:</strong> Giấy chứng tử, di chúc (nếu có)</li>
+          <li><strong>Identity verification:</strong> Thoroughly checking personal documents</li>
+          <li><strong>Photography:</strong> Taking photographs of all parties involved</li>
+          <li><strong>Biological sampling:</strong> Usually saliva or cheek cells, as these are non-invasive and widely used</li>
+          <li><strong>Witnessed:</strong> A lawyer or representative of the court is present</li>
+          <li><strong>Sealing:</strong> Samples are sealed and labeled immediately</li>
+          <li><strong>Digital confirmation:</strong> All parties digitally confirm the sampling process</li>
         </ul>
         
-        <p><strong>Quy trình lấy mẫu:</strong></p>
+        <p><strong>Analysis process:</strong></p>
         <ul>
-          <li><strong>Xác minh danh tính:</strong> Kiểm tra kỹ giấy tờ tùy thân</li>
-          <li><strong>Chụp ảnh:</strong> Chụp ảnh các bên tham gia xét nghiệm</li>
-          <li><strong>Lấy mẫu sinh học:</strong> Thường là nước bọt hoặc tế bào má</li>
-          <li><strong>Có người chứng kiến:</strong> Luật sư hoặc đại diện tòa án</li>
-          <li><strong>Niêm phong mẫu:</strong> Đóng gói và niêm phong theo quy trình</li>
-          <li><strong>Ký xác nhận:</strong> Tất cả các bên ký xác nhận việc lấy mẫu</li>
+          <li><strong>PCR-STR technique:</strong> Using the most advanced technology available</li>
+          <li><strong>Multiple markers:</strong> Typically 15-20 different STRs are analyzed</li>
+          <li><strong>High accuracy:</strong> Achieving ≥99.9% accuracy in determining relationships</li>
+          <li><strong>Quality control:</strong> Strict QC/QA procedures</li>
+          <li><strong>Result confirmation:</strong> At least 2 experts must confirm the results</li>
         </ul>
         
-        <p><strong>Bước 4: Phân tích mẫu</strong></p>
+        <p><strong>Step 5: Providing results</strong></p>
         <ul>
-          <li><strong>Kỹ thuật PCR-STR:</strong> Sử dụng công nghệ tiên tiến nhất hiện nay</li>
-          <li><strong>Phân tích nhiều marker:</strong> Thường 15-20 vị trí STR khác nhau</li>
-          <li><strong>Độ chính xác cao:</strong> Đạt ≥99.9% trong xác định quan hệ</li>
-          <li><strong>Kiểm tra chất lượng:</strong> Quy trình QC/QA nghiêm ngặt</li>
-          <li><strong>Xác nhận kết quả:</strong> Được ít nhất 2 chuyên gia xác nhận</li>
-        </ul>
-        
-        <p><strong>Bước 5: Trả kết quả</strong></p>
-        <ul>
-          <li><strong>Gửi trực tiếp tòa án:</strong> Kết quả được gửi niêm phong đến tòa án</li>
-          <li><strong>Thông báo các bên:</strong> Các bên liên quan được thông báo</li>
-          <li><strong>Giải thích kết quả:</strong> Chuyên gia giải thích ý nghĩa kết quả</li>
-          <li><strong>Bổ sung hồ sơ:</strong> Kết quả trở thành bằng chứng trong hồ sơ vụ việc</li>
+          <li><strong>Direct submission to the court:</strong> Results are submitted in sealed envelopes</li>
+          <li><strong>Notification to all parties:</strong> All parties are informed about the results</li>
+          <li><strong>Explanation of results:</strong> Experts explain the meaning of the results</li>
+          <li><strong>Updating the file:</strong> Results become part of the case file</li>
         </ul>
 
-        <h2 id="4">Lợi ích của xét nghiệm ADN trong tranh chấp thừa kế</h2>
-        <p>Việc sử dụng xét nghiệm ADN trong giải quyết tranh chấp thừa kế mang lại nhiều lợi ích thiết thực cho tòa án, các bên liên quan và xã hội.</p>
+        <h2 id="4">Benefits of DNA testing in inheritance disputes</h2>
+        <p>Using DNA testing in inheritance disputes brings many practical benefits to the court, parties involved, and society:</p>
         
-        <p><strong>1. Bằng chứng khoa học đáng tin cậy</strong></p>
+        <p><strong>1. Scientific reliability:</strong></p>
         <ul>
-          <li><strong>Độ chính xác cao:</strong> Đạt 99.99% trong xác định quan hệ huyết thống</li>
-          <li><strong>Khách quan, trung lập:</strong> Không bị ảnh hưởng bởi yếu tố chủ quan</li>
-          <li><strong>Không thể làm giả:</strong> Dựa trên đặc điểm di truyền độc nhất</li>
-          <li><strong>Được quốc tế công nhận:</strong> Áp dụng rộng rãi trên toàn thế giới</li>
+          <li><strong>High accuracy:</strong> Achieving 99.99% accuracy in determining blood relationships</li>
+          <li><strong>Objectivity and neutrality:</strong> Not influenced by subjective factors</li>
+          <li><strong>Non-manipulable:</strong> Based on unique genetic markers</li>
+          <li><strong>Recognized internationally:</strong> Widely accepted across the world</li>
         </ul>
         
-        <p><strong>2. Xử lý tranh chấp nhanh chóng</strong></p>
+        <p><strong>2. Quick resolution:</strong></p>
         <ul>
-          <li><strong>Rút ngắn thời gian:</strong> Tránh kéo dài vụ việc nhiều năm</li>
-          <li><strong>Giảm chi phí tố tụng:</strong> Ít phiên tòa, ít thủ tục phức tạp</li>
-          <li><strong>Kết luận dứt khoát:</strong> Không để lại nghi ngờ hay tranh cãi</li>
-          <li><strong>Giảm tải cho tòa án:</strong> Hỗ trợ thẩm phán đưa ra quyết định chính xác</li>
+          <li><strong>Shortening the process:</strong> Avoiding lengthy disputes</li>
+          <li><strong>Reducing legal costs:</strong> Fewer court hearings, fewer procedural steps</li>
+          <li><strong>Final conclusion:</strong> No room for doubt or dispute</li>
+          <li><strong>Reducing burden on the court:</strong> Supporting the court's decision-making</li>
         </ul>
         
-        <p><strong>3. Đảm bảo tính minh bạch và công bằng</strong></p>
+        <p><strong>3. Ensuring fairness and equality:</strong></p>
         <ul>
-          <li><strong>Xác nhận người có quyền:</strong> Đảm bảo chỉ người thừa kế hợp pháp được hưởng di sản</li>
-          <li><strong>Loại trừ người không có quyền:</strong> Ngăn chặn việc chiếm đoạt tài sản trái phép</li>
-          <li><strong>Bảo vệ quyền lợi các bên:</strong> Cả người thừa kế thật và người để lại di sản</li>
-          <li><strong>Tạo niềm tin xã hội:</strong> Củng cố lòng tin vào hệ thống tư pháp</li>
+          <li><strong>Identifying rightful heirs:</strong> Only legitimate heirs are recognized</li>
+          <li><strong>Preventing unauthorized claims:</strong> Preventing unauthorized claims to property</li>
+          <li><strong>Protecting the interests of all parties:</strong> Both legitimate heirs and the estate are protected</li>
+          <li><strong>Building social trust:</strong> Strengthening the legal system's credibility</li>
         </ul>
         
-        <p><strong>4. Bảo vệ đặc biệt cho trẻ em và người yếu thế</strong></p>
+        <p><strong>4. Special protection for children and vulnerable groups:</strong></p>
         <ul>
-          <li><strong>Quyền lợi trẻ em:</strong> Đảm bảo trẻ em được hưởng thừa kế đúng quy định</li>
-          <li><strong>Bảo vệ người thừa kế thật:</strong> Không bị mất quyền lợi do thiếu bằng chứng</li>
-          <li><strong>Ngăn chặn lừa đảo:</strong> Tránh trường hợp giả mạo quan hệ huyết thống</li>
-          <li><strong>Đặc biệt quan trọng:</strong> Khi tài sản lớn hoặc quan hệ huyết thống không rõ ràng</li>
+          <li><strong>Children's rights:</strong> Ensuring children receive their rightful inheritance</li>
+          <li><strong>Protection of legitimate heirs:</strong> Preventing legitimate heirs from losing their rights</li>
+          <li><strong>Deterring fraud:</strong> Preventing fraudulent claims</li>
+          <li><strong>Important consideration:</strong> Especially relevant when property is large or blood relationship is unclear</li>
         </ul>
         
-        <p><strong>5. Giá trị xã hội tích cực</strong></p>
+        <p><strong>5. Positive social impact:</strong></p>
         <ul>
-          <li><strong>Giảm mâu thuẫn gia đình:</strong> Tránh chia rẽ, hận thù trong gia đình</li>
-          <li><strong>Bảo vệ truyền thống:</strong> Duy trì các giá trị gia đình truyền thống</li>
-          <li><strong>Tạo tiền lệ tốt:</strong> Khuyến khích giải quyết tranh chấp bằng khoa học</li>
-          <li><strong>Nâng cao ý thức pháp luật:</strong> Giúp người dân hiểu và tôn trọng pháp luật</li>
+          <li><strong>Reducing family conflicts:</strong> Avoiding family division and animosity</li>
+          <li><strong>Preserving family traditions:</strong> Maintaining family traditions</li>
+          <li><strong>Promoting legal awareness:</strong> Encouraging legal resolution of disputes</li>
+          <li><strong>Enhancing legal consciousness:</strong> Helping people understand and respect the law</li>
         </ul>
 
-        <h2 id="5">Chi phí và thời gian thực hiện</h2>
-        <p>Chi phí và thời gian thực hiện xét nghiệm ADN trong tranh chấp thừa kế phụ thuộc vào nhiều yếu tố như loại xét nghiệm, số lượng người tham gia và mức độ ưu tiên.</p>
+        <h2 id="5">Time and Cost</h2>
+        <p>The time and cost of DNA testing in inheritance disputes depend on several factors, including the type of test, the number of participants, and the urgency of the case. Generally, the process involves:</p>
         
-        <p><strong>Bảng giá tham khảo (năm 2024):</strong></p>
+        <p><strong>Estimated costs (2024):</strong></p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr style="background-color: #f8f9fa;">
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Loại xét nghiệm</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Chi phí (VNĐ)</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Thời gian</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Test Type</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Cost (VND)</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Time</th>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm cha-con (pháp lý)</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">4.000.000 - 5.000.000</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-5 ngày</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Father-child (legal)</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">4,000,000 - 5,000,000</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-5 days</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm cha-mẹ-con</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5.500.000 - 6.500.000</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-5 ngày</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Father-mother-child</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5,500,000 - 6,500,000</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-5 days</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm anh chị em ruột</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">6.000.000 - 7.000.000</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 ngày</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Sibling relationship</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">6,000,000 - 7,000,000</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 days</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm ông bà-cháu</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">7.000.000 - 8.000.000</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 ngày</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Grandparent-grandchild relationship</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">7,000,000 - 8,000,000</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 days</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Gói ưu tiên (1-2 ngày)</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">+50% phí cơ bản</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">1-2 ngày</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Priority (1-2 days)</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">+50% of base fee</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">1-2 days</td>
           </tr>
         </table>
         
-        <p><strong>Các yếu tố ảnh hưởng đến chi phí:</strong></p>
+        <p><strong>Factors affecting costs:</strong></p>
         <ul>
-          <li><strong>Số lượng người tham gia:</strong> Càng nhiều người càng tốn chi phí</li>
-          <li><strong>Loại mối quan hệ:</strong> Quan hệ xa hơn thường phức tạp hơn</li>
-          <li><strong>Mức độ ưu tiên:</strong> Xét nghiệm khẩn cấp có phụ phí</li>
-          <li><strong>Chất lượng mẫu:</strong> Mẫu kém chất lượng cần xử lý đặc biệt</li>
-          <li><strong>Yêu cầu đặc biệt:</strong> Báo cáo chi tiết, tư vấn chuyên sâu</li>
+          <li><strong>Number of participants:</strong> The more people involved, the higher the cost</li>
+          <li><strong>Type of relationship:</strong> More distant relationships are more complex</li>
+          <li><strong>Urgency:</strong> Urgent cases have a surcharge</li>
+          <li><strong>Sample quality:</strong> Poor quality samples require special handling</li>
+          <li><strong>Special requirements:</strong> Detailed reports and expert consultations</li>
         </ul>
         
-        <p><strong>Thời gian thực hiện chi tiết:</strong></p>
+        <p><strong>Detailed timeline:</strong></p>
         <ul>
-          <li><strong>Chuẩn bị hồ sơ:</strong> 1-2 ngày</li>
-          <li><strong>Lấy mẫu:</strong> 1 ngày</li>
-          <li><strong>Phân tích mẫu:</strong> 2-4 ngày</li>
-          <li><strong>Kiểm tra chất lượng:</strong> 1 ngày</li>
-          <li><strong>Lập báo cáo:</strong> 1 ngày</li>
-          <li><strong>Gửi kết quả:</strong> 1 ngày</li>
+          <li><strong>Preparing documents:</strong> 1-2 days</li>
+          <li><strong>Sampling:</strong> 1 day</li>
+          <li><strong>Analysis:</strong> 2-4 days</li>
+          <li><strong>Quality control:</strong> 1 day</li>
+          <li><strong>Preparing report:</strong> 1 day</li>
+          <li><strong>Sending results:</strong> 1 day</li>
         </ul>
         
-        <p><strong>Chính sách hỗ trợ chi phí:</strong></p>
+        <p><strong>Supporting policies for costs:</strong></p>
         <ul>
-          <li><strong>Hộ nghèo, cận nghèo:</strong> Miễn phí hoặc giảm 70-80%</li>
-          <li><strong>Người có công:</strong> Giảm 50% chi phí</li>
-          <li><strong>Trẻ em mồ côi:</strong> Ưu tiên hỗ trợ từ các quỹ xã hội</li>
-          <li><strong>Thanh toán trả góp:</strong> Cho phép thanh toán theo đợt</li>
+          <li><strong>Poor households, near-poor:</strong> Exemption or 70-80% reduction</li>
+          <li><strong>Individuals with contributions:</strong> 50% reduction in fees</li>
+          <li><strong>Orphaned children:</strong> Priority support from social welfare funds</li>
+          <li><strong>Installment payments:</strong> Allowing installment payments</li>
         </ul>
 
-        <h2 id="6">Những lưu ý quan trọng</h2>
-        <p>Để đảm bảo xét nghiệm ADN đạt hiệu quả cao và có giá trị pháp lý, các bên cần lưu ý những điểm quan trọng sau:</p>
+        <h2 id="6">Important Considerations</h2>
+        <p>To ensure the test is effective and legally valid, all parties should consider the following points:</p>
         
-        <p><strong>1. Lựa chọn đơn vị thực hiện uy tín</strong></p>
+        <p><strong>1. Choosing a reputable testing facility:</strong></p>
         <ul>
-          <li><strong>Giấy phép hợp lệ:</strong> Kiểm tra giấy phép hoạt động của Bộ Y tế</li>
-          <li><strong>Chứng nhận chất lượng:</strong> Có các chứng nhận quốc tế về chất lượng</li>
-          <li><strong>Quy trình chuẩn pháp lý:</strong> Tuân thủ đúng quy trình để kết quả được công nhận</li>
-          <li><strong>Kinh nghiệm thực tế:</strong> Có nhiều năm kinh nghiệm xử lý các vụ việc pháp lý</li>
-          <li><strong>Đội ngũ chuyên gia:</strong> Có bác sĩ, luật sư tư vấn chuyên nghiệp</li>
+          <li><strong>Valid operating license:</strong> Checking the operating permit of the Ministry of Health</li>
+          <li><strong>Quality certification:</strong> Having international quality certifications</li>
+          <li><strong>Following the legal procedure:</strong> Adhering to the correct procedure to ensure results are recognized</li>
+          <li><strong>Practical experience:</strong> Having many years of experience handling legal cases</li>
+          <li><strong>Expert team:</strong> Having doctors and lawyers providing professional advice</li>
         </ul>
         
-        <p><strong>2. Chuẩn bị giấy tờ đầy đủ và chính xác</strong></p>
+        <p><strong>2. Preparing complete and accurate documents:</strong></p>
         <ul>
-          <li><strong>CMND/CCCD:</strong> Phải còn hiệu lực, rõ ràng, không bị hư hỏng</li>
-          <li><strong>Giấy khai sinh:</strong> Bản chính hoặc bản sao có công chứng</li>
-          <li><strong>Quyết định tòa án:</strong> Văn bản chính thức yêu cầu xét nghiệm</li>
-          <li><strong>Giấy ủy quyền:</strong> Có công chứng nếu có người đại diện</li>
-          <li><strong>Các giấy tờ khác:</strong> Di chúc, giấy chứng tử, sổ hộ khẩu (nếu cần)</li>
+          <li><strong>ID card/Passport:</strong> Still valid, clear, and not damaged</li>
+          <li><strong>Birth certificate:</strong> Original or notarized copy</li>
+          <li><strong>Court decision:</strong> Official request for testing</li>
+          <li><strong>Power of attorney:</strong> Notarized if represented by someone else</li>
+          <li><strong>Other relevant documents:</strong> Last will and testament, death certificate, household registration (if needed)</li>
         </ul>
         
-        <p><strong>3. Đảm bảo quy trình lấy mẫu đúng chuẩn</strong></p>
+        <p><strong>3. Ensuring the sampling process is standardized:</strong></p>
         <ul>
-          <li><strong>Có người chứng kiến:</strong> Luật sư, đại diện tòa án hoặc cơ quan có thẩm quyền</li>
-          <li><strong>Niêm phong bảo mật:</strong> Mẫu được niêm phong ngay sau khi lấy</li>
-          <li><strong>Ghi nhận đầy đủ:</strong> Thông tin người lấy mẫu, thời gian, địa điểm</li>
-          <li><strong>Ký xác nhận:</strong> Tất cả các bên ký xác nhận việc lấy mẫu</li>
-          <li><strong>Bảo quản đúng cách:</strong> Mẫu được bảo quản trong điều kiện thích hợp</li>
+          <li><strong>Witnessed:</strong> A lawyer, court representative, or authorized personnel</li>
+          <li><strong>Sealing:</strong> Samples are sealed immediately after collection</li>
+          <li><strong>Complete record:</strong> Recording the person collecting the sample, time, and location</li>
+          <li><strong>Digital confirmation:</strong> All parties digitally confirm the sampling process</li>
+          <li><strong>Proper storage:</strong> Storing samples in appropriate conditions</li>
         </ul>
         
-        <p><strong>4. Tham vấn luật sư chuyên nghiệp</strong></p>
+        <p><strong>4. Consulting with legal experts:</strong></p>
         <ul>
-          <li><strong>Hiểu rõ quyền lợi:</strong> Luật sư giải thích quyền và nghĩa vụ của các bên</li>
-          <li><strong>Đánh giá rủi ro:</strong> Phân tích các tình huống có thể xảy ra</li>
-          <li><strong>Chuẩn bị chiến lược:</strong> Lập kế hoạch xử lý dựa trên kết quả</li>
-          <li><strong>Hỗ trợ thủ tục:</strong> Giúp hoàn thiện các thủ tục pháp lý</li>
-          <li><strong>Đại diện tại tòa:</strong> Bảo vệ quyền lợi trong quá trình tố tụng</li>
+          <li><strong>Understanding rights and obligations:</strong> Legal experts explain the rights and responsibilities of all parties</li>
+          <li><strong>Risk assessment:</strong> Analyzing potential scenarios</li>
+          <li><strong>Preparing a strategy:</strong> Developing a plan based on the results</li>
+          <li><strong>Assisting with procedures:</strong> Helping to complete legal procedures</li>
+          <li><strong>Representing at court:</strong> Protecting interests during the legal process</li>
         </ul>
         
-        <p><strong>5. Chuẩn bị tâm lý cho kết quả</strong></p>
+        <p><strong>5. Preparing for the outcome:</strong></p>
         <ul>
-          <li><strong>Chấp nhận sự thật:</strong> Sẵn sàng đối mặt với mọi kết quả</li>
-          <li><strong>Tôn trọng kết quả:</strong> Không tranh cãi hay nghi ngờ kết quả khoa học</li>
-          <li><strong>Bảo vệ danh tiếng:</strong> Giữ bí mật thông tin cá nhân và gia đình</li>
-          <li><strong>Hòa giải gia đình:</strong> Ưu tiên hòa giải, tránh chia rẽ gia đình</li>
-          <li><strong>Tuân thủ pháp luật:</strong> Thực hiện đúng quyết định của tòa án</li>
+          <li><strong>Accepting the truth:</strong> Being prepared for any outcome</li>
+          <li><strong>Respecting the result:</strong> Not disputing or questioning the scientific results</li>
+          <li><strong>Protecting personal privacy:</strong> Keeping personal information and family matters confidential</li>
+          <li><strong>Facilitating family reconciliation:</strong> Prioritizing mediation, avoiding family division</li>
+          <li><strong>Following the law:</strong> Adhering to the court's decision</li>
         </ul>
         
         <div class="warning-box">
-          <p><strong>Cảnh báo quan trọng:</strong> Việc làm giả kết quả xét nghiệm ADN hoặc cung cấp thông tin sai lệch có thể bị xử lý hình sự theo quy định của pháp luật. Các bên cần thực hiện trung thực và tuân thủ đúng quy định.</p>
+          <p><strong>Important warning:</strong> Falsifying test results or providing false information can result in criminal penalties. All parties must act honestly and in accordance with the law.</p>
         </div>
 
-        <h2 id="7">Các trường hợp thường gặp</h2>
-        <p>Dựa trên kinh nghiệm thực tế, có một số trường hợp tranh chấp thừa kế thường gặp cần sử dụng xét nghiệm ADN:</p>
+        <h2 id="7">Common Scenarios</h2>
+        <p>Based on practical experience, there are some common inheritance dispute scenarios that require DNA testing:</p>
         
-        <p><strong>Trường hợp 1: Tranh chấp về con ruột</strong></p>
+        <p><strong>Scenario 1: Father-child relationship dispute</strong></p>
         <ul>
-          <li><strong>Tình huống:</strong> Người chồng qua đời, vợ và con trai tranh chấp với một phụ nữ khác tuyên bố có con với người chồng</li>
-          <li><strong>Giải pháp:</strong> Xét nghiệm ADN giữa đứa trẻ với người chồng đã mất (qua mẫu từ con trai hoặc cha mẹ của người chồng)</li>
-          <li><strong>Kết quả:</strong> Xác định được đứa trẻ có phải con ruột hay không, từ đó quyết định quyền thừa kế</li>
+          <li><strong>Situation:</strong> The husband dies, and his wife and son are disputing with another woman who claims to have had a child with the deceased</li>
+          <li><strong>Solution:</strong> DNA testing between the child and the deceased's son (using samples from the son or the deceased's parents)</li>
+          <li><strong>Outcome:</strong> Determining whether the child is the biological child of the deceased, and thus determining inheritance rights</li>
         </ul>
         
-        <p><strong>Trường hợp 2: Xác định anh chị em ruột</strong></p>
+        <p><strong>Scenario 2: Identifying sibling relationships</strong></p>
         <ul>
-          <li><strong>Tình huống:</strong> Gia đình có nhiều con, một số được nuôi ở nơi khác, khi cha mẹ mất có tranh chấp về quan hệ huyết thống</li>
-          <li><strong>Giải pháp:</strong> Xét nghiệm ADN giữa các anh chị em để xác định mối quan hệ</li>
-          <li><strong>Kết quả:</strong> Phân biệt được con ruột và con nuôi, chia thừa kế đúng quy định</li>
+          <li><strong>Situation:</strong> The family has multiple children, some of whom are being raised in different places, and there is a dispute about blood relationship between the deceased's parents</li>
+          <li><strong>Solution:</strong> DNA testing between siblings to determine their relationship</li>
+          <li><strong>Outcome:</strong> Distinguishing between biological children and adopted children, dividing inheritance according to the law</li>
         </ul>
         
-        <p><strong>Trường hợp 3: Tranh chấp thế hệ thứ hai</strong></p>
+        <p><strong>Scenario 3: Second-generation relationship dispute</strong></p>
         <ul>
-          <li><strong>Tình huống:</strong> Ông bà mất, có người tuyên bố là cháu ruột nhưng không có giấy tờ chứng minh</li>
-          <li><strong>Giải pháp:</strong> Xét nghiệm ADN với các cháu khác đã được xác nhận hoặc với con còn sống của ông bà</li>
-          <li><strong>Kết quả:</strong> Xác định được mối quan hệ ông bà - cháu, quyết định quyền thừa kế</li>
+          <li><strong>Situation:</strong> The deceased's grandparents have passed away, and someone has claimed to be the grandchild of the deceased, but there is no proof in the records</li>
+          <li><strong>Solution:</strong> DNA testing with other grandchildren who have been confirmed or with the deceased's surviving children</li>
+          <li><strong>Outcome:</strong> Determining the relationship between grandparents and grandchildren, and thus determining inheritance rights</li>
         </ul>
         
-        <p><strong>Trường hợp 4: Con ngoài giá thú</strong></p>
+        <p><strong>Scenario 4: Child outside of marriage</strong></p>
         <ul>
-          <li><strong>Tình huống:</strong> Người đàn ông có vợ con hợp pháp, nhưng có con với người phụ nữ khác, khi mất có tranh chấp thừa kế</li>
-          <li><strong>Giải pháp:</strong> Xét nghiệm ADN để xác định quan hệ cha con</li>
-          <li><strong>Kết quả:</strong> Con ngoài giá thú được xác nhận có quyền thừa kế theo quy định pháp luật</li>
+          <li><strong>Situation:</strong> A man has a legal wife and children, but also has a child with another woman, and there is a dispute about inheritance after his death</li>
+          <li><strong>Solution:</strong> DNA testing to determine the father-child relationship</li>
+          <li><strong>Outcome:</strong> The child outside of marriage is confirmed to have inheritance rights according to the law</li>
         </ul>
         
-        <p><strong>Trường hợp 5: Nhận con nuôi không đúng thủ tục</strong></p>
+        <p><strong>Scenario 5: Adoption without proper procedure</strong></p>
         <ul>
-          <li><strong>Tình huống:</strong> Gia đình nhận nuôi con nhưng không làm thủ tục, sau này có tranh chấp về quyền thừa kế</li>
-          <li><strong>Giải pháp:</strong> Xét nghiệm ADN để phân biệt con ruột và con nuôi</li>
-          <li><strong>Kết quả:</strong> Xác định rõ tình trạng, áp dụng đúng quy định pháp luật về thừa kế</li>
+          <li><strong>Situation:</strong> The family adopts a child, but does not follow the proper procedure, and later there is a dispute about inheritance</li>
+          <li><strong>Solution:</strong> DNA testing to distinguish between biological children and adopted children</li>
+          <li><strong>Outcome:</strong> Determining the situation clearly, applying the law correctly regarding inheritance</li>
         </ul>
 
-        <h2 id="8">Kinh nghiệm thực tế từ các vụ việc</h2>
-        <p>Từ kinh nghiệm xử lý hàng nghìn vụ việc tranh chấp thừa kế, xét nghiệm ADN đã chứng minh hiệu quả cao trong việc giải quyết các tranh chấp.</p>
+        <h2 id="8">Practical Experience from Cases</h2>
+        <p>Based on experience handling thousands of inheritance disputes, DNA testing has proven to be highly effective in resolving disputes. The results are:</p>
         
-        <p><strong>Thống kê thành công:</strong></p>
+        <p><strong>Success statistics:</strong></p>
         <ul>
-          <li><strong>Tỷ lệ giải quyết:</strong> 95% các vụ việc được giải quyết dứt điểm</li>
-          <li><strong>Thời gian rút ngắn:</strong> Giảm 60-70% thời gian xử lý so với phương pháp truyền thống</li>
-          <li><strong>Chi phí tiết kiệm:</strong> Giảm 40-50% chi phí tố tụng tổng thể</li>
-          <li><strong>Độ hài lòng:</strong> 90% các bên hài lòng với kết quả</li>
+          <li><strong>Resolution rate:</strong> 95% of cases are resolved without further appeal</li>
+          <li><strong>Time saved:</strong> Reducing time by 60-70% compared to traditional methods</li>
+          <li><strong>Cost savings:</strong> Reducing overall legal costs by 40-50%</li>
+          <li><strong>Satisfaction:</strong> 90% of all parties are satisfied with the outcome</li>
         </ul>
         
-        <p><strong>Bài học kinh nghiệm:</strong></p>
+        <p><strong>Lessons learned:</strong></p>
         <ul>
-          <li><strong>Thực hiện sớm:</strong> Càng sớm thực hiện xét nghiệm càng tốt, tránh kéo dài tranh chấp</li>
-          <li><strong>Chuẩn bị kỹ:</strong> Chuẩn bị đầy đủ giấy tờ và tâm lý trước khi thực hiện</li>
-          <li><strong>Chọn đơn vị uy tín:</strong> Lựa chọn trung tâm có kinh nghiệm và uy tín</li>
-          <li><strong>Tư vấn pháp lý:</strong> Luôn có luật sư tư vấn trong suốt quá trình</li>
-          <li><strong>Tôn trọng kết quả:</strong> Chấp nhận và tôn trọng kết quả khoa học</li>
+          <li><strong>Early action:</strong> The sooner DNA testing is conducted, the better, avoiding prolonged disputes</li>
+          <li><strong>Thorough preparation:</strong> Being well-prepared with all necessary documents and mental state before conducting the test</li>
+          <li><strong>Choosing a reputable facility:</strong> Selecting a facility with experience and reputation</li>
+          <li><strong>Legal advice:</strong> Having legal advice throughout the process</li>
+          <li><strong>Respecting the result:</strong> Accepting and respecting the scientific outcome</li>
         </ul>
         
-        <p><strong>Những lưu ý từ thực tế:</strong></p>
+        <p><strong>Practical insights:</strong></p>
         <ul>
-          <li><strong>Mẫu chất lượng kém:</strong> 5-10% trường hợp cần lấy mẫu lại do chất lượng không đạt</li>
-          <li><strong>Tranh chấp kết quả:</strong> 2-3% trường hợp có tranh cãi về kết quả, cần giải thích kỹ</li>
-          <li><strong>Vấn đề tâm lý:</strong> 15-20% trường hợp gặp khó khăn về mặt tâm lý</li>
-          <li><strong>Chi phí phát sinh:</strong> 10-15% trường hợp có chi phí phát sinh do yêu cầu đặc biệt</li>
+          <li><strong>Poor quality samples:</strong> 5-10% of cases require re-sampling due to poor quality</li>
+          <li><strong>Dispute over results:</strong> 2-3% of cases have disputes about the results, requiring detailed explanation</li>
+          <li><strong>Mental issues:</strong> 15-20% of cases face challenges in the psychological aspect</li>
+          <li><strong>Additional costs:</strong> 10-15% of cases have additional costs due to special requirements</li>
         </ul>
         
-        <p><strong>Khuyến nghị cho tương lai:</strong></p>
+        <p><strong>Future recommendations:</strong></p>
         <ul>
-          <li><strong>Nâng cao nhận thức:</strong> Tuyên truyền để người dân hiểu rõ về xét nghiệm ADN</li>
-          <li><strong>Hoàn thiện pháp luật:</strong> Bổ sung quy định cụ thể về xét nghiệm ADN trong thừa kế</li>
-          <li><strong>Đào tạo nhân lực:</strong> Tăng cường đào tạo chuyên gia pháp y và luật sư</li>
-          <li><strong>Phát triển công nghệ:</strong> Đầu tư vào công nghệ mới để nâng cao chất lượng</li>
-          <li><strong>Hỗ trợ người nghèo:</strong> Mở rộng chính sách hỗ trợ cho người có hoàn cảnh khó khăn</li>
+          <li><strong>Improving public awareness:</strong> Raising public awareness about DNA testing</li>
+          <li><strong>Improving the law:</strong> Supplementing the law with specific provisions regarding DNA testing in inheritance</li>
+          <li><strong>Human resource development:</strong> Strengthening the training of medical and legal professionals</li>
+          <li><strong>Technology development:</strong> Investing in new technology to improve quality</li>
+          <li><strong>Supporting the disadvantaged:</strong> Expanding support programs for people in difficult situations</li>
         </ul>
         
         <div class="conclusion-box">
-          <h3>Kết luận</h3>
-          <p>Xét nghiệm ADN đã và đang đóng vai trò quan trọng trong việc giải quyết các tranh chấp thừa kế, mang lại công bằng và minh bạch cho hệ thống tư pháp. Với sự phát triển của khoa học công nghệ, xét nghiệm ADN sẽ tiếp tục là công cụ đáng tin cậy giúp bảo vệ quyền lợi hợp pháp của các bên và xây dựng xã hội công bằng, văn minh.</p>
+          <h3>Conclusion</h3>
+          <p>DNA testing has been and continues to be an important tool in resolving inheritance disputes, providing fairness and transparency to the legal system. With the continuous development of science and technology, DNA testing will continue to contribute significantly to improving the quality of life and building a civilized society.</p>
           
-          <p>Để đạt hiệu quả cao nhất, các bên cần lựa chọn đơn vị thực hiện uy tín, chuẩn bị đầy đủ giấy tờ, tuân thủ đúng quy trình và luôn có sự tư vấn của luật sư chuyên nghiệp. Điều này không chỉ đảm bảo kết quả chính xác mà còn bảo vệ quyền lợi và danh tiếng của tất cả các bên liên quan.</p>
+          <p>To achieve the highest possible outcome, all parties should choose a reputable testing facility, prepare all necessary documents, follow the correct procedure, and consult with legal experts. This not only ensures accurate results but also protects the rights and reputation of all involved parties.</p>
         </div>
       </div>
     `
@@ -1189,41 +1178,41 @@ const articles = [
 
   {
     id: 5,
-    title: "Giải Mã Sự Sống: Nguyên Lý Hoạt Động Của Xét Nghiệm ADN",
-    category: "Kiến Thức",
-    excerpt: "Khám phá nguyên lý khoa học đằng sau xét nghiệm ADN - công cụ mạnh mẽ giúp 'đọc' bản thiết kế độc nhất vô nhị của mỗi người với độ chính xác đến kinh ngạc.",
+    title: "Decoding Life: Understanding the Mechanism of DNA Testing",
+    category: "Knowledge",
+    excerpt: "Discover the scientific basis behind DNA testing - a powerful tool that helps 'read' the unique, one-of-a-kind design of each person with incredible accuracy.",
     image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&h=800&fit=crop",
     slug: "nguyen-ly-hoat-dong-cua-xet-nghiem-adn",
-    author: "GS. Vũ Thanh Sơn",
+    author: "Dr. Vu Thanh Son",
     date: "2024-01-18",
-    readTime: "15 phút đọc",
+    readTime: "15 min read",
     featured: true,
     views: 1650,
     likes: 124,
     comments: 31,
     tableOfContents: [
-      { id: "1", title: "ADN: 'Bản Thiết Kế' Di Truyền Của Bạn", level: 1 },
-      { id: "2", title: "Quy Trình 'Đọc' ADN: Từ Mẫu Sinh Học Đến Kết Quả", level: 1 },
-      { id: "3", title: "Thu Thập Mẫu Sinh Học", level: 1 },
-      { id: "4", title: "Tách Chiết ADN", level: 1 },
-      { id: "5", title: "Khuếch Đại Đoạn Gen Mục Tiêu (PCR)", level: 1 },
-      { id: "6", title: "Phân Tích Kích Thước Các Đoạn ADN", level: 1 },
-      { id: "7", title: "So Sánh và Đánh Giá Kết Quả", level: 1 },
-      { id: "8", title: "Độ Chính Xác và Giá Trị Pháp Lý", level: 1 },
-      { id: "9", title: "Tương Lai Của Công Nghệ ADN", level: 1 },
-      { id: "10", title: "Hướng Dẫn Cho Người Dân", level: 1 }
+      { id: "1", title: "DNA: 'Design' of Your Genetic Code", level: 1 },
+      { id: "2", title: "Reading DNA: From Biological Sample to Result", level: 1 },
+      { id: "3", title: "Collecting Biological Samples", level: 1 },
+      { id: "4", title: "Extracting DNA", level: 1 },
+      { id: "5", title: "Amplifying Target DNA Segments (PCR)", level: 1 },
+      { id: "6", title: "Analyzing the Size of DNA Segments", level: 1 },
+      { id: "7", title: "Comparing and Evaluating Results", level: 1 },
+      { id: "8", title: "Accuracy and Legal Value", level: 1 },
+      { id: "9", title: "Future of DNA Technology", level: 1 },
+      { id: "10", title: "Guidelines for the Public", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <p class="lead-paragraph">Xét nghiệm ADN đã trở thành một công cụ mạnh mẽ trong nhiều lĩnh vực, từ pháp y đến xác định quan hệ huyết thống. Nhưng làm thế nào mà khoa học có thể "đọc" được bản thiết kế độc nhất vô nhị của mỗi người? Hãy cùng tìm hiểu nguyên lý cơ bản đằng sau những kết quả chính xác đến kinh ngạc này.</p>
+        <p class="lead-paragraph">DNA testing has become a powerful tool in various fields, from forensic medicine to determining blood relationships. But how does science 'read' the unique, one-of-a-kind design of each person? Let's explore the basic principles behind these incredible results.</p>
         
-        <h2 id="1">ADN: "Bản Thiết Kế" Di Truyền Của Bạn</h2>
-        <p>Trong hầu hết mọi tế bào của cơ thể, chúng ta đều mang một chuỗi phân tử phức tạp gọi là <strong>ADN (axit deoxyribonucleic)</strong>. ADN là bản đồ di truyền cá nhân, chứa đựng thông tin quy định mọi đặc điểm của bạn.</p>
+        <h2 id="1">DNA: "Design" of Your Genetic Code</h2>
+        <p>In almost all cells of the body, we carry a complex molecule called <strong>DNA (deoxyribonucleic acid)</strong>. DNA is your personal genetic blueprint, containing information about every aspect of you. The structure of DNA is:</p>
         
-        <p><strong>Cấu trúc ADN:</strong></p>
+        <p><strong>DNA structure:</strong></p>
         <ul>
-          <li><strong>Chuỗi xoắn kép:</strong> ADN có cấu trúc như một chiếc thang xoắn ốc</li>
-          <li><strong>Bốn "chữ cái" hóa học:</strong>
+          <li><strong>Double helix:</strong> DNA has a double helix structure similar to a ladder</li>
+          <li><strong>Four "letters" of chemistry:</strong>
             <ul>
               <li>Adenine (A)</li>
               <li>Thymine (T)</li>
@@ -1231,204 +1220,202 @@ const articles = [
               <li>Cytosine (C)</li>
             </ul>
           </li>
-          <li><strong>Trật tự sắp xếp riêng biệt:</strong> Chính trình tự của các chữ cái này tạo nên mã di truyền độc nhất của mỗi cá thể</li>
+          <li><strong>Specific order:</strong> The order of these letters creates the unique genetic code for each individual</li>
         </ul>
         
-        <p><strong>Short Tandem Repeats (STRs) - "Dấu vân tay" di truyền:</strong></p>
-        <p>Điều đặc biệt là, mặc dù phần lớn ADN của con người giống nhau, có những đoạn ngắn được lặp đi lặp lại nhiều lần với số lượng khác nhau giữa mỗi người. Chúng được gọi là <strong>Short Tandem Repeats (STRs)</strong> – và đây chính là "dấu vân tay" di truyền mà các xét nghiệm ADN hiện đại tập trung vào.</p>
+        <p><strong>Short Tandem Repeats (STRs) - "Fingerprint" of genetics:</strong></p>
+        <p>Interestingly, while most human DNA is similar, there are short segments that repeat multiple times with different lengths between individuals. These are called <strong>Short Tandem Repeats (STRs)</strong> - and this is the "fingerprint" of genetics that modern DNA testing focuses on.</p>
 
-        <h2 id="2">Quy Trình "Đọc" ADN: Từ Mẫu Sinh Học Đến Kết Quả</h2>
-        <p>Về cơ bản, xét nghiệm ADN là quá trình so sánh các đoạn STRs cụ thể giữa các cá thể. Những đoạn này được di truyền từ cả cha và mẹ, mang tính đặc trưng cao, giúp chúng trở thành chỉ dấu hoàn hảo cho việc xác định mối quan hệ.</p>
+        <h2 id="2">Reading DNA: From Biological Sample to Result</h2>
+        <p>In essence, DNA testing is about comparing specific STR segments between individuals. These segments are inherited from both parents, carrying high specificity, making them perfect markers for determining relationships. The testing process generally includes the following steps:</p>
         
-        <p>Quy trình xét nghiệm ADN thường bao gồm các bước chính sau:</p>
+        <p>The typical DNA testing process includes the following main steps:</p>
 
-        <h2 id="3">1. Thu Thập Mẫu Sinh Học</h2>
-        <p>Bước đầu tiên là lấy mẫu có chứa tế bào và ADN. Các mẫu phổ biến nhất là:</p>
+        <h2 id="3">1. Collecting Biological Samples</h2>
+        <p>The first step is to obtain a sample containing cells and DNA. The most common samples are:</p>
         
-        <p><strong>Mẫu niêm mạc miệng (nước bọt):</strong></p>
+        <p><strong>Mouthwash (saliva):</strong></p>
         <ul>
-          <li>An toàn, không xâm lấn và dễ thu thập</li>
-          <li>Sử dụng tăm bông chuyên dụng cọ xát vào mặt trong má</li>
-          <li>Phương pháp được ưa chuộng nhất hiện nay</li>
+          <li>Safe, non-invasive, and easy to collect</li>
+          <li>Using a cotton swab to gently swab the inside of the mouth</li>
+          <li>The preferred method currently</li>
         </ul>
         
-        <p><strong>Mẫu máu:</strong></p>
+        <p><strong>Blood samples:</strong></p>
         <ul>
-          <li>Thường dùng cho các trường hợp đặc biệt</li>
-          <li>Khi cần lượng ADN lớn hơn</li>
-          <li>Độ tin cậy cao</li>
+          <li>Often used for special cases</li>
+          <li>When larger amounts of DNA are needed</li>
+          <li>High reliability</li>
         </ul>
         
-        <p><strong>Các mẫu khác:</strong></p>
+        <p><strong>Other samples:</strong></p>
         <ul>
-          <li>Tóc (phải có chân tóc)</li>
-          <li>Móng tay</li>
-          <li>Các dấu vết sinh học tại hiện trường vụ án</li>
+          <li>Hair (must have hair follicles)</li>
+          <li>Nail clippings</li>
+          <li>Biological evidence from crime scenes</li>
         </ul>
         
         <div class="important-note">
-          <p><strong>Lưu ý quan trọng:</strong> Đối với xét nghiệm có giá trị pháp lý, việc lấy mẫu cần được thực hiện bởi nhân viên chuyên môn, có người chứng kiến và lập biên bản.</p>
+          <p><strong>Important note:</strong> For legal testing, the sampling process must be conducted by trained staff, with witnesses present, and a record must be made. This is crucial for legal validity.</p>
         </div>
 
-        <h2 id="4">2. Tách Chiết ADN</h2>
-        <p>Mẫu thu được sẽ trải qua quá trình tách chiết để loại bỏ các thành phần khác, chỉ giữ lại ADN tinh khiết, sẵn sàng cho phân tích.</p>
+        <h2 id="4">2. Extracting DNA</h2>
+        <p>The obtained sample will go through a process to remove unwanted components, leaving only pure DNA ready for analysis. The process is:</p>
         
-        <p><strong>Quy trình tách chiết:</strong></p>
+        <p><strong>Extraction process:</strong></p>
         <ul>
-          <li>Phá vỡ màng tế bào để giải phóng ADN</li>
-          <li>Loại bỏ protein và các tạp chất</li>
-          <li>Tinh chế ADN đạt độ sạch cao</li>
-          <li>Kiểm tra chất lượng và nồng độ ADN</li>
+          <li>Breaking down cell membranes to release DNA</li>
+          <li>Removing proteins and other contaminants</li>
+          <li>Purifying DNA to high purity</li>
+          <li>Checking quality and DNA concentration</li>
         </ul>
 
-        <h2 id="5">3. Khuếch Đại Đoạn Gen Mục Tiêu (PCR)</h2>
-        <p>Vì lượng ADN trong mẫu thường rất ít, kỹ thuật <strong>Phản ứng chuỗi Polymerase (PCR)</strong> sẽ được sử dụng. PCR như một "máy photocopy" gen, tạo ra hàng triệu bản sao của các đoạn STRs cần phân tích, giúp chúng ta có đủ lượng ADN để nghiên cứu.</p>
+        <h2 id="5">3. Amplifying Target DNA Segments (PCR)</h2>
+        <p>Due to the small amount of DNA in the sample, the <strong>Polymerase Chain Reaction (PCR)</strong> technique will be used. PCR acts like a "copy machine" for DNA, creating millions of copies of the STR segments we need for analysis. This allows us to have enough DNA for research.</p>
         
-        <p><strong>Nguyên lý hoạt động của PCR:</strong></p>
+        <p><strong>How PCR works:</strong></p>
         <ul>
-          <li><strong>Biến tính (Denaturation):</strong> Tách đôi chuỗi ADN bằng nhiệt độ cao (94-96°C)</li>
-          <li><strong>Gắn mồi (Annealing):</strong> Các mồi đặc hiệu gắn vào vùng đích (50-65°C)</li>
-          <li><strong>Kéo dài (Extension):</strong> Enzyme DNA polymerase tổng hợp chuỗi mới (72°C)</li>
-          <li><strong>Lặp lại:</strong> Chu kỳ được lặp lại 25-35 lần</li>
+          <li><strong>Denaturation:</strong> Separating the double-stranded DNA into single strands at high temperatures (94-96°C)</li>
+          <li><strong>Annealing:</strong> Specific primers bind to complementary sequences on the target DNA (50-65°C)</li>
+          <li><strong>Extension:</strong> Enzyme DNA polymerase synthesizes new DNA strands (72°C)</li>
+          <li><strong>Repetition:</strong> The cycle repeats 25-35 times</li>
         </ul>
         
-        <p>Sau quá trình PCR, số lượng ADN đích tăng lên theo cấp số nhân, từ vài phân tử ban đầu thành hàng triệu bản sao.</p>
+        <p>After PCR, the number of target DNA segments increases exponentially, starting from a few initial molecules to millions of copies.</p>
 
-        <h2 id="6">4. Phân Tích Kích Thước Các Đoạn ADN</h2>
-        <p>Sau khi khuếch đại, các đoạn STRs này sẽ có chiều dài khác nhau. <strong>Công nghệ điện di mao quản</strong> sẽ tách và đo chính xác kích thước của từng đoạn STR. Mỗi đoạn sẽ phát ra tín hiệu riêng, tạo thành một "biểu đồ gen" độc đáo.</p>
+        <h2 id="6">4. Analyzing the Size of DNA Segments</h2>
+        <p>After amplification, these STR segments will have different lengths. The <strong>Capillary Electrophoresis</strong> technology will separate and accurately measure the size of each segment. Each segment will emit a unique signal, creating a "genetic profile" that is unique.</p>
         
-        <p><strong>Quy trình điện di mao quản:</strong></p>
+        <p><strong>Capillary electrophoresis process:</strong></p>
         <ul>
-          <li>Các đoạn ADN được đánh dấu bằng chất huỳnh quang</li>
-          <li>Di chuyển qua ống mao quản siêu mỏng</li>
-          <li>Phân tách theo kích thước - đoạn nhỏ di chuyển nhanh hơn</li>
-          <li>Detector laser đọc tín hiệu huỳnh quang</li>
-          <li>Tạo ra electropherogram (biểu đồ điện di)</li>
-        </ul>
-
-        <h2 id="7">5. So Sánh và Đánh Giá Kết Quả</h2>
-        <p>Dữ liệu từ biểu đồ gen được chuyển thành hồ sơ ADN số hóa.</p>
-        
-        <p><strong>Với xét nghiệm huyết thống:</strong></p>
-        <ul>
-          <li>Hồ sơ ADN của người con được so sánh với hồ sơ của cha và mẹ giả định</li>
-          <li>Vì con nhận một nửa gen từ cha và một nửa từ mẹ</li>
-          <li>Nếu có quan hệ, các đoạn STRs của con phải trùng khớp với của cha tại tất cả các vị trí đã kiểm tra</li>
-          <li>Thường phân tích 15-20 vị trí STR khác nhau</li>
-        </ul>
-        
-        <p><strong>Với pháp y:</strong></p>
-        <ul>
-          <li>Hồ sơ ADN từ hiện trường được đối chiếu với dữ liệu nghi phạm</li>
-          <li>So sánh với ngân hàng ADN để tìm kiếm sự trùng khớp</li>
-          <li>Tính toán xác suất trùng ngẫu nhiên</li>
-        </ul>
-        
-        <p><strong>Vai trò của AI và Machine Learning:</strong></p>
-        <p>Ngày nay, <strong>Trí tuệ Nhân tạo (AI)</strong> và <strong>Học máy (Machine Learning)</strong> hỗ trợ đắc lực trong việc phân tích lượng dữ liệu khổng lồ này, giúp:</p>
-        <ul>
-          <li>Tăng tốc độ xử lý dữ liệu</li>
-          <li>Nâng cao độ chính xác phân tích</li>
-          <li>Giảm thiểu sai sót do con người</li>
-          <li>Phát hiện các pattern phức tạp</li>
-          <li>Tự động hóa quy trình đánh giá</li>
+          <li>DNA segments are labeled with fluorescent markers</li>
+          <li>Moving through ultra-thin capillary tubes</li>
+          <li>Separation based on size - smaller segments move faster</li>
+          <li>Laser-based detector reads fluorescence signals</li>
+          <li>Generating electropherograms (electrophoresis charts)</li>
         </ul>
 
-        <h2 id="8">Độ Chính Xác và Giá Trị Pháp Lý</h2>
-        <p>Khi được thực hiện tại các phòng thí nghiệm đạt chuẩn quốc tế, xét nghiệm ADN mang lại độ chính xác cực cao:</p>
+        <h2 id="7">5. Comparing and Evaluating Results</h2>
+        <p>The data from the genetic profile is converted into digital DNA profiles. The process is:</p>
         
-        <p><strong>Tiêu chuẩn chất lượng:</strong></p>
+        <p><strong>For blood relationship testing:</strong></p>
         <ul>
-          <li><strong>ISO 17025:</strong> Tiêu chuẩn năng lực phòng thí nghiệm</li>
-          <li><strong>AABB:</strong> Hiệp hội Ngân hàng Máu Hoa Kỳ</li>
-          <li><strong>CAP:</strong> Trường Cao đẳng Bác sĩ Giải phẫu bệnh Hoa Kỳ</li>
+          <li>The DNA profile of the child is compared with that of the presumed father and mother</li>
+          <li>Because the child inherits half of their DNA from the father and half from the mother</li>
+          <li>If there is a relationship, the child's STR segments must match those of the father at all tested loci</li>
+          <li>Typically, 15-20 different STRs are analyzed</li>
         </ul>
         
-        <p><strong>Độ chính xác:</strong></p>
+        <p><strong>For forensic medicine:</strong></p>
         <ul>
-          <li><strong>Có quan hệ:</strong> Độ chính xác thường đạt 99.99% hoặc hơn</li>
-          <li><strong>Không có quan hệ:</strong> Khẳng định loại trừ với độ chính xác 100%</li>
-          <li><strong>Xác suất cha:</strong> Thường > 99.9% khi có quan hệ</li>
-          <li><strong>Chỉ số kết hợp (CI):</strong> Thường > 10,000</li>
+          <li>The DNA profile from the scene is compared with a database of known offenders</li>
+          <li>Comparing with the DNA database to find matches</li>
+          <li>Calculating the probability of random matches</li>
         </ul>
         
-        <p><strong>Giá trị pháp lý:</strong></p>
-        <p>Chính vì độ tin cậy vượt trội này, kết quả xét nghiệm ADN có giá trị pháp lý rất cao, được chấp nhận rộng rãi trong:</p>
+        <p><strong>Role of AI and Machine Learning:</strong></p>
+        <p>Today, <strong>Artificial Intelligence (AI)</strong> and <strong>Machine Learning</strong> are crucial in analyzing this vast amount of data, helping:</p>
         <ul>
-          <li>Các thủ tục tư pháp</li>
-          <li>Thủ tục hành chính</li>
-          <li>Tranh chấp dân sự</li>
-          <li>Điều tra hình sự</li>
-          <li>Thủ tục xuất nhập cảnh</li>
-        </ul>
-
-        <h2 id="9">Tương Lai Của Công Nghệ ADN</h2>
-        <p>Công nghệ xét nghiệm ADN đang không ngừng tiến bộ, với các kỹ thuật tiên tiến đang được phát triển:</p>
-        
-        <p><strong>Giải trình tự Thế hệ Mới (NGS):</strong></p>
-        <ul>
-          <li>Phân tích toàn bộ hệ gen chi tiết hơn</li>
-          <li>Giảm chi phí và thời gian xử lý</li>
-          <li>Tăng độ phân giải và độ chính xác</li>
-          <li>Khả năng phân tích mẫu degraded</li>
-        </ul>
-        
-        <p><strong>Ứng dụng mới:</strong></p>
-        <ul>
-          <li><strong>Y học cá thể hóa:</strong> Điều trị dựa trên đặc điểm di truyền cá nhân</li>
-          <li><strong>Chẩn đoán bệnh sớm:</strong> Phát hiện nguy cơ mắc bệnh di truyền</li>
-          <li><strong>Dược lý di truyền:</strong> Lựa chọn thuốc phù hợp với từng người</li>
-          <li><strong>Nghiên cứu tiến hóa:</strong> Tìm hiểu lịch sử di truyền loài người</li>
-        </ul>
-        
-        <p><strong>Công nghệ mới nổi:</strong></p>
-        <ul>
-          <li>Portable DNA sequencing (giải trình tự ADN di động)</li>
-          <li>Real-time PCR với độ nhạy cao hơn</li>
-          <li>Microfluidics cho xét nghiệm nhanh</li>
-          <li>Blockchain để bảo mật dữ liệu di truyền</li>
+          <li>Increasing data processing speed</li>
+          <li>Improving analysis accuracy</li>
+          <li>Reducing human error</li>
+          <li>Detecting complex patterns</li>
+          <li>Automating evaluation processes</li>
         </ul>
 
-        <h2 id="10">Hướng Dẫn Cho Người Dân</h2>
-        <p><strong>Khi nào nên thực hiện xét nghiệm ADN:</strong></p>
+        <h2 id="8">Accuracy and Legal Value</h2>
+        <p>When conducted in laboratories meeting international standards, DNA testing provides extremely high accuracy:</p>
+        
+        <p><strong>Quality standards:</strong></p>
         <ul>
-          <li>Xác định quan hệ huyết thống cho mục đích cá nhân</li>
-          <li>Giải quyết tranh chấp pháp lý về thừa kế</li>
-          <li>Thủ tục nhận con nuôi hoặc xác nhận cha con</li>
-          <li>Hỗ trợ thủ tục xuất nhập cảnh</li>
-          <li>Mục đích y tế (ghép tạng, chẩn đoán bệnh di truyền)</li>
+          <li><strong>ISO 17025:</strong> Standard for laboratory competence</li>
+          <li><strong>AABB:</strong> American Association of Blood Banks</li>
+          <li><strong>CAP:</strong> American College of Medical Genetics and Genomics</li>
         </ul>
         
-        <p><strong>Lựa chọn cơ sở xét nghiệm uy tín:</strong></p>
+        <p><strong>Accuracy:</strong></p>
         <ul>
-          <li>Có giấy phép hoạt động của Bộ Y tế</li>
-          <li>Được chứng nhận bởi các tổ chức quốc tế (ISO, AABB, CAP)</li>
-          <li>Có đội ngũ chuyên gia giàu kinh nghiệm</li>
-          <li>Sử dụng công nghệ và thiết bị hiện đại</li>
-          <li>Có chính sách bảo mật thông tin rõ ràng</li>
-          <li>Cung cấp dịch vụ tư vấn chuyên nghiệp</li>
+          <li><strong>With relationship:</strong> Accuracy is usually around 99.99% or higher</li>
+          <li><strong>Without relationship:</strong> Unambiguously ruling out with 100% accuracy</li>
+          <li><strong>Paternity index:</strong> Usually > 99.9% when there is a relationship</li>
+          <li><strong>Combined index (CI):</strong> Usually > 10,000</li>
         </ul>
         
-        <p><strong>Chuẩn bị trước khi xét nghiệm:</strong></p>
+        <p><strong>Legal value:</strong></p>
+        <p>Due to this high level of reliability, DNA testing results have very high legal value, widely accepted in:</p>
         <ul>
-          <li>Tìm hiểu về quy trình và chi phí</li>
-          <li>Chuẩn bị đầy đủ giấy tờ cần thiết</li>
-          <li>Thảo luận với các bên liên quan</li>
-          <li>Hiểu rõ ý nghĩa và hậu quả của kết quả</li>
-          <li>Lựa chọn loại xét nghiệm phù hợp với mục đích</li>
+          <li>Legal procedures</li>
+          <li>Administrative procedures</li>
+          <li>Civil disputes</li>
+          <li>Criminal investigations</li>
+          <li>Immigration procedures</li>
+        </ul>
+
+        <h2 id="9">Future of DNA Technology</h2>
+        <p>DNA testing technology is constantly advancing, with new technologies being developed:</p>
+        
+        <p><strong>Next-generation sequencing (NGS):</strong></p>
+        <ul>
+          <li>Analyzing the entire genome in more detail</li>
+          <li>Reducing costs and processing time</li>
+          <li>Increasing resolution and accuracy</li>
+          <li>Ability to analyze degraded samples</li>
         </ul>
         
-        <p><strong>Sau khi có kết quả:</strong></p>
+        <p><strong>New applications:</strong></p>
         <ul>
-          <li>Yêu cầu giải thích chi tiết từ chuyên gia</li>
-          <li>Bảo quản kết quả cẩn thận</li>
-          <li>Sử dụng kết quả đúng mục đích</li>
-          <li>Tôn trọng quyền riêng tư của các bên liên quan</li>
+          <li><strong>Personalized medicine:</strong> Treatment based on individual genetic characteristics</li>
+          <li><strong>Early disease detection:</strong> Detecting potential genetic risks</li>
+          <li><strong>Pharmacogenetics:</strong> Selecting the right medication for each individual</li>
+          <li><strong>Evolutionary research:</strong> Understanding human evolutionary history</li>
+        </ul>
+        
+        <p><strong>New technologies:</strong></p>
+        <ul>
+          <li>Portable DNA sequencing (mobile DNA testing)</li>
+          <li>Real-time PCR with higher sensitivity</li>
+          <li>Microfluidics for faster testing</li>
+          <li>Blockchain for secure data storage</li>
+        </ul>
+
+        <h2 id="10">Guidelines for the Public</h2>
+        <p><strong>When should DNA testing be conducted?</strong></p>
+        <ul>
+          <li>To determine blood relationships for personal purposes</li>
+          <li>To resolve legal disputes about inheritance</li>
+          <li>To process immigration procedures</li>
+          <li>To support medical purposes (organ transplantation, genetic disease diagnosis)</li>
+        </ul>
+        
+        <p><strong>Choosing a reputable testing facility:</strong></p>
+        <ul>
+          <li>Having a valid operating license from the Ministry of Health</li>
+          <li>Being certified by international organizations (ISO, AABB, CAP)</li>
+          <li>Having a team of experienced professionals</li>
+          <li>Using modern technology and equipment</li>
+          <li>Having clear privacy policies</li>
+          <li>Providing professional consultation services</li>
+        </ul>
+        
+        <p><strong>Preparing before testing:</strong></p>
+        <ul>
+          <li>Researching the process and costs</li>
+          <li>Having all necessary documents ready</li>
+          <li>Discussing the implications and consequences of the results with all parties involved</li>
+          <li>Choosing the appropriate type of test based on purpose</li>
+        </ul>
+        
+        <p><strong>After receiving results:</strong></p>
+        <ul>
+          <li>Requesting detailed explanations from experts</li>
+          <li>Storing results carefully</li>
+          <li>Using results for the intended purpose</li>
+          <li>Respecting the privacy of all parties involved</li>
         </ul>
         
         <div class="conclusion-box">
-          <h3>Kết luận</h3>
-          <p>Hiểu rõ nguyên lý hoạt động của xét nghiệm ADN giúp chúng ta đánh giá đúng vai trò và tiềm năng của công nghệ này trong việc giải mã những bí ẩn của sự sống và phục vụ cộng đồng. Với sự phát triển không ngừng của khoa học công nghệ, xét nghiệm ADN sẽ tiếp tục đóng góp quan trọng vào việc nâng cao chất lượng cuộc sống và xây dựng xã hội công bằng, văn minh.</p>
+          <h3>Conclusion</h3>
+          <p>Understanding the mechanism of DNA testing helps us evaluate its appropriate role and potential in decoding the mysteries of life and serving the community. With the continuous development of science and technology, DNA testing will continue to play a significant role in improving the quality of life and building a civilized society.</p>
         </div>
       </div>
     `
@@ -1436,154 +1423,154 @@ const articles = [
 // ... existing code ...
   {
     id: 6,
-    title: "Thủ Tục Đăng Ký Xét Nghiệm ADN Online",
-    category: "Hành Chính",
-    excerpt: "Hướng dẫn đăng ký xét nghiệm ADN trực tuyến nhanh chóng, tiện lợi qua hệ thống điện tử của Bộ Y tế.",
+    title: "Online DNA Testing Registration",
+    category: "Administration",
+    excerpt: "A quick guide to registering for DNA testing online, making the process convenient and hassle-free through the Ministry of Health's electronic system.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop",
     slug: "thu-tuc-dang-ky-xet-nghiem-adn-online",
-    author: "Chuyên viên Nguyễn Văn Đức",
+    author: "Specialist Nguyen Van Duc",
     date: "2024-01-16",
-    readTime: "7 phút đọc",
+    readTime: "7 min read",
     featured: false,
     views: 1320,
     likes: 89,
     comments: 22,
     tableOfContents: [
-      { id: "1", title: "Hệ thống đăng ký online", level: 1 },
-      { id: "2", title: "Các bước thực hiện", level: 1 },
-      { id: "3", title: "Thanh toán trực tuyến", level: 1 },
-      { id: "4", title: "Theo dõi tiến độ", level: 1 }
+      { id: "1", title: "Online registration system", level: 1 },
+      { id: "2", title: "Steps to follow", level: 1 },
+      { id: "3", title: "Online payment", level: 1 },
+      { id: "4", title: "Tracking progress", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <h2 id="1">Hệ thống đăng ký online</h2>
-        <p>Hệ thống đăng ký xét nghiệm ADN trực tuyến của Bộ Y tế cho phép người dân thực hiện các thủ tục một cách nhanh chóng và tiện lợi.</p>
+        <h2 id="1">Online registration system</h2>
+        <p>The online DNA testing registration system of the Ministry of Health allows the public to complete procedures quickly and conveniently.</p>
         
-        <h2 id="2">Các bước thực hiện</h2>
-        <p>Quy trình đăng ký gồm 5 bước đơn giản:</p>
+        <h2 id="2">Steps to follow</h2>
+        <p>The registration process consists of 5 simple steps:</p>
         <ul>
-          <li>Đăng ký tài khoản trên hệ thống</li>
-          <li>Điền thông tin cá nhân</li>
-          <li>Upload giấy tờ cần thiết</li>
-          <li>Chọn địa điểm lấy mẫu</li>
-          <li>Xác nhận và thanh toán</li>
+          <li>Registering an account on the system</li>
+          <li>Entering personal information</li>
+          <li>Uploading required documents</li>
+          <li>Selecting a collection location</li>
+          <li>Confirming payment</li>
         </ul>
         
-        <h2 id="3">Thanh toán trực tuyến</h2>
-        <p>Hệ thống hỗ trợ nhiều hình thức thanh toán: thẻ ATM, ví điện tử, chuyển khoản ngân hàng.</p>
+        <h2 id="3">Online payment</h2>
+        <p>The system supports multiple payment methods: ATM cards, electronic wallets, bank transfers.</p>
         
-        <h2 id="4">Theo dõi tiến độ</h2>
-        <p>Khách hàng có thể theo dõi tiến độ xử lý hồ sơ và nhận kết quả qua SMS hoặc email.</p>
+        <h2 id="4">Tracking progress</h2>
+        <p>Customers can track the progress of their application and receive results via SMS or email.</p>
       </div>
     `
   },
   {
     id: 7,
-    title: "Cập Nhật: Giá Xét Nghiệm ADN Giảm 30% Trong Tháng 2",
-    category: "Tin Tức",
-    excerpt: "Tin vui cho người dân khi các trung tâm xét nghiệm ADN đồng loạt giảm giá dịch vụ trong tháng 2/2024.",
+    title: "Update: DNA Testing Fees Reduced by 30% in February",
+    category: "News",
+    excerpt: "Good news for the public as many DNA testing centers across the country are reducing service fees in February 2024.",
     image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&h=800&fit=crop",
     slug: "cap-nhat-gia-xet-nghiem-adn-giam-30-trong-thang-2",
-    author: "Phóng viên Hoàng Minh Tuấn",
+    author: "Reporter Hoang Minh Tuấn",
     date: "2024-01-15",
-    readTime: "4 phút đọc",
+    readTime: "4 min read",
     featured: false,
     views: 1890,
     likes: 134,
     comments: 28,
     tableOfContents: [
-      { id: "1", title: "Thông tin giảm giá", level: 1 },
-      { id: "2", title: "Điều kiện áp dụng", level: 1 },
-      { id: "3", title: "Cách thức đăng ký", level: 1 }
+      { id: "1", title: "Information about the discount", level: 1 },
+      { id: "2", title: "Conditions for application", level: 1 },
+      { id: "3", title: "Methods of registration", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <h2 id="1">Thông tin giảm giá</h2>
-        <p>Từ ngày 1/2/2024, các trung tâm xét nghiệm ADN trên toàn quốc đồng loạt giảm giá dịch vụ 30% nhằm hỗ trợ người dân tiếp cận dễ dàng hơn.</p>
+        <h2 id="1">Information about the discount</h2>
+        <p>From January 2, 2024, all DNA testing centers across the country are reducing service fees by 30% to make it easier for the public to access services.</p>
         
-        <h2 id="2">Điều kiện áp dụng</h2>
-        <p>Chương trình áp dụng cho tất cả các loại xét nghiệm ADN, không giới hạn số lượng, áp dụng đến hết tháng 2/2024.</p>
+        <h2 id="2">Conditions for application</h2>
+        <p>The program applies to all types of DNA testing, without any limits on the number of tests, and will continue until the end of February 2024.</p>
         
-        <h2 id="3">Cách thức đăng ký</h2>
-        <p>Khách hàng có thể đăng ký trực tiếp tại các trung tâm hoặc qua hệ thống online để được hưởng ưu đãi.</p>
+        <h2 id="3">Methods of registration</h2>
+        <p>Customers can register directly at the centers or through the online system to enjoy the discounts.</p>
       </div>
     `
   },
   {
     id: 8,
-    title: "Quyền Lợi Pháp Lý Khi Thực Hiện Xét Nghiệm ADN",
-    category: "Dân Sự",
-    excerpt: "Tìm hiểu về các quyền lợi và nghĩa vụ pháp lý của các bên khi tham gia xét nghiệm ADN theo luật hiện hành.",
+    title: "Legal Rights and Obligations when Conducting DNA Testing",
+    category: "Civil Law",
+    excerpt: "Understanding the legal rights and obligations of all parties when conducting DNA testing under current law.",
     image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200&h=800&fit=crop",
     slug: "quyen-loi-phap-ly-khi-thuc-hien-xet-nghiem-adn",
-    author: "Luật sư Đỗ Thị Mai",
+    author: "Lawyer Do Thi Mai",
     date: "2024-01-12",
-    readTime: "9 phút đọc",
+    readTime: "9 min read",
     featured: false,
     views: 1150,
     likes: 78,
     comments: 19,
     tableOfContents: [
-      { id: "1", title: "Quyền của người tham gia", level: 1 },
-      { id: "2", title: "Nghĩa vụ pháp lý", level: 1 },
-      { id: "3", title: "Bảo vệ quyền riêng tư", level: 1 },
-      { id: "4", title: "Xử lý tranh chấp", level: 1 }
+      { id: "1", title: "Rights of the participant", level: 1 },
+      { id: "2", title: "Legal obligations", level: 1 },
+      { id: "3", title: "Protection of personal privacy", level: 1 },
+      { id: "4", title: "Handling disputes", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <h2 id="1">Quyền của người tham gia</h2>
-        <p>Người tham gia xét nghiệm ADN có quyền được thông báo đầy đủ về mục đích, quy trình và hậu quả của việc xét nghiệm.</p>
+        <h2 id="1">Rights of the participant</h2>
+        <p>The person conducting DNA testing has the right to be fully informed about the purpose, process, and consequences of the testing.</p>
         
-        <h2 id="2">Nghĩa vụ pháp lý</h2>
-        <p>Các bên có nghĩa vụ cung cấp thông tin chính xác, hợp tác trong quá trình lấy mẫu và tuân thủ các quy định pháp luật.</p>
+        <h2 id="2">Legal obligations</h2>
+        <p>All parties have the obligation to provide accurate information, cooperate during the sampling process, and comply with legal regulations.</p>
         
-        <h2 id="3">Bảo vệ quyền riêng tư</h2>
-        <p>Thông tin ADN được bảo mật nghiêm ngặt và chỉ được sử dụng cho mục đích đã thỏa thuận.</p>
+        <h2 id="3">Protection of personal privacy</h2>
+        <p>DNA information is strictly confidential and is only used for the agreed purposes.</p>
         
-        <h2 id="4">Xử lý tranh chấp</h2>
-        <p>Trong trường hợp có tranh chấp, các bên có thể khiếu nại hoặc khởi kiện theo quy định của pháp luật.</p>
+        <h2 id="4">Handling disputes</h2>
+        <p>In case of disputes, parties can file complaints or initiate legal action according to the law.</p>
       </div>
     `
   },
   {
     id: 9,
-    title: "Ứng Dụng AI Trong Phân Tích Kết Quả ADN",
-    category: "Kiến Thức",
-    excerpt: "Công nghệ trí tuệ nhân tạo đang cách mạng hóa việc phân tích và xử lý kết quả xét nghiệm ADN.",
+    title: "AI Applications in DNA Analysis",
+    category: "Knowledge",
+    excerpt: "Artificial intelligence technology is revolutionizing the way we analyze and process DNA results.",
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop",
     slug: "ung-dung-ai-trong-phan-tich-ket-qua-adn",
-    author: "TS. Lê Minh Hải",
+    author: "Dr. Le Minh Hai",
     date: "2024-01-10",
-    readTime: "11 phút đọc",
+    readTime: "11 min read",
     featured: false,
     views: 1420,
     likes: 95,
     comments: 26,
     tableOfContents: [
-      { id: "1", title: "AI trong xét nghiệm ADN", level: 1 },
-      { id: "2", title: "Thuật toán machine learning", level: 1 },
-      { id: "3", title: "Ưu điểm của AI", level: 1 },
-      { id: "4", title: "Tương lai của công nghệ", level: 1 }
+      { id: "1", title: "AI in DNA testing", level: 1 },
+      { id: "2", title: "Machine learning algorithms", level: 1 },
+      { id: "3", title: "Advantages of AI", level: 1 },
+      { id: "4", title: "Future of technology", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <h2 id="1">AI trong xét nghiệm ADN</h2>
-        <p>Trí tuệ nhân tạo đang được ứng dụng rộng rãi trong việc phân tích dữ liệu ADN, giúp tăng độ chính xác và giảm thời gian xử lý.</p>
+        <h2 id="1">AI in DNA testing</h2>
+        <p>Artificial intelligence is increasingly being applied in DNA data analysis, increasing accuracy and reducing processing time.</p>
         
-        <h2 id="2">Thuật toán machine learning</h2>
-        <p>Các thuật toán học máy được huấn luyện trên hàng triệu mẫu dữ liệu ADN để nhận diện các pattern và đưa ra kết luận chính xác.</p>
+        <h2 id="2">Machine learning algorithms</h2>
+        <p>Machine learning algorithms are trained on millions of DNA data samples to identify patterns and make accurate conclusions.</p>
         
-        <h2 id="3">Ưu điểm của AI</h2>
-        <p>AI mang lại nhiều ưu điểm:</p>
+        <h2 id="3">Advantages of AI</h2>
+        <p>AI brings many advantages:</p>
         <ul>
-          <li>Tăng độ chính xác lên 99.99%</li>
-          <li>Giảm thời gian phân tích từ ngày xuống giờ</li>
-          <li>Phát hiện các mối quan hệ phức tạp</li>
-          <li>Giảm thiểu sai sót do con người</li>
+          <li>Increasing accuracy to 99.99%</li>
+          <li>Reducing analysis time from days to hours</li>
+          <li>Detecting complex relationships</li>
+          <li>Reducing human error</li>
         </ul>
         
-        <h2 id="4">Tương lai của công nghệ</h2>
-        <p>Trong tương lai, AI sẽ tiếp tục phát triển và có thể dự đoán được nhiều thông tin di truyền khác từ mẫu ADN.</p>
+        <h2 id="4">Future of technology</h2>
+        <p>In the future, AI will continue to develop and may be able to predict various genetic information from DNA samples.</p>
       </div>
     `
   }
@@ -1593,22 +1580,22 @@ const BlogDetail = () => {
   const { slug } = useParams();
   const [activeSection, setActiveSection] = useState('1');
   
-  // Tìm bài viết theo slug
+  // Find the article by slug
   const article = articles.find(a => a.slug === slug);
   
-  // Nếu không tìm thấy bài viết, chuyển hướng về trang blog
+  // If the article is not found, redirect to the blog page
   if (!article) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy bài viết</h1>
-          <Link to="/blog" className="text-blue-600 hover:text-blue-800">Quay lại trang Blog</Link>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Article not found</h1>
+          <Link to="/blog" className="text-blue-600 hover:text-blue-800">Return to Blog</Link>
         </div>
       </div>
     );
   }
 
-  // Lấy bài viết liên quan (cùng category, khác id)
+  // Get related articles (same category, different id)
   const relatedArticles = articles
     .filter(a => a.category === article.category && a.id !== article.id)
     .slice(0, 3);
@@ -1628,13 +1615,61 @@ const BlogDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header Section - Updated to match services style */}
+      <div
+        className="relative text-white h-[400px] flex items-center justify-center"
+        style={{
+          backgroundImage:
+            "url('/images/close-up-hands-typing-keyboard.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="absolute inset-0 bg-black opacity-60"></div>
+        <div className="relative z-10 container mx-auto px-6 text-center">
+          <h1
+            className="text-4xl md:text-5xl font-bold mb-4"
+            style={{
+              textShadow:
+                "1px 1px 0 #808080, -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 0 1px 0 #808080, 1px 0 0 #808080, 0 -1px 0 #808080, -1px 0 0 #808080",
+            }}
+          >
+            {article.title}
+          </h1>
+          
+          <div className="flex flex-wrap justify-center items-center gap-4 mb-4">
+            <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaUser className="mr-2" />
+              <span className="font-medium">{article.author}</span>
+            </div>
+            <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaCalendar className="mr-2" />
+              <span>{formatDate(article.date)}</span>
+            </div>
+            <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaClock className="mr-2" />
+              <span>{article.readTime}</span>
+            </div>
+            <div className={`flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm`}>
+              <FaTag className="mr-2" />
+              <span>{article.category}</span>
+            </div>
+          </div>
+          
+          <p className="text-lg max-w-3xl mx-auto text-white/90 mt-4">
+            {article.excerpt}
+          </p>
+        </div>
+      </div>
+
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-3">
           <nav className="flex items-center space-x-2 text-sm text-gray-600">
             <Link to="/" className="hover:text-blue-600 flex items-center">
               <FaHome className="mr-1" />
-              Trang chủ
+              Home
             </Link>
             <FaChevronRight className="text-gray-400" />
             <Link to="/blog" className="hover:text-blue-600">Blog</Link>
@@ -1650,47 +1685,8 @@ const BlogDetail = () => {
           <div className="lg:col-span-3">
             {/* Article Header */}
             <article className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              {/* Article Meta */}
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${
-                    article.category === 'Kiến Thức' ? 'from-green-500 to-green-600' :
-                    article.category === 'Hành Chính' ? 'from-red-500 to-red-600' :
-                    article.category === 'Tin Tức' ? 'from-purple-500 to-purple-600' :
-                    'from-orange-500 to-orange-600'
-                  }`}>
-                    <FaTag className="inline mr-1" />
-                    {article.category}
-                  </span>
-                  {article.featured && (
-                    <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                      ⭐ Nổi bật
-                    </span>
-                  )}
-                </div>
-                
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                  {article.title}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-6 text-gray-600 mb-6">
-                  <div className="flex items-center">
-                    <FaUser className="mr-2 text-blue-500" />
-                    <span className="font-medium">{article.author}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaCalendar className="mr-2 text-blue-500" />
-                    <span>{formatDate(article.date)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaClock className="mr-2 text-blue-500" />
-                    <span>{article.readTime}</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Featured Image */}
-              <div className="px-6">
+              <div className="px-6 pt-6">
                 <img
                   src={article.image}
                   alt={article.title}
@@ -1710,7 +1706,7 @@ const BlogDetail = () => {
             {/* Related Articles */}
             {relatedArticles.length > 0 && (
               <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Bài viết liên quan</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {relatedArticles.map((relatedArticle) => (
                     <Link 
@@ -1725,9 +1721,9 @@ const BlogDetail = () => {
                       />
                       <div className="p-4">
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold text-white mb-2 ${
-                          relatedArticle.category === 'Kiến Thức' ? 'bg-green-500' :
-                          relatedArticle.category === 'Hành Chính' ? 'bg-red-500' :
-                          relatedArticle.category === 'Tin Tức' ? 'bg-purple-500' :
+                          relatedArticle.category === 'Knowledge' ? 'bg-green-500' :
+                          relatedArticle.category === 'Administration' ? 'bg-red-500' :
+                          relatedArticle.category === 'News' ? 'bg-purple-500' :
                           'bg-orange-500'
                         }`}>
                           {relatedArticle.category}
@@ -1755,7 +1751,7 @@ const BlogDetail = () => {
             {/* Table of Contents */}
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-3">
-                📋 Nội dung:
+                📋 Table of Contents:
               </h3>
               <nav className="space-y-2">
                 {article.tableOfContents?.map((item) => (
@@ -1783,7 +1779,7 @@ const BlogDetail = () => {
                   className="flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold"
                 >
                   <FaArrowLeft className="mr-2" />
-                  Quay lại Blog
+                  Return to Blog
                 </Link>
               </div>
             </div>

@@ -29,22 +29,21 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const statusList = [
-  "Waiting confirmed",
-  "Booking confirmed",
+  "Awaiting Confirmation",
+  "Payment Confirmed",
+  "Booking Confirmed",
   "Awaiting Sample",
   "In Progress",
-  "Ready",
-  "Pending Payment",
   "Completed",
-  "Cancel",
+  "Cancelled",
 ];
 
 const columns = [
-  { title: "Kit ID", dataIndex: "kitID", key: "kitID" },
   { title: "Booking ID", dataIndex: "bookingId", key: "bookingId" },
   { title: "Customer ID", dataIndex: "customerID", key: "customerID" },
-  { title: "Customer Name", dataIndex: "customerName", key: "customerName" },
+  { title: "Kit ID", dataIndex: "kitID", key: "kitID" },
   { title: "Service ID", dataIndex: "serviceID", key: "serviceID" },
+  { title: "Payment Code", dataIndex: "paymentCode", key: "paymentCode" },
   {
     title: "Collection Method",
     dataIndex: "collectionMethod",
@@ -74,12 +73,17 @@ const columns = [
     render: (status) => {
       let color = "default";
       let icon = <ClockCircleOutlined />;
-      if (status === "Waiting confirmed") {
-        color = "gold";
+
+      if (status === "Awaiting Confirmation") {
+        color = "orange";
         icon = <ClockCircleOutlined />;
       }
-      if (status === "Booking confirmed") {
+      if (status === "Payment Confirmed") {
         color = "blue";
+        icon = <CheckCircleOutlined />;
+      }
+      if (status === "Booking Confirmed") {
+        color = "green";
         icon = <CheckCircleOutlined />;
       }
       if (status === "Awaiting Sample") {
@@ -90,22 +94,15 @@ const columns = [
         color = "cyan";
         icon = <LoadingOutlined />;
       }
-      if (status === "Ready") {
-        color = "lime";
-        icon = <CheckCircleOutlined />;
-      }
-      if (status === "Pending Payment") {
-        color = "orange";
-        icon = <ExclamationCircleOutlined />;
-      }
       if (status === "Completed") {
         color = "green";
         icon = <CheckCircleOutlined />;
       }
-      if (status === "Cancel") {
+      if (status === "Cancelled") {
         color = "red";
         icon = <ExclamationCircleOutlined />;
       }
+
       return (
         <Tag icon={icon} color={color}>
           {status}
@@ -153,21 +150,17 @@ const columns = [
   },
   { title: "Address", dataIndex: "address", key: "address" },
   { title: "Note", dataIndex: "note", key: "note" },
-  {
-    title: "Test Subjects",
-    dataIndex: "testSubjects",
-    key: "testSubjects",
-    render: (val) => val || "",
-  },
 ];
 
 const Booking = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [collectionMethodFilter, setCollectionMethodFilter] = useState("");
-  const [mediationMethodFilter, setMediationMethodFilter] = useState("");
+  // Default filter values for initial display
+  const [statusFilter, setStatusFilter] = useState(undefined);
+  const [collectionMethodFilter, setCollectionMethodFilter] =
+    useState(undefined);
+  const [mediationMethodFilter, setMediationMethodFilter] = useState(undefined);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -192,27 +185,7 @@ const Booking = () => {
   const filteredBookings = bookings.filter((booking) => {
     // Only allow filter and display for the specified statuses
     if (!statusList.includes(booking.status)) return false;
-    // Map status from Vietnamese to English for filtering
-    let statusEn = booking.status;
-    switch (booking.status) {
-      case "Chờ thanh toán":
-        statusEn = "Pending Payment";
-        break;
-      case "Đã thanh toán":
-        statusEn = "Paid";
-        break;
-      case "Đang chờ mẫu":
-        statusEn = "Awaiting Sample";
-        break;
-      case "Đang xét nghiệm":
-        statusEn = "In Progress";
-        break;
-      case "Hoàn tất":
-        statusEn = "Completed";
-        break;
-      default:
-        statusEn = booking.status;
-    }
+
     const matchesSearch =
       booking.bookingId?.toString().includes(searchText) ||
       booking.customerID?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -223,16 +196,23 @@ const Booking = () => {
         .includes(searchText.toLowerCase()) ||
       booking.paymentMethod?.toLowerCase().includes(searchText.toLowerCase()) ||
       booking.note?.toLowerCase().includes(searchText.toLowerCase());
-    // Case-insensitive status filter
+
+    // Direct status filter (no mapping needed since we use the correct statuses)
     const matchesStatus =
-      !statusFilter ||
-      (statusEn && statusEn.toLowerCase() === statusFilter.toLowerCase());
+      !statusFilter || (booking.status && booking.status === statusFilter);
+
     const matchesCollectionMethod =
       !collectionMethodFilter ||
-      booking.collectionMethod === collectionMethodFilter;
+      (booking.collectionMethod &&
+        booking.collectionMethod.toLowerCase() ===
+          collectionMethodFilter.toLowerCase());
+
     const matchesMediationMethod =
       !mediationMethodFilter ||
-      booking.mediationMethod === mediationMethodFilter;
+      (booking.mediationMethod &&
+        booking.mediationMethod.toLowerCase() ===
+          mediationMethodFilter.toLowerCase());
+
     return (
       matchesSearch &&
       matchesStatus &&
@@ -304,32 +284,31 @@ const Booking = () => {
   };
 
   return (
-    <div>
+    <>
       <Title level={3}>Tracking Booking</Title>
       <Card style={{ marginBottom: 16 }}>
         <Row
-          gutter={[16, 16]}
+          gutter={[8, 8]}
           align="middle"
-          justify="start"
           style={{ flexWrap: "wrap", width: "100%" }}>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={12} md={6} style={{ marginBottom: 8 }}>
             <Input
               placeholder="Search by Booking ID, Customer ID, Service ID, Kit ID, Type, ..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
-              size="large"
             />
           </Col>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={8} md={6} lg={4} style={{ marginBottom: 8 }}>
             <Select
               placeholder="Filter by Status"
               value={statusFilter}
-              onChange={setStatusFilter}
-              style={{ width: "100%" }}
-              allowClear
-              size="large">
+              onChange={(value) =>
+                setStatusFilter(value === undefined ? null : value)
+              }
+              style={{ width: "100%", minWidth: 180, maxWidth: 240 }}
+              allowClear>
               {statusList.map((status) => (
                 <Option value={status} key={status}>
                   {status}
@@ -337,76 +316,58 @@ const Booking = () => {
               ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={8} md={6} lg={4} style={{ marginBottom: 8 }}>
             <Select
               placeholder="Filter by Collection Method"
               value={collectionMethodFilter}
-              onChange={setCollectionMethodFilter}
-              style={{ width: "100%" }}
-              allowClear
-              size="large">
-              {/* Lấy danh sách collectionMethod duy nhất */}
-              {[...new Set(bookings.map((b) => b.collectionMethod))]
-                .filter(Boolean)
-                .map((method) => (
-                  <Option key={method} value={method}>
-                    {method}
-                  </Option>
-                ))}
+              onChange={(value) =>
+                setCollectionMethodFilter(value === undefined ? null : value)
+              }
+              style={{ width: "100%", minWidth: 180, maxWidth: 240 }}
+              allowClear>
+              <Option value="At Home">At Home</Option>
+              <Option value="At Facility">At Facility</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={6} lg={6} xl={6} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={8} md={6} lg={4} style={{ marginBottom: 8 }}>
             <Select
               placeholder="Filter by Mediation Method"
               value={mediationMethodFilter}
-              onChange={setMediationMethodFilter}
-              style={{ width: "100%" }}
-              allowClear
-              size="large">
-              {/* Lấy danh sách mediationMethod duy nhất */}
-              {[...new Set(bookings.map((b) => b.mediationMethod))]
-                .filter(Boolean)
-                .map((method) => (
-                  <Option key={method} value={method}>
-                    {method}
-                  </Option>
-                ))}
+              onChange={(value) =>
+                setMediationMethodFilter(value === undefined ? null : value)
+              }
+              style={{ width: "100%", minWidth: 180, maxWidth: 240 }}
+              allowClear>
+              <Option value="Staff Collection">Staff Collection</Option>
+              <Option value="Postal Delivery">Postal Delivery</Option>
+              <Option value="Walk-in Service">Walk-in Service</Option>
             </Select>
           </Col>
+          <Col flex="auto" />
           <Col
-            xs={24}
-            sm={24}
-            md={24}
-            lg={24}
-            xl={24}
-            style={{ marginBottom: 8 }}>
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-              }}>
-              <Space size={12} style={{ width: "auto" }}>
-                <Button
-                  icon={<DownloadOutlined />}
-                  onClick={handleExportPDF}
-                  type="default"
-                  style={{ borderRadius: 6, minWidth: 120 }}
-                  size="large">
-                  Export PDF
-                </Button>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={fetchBookings}
-                  type="primary"
-                  style={{ borderRadius: 6, minWidth: 120 }}
-                  size="large"
-                  loading={loading}>
-                  Refresh
-                </Button>
-              </Space>
-            </div>
+            style={{
+              marginBottom: 8,
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}>
+            <Space size={12} style={{ width: "auto" }}>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExportPDF}
+                type="default"
+                style={{ borderRadius: 6, minWidth: 120 }}>
+                Export PDF
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchBookings}
+                type="primary"
+                style={{ borderRadius: 6, minWidth: 120 }}
+                loading={loading}>
+                Refresh
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>
@@ -438,7 +399,7 @@ const Booking = () => {
           }}
         />
       </Card>
-    </div>
+    </>
   );
 };
 

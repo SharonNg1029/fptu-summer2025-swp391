@@ -17,16 +17,170 @@ import api, { saveAuthData } from "../../configs/axios";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { login } from "../../redux/features/userSlice";
 import { useDispatch } from "react-redux";
+import * as yup from 'yup';
 
-// Custom OTP Verification Component - UPDATED
+// ✅ Yup validation schema với vanilla JavaScript date validation
+const validationSchema = yup.object().shape({
+  fullname: yup
+    .string()
+    .required('Full name is required')
+    .trim()
+    .min(2, 'Full name must be at least 2 characters'),
+
+  username: yup
+    .string()
+    .required('Username is required')
+    .trim()
+    .min(3, 'Username must be at least 3 characters')
+    .max(20, 'Username must not exceed 20 characters')
+    .matches(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+
+  email: yup
+    .string()
+    .required('Email is required')
+    .email('Please enter a valid email address')
+    .trim(),
+
+  password: yup
+    .string()
+    .required('Password is required')
+    .min(6, 'Password must be at least 6 characters')
+    .max(50, 'Password must not exceed 50 characters'),
+
+  // ✅ Phone validation - bắt đầu bằng 0 và đủ 10 số
+  phone: yup
+    .string()
+    .required('Phone number is required')
+    .matches(/^0\d{9}$/, 'Phone number must start with 0 and have exactly 10 digits')
+    .test('phone-format', 'Phone number must start with 0 and contain exactly 10 digits', (value) => {
+      if (!value) return false;
+      const cleanPhone = value.replace(/\s+/g, '').replace(/[^\d]/g, '');
+      return cleanPhone.length === 10 && cleanPhone.startsWith('0');
+    }),
+
+  // ✅ DOB validation - sử dụng vanilla JavaScript
+  dob: yup
+    .mixed()
+    .required('Date of birth is required')
+    .test('dob-valid', 'Please select a valid date', (value) => {
+      if (!value) return false;
+      return true; // Basic validation
+    })
+    .test('dob-not-future', 'Date of birth cannot be in the future', (value) => {
+      if (!value) return false;
+      
+      try {
+        let dateToCheck;
+        
+        // Handle different input types
+        if (value && typeof value === 'object' && value.format) {
+          // Antd DatePicker moment object
+          dateToCheck = new Date(value.format('YYYY-MM-DD'));
+        } else if (value instanceof Date) {
+          // Date object
+          dateToCheck = value;
+        } else if (typeof value === 'string') {
+          // String
+          dateToCheck = new Date(value);
+        } else {
+          return false;
+        }
+
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today
+        
+        return dateToCheck <= today;
+      } catch (error) {
+        console.error('DOB validation error:', error);
+        return false;
+      }
+    })
+    .test('dob-reasonable', 'Please enter a valid date of birth', (value) => {
+      if (!value) return false;
+      
+      try {
+        let dateToCheck;
+        
+        if (value && typeof value === 'object' && value.format) {
+          dateToCheck = new Date(value.format('YYYY-MM-DD'));
+        } else if (value instanceof Date) {
+          dateToCheck = value;
+        } else if (typeof value === 'string') {
+          dateToCheck = new Date(value);
+        } else {
+          return false;
+        }
+
+        const today = new Date();
+        const hundredYearsAgo = new Date();
+        hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+        
+        return dateToCheck > hundredYearsAgo && dateToCheck <= today;
+      } catch (error) {
+        console.error('DOB reasonable validation error:', error);
+        return false;
+      }
+    }),
+
+  address: yup
+    .string()
+    .required('Address is required')
+    .trim()
+    .min(5, 'Address must be at least 5 characters'),
+
+  gender: yup
+    .number()
+    .required('Gender is required')
+    .oneOf([0, 1], 'Please select a valid gender'),
+
+  agreement: yup
+    .boolean()
+    .oneOf([true], 'You must agree to the Terms and Privacy Policy')
+});
+
+// ✅ Helper functions
+const validateField = async (fieldName, value, allValues = {}) => {
+  try {
+    await validationSchema.validateAt(fieldName, { ...allValues, [fieldName]: value });
+    return { isValid: true, message: '' };
+  } catch (error) {
+    return { isValid: false, message: error.message };
+  }
+};
+
+const validateForm = async (values) => {
+  try {
+    await validationSchema.validate(values, { abortEarly: false });
+    return { isValid: true, errors: {} };
+  } catch (error) {
+    const errors = {};
+    error.inner.forEach((err) => {
+      errors[err.path] = err.message;
+    });
+    return { isValid: false, errors };
+  }
+};
+
+const formatPhoneNumber = (value) => {
+  if (!value) return '';
+  
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length > 0 && !numbers.startsWith('0')) {
+    return '0' + numbers.slice(0, 9);
+  }
+  
+  return numbers.slice(0, 10);
+};
+
+// Custom OTP Verification Component
 const OTPVerification = ({ email, onVerify, onClose }) => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 phút = 300 giây
+  const [timeLeft, setTimeLeft] = useState(300);
   const [canResend, setCanResend] = useState(false);
 
-  // Đếm ngược thời gian
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
@@ -38,7 +192,6 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
     }
   }, [timeLeft]);
 
-  // Format thời gian hiển thị (MM:SS)
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -53,7 +206,6 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
 
     setLoading(true);
     try {
-      // Tự động gán email vào request
       await api.post("auth/verify-otp", { email, otp });
       toast.success("Account registration successful!");
       onVerify();
@@ -75,11 +227,10 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
   const handleResend = async () => {
     setResendLoading(true);
     try {
-      // Tự động gán email vào request resend
       await api.post("auth/resend-otp", { email });
       toast.success("New OTP code has been sent to your email");
       setOtp("");
-      setTimeLeft(300); // Reset về 5 phút
+      setTimeLeft(300);
       setCanResend(false);
     } catch (error) {
       console.error(error);
@@ -102,13 +253,11 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
       <div className="otp-verification-subtitle">
         We've sent a 6-digit verification code to your email.
         <br />
-{/* ẨN EMAIL - chỉ hiển thị thông báo chung */}
         <span style={{ color: "#1890ff", fontWeight: "bold" }}>
           Please check your inbox and enter the code below.
         </span>
       </div>
 
-      {/* HIỂN THỊ THỜI GIAN CÒN LẠI */}
       <div
         className="otp-timer"
         style={{
@@ -141,7 +290,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
         onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
         onKeyPress={handleKeyPress}
         maxLength={6}
-        disabled={timeLeft === 0} // Disable khi hết thời gian
+        disabled={timeLeft === 0}
       />
 
       <div>
@@ -172,7 +321,6 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
         </button>
       </div>
 
-      {/* THÔNG BÁO THÊM */}
       <div
         style={{
           marginTop: "15px",
@@ -191,14 +339,10 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
 function RegisterForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  // State cho OTP
   const [currentToastId, setCurrentToastId] = useState(null);
 
-  // Google Client ID
   const GOOGLE_CLIENT_ID = "26142191146-7u8f63rgtupdv8v6kv8ug307j55hjfob.apps.googleusercontent.com";
 
-  // Google Success Handler (đồng bộ với LoginForm)
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await api.post("/auth/google", {
@@ -236,8 +380,6 @@ function RegisterForm() {
       });
 
       toast.success("Google registration successful!");
-
-      // Navigate về home cho mọi role
       navigate("/");
     } catch (e) {
       console.error("Google registration error:", e);
@@ -250,12 +392,10 @@ function RegisterForm() {
     }
   };
 
-  // Google Error Handler
   const handleGoogleError = () => {
     toast.error("Google registration failed! Please try again.");
   };
 
-  // Function hiển thị OTP Verification
   const showOTPVerification = (email) => {
     if (currentToastId) {
       toast.dismiss(currentToastId);
@@ -263,15 +403,13 @@ function RegisterForm() {
 
     const toastId = toast(
       <OTPVerification
-        email={email} // TỰ ĐỘNG TRUYỀN EMAIL TỪ FORM ĐĂNG KÝ
+        email={email}
         onVerify={() => {
           setTimeout(() => {
             navigate("/login");
           }, 2000);
         }}
-        onResend={() => {
-          // OTP resend is handled within the component
-        }}
+        onResend={() => {}}
         onClose={() => {
           toast.dismiss(toastId);
           setCurrentToastId(null);
@@ -294,9 +432,21 @@ function RegisterForm() {
 
   const onFinish = async (values) => {
     if (values.dob && values.dob.format) {
-    values.dob = values.dob.format("YYYY-MM-DD");
-  }
-    console.log("Success:", values);
+      values.dob = values.dob.format("YYYY-MM-DD");
+    }
+
+    console.log("Form values before validation:", values);
+
+    const validation = await validateForm(values);
+    if (!validation.isValid) {
+      console.log("Yup validation errors:", validation.errors);
+      const firstError = Object.values(validation.errors)[0];
+      toast.error(firstError);
+      return;
+    }
+
+    console.log("Yup validation passed. Submitting...", values);
+
     try {
       await api.post("auth/register", values);
       toast.success(
@@ -315,7 +465,6 @@ function RegisterForm() {
         "Registration failed. Please try again.";
       const statusCode = e.response?.status;
 
-      // Kiểm tra nếu là case OTP đã gửi thành công
       if (
         errorMessage.includes("OTP has been sent") ||
         errorMessage.includes("confirm to active")
@@ -330,14 +479,13 @@ function RegisterForm() {
         return;
       }
 
-      // Xử lý lỗi khác...
       const finalErrorMessage =
         statusCode === 409 || statusCode === 400
           ? errorMessage.toLowerCase().includes("email")
             ? "This email is already registered. Please use a different email address."
             : errorMessage.toLowerCase().includes("username")
             ? "This username is already taken. Please choose a different username."
-: errorMessage
+            : errorMessage
           : errorMessage;
 
       toast.error(finalErrorMessage);
@@ -353,6 +501,11 @@ function RegisterForm() {
     if (termsError) {
       toast.error("Please agree to the Terms and Privacy Policy to continue");
     }
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    e.target.value = formatted;
   };
 
   return (
@@ -391,7 +544,19 @@ function RegisterForm() {
                   label="Full Name"
                   name="fullname"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('fullname', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Input placeholder="Enter your full name" />
                 </Form.Item>
@@ -400,7 +565,19 @@ function RegisterForm() {
                   label="Username"
                   name="username"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('username', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Input placeholder="Choose a username" />
                 </Form.Item>
@@ -409,7 +586,19 @@ function RegisterForm() {
                   label="Password"
                   name="password"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('password', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                   hasFeedback
                 >
                   <Input.Password placeholder="Create a password" />
@@ -422,6 +611,16 @@ function RegisterForm() {
                   rules={[
                     { required: true, message: "Required" },
                     { type: "email", message: "Invalid email" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('email', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
                   ]}
                 >
                   <Input placeholder="Enter your email" />
@@ -433,21 +632,61 @@ function RegisterForm() {
                   label="Phone"
                   name="phone"
                   className="form-field"
-rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('phone', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
-                  <Input placeholder="Enter your phone number" />
+                  <Input 
+                    placeholder="Enter your phone number (0xxxxxxxxx)"
+                    onChange={handlePhoneChange}
+                    maxLength={10}
+                  />
                 </Form.Item>
 
                 <Form.Item
                   label="Date of Birth"
                   name="dob"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('dob', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <DatePicker
                     placeholder="Select date of birth"
                     style={{ width: "100%" }}
                     format="YYYY/MM/DD"
+                    disabledDate={(current) => {
+                      // ✅ Vanilla JavaScript date validation
+                      if (!current) return false;
+                      
+                      const today = new Date();
+                      const hundredYearsAgo = new Date();
+                      hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+                      
+                      const currentDate = current.toDate();
+                      
+                      return currentDate > today || currentDate < hundredYearsAgo;
+                    }}
                   />
                 </Form.Item>
 
@@ -455,7 +694,19 @@ rules={[{ required: true, message: "Required" }]}
                   label="Address"
                   name="address"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const result = await validateField('address', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Input placeholder="Enter your address" />
                 </Form.Item>
@@ -464,7 +715,19 @@ rules={[{ required: true, message: "Required" }]}
                   label="Gender"
                   name="gender"
                   className="form-field"
-                  rules={[{ required: true, message: "Required" }]}
+                  rules={[
+                    { required: true, message: "Required" },
+                    {
+                      validator: async (_, value) => {
+                        if (value === undefined || value === null) return Promise.resolve();
+                        const result = await validateField('gender', value);
+                        if (!result.isValid) {
+                          return Promise.reject(new Error(result.message));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Select placeholder="Select gender">
                     <Select.Option value={0}>Male</Select.Option>
@@ -501,7 +764,6 @@ rules={[{ required: true, message: "Required" }]}
             </Form.Item>
           </Form>
 
-          {/* ===== THÊM GOOGLE SIGN UP ===== */}
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
             <div className="google-login-section">
               <p className="google-login-label">Or sign up with Google</p>
@@ -512,7 +774,6 @@ rules={[{ required: true, message: "Required" }]}
               />
             </div>
           </GoogleOAuthProvider>
-          {/* ===== KẾT THÚC GOOGLE SIGN UP ===== */}
 
           <p className="helper-text">
             Already have an account? <Link to="/login">Login here</Link>

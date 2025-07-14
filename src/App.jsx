@@ -38,6 +38,16 @@ import Pricing from "./pages/home-page/pricing";
 import ViewReports from "./pages/dashboard-manager/staff-reports";
 import BookingPage from "./pages/booking/BookingPage";
 import BlogDetail from "./pages/home-page/blog/BlogDetail";
+import ChangePasswordPage from "./pages/home-page/resetPassword/ChangePasswordPage";
+
+import MyBookingPage from "./pages/my-booking/MyBooking";
+
+import ProtectedRoute from "./components/routes/ProtectedRoute";
+
+import ResultManagementPage from "./pages/dashboard-staff/result-management";
+
+import FeedbackPage from "./pages/feedback/feedback";
+
 
 function App() {
   const router = createBrowserRouter([
@@ -74,6 +84,10 @@ function App() {
           element: <Blog />,
         },
         {
+          path: "blog/:slug",
+          element: <BlogDetail />,
+        },
+        {
           path: "contact",
           element: <Contact />,
         },
@@ -93,65 +107,115 @@ function App() {
       element: <ProfilePage />,
     },
     {
+    path: "/my-booking",
+    element: <MyBookingPage />,
+    },
+    {
+    path: "/feedback",
+    element: <FeedbackPage />,
+    },
+    {
       path: "/booking",
       element: <BookingPage />,
     },
     {
-      path: "/dashboard", // Admin Dashboard
-      element: <DashboardAdmin />,
+      path: "/dashboard",
+      element: <ProtectedRoute roles={["admin"]} />, // bảo vệ cho admin
       children: [
-        { index: true, element: <OverviewPage /> }, // Trang Overview mặc định
         {
-          path: "overview",
-          element: <OverviewPage />,
-        },
-        {
-          path: "services",
+          path: "", // Admin Dashboard
+          element: <DashboardAdmin />,
           children: [
-            { path: "booking", element: <Booking /> },
-            { path: "service-management", element: <ServiceManagementPage /> },
-            { index: true, element: <ServiceManagementPage /> },
+            { index: true, element: <OverviewPage /> }, // Trang Overview mặc định
+            {
+              path: "overview",
+              element: <OverviewPage />,
+            },
+            {
+              path: "services",
+              children: [
+                { path: "booking", element: <Booking /> },
+                {
+                  path: "service-management",
+                  element: <ServiceManagementPage />,
+                },
+                { index: true, element: <ServiceManagementPage /> },
+              ],
+            },
+            {
+              path: "accounts",
+              element: <AccountManagement />,
+            },
+            {
+              path: "logs",
+              element: <SystemLogs />,
+            },
           ],
-        },
-        {
-          path: "accounts",
-          element: <AccountManagement />,
-        },
-        {
-          path: "logs",
-          element: <SystemLogs />,
         },
       ],
     },
     {
       path: "/staff-dashboard", // Staff Dashboard
-      element: <StaffDashboard />,
+      element: <ProtectedRoute roles={["staff"]} />, // bảo vệ cho staff
       children: [
-        { index: true, element: <StaffOverviewPage /> },
-        { path: "overview", element: <StaffOverviewPage /> },
-        { path: "order-processing", element: <OrderProcessingPage /> }, // Combined
-        { path: "staff-reporting", element: <StaffReportingPage /> }, // Combined
-        // { path: "customer-contact", element: <CustomerContactPage /> }, // Still separate
+        {
+          path: "",
+          element: <StaffDashboard />,
+          children: [
+            { index: true, element: <StaffOverviewPage /> },
+            { path: "overview", element: <StaffOverviewPage /> },
+            { path: "order-processing", element: <OrderProcessingPage /> },
+            { path: "staff-reporting", element: <StaffReportingPage /> },
+            { path: "result-management", element: <ResultManagementPage /> },
+          ],
+        },
       ],
     },
     {
       path: "/manager-dashboard", // Manager Dashboard
-      element: <ManagerDashboard />,
+      element: <ProtectedRoute roles={["manager"]} />, // bảo vệ cho manager
       children: [
-        { index: true, element: <ManagerOverviewPage /> },
-        { path: "overview", element: <ManagerOverviewPage /> },
         {
-          path: "testing-process-monitoring",
-          element: <TestingProcessMonitoringPage />,
+          path: "",
+          element: <ManagerDashboard />,
+          children: [
+            { index: true, element: <ManagerOverviewPage /> },
+            { path: "overview", element: <ManagerOverviewPage /> },
+            {
+              path: "testing-process-monitoring",
+              element: <TestingProcessMonitoringPage />,
+            },
+            { path: "customer-feedback", element: <CustomerFeedbackPage /> },
+            { path: "inventory", element: <Inventory /> },
+            { path: "view-staff-reports", element: <ViewReports /> },
+          ],
         },
-        { path: "customer-feedback", element: <CustomerFeedbackPage /> },
-        { path: "inventory", element: <Inventory /> },
-        { path: "view-staff-reports", element: <ViewReports /> },
       ],
     },
     {
       path: "/verify",
       element: <VerifyPage />,
+    },
+    {
+      path: "/reset-password",
+      element: <ChangePasswordPage />,
+    },
+    // ✅ Add new routes for role-based password reset
+    {
+      path: "/customer/reset-password/:id",
+      element: <ChangePasswordPage />,
+    },
+    {
+      path: "/staff/reset-password/:id",
+      element: <ChangePasswordPage />,
+    },
+    {
+      path: "/manager/reset-password/:id",
+      element: <ChangePasswordPage />,
+    },
+    {
+      path: "/admin/reset-password/:id",
+      element: <ChangePasswordPage />,
     },
   ]);
 
@@ -160,6 +224,18 @@ function App() {
       <PersistGate loading={null} persistor={persistor}>
         <ScrollToTopButton />
         <RouterProvider router={router} />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
         <Toaster position="top-right" reverseOrder={false} />
       </PersistGate>
     </Provider>

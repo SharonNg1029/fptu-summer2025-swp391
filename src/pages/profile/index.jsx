@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   selectUserRole,
   selectCustomerID,
@@ -18,32 +19,372 @@ import {
   X,
   Camera,
   Shield,
-  Clock,
   CheckCircle,
   AlertCircle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import api from "../../configs/axios";
 import { updateUser } from "../../redux/features/userSlice";
 import toast from "react-hot-toast";
 
+// Custom DatePicker Component
+const CustomDatePicker = ({ value, onChange, min, max, className, placeholder, disabled = false }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState(value ? new Date(value) : null);
+  const dropdownRef = useRef(null);
+
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  // Initialize date from value prop
+  useEffect(() => {
+    if (value) {
+      const date = new Date(value);
+      setSelectedDate(date);
+      setCurrentMonth(date.getMonth());
+      setCurrentYear(date.getFullYear());
+    }
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Get min/max dates
+  const minDate = min ? new Date(min) : new Date(new Date().getFullYear() - 100, 0, 1);
+  const maxDate = max ? new Date(max) : new Date();
+
+  // Generate calendar days
+  const getDaysInMonth = (month, year) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+
+    // Previous month's trailing days
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+    
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      days.push({
+        day: daysInPrevMonth - i,
+        isCurrentMonth: false,
+        isNextMonth: false,
+        date: new Date(prevYear, prevMonth, daysInPrevMonth - i)
+      });
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push({
+        day,
+        isCurrentMonth: true,
+        isNextMonth: false,
+        date: new Date(year, month, day)
+      });
+    }
+
+    // Next month's leading days
+    const remainingDays = 42 - days.length; // 6 weeks * 7 days
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
+    
+    for (let day = 1; day <= remainingDays; day++) {
+      days.push({
+        day,
+        isCurrentMonth: false,
+        isNextMonth: true,
+        date: new Date(nextYear, nextMonth, day)
+      });
+    }
+
+    return days;
+  };
+
+  const handleDateClick = (day) => {
+    if (!day.isCurrentMonth || disabled) return;
+    
+    const newDate = new Date(currentYear, currentMonth, day.day);
+    
+    // Check if date is within min/max bounds
+    if (newDate < minDate || newDate > maxDate) return;
+    
+    setSelectedDate(newDate);
+    const formattedDate = newDate.toISOString().split('T')[0];
+    onChange(formattedDate);
+    setIsOpen(false);
+  };
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  const handleClear = () => {
+    if (disabled) return;
+    setSelectedDate(null);
+    onChange('');
+    setIsOpen(false);
+  };
+
+  const handleToday = () => {
+    if (disabled) return;
+    const today = new Date();
+    if (today >= minDate && today <= maxDate) {
+      setSelectedDate(today);
+      setCurrentMonth(today.getMonth());
+      setCurrentYear(today.getFullYear());
+      onChange(today.toISOString().split('T')[0]);
+      setIsOpen(false);
+    }
+  };
+
+  const formatDisplayDate = (date) => {
+    if (!date) return '';
+    return date.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const isDateDisabled = (date) => {
+    return date < minDate || date > maxDate;
+  };
+
+  const isDateSelected = (day) => {
+    if (!selectedDate || !day.isCurrentMonth) return false;
+    return selectedDate.getDate() === day.day &&
+           selectedDate.getMonth() === currentMonth &&
+           selectedDate.getFullYear() === currentYear;
+  };
+
+  const isToday = (day) => {
+    if (!day.isCurrentMonth) return false;
+    const today = new Date();
+    return today.getDate() === day.day &&
+           today.getMonth() === currentMonth &&
+           today.getFullYear() === currentYear;
+  };
+
+  const days = getDaysInMonth(currentMonth, currentYear);
+
+  // Generate year options from current year to 100 years ago
+  const yearOptions = [];
+  const currentYearNum = new Date().getFullYear();
+  for (let i = 0; i <= 100; i++) {
+    yearOptions.push(currentYearNum - i);
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Input Field */}
+      <div
+        className={`w-full px-4 py-2.5 border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer bg-white'} flex items-center justify-between ${className || ''}`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span className={`vietnamese-text ${selectedDate ? 'text-gray-900' : 'text-gray-500'}`}>
+          {selectedDate ? formatDisplayDate(selectedDate) : (placeholder || 'Select date')}
+        </span>
+        <Calendar className="h-5 w-5 text-gray-400" />
+      </div>
+
+      {/* Dropdown Calendar */}
+      {isOpen && !disabled && (
+        <div 
+          className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl date-picker-dropdown p-4 w-80"
+          style={{ 
+            pointerEvents: 'auto', 
+            zIndex: 99999,
+            position: 'absolute'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header with Month/Year Dropdowns */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={handlePrevMonth}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              type="button"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              {/* Month Selector */}
+              <select
+                value={currentMonth}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setCurrentMonth(parseInt(e.target.value));
+                }}
+                className="px-2 py-1 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 vietnamese-text cursor-pointer"
+                style={{ pointerEvents: 'auto', zIndex: 100000 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {months.map((month, index) => (
+                  <option key={index} value={index} className="vietnamese-text">
+                    {month}
+                  </option>
+                ))}
+              </select>
+              
+              {/* Year Selector */}
+              <select
+                value={currentYear}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setCurrentYear(parseInt(e.target.value));
+                }}
+                className="px-2 py-1 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 vietnamese-text cursor-pointer"
+                style={{ pointerEvents: 'auto', zIndex: 100000 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year} className="vietnamese-text">
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <button
+              onClick={handleNextMonth}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              type="button"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <ChevronRight className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Week Days Header */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {weekDays.map((day) => (
+              <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((day, index) => {
+              const dayDisabled = !day.isCurrentMonth || isDateDisabled(day.date);
+              const selected = isDateSelected(day);
+              const todayDate = isToday(day);
+              
+              return (
+                <button
+                  key={index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDateClick(day);
+                  }}
+                  disabled={dayDisabled}
+                  type="button"
+                  style={{ pointerEvents: 'auto' }}
+                  className={`
+                    w-8 h-8 text-sm rounded transition-colors relative
+                    ${day.isCurrentMonth 
+                      ? dayDisabled
+                        ? 'text-gray-300 cursor-not-allowed'
+                        : selected
+                          ? 'bg-blue-600 text-white font-semibold'
+                          : todayDate
+                            ? 'bg-blue-100 text-blue-800 font-semibold'
+                            : 'text-gray-700 hover:bg-gray-100'
+                      : 'text-gray-300 cursor-default'
+                    }
+                  `}
+                >
+                  {day.day}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="flex justify-between mt-4 pt-3 border-t border-gray-200">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              type="button"
+              style={{ pointerEvents: 'auto' }}
+              className="text-blue-600 hover:text-blue-800 font-medium vietnamese-text transition-colors"
+            >
+              Clear
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToday();
+              }}
+              type="button"
+              style={{ pointerEvents: 'auto' }}
+              className="text-blue-600 hover:text-blue-800 font-medium vietnamese-text transition-colors"
+            >
+              Today
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProfilePage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const currentUser = useSelector((state) => state.user?.currentUser);
-  // Sử dụng selector lấy role và ID từ userSlice
   const userRole = useSelector(selectUserRole);
   const customerID = useSelector(selectCustomerID);
   const staffID = useSelector(selectStaffID);
   const managerID = useSelector(selectManagerID);
   const adminID = useSelector(selectAdminID);
+  const fileInputRef = useRef(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
-  // Ưu tiên lấy đúng ID theo role
   let userID = null;
   if (userRole === "customer") userID = customerID;
   else if (userRole === "staff") userID = staffID;
   else if (userRole === "manager") userID = managerID;
   else if (userRole === "admin") userID = adminID;
-
-  // Nếu vẫn không có userID, fallback lấy từ currentUser
   if (!userID && currentUser) {
     userID =
       currentUser?.customerID ||
@@ -55,13 +396,16 @@ const ProfilePage = () => {
       currentUser?.adminID ||
       currentUser?.adminId;
   }
-  if (!userID && currentUser) {
-    setTimeout(() => {
-      toast.error(
-        "Can not find User ID in your account. Please sign in again or contact support."
-      );
-    }, 100);
-  }
+
+  useEffect(() => {
+    if (!userID && currentUser) {
+      setTimeout(() => {
+        toast.error(
+          "Can not find User ID in your account. Please sign in again or contact support."
+        );
+      }, 100);
+    }
+  }, [userID, currentUser]);
 
   const [userProfile, setUserProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -78,6 +422,202 @@ const ProfilePage = () => {
     gender: "",
   });
 
+  const [dobValidation, setDobValidation] = useState({
+    isValid: true,
+    message: "",
+  });
+
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, "0");
+    const day = today.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getMinDate = () => {
+    const today = new Date();
+    const minYear = today.getFullYear() - 100;
+    return `${minYear}-01-01`;
+  };
+
+  const validateDateOfBirth = (dateValue) => {
+    if (!dateValue) return { isValid: true, message: "" };
+    const selectedDate = new Date(dateValue);
+    const today = new Date();
+    const hundredYearsAgo = new Date();
+    hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+    today.setHours(23, 59, 59, 999);
+    selectedDate.setHours(0, 0, 0, 0);
+    if (selectedDate > today) {
+      return {
+        isValid: false,
+        message: "Date of birth cannot be in the future",
+      };
+    }
+    if (selectedDate < hundredYearsAgo) {
+      return {
+        isValid: false,
+        message: "Please enter a valid date of birth",
+      };
+    }
+    return { isValid: true, message: "" };
+  };
+
+  const fixVietnameseEncoding = (text) => {
+    if (!text || typeof text !== "string") return text;
+    try {
+      if (text.includes("%")) {
+        const decoded = decodeURIComponent(text);
+        if (decoded !== text) {
+          return decoded;
+        }
+      }
+      const replacements = {
+        "Nguy?n": "Nguyễn",
+        "Tr?n": "Trần",
+        "L?": "Lê",
+        "Ph?m": "Phạm",
+        "Hu?nh": "Huỳnh",
+        Võ: "Võ",
+        Ngô: "Ngô",
+        "Đ?ng": "Đặng",
+        Bùi: "Bùi",
+        "Đ?": "Đỗ",
+        "H?": "Hồ",
+        "Ng?": "Ngô",
+        Dương: "Dương",
+        "?": "ế", // Common ? replacement
+        á: "á",
+        à: "à",
+        ả: "ả",
+        ã: "ã",
+        ạ: "ạ",
+      };
+      let fixed = text;
+      Object.entries(replacements).forEach(([wrong, correct]) => {
+        if (fixed.includes(wrong)) {
+          fixed = fixed.replace(new RegExp(wrong, "g"), correct);
+        }
+      });
+      return fixed;
+    } catch (error) {
+      console.error("❌ Error fixing Vietnamese encoding:", error);
+      return text;
+    }
+  };
+
+  const normalizeVietnamese = (text, shouldTrim = false) => {
+    if (!text) return text;
+    let fixed = fixVietnameseEncoding(text);
+    fixed = fixed.normalize("NFD").normalize("NFC");
+    if (shouldTrim) {
+      fixed = fixed.trim();
+    }
+    return fixed;
+  };
+
+  const convertDatabaseGenderToUI = (dbGender) => {
+    if (dbGender === 0 || dbGender === "0") {
+      return "1";
+    }
+    if (dbGender === 1 || dbGender === "1") {
+      return "2";
+    }
+    if (dbGender === 1073741824) {
+      return "";
+    }
+    return "";
+  };
+
+  const convertUIGenderToDatabase = (uiGender) => {
+    if (uiGender === "1" || uiGender === 1) {
+      return 0;
+    }
+    if (uiGender === "2" || uiGender === 2) {
+      return 1;
+    }
+    return null;
+  };
+
+  const getGenderDisplayText = (dbGender) => {
+    if (dbGender === 0 || dbGender === "0") return "Male";
+    if (dbGender === 1 || dbGender === "1") return "Female";
+    if (dbGender === 1073741824) return "Not specified";
+    return "Not provided";
+  };
+
+  const cleanPlaceholderValue = (value) => {
+    if (!value) return "";
+    const placeholders = [
+      "string",
+      "test",
+      "placeholder",
+      "example",
+      "null",
+      "undefined",
+    ];
+    if (
+      typeof value === "string" &&
+      placeholders.includes(value.toLowerCase())
+    ) {
+      return "";
+    }
+    return value;
+  };
+
+  const getFieldValue = (profile, fieldName, fallbackFields = []) => {
+    let value = profile?.[fieldName];
+    if (
+      (value === null || value === undefined || value === "") &&
+      fallbackFields.length > 0
+    ) {
+      for (const fallback of fallbackFields) {
+        if (
+          profile?.[fallback] !== null &&
+          profile?.[fallback] !== undefined &&
+          profile?.[fallback] !== ""
+        ) {
+          value = profile[fallback];
+          break;
+        }
+      }
+    }
+    if (
+      (value === null || value === undefined || value === "") &&
+      profile?.account?.[fieldName]
+    ) {
+      value = profile.account[fieldName];
+    }
+    return cleanPlaceholderValue(value);
+  };
+
+  const formatMemberSince = (dateValue) => {
+    if (!dateValue) return "Unknown";
+    try {
+      let date;
+      if (Array.isArray(dateValue) && dateValue.length >= 3) {
+        const [year, month, day] = dateValue;
+        date = new Date(year, month - 1, day);
+      } else if (typeof dateValue === "string") {
+        date = new Date(dateValue);
+      } else if (dateValue instanceof Date) {
+        date = dateValue;
+      } else {
+        return "Unknown";
+      }
+      if (isNaN(date.getTime())) return "Unknown";
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error, dateValue);
+      return "Unknown";
+    }
+  };
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!userID) {
@@ -91,97 +631,307 @@ const ProfilePage = () => {
         if (userRole === "staff") apiPath = `/staff/my-info/${userID}`;
         if (userRole === "manager") apiPath = `/manager/my-info/${userID}`;
         if (userRole === "admin") apiPath = `/admin/my-info/${userID}`;
-
-        const response = await api.get(apiPath);
+        const response = await api.get(apiPath, {
+          headers: {
+            Accept: "application/json; charset=utf-8",
+          },
+        });
         const profile = response.data.data || response.data[0] || response.data;
 
+        const fullName = getFieldValue(profile, "fullName", ["full_name", "fullname"]);
+        const email = getFieldValue(profile, "email", ["Email"]);
+        const phone = getFieldValue(profile, "phone", ["Phone"]);
+        const address = getFieldValue(profile, "address", ["Address"]);
+        const rawGender = getFieldValue(profile, "gender", ["Gender"]);
+        const dobValue = getFieldValue(profile, "dob", ["DOB", "dateOfBirth"]);
+
+        let dobForInput = "";
+        if (dobValue) {
+          if (Array.isArray(dobValue) && dobValue.length >= 3) {
+            const [year, month, day] = dobValue;
+            dobForInput = `${year}-${month.toString().padStart(2, "0")}-${day
+              .toString()
+              .padStart(2, "0")}`;
+          } else if (typeof dobValue === "string") {
+            if (dobValue.includes("-")) {
+              dobForInput = dobValue;
+            } else {
+              const parsedDate = new Date(dobValue);
+              if (!isNaN(parsedDate.getTime())) {
+                dobForInput = parsedDate.toISOString().split("T")[0];
+              }
+            }
+          }
+        }
+
+        const genderForUI = convertDatabaseGenderToUI(rawGender);
+
         setUserProfile(profile);
+
         setEditForm({
-          fullName: profile.fullName || "",
-          dob: profile.dob
-            ? new Date(profile.dob).toISOString().split("T")[0]
-            : "",
-          email: profile.email || "",
-          phone: profile.phone || "",
-          address: profile.address || "",
-          gender: profile.gender || "",
+          fullName: normalizeVietnamese(fullName, false) || "",
+          dob: dobForInput,
+          email: normalizeVietnamese(email, true) || "",
+          phone: normalizeVietnamese(phone, true) || "",
+          address: normalizeVietnamese(address, false) || "",
+          gender: genderForUI,
         });
+
         setError(null);
       } catch (err) {
-        console.error("Error fetching user profile:", err);
+        console.error("❌ Error fetching user profile:", err);
         setError("Failed to load profile data.");
-        toast.error("Failed to load profile data.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userID, userRole]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
+    if (field === "dob") {
+      const validation = validateDateOfBirth(value);
+      setDobValidation(validation);
+    }
     setEditForm((prev) => ({
       ...prev,
-      [field]: value,
+      [field]:
+        field === "fullName" || field === "address"
+          ? normalizeVietnamese(value, false)
+          : normalizeVietnamese(value, true),
     }));
-  };
+  }, []);
 
   const handleSaveProfile = async () => {
     if (!userID) return;
-
+    const dobValidationResult = validateDateOfBirth(editForm.dob);
+    if (!dobValidationResult.isValid) {
+      setError(dobValidationResult.message);
+      toast.error(dobValidationResult.message);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      // API path để cập nhật nên được xác định theo vai trò
-      let updatePath = `/customer/${userID}`;
-      if (userRole === "staff") updatePath = `/staff/${userID}`;
-      if (userRole === "manager") updatePath = `/manager/${userID}`;
-      if (userRole === "admin") updatePath = `/admin/${userID}`;
-
-      const response = await api.patch(updatePath, editForm);
-      const updatedProfile = response.data.data || response.data;
-
-      setUserProfile(updatedProfile);
-      dispatch(updateUser({ ...currentUser, ...updatedProfile })); // Cập nhật redux state
+      let updatePath = `/customer/my-account/${userID}`;
+      if (userRole === "staff") updatePath = `/staff/my-account/${userID}`;
+      if (userRole === "manager") updatePath = `/manager/my-account/${userID}`;
+      if (userRole === "admin") updatePath = `/admin/my-account/${userID}`;
+      const genderForDatabase = convertUIGenderToDatabase(editForm.gender);
+      let dobForDatabase = null;
+      if (editForm.dob) {
+        const dobParts = editForm.dob.split("-");
+        if (dobParts.length === 3) {
+          dobForDatabase = [
+            parseInt(dobParts[0]),
+            parseInt(dobParts[1]),
+            parseInt(dobParts[2]),
+          ];
+        }
+      }
+      const formData = {
+        fullName: normalizeVietnamese(editForm.fullName, false) || null,
+        phone: normalizeVietnamese(editForm.phone, true) || null,
+        address: normalizeVietnamese(editForm.address, false) || null,
+        dob: dobForDatabase,
+        gender: genderForDatabase,
+        avatar: editForm.avatar || null
+      };
+      const cleanFormData = Object.entries(formData).reduce(
+        (acc, [key, value]) => {
+          if (value !== null && value !== "" && value !== undefined) {
+            acc[key] = value;
+          }
+          return acc;
+        }, {}
+      );
+    
+      await api.patch(updatePath, cleanFormData, {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Accept: "application/json; charset=utf-8",
+        },
+      });
+      let refreshPath = `/customer/my-info/${userID}`;
+      if (userRole === "staff") refreshPath = `/staff/my-info/${userID}`;
+      if (userRole === "manager") refreshPath = `/manager/my-info/${userID}`;
+      if (userRole === "admin") refreshPath = `/admin/my-info/${userID}`;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const refreshResponse = await api.get(refreshPath, {
+        headers: {
+          Accept: "application/json; charset=utf-8",
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+        params: {
+          _t: Date.now(),
+        },
+      });
+      const refreshedProfile =
+        refreshResponse.data.data ||
+        refreshResponse.data[0] ||
+        refreshResponse.data;
+      setUserProfile(refreshedProfile);
+      const refreshedFullName = getFieldValue(refreshedProfile, "full_name", [
+        "fullName",
+        "fullname",
+      ]);
+      const refreshedEmail = getFieldValue(refreshedProfile, "email", [
+        "Email",
+      ]);
+      const refreshedPhone = getFieldValue(refreshedProfile, "phone", [
+        "Phone",
+      ]);
+      const refreshedAddress = getFieldValue(refreshedProfile, "address", [
+        "Address",
+      ]);
+      const refreshedRawGender = getFieldValue(refreshedProfile, "gender", [
+        "Gender",
+      ]);
+      const refreshedDob = getFieldValue(refreshedProfile, "dob", [
+        "DOB",
+        "dateOfBirth",
+      ]);
+      let refreshedDobForInput = "";
+      if (refreshedDob) {
+        if (Array.isArray(refreshedDob) && refreshedDob.length >= 3) {
+          const [year, month, day] = refreshedDob;
+          refreshedDobForInput = `${year}-${month
+            .toString()
+            .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+        } else if (
+          typeof refreshedDob === "string" &&
+          refreshedDob.includes("-")
+        ) {
+          refreshedDobForInput = refreshedDob;
+        }
+      }
+      const refreshedGenderForUI = convertDatabaseGenderToUI(refreshedRawGender);
+      const updatedEditForm = {
+        fullName: normalizeVietnamese(refreshedFullName, false) || "",
+        dob: refreshedDobForInput,
+        email: normalizeVietnamese(refreshedEmail, true) || "",
+        phone: normalizeVietnamese(refreshedPhone, true) || "",
+        address: normalizeVietnamese(refreshedAddress, false) || "",
+        gender: refreshedGenderForUI,
+        avatar: getFieldValue(refreshedProfile, "avatar", ["avatarPath"]) || ""
+      };
+      setEditForm(updatedEditForm);
+      let newFullName = normalizeVietnamese(refreshedFullName, false) || "";
+      dispatch(
+        updateUser({
+          ...currentUser,
+          ...refreshedProfile,
+          fullName: newFullName,
+        })
+      );
       setIsEditing(false);
       setSuccess(true);
-      toast.success("Profile updated successfully!");
-
+      setDobValidation({ isValid: true, message: "" });
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error("Error updating profile:", err);
+      console.error("❌ Error updating profile:", err);
       const errorMessage =
         err.response?.data?.message || "Failed to update profile.";
       setError(errorMessage);
-      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancelEdit = () => {
+    const fullName = getFieldValue(userProfile, "full_name", [
+      "fullName",
+      "fullname",
+    ]);
+    const email = getFieldValue(userProfile, "email", ["Email"]);
+    const phone = getFieldValue(userProfile, "phone", ["Phone"]);
+    const address = getFieldValue(userProfile, "address", ["Address"]);
+    const rawGender = getFieldValue(userProfile, "gender", ["Gender"]);
+    const dobValue = getFieldValue(userProfile, "dob", ["DOB", "dateOfBirth"]);
+    let dobForInput = "";
+    if (dobValue) {
+      if (Array.isArray(dobValue) && dobValue.length >= 3) {
+        const [year, month, day] = dobValue;
+        dobForInput = `${year}-${month.toString().padStart(2, "0")}-${day
+          .toString()
+          .padStart(2, "0")}`;
+      } else if (typeof dobValue === "string" && dobValue.includes("-")) {
+        dobForInput = dobValue;
+      }
+    }
+    const genderForUI = convertDatabaseGenderToUI(rawGender);
+    const avatarPath = getFieldValue(userProfile, "avatar", ["avatarPath"]);
     setEditForm({
-      fullName: userProfile?.fullName || "",
-      dob: userProfile?.dob
-        ? new Date(userProfile.dob).toISOString().split("T")[0]
-        : "",
-      email: userProfile?.email || "",
-      phone: userProfile?.phone || "",
-      address: userProfile?.address || "",
-      gender: userProfile?.gender || "",
+      fullName: normalizeVietnamese(fullName, false) || "",
+      dob: dobForInput,
+      email: normalizeVietnamese(email, true) || "",
+      phone: normalizeVietnamese(phone, true) || "",
+      address: normalizeVietnamese(address, false) || "",
+      gender: genderForUI,
+      avatar: avatarPath || "",
     });
+    setDobValidation({ isValid: true, message: "" });
     setIsEditing(false);
     setError(null);
   };
 
-  // --- Render Components ---
+  const goBack = () => {
+    navigate(-1);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await api.post("/files/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const uploadedPath = response?.data?.path || response?.data?.data || response?.data;
+      if (!uploadedPath) {
+        throw new Error("Upload succeeded but no path returned.");
+      }
+      const preview = URL.createObjectURL(file);
+      setPreviewUrl(preview);
+      setEditForm((prev) => ({
+        ...prev,
+        avatar: uploadedPath.startsWith("/media") ? uploadedPath : `/media/${uploadedPath}`,
+      }));
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Upload failed. Please try again.");
+    }
+  };
+
+  const getAvatarUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return `/api${path}`;
+  };
+
+  const handleChangePassword = () => {
+    let passwordResetPath = "/reset-password";
+    if (userRole === "admin" && userID) {
+      passwordResetPath = `/admin/reset-password/${userID}`;
+    } else if (userRole === "staff" && userID) {
+      passwordResetPath = `/staff/reset-password/${userID}`;
+    } else if (userRole === "manager" && userID) {
+      passwordResetPath = `/manager/reset-password/${userID}`;
+    } else if (userRole === "customer" && userID) {
+      passwordResetPath = `/customer/reset-password/${userID}`;
+    }
+    navigate(passwordResetPath);
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex items-center space-x-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <span className="text-lg font-medium text-gray-700">
+          <span className="text-lg font-medium text-gray-700 vietnamese-text">
             Loading Your Profile...
           </span>
         </div>
@@ -194,280 +944,400 @@ const ProfilePage = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
+          <h2 className="text-2xl font-bold text-gray-800 mb-3 vietnamese-text">
             Oops! Something Went Wrong
           </h2>
-          <p className="text-gray-600">{error}</p>
+          <p className="text-gray-600 vietnamese-text">{error}</p>
         </div>
       </div>
     );
   }
 
-  const ProfileHeader = () => (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
-      <div
-        className="p-8 relative"
-        style={{
-          background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
-        }}>
-        <div className="relative flex flex-col sm:flex-row items-center sm:space-x-6">
-          <div className="relative mb-4 sm:mb-0">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-blue-200">
-              <User className="h-12 w-12 text-blue-800" />
-            </div>
-            <button className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-2 rounded-full shadow-lg transition-transform duration-200 hover:scale-110 hover:bg-blue-700 border-2 border-white">
-              <Camera className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="text-white text-center sm:text-left">
-            <h1 className="text-3xl font-bold mb-1">
-              {userProfile?.fullName || "User Profile"}
-            </h1>
-            <div className="flex flex-wrap justify-center sm:justify-start items-center space-x-4 text-blue-100">
-              <div className="flex items-center space-x-1.5">
-                <Shield className="h-4 w-4" />
-                <span className="capitalize">
-                  {userProfile?.role || "Customer"}
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <Clock className="h-4 w-4" />
-                <span>
-                  Member since{" "}
-                  {new Date(userProfile?.createdAt || Date.now()).getFullYear()}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 sm:mt-0 sm:ml-auto">
-            <button
-              onClick={isEditing ? handleCancelEdit : () => setIsEditing(true)}
-              disabled={saving}
-              className={`px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 flex items-center space-x-2 disabled:opacity-60 ${
-                isEditing
-                  ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  : "bg-white text-blue-700 hover:bg-gray-100 hover:shadow-xl transform hover:-translate-y-0.5"
-              }`}>
-              {isEditing ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Edit3 className="h-5 w-5" />
-              )}
-              <span>{isEditing ? "Cancel" : "Edit Profile"}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const FormInput = ({
-    id,
-    label,
-    value,
-    onChange,
-    type = "text",
-    placeholder,
-  }) => (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-semibold text-gray-600 mb-2">
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  const FormSelect = ({ id, label, value, onChange, children }) => (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-semibold text-gray-600 mb-2">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={onChange}
-        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
-        {children}
-      </select>
-    </div>
-  );
-
-  const FormTextarea = ({
-    id,
-    label,
-    value,
-    onChange,
-    placeholder,
-    rows = 3,
-  }) => (
-    <div className="md:col-span-2">
-      <label
-        htmlFor={id}
-        className="block text-sm font-semibold text-gray-600 mb-2">
-        {label}
-      </label>
-      <textarea
-        id={id}
-        value={value}
-        onChange={onChange}
-        rows={rows}
-        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  const DisplayField = ({ label, value, icon: Icon }) => (
-    <div>
-      <label className="block text-sm font-semibold text-gray-600 mb-2">
-        {label}
-      </label>
-      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
-        {Icon && <Icon className="h-5 w-5 text-blue-700 flex-shrink-0" />}
-        <span className="truncate">{value || "Not provided"}</span>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div
+      lang="vi"
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+          
+          .vietnamese-text {
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
+            font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-variant-ligatures: normal;
+            letter-spacing: 0.01em;
+          }
+          
+          .vietnamese-text {
+            unicode-bidi: embed;
+            direction: ltr;
+          }
+          
+          input.vietnamese-input, 
+          textarea.vietnamese-input, 
+          select.vietnamese-input {
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: 16px !important;
+            line-height: 1.5 !important;
+            letter-spacing: 0.01em !important;
+          }
+          
+          button.vietnamese-button {
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-weight: 500 !important;
+            letter-spacing: 0.01em !important;
+          }
+          
+          h1.vietnamese-header, h2.vietnamese-header, h3.vietnamese-header {
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.01em !important;
+          }
+
+          .date-picker-dropdown {
+            pointer-events: auto !important;
+            z-index: 99999 !important;
+            position: absolute !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+          }
+          
+          .date-picker-dropdown * {
+            pointer-events: auto !important;
+          }
+          
+          .date-picker-dropdown select {
+            pointer-events: auto !important;
+            z-index: 100000 !important;
+            position: relative !important;
+          }
+
+          .date-picker-dropdown button {
+            pointer-events: auto !important;
+          }
+          
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          .animate-slideIn { animation: slideIn 0.5s ease-out forwards; }
+          
+          * {
+            text-rendering: optimizeLegibility;
+          }
+        `,
+        }}
+      />
+
       <div className="container mx-auto px-4 py-10">
-        {/* --- Messages --- */}
+        {/* Messages */}
         {success && (
           <div className="fixed top-5 right-5 z-50 bg-green-500 text-white px-5 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slideIn">
             <CheckCircle className="h-5 w-5" />
-            <span>Profile updated successfully!</span>
+            <span className="vietnamese-text">
+              Profile updated successfully!
+            </span>
           </div>
         )}
         {error && (
           <div className="fixed top-5 right-5 z-50 bg-red-500 text-white px-5 py-3 rounded-lg shadow-lg flex items-center space-x-2">
             <AlertCircle className="h-5 w-5" />
-            <span>{error}</span>
+            <span className="vietnamese-text">{error}</span>
           </div>
         )}
 
         <div className="max-w-5xl mx-auto">
-          <ProfileHeader />
+          {/* Profile Header */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 border border-gray-200">
+            <div
+              className="p-8 relative"
+              style={{
+                background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+              }}>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={goBack}
+                  className="p-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors vietnamese-button flex items-center justify-center"
+                  aria-label="Go back">
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+
+                <div className="flex items-center space-x-4 flex-1">
+                  <div className="relative">
+                    {previewUrl || userProfile?.avatar ? (
+                      <img
+                        src={previewUrl || `/api${userProfile.avatar}`}
+                        alt="Avatar Preview"
+                        className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-blue-200">
+                        <User className="h-8 w-8 text-blue-800" />
+                      </div>
+                    )}
+                    {isEditing && (
+                      <>
+                        <button className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-1.5 rounded-full shadow-lg transition-transform duration-200 hover:scale-110 hover:bg-blue-700 border-2 border-white"
+                                onClick={() => fileInputRef.current.click()}
+                        >
+                          <Camera className="h-3 w-3" />
+                        </button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </>
+                    )}                  
+                  </div>
+                  <div className="text-white flex-1">
+                    <h1 className="text-2xl font-bold mb-1 vietnamese-text vietnamese-header">
+                      Profile Settings
+                    </h1>
+                    <p className="text-blue-100 vietnamese-text">
+                      Manage your personal information and account settings
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={
+                    isEditing ? handleCancelEdit : () => setIsEditing(true)
+                  }
+                  disabled={saving}
+                  className={`px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 flex items-center space-x-2 disabled:opacity-60 vietnamese-button ${
+                    isEditing
+                      ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                      : "bg-white text-blue-700 hover:bg-gray-100 hover:shadow-xl transform hover:-translate-y-0.5"
+                  }`}>
+                  {isEditing ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Edit3 className="h-5 w-5" />
+                  )}
+                  <span className="vietnamese-text">
+                    {isEditing ? "Cancel" : "Edit Profile"}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* --- Main Information Card --- */}
+            {/* Main Information Card */}
             <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center space-x-3">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center space-x-3 vietnamese-header">
                 <User className="h-6 w-6 text-blue-800" />
-                <span>Personal Information</span>
+                <span className="vietnamese-text">Personal Information</span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {isEditing ? (
                   <>
-                    <FormInput
-                      id="fullName"
-                      label="Full Name"
-                      value={editForm.fullName}
-                      onChange={(e) =>
-                        handleInputChange("fullName", e.target.value)
-                      }
-                      placeholder="Enter full name"
-                    />
-                    <FormInput
-                      id="dob"
-                      label="Date of Birth"
-                      type="date"
-                      value={editForm.dob}
-                      onChange={(e) => handleInputChange("dob", e.target.value)}
-                    />
-                    <FormInput
-                      id="email"
-                      label="Email Address"
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) =>
-                        handleInputChange("email", e.target.value)
-                      }
-                      placeholder="Enter email"
-                    />
-                    <FormInput
-                      id="phone"
-                      label="Phone Number"
-                      type="tel"
-                      value={editForm.phone}
-                      onChange={(e) =>
-                        handleInputChange("phone", e.target.value)
-                      }
-                      placeholder="Enter phone"
-                    />
-                    <FormSelect
-                      id="gender"
-                      label="Gender"
-                      value={editForm.gender}
-                      onChange={(e) =>
-                        handleInputChange("gender", e.target.value)
-                      }>
-                      <option value="">Select gender</option>
-                      <option value={1}>Male</option>
-                      <option value={2}>Female</option>
-                    </FormSelect>
-                    <FormTextarea
-                      id="address"
-                      label="Address"
-                      value={editForm.address}
-                      onChange={(e) =>
-                        handleInputChange("address", e.target.value)
-                      }
-                      placeholder="Enter address"
-                    />
+                    {/* Full Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.fullName}
+                        onChange={(e) =>
+                          handleInputChange("fullName", e.target.value)
+                        }
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent vietnamese-input"
+                        placeholder="Enter full name"
+                      />
+                    </div>
+
+                    {/* Date of Birth with Custom DatePicker */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Date of Birth
+                      </label>
+                      <CustomDatePicker
+                        value={editForm.dob}
+                        onChange={(value) => handleInputChange("dob", value)}
+                        min={getMinDate()}
+                        max={getTodayDate()}
+                        placeholder="Select your date of birth"
+                        className={`${
+                          !dobValidation.isValid
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      {!dobValidation.isValid && (
+                        <p className="mt-1 text-sm text-red-600 vietnamese-text flex items-center">
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          {dobValidation.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        disabled
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 bg-gray-100 text-gray-500 cursor-not-allowed vietnamese-input"
+                        placeholder="Email cannot be changed"
+                      />
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) =>
+                          handleInputChange("phone", e.target.value)
+                        }
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent vietnamese-input"
+                        placeholder="Enter phone"
+                      />
+                    </div>
+
+                    {/* Gender */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Gender
+                      </label>
+                      <select
+                        value={editForm.gender}
+                        onChange={(e) =>
+                          handleInputChange("gender", e.target.value)
+                        }
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white vietnamese-input">
+                        <option value="" className="vietnamese-text">
+                          Select gender
+                        </option>
+                        <option value={1} className="vietnamese-text">
+                          Male
+                        </option>
+                        <option value={2} className="vietnamese-text">
+                          Female
+                        </option>
+                      </select>
+                    </div>
+
+                    {/* Address */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Address
+                      </label>
+                      <textarea
+                        value={editForm.address}
+                        onChange={(e) =>
+                          handleInputChange("address", e.target.value)
+                        }
+                        rows={3}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent vietnamese-input"
+                        placeholder="Enter address"
+                      />
+                    </div>
                   </>
                 ) : (
                   <>
-                    <DisplayField
-                      label="Full Name"
-                      value={userProfile?.fullName}
-                    />
-                    <DisplayField
-                      label="Date of Birth"
-                      value={
-                        userProfile?.dob
-                          ? new Date(userProfile.dob).toLocaleDateString()
-                          : "Not provided"
-                      }
-                      icon={Calendar}
-                    />
-                    <DisplayField
-                      label="Email Address"
-                      value={userProfile?.email}
-                      icon={Mail}
-                    />
-                    <DisplayField
-                      label="Phone Number"
-                      value={userProfile?.phone}
-                      icon={Phone}
-                    />
-                    <DisplayField
-                      label="Gender"
-                      value={
-                        userProfile?.gender === 1
-                          ? "Male"
-                          : userProfile?.gender === 2
-                          ? "Female"
-                          : "Not provided"
-                      }
-                    />
+                    {/* Display Fields */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Full Name
+                      </label>
+                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+                        <span className="truncate vietnamese-text">
+                          {normalizeVietnamese(
+                            getFieldValue(userProfile, "full_name", [
+                              "fullName",
+                              "fullname",
+                            ]),
+                            false
+                          ) || "Not provided"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Date of Birth
+                      </label>
+                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+                        <Calendar className="h-5 w-5 text-blue-700 flex-shrink-0" />
+                        <span className="truncate vietnamese-text">
+                          {formatMemberSince(
+                            getFieldValue(userProfile, "dob", [
+                              "DOB",
+                              "dateOfBirth",
+                            ])
+                          ) || "Not provided"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Email Address
+                      </label>
+                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+                        <Mail className="h-5 w-5 text-blue-700 flex-shrink-0" />
+                        <span className="truncate vietnamese-text">
+                          {getFieldValue(userProfile, "email", ["Email"]) ||
+                            "Not provided"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Phone Number
+                      </label>
+                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+                        <Phone className="h-5 w-5 text-blue-700 flex-shrink-0" />
+                        <span className="truncate vietnamese-text">
+                          {getFieldValue(userProfile, "phone", ["Phone"]) ||
+                            "Not provided"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Gender
+                      </label>
+                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+                        <span className="truncate vietnamese-text">
+                          {getGenderDisplayText(
+                            getFieldValue(userProfile, "gender", ["Gender"])
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="md:col-span-2">
-                      <DisplayField
-                        label="Address"
-                        value={userProfile?.address}
-                        icon={MapPin}
-                      />
+                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+                        Address
+                      </label>
+                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+                        <MapPin className="h-5 w-5 text-blue-700 flex-shrink-0" />
+                        <span className="truncate vietnamese-text">
+                          {normalizeVietnamese(
+                            getFieldValue(userProfile, "address", ["Address"]),
+                            false
+                          ) || "Not provided"}
+                        </span>
+                      </div>
                     </div>
                   </>
                 )}
@@ -477,13 +1347,17 @@ const ProfilePage = () => {
                   <button
                     onClick={handleCancelEdit}
                     disabled={saving}
-                    className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-semibold transition-all duration-200 hover:bg-gray-100 disabled:opacity-50">
-                    Cancel
+                    className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-semibold transition-all duration-200 hover:bg-gray-100 disabled:opacity-50 vietnamese-button">
+                    <span className="vietnamese-text">Cancel</span>
                   </button>
                   <button
                     onClick={handleSaveProfile}
-                    disabled={saving}
-                    className="px-6 py-2.5 text-white rounded-lg font-semibold transition-all duration-300 shadow-md flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-105"
+                    disabled={saving || !dobValidation.isValid}
+                    className={`px-6 py-2.5 text-white rounded-lg font-semibold transition-all duration-300 shadow-md flex items-center space-x-2 disabled:cursor-not-allowed transform vietnamese-button ${
+                      saving || !dobValidation.isValid
+                        ? "opacity-60 cursor-not-allowed"
+                        : "opacity-100 hover:scale-105"
+                    }`}
                     style={{
                       background:
                         "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
@@ -491,12 +1365,12 @@ const ProfilePage = () => {
                     {saving ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Saving...</span>
+                        <span className="vietnamese-text">Saving...</span>
                       </>
                     ) : (
                       <>
                         <Save className="h-5 w-5" />
-                        <span>Save Changes</span>
+                        <span className="vietnamese-text">Save Changes</span>
                       </>
                     )}
                   </button>
@@ -504,59 +1378,36 @@ const ProfilePage = () => {
               )}
             </div>
 
-            {/* --- Sidebar Cards --- */}
+            {/* Sidebar Cards */}
             <div className="space-y-8">
               <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  Account Status
+                <h3 className="text-xl font-bold text-gray-800 mb-4 vietnamese-text vietnamese-header">
+                  Member Information
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 font-medium">Status</span>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                      Active
+                    <span className="text-gray-600 font-mono vietnamese-text">
+                      Member Since&nbsp; 
                     </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 font-medium">Role</span>
-                    <span
-                      className="px-3 py-1 rounded-full text-sm font-semibold capitalize text-white"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
-                      }}>
-                      {userProfile?.role || "Customer"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 font-medium">
-                      Member Since
-                    </span>
-                    <span className="text-gray-800 font-semibold">
-                      {new Date(
-                        userProfile?.createdAt || Date.now()
-                      ).toLocaleDateString()}
+                    <span className="text-gray-800 font-semibold vietnamese-text">
+                      {formatMemberSince(
+                        userProfile?.account?.createAt || userProfile?.createAt
+                      )}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 vietnamese-text vietnamese-header">
                   Quick Actions
                 </h3>
                 <div className="space-y-2">
-                  <button className="w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center space-x-3 text-gray-700 font-medium hover:bg-gray-100 hover:text-blue-800">
+                  <button
+                    onClick={handleChangePassword}
+                    className="w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center space-x-3 text-gray-700 font-medium hover:bg-gray-100 hover:text-blue-800 vietnamese-button">
                     <Shield className="h-5 w-5 text-blue-700" />
-                    <span>Change Password</span>
-                  </button>
-                  <button className="w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center space-x-3 text-gray-700 font-medium hover:bg-gray-100 hover:text-blue-800">
-                    <Mail className="h-5 w-5 text-blue-700" />
-                    <span>Email Preferences</span>
-                  </button>
-                  <button className="w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center space-x-3 text-gray-700 font-medium hover:bg-gray-100 hover:text-blue-800">
-                    <User className="h-5 w-5 text-blue-700" />
-                    <span>Privacy Settings</span>
+                    <span className="vietnamese-text">Change Password</span>
                   </button>
                 </div>
               </div>
@@ -564,14 +1415,6 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-
-      <style>{`
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                .animate-slideIn { animation: slideIn 0.5s ease-out forwards; }
-            `}</style>
     </div>
   );
 };

@@ -30,6 +30,47 @@ import autoTable from "jspdf-autotable";
 const { Title } = Typography;
 const { Option } = Select;
 
+// Helper to format date from array or string
+// Format array [YYYY,MM,DD] to dd/MM/yyyy
+const formatDateArray = (arr) => {
+  if (!Array.isArray(arr) || arr.length < 3) return "-";
+  const [year, month, day] = arr;
+  return `${day.toString().padStart(2, "0")}/${month
+    .toString()
+    .padStart(2, "0")}/${year}`;
+};
+
+// Format time range string (e.g. "13:15-14:15") or array [h,m] to HH:mm
+const formatTime = (val) => {
+  if (!val) return "-";
+  if (typeof val === "string") {
+    // If string is a time range (e.g. "13:15-14:15"), show as is
+    if (/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(val)) return val;
+    // If string is a single time (e.g. "13:15"), show as is
+    if (/^\d{1,2}:\d{2}$/.test(val)) return val;
+    return val;
+  }
+  if (Array.isArray(val) && val.length >= 2) {
+    const [hour, minute] = val;
+    return `${hour.toString().padStart(2, "0")}:${minute
+      .toString()
+      .padStart(2, "0")}`;
+  }
+  return "-";
+};
+
+// Fallback for lastUpdate (array or string)
+const formatDateTime = (date) => {
+  if (!date) return "N/A";
+  if (Array.isArray(date) && date.length >= 3) {
+    const [year, month, day, hour = 0, minute = 0] = date;
+    const dateObj = new Date(year, month - 1, day, hour, minute);
+    return dateObj.toLocaleString();
+  }
+  // Fallback for string dates
+  return new Date(date).toLocaleString();
+};
+
 const TestingProcessMonitoringPage = () => {
   const [loading, setLoading] = useState(true);
   const [tests, setTests] = useState([]);
@@ -41,7 +82,14 @@ const TestingProcessMonitoringPage = () => {
     try {
       const response = await api.get("/manager/booking-assigned");
       // Chuẩn hóa dữ liệu theo mẫu API mới
-      const data = response.data?.data || response.data || [];
+      let data = response.data;
+      // Nếu response có dạng { data: [...] } thì lấy data.data
+      if (data && Array.isArray(data.data)) {
+        data = data.data;
+      } else if (!Array.isArray(data)) {
+        // Nếu không phải mảng, trả về mảng rỗng
+        data = [];
+      }
       setTests(
         data.map((item) => ({
           assignedID: item.assignedID,
@@ -51,7 +99,10 @@ const TestingProcessMonitoringPage = () => {
           lastUpdate: item.lastUpdate,
           serviceType: item.serviceType,
           status: item.status,
-          timeRange: item.timeRange,
+          // appointmentTime là string, không cần fallback
+          appointmentTime: item.appointmentTime || null,
+          // appointmentDate là array, nếu không có thì null
+          appointmentDate: item.appointmentDate || null,
         }))
       );
     } catch (error) {
@@ -69,17 +120,47 @@ const TestingProcessMonitoringPage = () => {
     fetchTests();
   }, [fetchTests]);
 
-  const filteredTests = tests.filter((test) => {
-    const matchesSearch =
-      test.testId?.toLowerCase().includes(searchText.toLowerCase()) ||
-      test.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      test.serviceType?.toLowerCase().includes(searchText.toLowerCase()) ||
-      test.assignedStaff?.toLowerCase().includes(searchText.toLowerCase());
+  const filteredTests = tests
+    .filter((test) => {
+      // Defensive: always check for undefined/null before calling toLowerCase
+      const search = (searchText || "").toLowerCase();
+      const assignedID = test.assignedID
+        ? test.assignedID.toString().toLowerCase()
+        : "";
+      const customerName = test.customerName
+        ? test.customerName.toLowerCase()
+        : "";
+      const serviceType = test.serviceType
+        ? test.serviceType.toLowerCase()
+        : "";
+      const staffName = test.staffName ? test.staffName.toLowerCase() : "";
 
-    const matchesStatus = statusFilter === "" || test.status === statusFilter;
+      const matchesSearch =
+        assignedID.includes(search) ||
+        customerName.includes(search) ||
+        serviceType.includes(search) ||
+        staffName.includes(search);
 
-    return matchesSearch && matchesStatus;
-  });
+      // Defensive: check status and statusFilter before toLowerCase
+      const matchesStatus =
+        !statusFilter ||
+        (test.status || "").toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus;
+    })
+    // Sắp xếp theo lastUpdate mới nhất đến cũ nhất
+    .sort((a, b) => {
+      // lastUpdate có thể là array [y,m,d,h,m] hoặc string
+      const getDate = (val) => {
+        if (Array.isArray(val) && val.length >= 3) {
+          // [year, month, day, hour, minute]
+          return new Date(val[0], val[1] - 1, val[2], val[3] || 0, val[4] || 0);
+        }
+        if (val) return new Date(val);
+        return new Date(0);
+      };
+      return getDate(b.lastUpdate) - getDate(a.lastUpdate);
+    });
 
   const columns = [
     {
@@ -102,14 +183,20 @@ const TestingProcessMonitoringPage = () => {
     },
     {
       title: "Service",
-      dataIndex: "service",
-      key: "service",
+      dataIndex: "serviceType",
+      key: "serviceType",
+    },
+    {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date) => formatDateArray(date),
     },
     {
       title: "Appointment Time",
-      dataIndex: "timeRange",
-      key: "timeRange",
-      render: (timeRange) => timeRange || "N/A",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (appointmentTime) => formatTime(appointmentTime),
     },
     {
       title: "Status",
@@ -118,11 +205,15 @@ const TestingProcessMonitoringPage = () => {
       render: (status) => {
         let color = "default";
         let icon = <ClockCircleOutlined />;
-        if (status === "Waiting confirmed") {
+        if (status === "Awaiting Confirmation") {
           color = "gold";
           icon = <ClockCircleOutlined />;
         }
-        if (status === "Booking confirmed") {
+        if (status === "Payment Confirmed") {
+          color = "orange";
+          icon = <CheckCircleOutlined />;
+        }
+        if (status === "Booking Confirmed") {
           color = "blue";
           icon = <CheckCircleOutlined />;
         }
@@ -134,19 +225,11 @@ const TestingProcessMonitoringPage = () => {
           color = "cyan";
           icon = <LoadingOutlined />;
         }
-        if (status === "Ready") {
-          color = "lime";
-          icon = <CheckCircleOutlined />;
-        }
-        if (status === "Pending Payment") {
-          color = "orange";
-          icon = <ExclamationCircleOutlined />;
-        }
         if (status === "Completed") {
           color = "green";
           icon = <CheckCircleOutlined />;
         }
-        if (status === "Cancel") {
+        if (status === "Cancelled") {
           color = "red";
           icon = <ExclamationCircleOutlined />;
         }
@@ -157,14 +240,13 @@ const TestingProcessMonitoringPage = () => {
         );
       },
       filters: [
-        { text: "Waiting confirmed", value: "Waiting confirmed" },
-        { text: "Booking confirmed", value: "Booking confirmed" },
+        { text: "Awaiting Confirmation", value: "Awaiting Confirmation" },
+        { text: "Payment Confirmed", value: "Payment Confirmed" },
+        { text: "Booking Confirmed", value: "Booking Confirmed" },
         { text: "Awaiting Sample", value: "Awaiting Sample" },
         { text: "In Progress", value: "In Progress" },
-        { text: "Ready", value: "Ready" },
-        { text: "Pending Payment", value: "Pending Payment" },
         { text: "Completed", value: "Completed" },
-        { text: "Cancel", value: "Cancel" },
+        { text: "Cancelled", value: "Cancelled" },
       ],
       onFilter: (value, record) => record.status === value,
     },
@@ -172,10 +254,23 @@ const TestingProcessMonitoringPage = () => {
       title: "Last Update Status",
       dataIndex: "lastUpdate",
       key: "lastUpdate",
-      render: (date) => (date ? new Date(date).toLocaleString() : "N/A"),
-      sorter: (a, b) =>
-        new Date(a.lastUpdate || "1970-01-01") -
-        new Date(b.lastUpdate || "1970-01-01"),
+      render: (lastUpdate) => formatDateTime(lastUpdate),
+      sorter: (a, b) => {
+        const getDate = (val) => {
+          if (Array.isArray(val) && val.length >= 3) {
+            return new Date(
+              val[0],
+              val[1] - 1,
+              val[2],
+              val[3] || 0,
+              val[4] || 0
+            );
+          }
+          if (val) return new Date(val);
+          return new Date(0);
+        };
+        return getDate(a.lastUpdate) - getDate(b.lastUpdate);
+      },
     },
   ];
 
@@ -199,10 +294,10 @@ const TestingProcessMonitoringPage = () => {
         test.assignedID,
         test.customerName,
         test.staffName,
-        test.timeRange || "N/A",
+        formatTime(test.appointmentTime),
         test.serviceType,
         test.status,
-        test.lastUpdate ? new Date(test.lastUpdate).toLocaleString() : "N/A",
+        formatDateTime(test.lastUpdate),
       ]);
       autoTable(doc, {
         head: [tableColumn],
@@ -217,6 +312,9 @@ const TestingProcessMonitoringPage = () => {
       toast.error("Failed to export PDF: " + error.message);
     }
   };
+
+  // State for page size
+  const [pageSize, setPageSize] = useState(10);
 
   return (
     <div style={{ padding: "0 24px" }}>
@@ -265,18 +363,19 @@ const TestingProcessMonitoringPage = () => {
             <Select
               placeholder="Filter by status"
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(value) => setStatusFilter(value)}
               style={{ width: "100%" }}
-              allowClear>
+              allowClear={true}>
               <Option value="">All Statuses</Option>
-              <Option value="Waiting confirmed">Waiting confirmed</Option>
-              <Option value="Booking confirmed">Booking confirmed</Option>
+              <Option value="Awaiting Confirmation">
+                Awaiting Confirmation
+              </Option>
+              <Option value="Payment Confirmed">Payment Confirmed</Option>
+              <Option value="Booking Confirmed">Booking Confirmed</Option>
               <Option value="Awaiting Sample">Awaiting Sample</Option>
               <Option value="In Progress">In Progress</Option>
-              <Option value="Ready">Ready</Option>
-              <Option value="Pending Payment">Pending Payment</Option>
               <Option value="Completed">Completed</Option>
-              <Option value="Cancel">Cancel</Option>
+              <Option value="Cancelled">Cancelled</Option>
             </Select>
           </Col>
         </Row>
@@ -287,13 +386,18 @@ const TestingProcessMonitoringPage = () => {
           loading={loading}
           columns={columns}
           dataSource={filteredTests}
-          rowKey="testId"
+          rowKey="assignedID"
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
+            pageSizeOptions: [5, 10, 20, 50, 100],
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} tests`,
+            onShowSizeChange: (current, size) => setPageSize(size),
+            onChange: (page, size) => {
+              if (size !== pageSize) setPageSize(size);
+            },
           }}
           scroll={{ x: 1000 }}
         />

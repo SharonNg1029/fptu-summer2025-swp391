@@ -11,7 +11,9 @@ import {
   Button,
   Divider,
   Progress,
+  Alert,
 } from "antd";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarOutlined,
   ContainerOutlined,
@@ -23,6 +25,7 @@ import {
   LineChartOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 import {
   BarChart,
@@ -52,27 +55,27 @@ const { Title } = Typography;
 
 // Định nghĩa các trạng thái booking và màu sắc riêng biệt
 const STATUS_COLORS = {
-  "Waiting confirmed": "#bdbdbd", // xám nhạt
-  "Booking confirmed": "#40a9ff", // xanh dương nhạt
-  "Awaiting Sample": "#faad14", // vàng
-  "In Progress": "#1890ff", // xanh dương
-  Ready: "#722ed1", // tím
-  "Pending Payment": "#ff4d4f", // đỏ
-  Completed: "#52c41a", // xanh lá
-  Cancel: "#8c8c8c", // xám đậm
+  "Awaiting Confirmation": "#faad14", // Orange
+  "Payment Confirmed": "#1890ff", // Blue
+  "Booking Confirmed": "#52c41a", // Green
+  "Awaiting Sample": "#722ed1", // Purple
+  "In Progress": "#13c2c2", // Cyan
+  Completed: "#52c41a", // Green
+  Cancelled: "#ff4d4f", // Red
 };
+
 const STATUS_ORDER = [
-  "Waiting confirmed",
-  "Booking confirmed",
+  "Awaiting Confirmation",
+  "Payment Confirmed",
+  "Booking Confirmed",
   "Awaiting Sample",
   "In Progress",
-  "Ready",
-  "Pending Payment",
   "Completed",
-  "Cancel",
+  "Cancelled",
 ];
 
 const StaffOverviewPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [overviewData, setOverviewData] = useState({
     totalAppointments: 0,
@@ -97,55 +100,90 @@ const StaffOverviewPage = () => {
     }
     setLoading(true);
     try {
+      // Lấy assignments như cũ
       const response = await api.get(`/staff/my-assignment/${staffID}`);
       const assignments = response.data || [];
       // Tổng số booking
       const totalAppointments = assignments.length;
-      const pendingAppointments = assignments.filter(
-        (a) =>
-          (a.status || "").trim().toLowerCase() ===
-          "awaiting sample".toLowerCase()
+
+      // Filter for allowed statuses only
+      const allowedStatuses = [
+        "Awaiting Confirmation",
+        "Payment Confirmed",
+        "Booking Confirmed",
+        "Awaiting Sample",
+        "In Progress",
+        "Completed",
+        "Cancelled",
+      ];
+
+      const validAssignments = assignments.filter((assignment) =>
+        allowedStatuses.includes(assignment.status)
+      );
+
+      const pendingAppointments = validAssignments.filter(
+        (a) => a.status === "Awaiting Sample"
       ).length;
-      // Số booking hôm nay
-      const today = new Date().toISOString().slice(0, 10);
-      const appointmentsToday = assignments.filter(
-        (a) => a.date === today
-      ).length;
+
       // Số booking đã hoàn thành
-      const totalAppointmentFinished = assignments.filter(
-        (a) =>
-          (a.status || "").trim().toLowerCase() === "completed".toLowerCase()
+      const totalAppointmentFinished = validAssignments.filter(
+        (a) => a.status === "Completed"
       ).length;
-      // Phân bố trạng thái: chuẩn hóa status, gom nhóm đúng tên, không trùng lặp
+      // Phân bố trạng thái: chỉ hiển thị các status được phép
       const statusCounts = {};
-      assignments.forEach((a) => {
-        let status = (a.status || "Unknown").trim();
-        // Chuẩn hóa về đúng tên status (case-insensitive)
-        const found = STATUS_ORDER.find(
-          (std) => std.toLowerCase() === status.toLowerCase()
-        );
-        status = found || status;
-        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      validAssignments.forEach((a) => {
+        const status = a.status;
+        if (allowedStatuses.includes(status)) {
+          statusCounts[status] = (statusCounts[status] || 0) + 1;
+        }
       });
-      // Đảm bảo đủ các status, kể cả khi không có dữ liệu
-      const orderStatusDistribution = STATUS_ORDER.map((name) => ({
-        name,
-        value: statusCounts[name] || 0,
-        color: STATUS_COLORS[name],
-      })).filter((item) => item.value > 0); // chỉ hiển thị status có dữ liệu
+
+      // Sử dụng màu từ STATUS_COLORS
+      const orderStatusDistribution = Object.entries(statusCounts).map(
+        ([name, value]) => ({
+          name,
+          value,
+          color: STATUS_COLORS[name] || "#d9d9d9",
+        })
+      );
       // Thống kê theo timeRange (sáng, chiều, tối)
       const timeRangeStats = [
         { period: "Morning", count: 0 },
         { period: "Afternoon", count: 0 },
-        { period: "Evening", count: 0 },
       ];
       assignments.forEach((a) => {
         if (!a.timeRange) return;
         const hour = parseInt(a.timeRange.split(":")[0]);
         if (hour < 12) timeRangeStats[0].count++;
         else if (hour < 18) timeRangeStats[1].count++;
-        else timeRangeStats[2].count++;
+        // Bỏ Evening
       });
+      // Lấy số lượng báo cáo hôm nay từ API /staff/my-report/{staffID}
+      let appointmentsToday = 0;
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const reportRes = await api.get(`/staff/my-report/${staffID}`);
+        const reports = reportRes.data?.data || reportRes.data || [];
+        // Chuẩn hóa appointmentDate nếu là mảng
+        const normalized = reports.map((item) => {
+          let appointmentDate = item.appointmentDate;
+          if (Array.isArray(appointmentDate) && appointmentDate.length >= 3) {
+            const y = appointmentDate[0];
+            const m = String(appointmentDate[1]).padStart(2, "0");
+            const d = String(appointmentDate[2]).padStart(2, "0");
+            appointmentDate = `${y}-${m}-${d}`;
+          }
+          return { ...item, appointmentDate };
+        });
+        appointmentsToday = normalized.filter(
+          (r) =>
+            r.status === "Pending" &&
+            r.appointmentDate &&
+            r.appointmentDate.slice(0, 10) === today
+        ).length;
+      } catch {
+        // Nếu lỗi thì giữ appointmentsToday = 0
+      }
       // Task summary
       const dailyTasks = [
         { name: "Total Assignments", count: totalAppointments },
@@ -188,7 +226,6 @@ const StaffOverviewPage = () => {
         timeRangeStats: [
           { period: "Morning", count: 0 },
           { period: "Afternoon", count: 0 },
-          { period: "Evening", count: 0 },
         ],
       });
     } finally {
@@ -209,6 +246,29 @@ const StaffOverviewPage = () => {
 
   return (
     <div style={{ padding: "0 24px" }}>
+      {/* Notification for today's reports */}
+      <Row gutter={[0, 16]} style={{ marginBottom: 8 }}>
+        <Col span={24}>
+          <Alert
+            type="info"
+            showIcon
+            message={
+              <span>
+                There are <b>{overviewData.appointmentsToday}</b> reports to be
+                completed today.{" "}
+                <Button
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate("/staff-dashboard/staff-reporting")}
+                  style={{ padding: 0 }}>
+                  Go to reporting
+                </Button>
+              </span>
+            }
+            style={{ background: "#e6f7ff", border: "1px solid #91d5ff" }}
+          />
+        </Col>
+      </Row>
       <div
         style={{
           display: "flex",

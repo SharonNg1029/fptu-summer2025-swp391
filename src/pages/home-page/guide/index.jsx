@@ -41,7 +41,7 @@ const Guide = () => {
         "For Postal, choose a delivery date and return the kit within 3 days.",
         "Express service available for Staff Visit and Walk-in only.",
         "Make payment based on your selections.",
-        "Receive a confirmation email and order status updates.",
+        "Receive a confirmation email and booking status updates.",
       ],
     },
     {
@@ -49,7 +49,7 @@ const Guide = () => {
       title: "Monitoring the Process",
       icon: "🔬",
       items: [
-        "Track your order status in real time.",
+        "Track your booking status in real time.",
         "If using Postal or Staff Collection, expect kit/staff on scheduled date.",
         "Send the sample to our lab (or return kit within 3 days).",
         "Postal bookings not returned in time will be canceled.",
@@ -82,41 +82,46 @@ const Guide = () => {
 
   const paymentMethods = [
     {
-      name: "QR Pay",
-      icon: "📱",
+      name: "VNPay",
+      icon: "🏦",
       color: "from-blue-500 to-indigo-500",
-      description: "For Home Collection (Staff Collection or Postal Delivery)",
+      description: "Online payment for all collection methods",
       features: [
-        "Self-collection at home (Postal Delivery)",
-        "Medical staff home visit (Staff Collection)",
+        "Available for Postal Delivery",
+        "Available for Staff Collection",
+        "Available for Walk-in Service",
         "15-minute payment window",
         "Instant confirmation",
       ],
     },
     {
-      name: "Cash/Card",
+      name: "Cash",
       icon: "💰",
       color: "from-green-500 to-emerald-500",
-      description: "Direct payment at medical facility (Walk-in Service)",
+      description:
+        "Direct payment at facility or home (not for Postal Delivery)",
       features: [
-        "Pay at medical facility",
+        "Pay at medical facility for Walk-in Service",
+        "Pay at home for Staff Collection",
+        "Not available for Postal Delivery",
         "Cash or card accepted",
-        "Immediate sample collection",
-        "No time restrictions",
+        "Immediate processing",
       ],
     },
   ];
 
- const collectionMethods = [
+  const collectionMethods = [
     {
       title: "At Facility (Walk-in Service)",
       description: "Come to our facility for professional sample collection",
-      paymentMethod: "Cash/Card",
+      paymentMethod: "VNPay or Cash",
       serviceTypes: ["Legal", "Non-Legal"],
       steps: [
         "Book appointment at facility.",
+        "Choose payment method: VNPay online or Cash at facility.",
         "Visit our medical center on the scheduled date and time.",
-        "Pay directly at facility.",
+        "If VNPay: complete payment within 15 minutes after booking.",
+        "If Cash: pay directly at facility.",
         "Professional sample collection.",
         "Immediate lab processing.",
       ],
@@ -125,11 +130,13 @@ const Guide = () => {
     {
       title: "At Home (Staff Collection)",
       description: "Our medical staff visits your home for sample collection",
-      paymentMethod: "QR Pay",
+      paymentMethod: "VNPay or Cash",
       serviceTypes: ["Legal", "Non-Legal"],
       steps: [
         "Book appointment for home visit.",
-        "Pay via QR Pay to confirm booking.",
+        "Choose payment method: VNPay online or Cash at home.",
+        "If VNPay: complete payment within 15 minutes after booking.",
+        "If Cash: prepare to pay when staff arrives.",
         "Medical staff visits your location on the scheduled date and time.",
         "Professional sample collection.",
         "Immediate lab processing.",
@@ -139,12 +146,13 @@ const Guide = () => {
     {
       title: "At Home (Postal Delivery)",
       description:
-        "Collect samples yourself using our kit, delivered via postal service (only for Non-Legal cases)",
-      paymentMethod: "QR Pay",
+        "Collect samples yourself using our kit, delivered via postal service ",
+      descriptionHighlight: "(only for Non-Legal cases)",
+      paymentMethod: "VNPay Only",
       serviceTypes: ["Non-Legal"], // Only for Non-Legal as per rule
       steps: [
         "Choose Non-Legal service and confirm your address for kit delivery.",
-        "Pay via QR Pay to confirm booking.",
+        "Pay via VNPay within 15 minutes to confirm booking.",
         "Receive sample collection kit by postal delivery on the selected date.",
         "Follow instructions to collect sample.",
         "Return the sample to our facility within 3 days. Booking will be cancelled if not returned.",
@@ -153,15 +161,59 @@ const Guide = () => {
     },
   ];
 
-  const orderTimeline = [
+  const sampleCollectionMethods = [
     {
-      status: "Waiting Confirmed",
-      description: "Order submitted, awaiting confirmation",
+      type: "Buccal Swab Sample",
+      icon: "🦷",
+      color: "from-blue-500 to-indigo-500",
+      steps: [
+        "Rinse your mouth with a small amount of clean water to remove residue",
+        "Use a sterile cotton swab and rub the inside of your cheek gently for 20–30 seconds to collect cheek cells",
+        "Use two swabs per cheek",
+        "Let them air dry naturally",
+        "Place them in an envelope",
+      ],
+    },
+    {
+      type: "Blood Sample",
+      icon: "🩸",
+      color: "from-red-500 to-rose-500",
+      steps: [
+        "Disinfect the area to be pricked using an alcohol swab",
+        "Use a sterile lancet to gently prick the skin",
+        "Squeeze out one large drop of blood",
+        "Absorb it with a sterile cotton swab",
+      ],
+    },
+    {
+      type: "Hair Sample",
+      icon: "💇",
+      color: "from-amber-500 to-orange-500",
+      steps: [
+        "Pluck 5–7 hairs with hair roots attached",
+        "Wrap them in a clean white sheet of paper",
+      ],
+    },
+    {
+      type: "Fingernail/Toenail Sample",
+      icon: "✂️",
+      color: "from-purple-500 to-violet-500",
+      steps: [
+        "Clean your hands, feet, and nail clippers thoroughly",
+        "Cut 5–7 fingernails or toenails",
+      ],
+    },
+  ];
+
+  const orderTimelineVNPay = [
+    {
+      status: "Awaiting Confirmation",
+      description: "Booking submitted, waiting for VNPay payment (15 minutes)",
       icon: "⏳",
     },
     {
       status: "Booking Confirmed",
-      description: "Appointment or kit delivery confirmed and scheduled",
+      description: "VNPay payment successful, booking confirmed",
       icon: "✅",
     },
     {
@@ -176,19 +228,38 @@ const Guide = () => {
       icon: "🔬",
     },
     {
-      status: "Ready",
-      description: "Analysis complete, results being prepared",
-      icon: "📋",
+      status: "Completed",
+      description: "Results ready and delivered to your account",
+      icon: "📊",
+    },
+  ];
+
+  const orderTimelineCash = [
+    {
+      status: "Awaiting Confirmation",
+      description: "Booking submitted, waiting for confirmation",
+      icon: "⏳",
+    },
+    {
+      status: "Booking Confirmed",
+      description:
+        "Appointment scheduled, will process payment on scheduled day",
+      icon: "✅",
+    },
+    {
+      status: "Awaiting Sample",
+      description: "Waiting for sample collection on scheduled date",
+      icon: "💰",
+    },
+    {
+      status: "In Progress",
+      description: "Sample received and being analyzed",
+      icon: "🔬",
     },
     {
       status: "Completed",
       description: "Results ready and delivered to your account",
       icon: "📊",
-    },
-    {
-      status: "Cancelled",
-      description: "Booking cancelled (e.g., kit not returned on time)",
-      icon: "❌",
     },
   ];
 
@@ -348,6 +419,11 @@ const Guide = () => {
                     </h3>
                     <p className="text-gray-600 text-sm mb-3">
                       {method.description}
+                      {method.descriptionHighlight && (
+                        <strong className="font-bold">
+                          {method.descriptionHighlight}
+                        </strong>
+                      )}
                     </p>
                     <div
                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${
@@ -379,6 +455,113 @@ const Guide = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* DNA Sample Collection Instructions Section */}
+      <div className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              How to Collect DNA Samples at Home
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Detailed instructions for proper sample collection at home
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {sampleCollectionMethods.map((method, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200">
+                <div className="p-6">
+                  <div className="flex items-center mb-6">
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl mr-4"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                      }}>
+                      {method.icon}
+                    </div>
+                    <h3
+                      className="text-xl font-bold"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}>
+                      {method.type}
+                    </h3>
+                  </div>
+
+                  <div
+                    className="w-16 h-0.5 mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+
+                  <div className="space-y-3">
+                    {method.steps.map((step, stepIndex) => (
+                      <div key={stepIndex} className="flex items-start">
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3 flex-shrink-0 mt-0.5"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                          }}>
+                          {stepIndex + 1}
+                        </div>
+                        <span className="text-gray-700 text-sm leading-relaxed">
+                          {step}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* NIPT Special Note */}
+          <div className="mt-12 bg-white rounded-2xl shadow-lg p-8 max-w-4xl mx-auto border border-gray-200">
+            <div className="flex items-center mb-4">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl mr-4"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                }}>
+                ⚠️
+              </div>
+              <h3
+                className="text-2xl font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
+                Important Note for NIPT Testing
+              </h3>
+            </div>
+            <div
+              className="w-16 h-0.5 mb-4"
+              style={{
+                background: "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+              }}></div>
+            <p className="text-gray-700 text-lg leading-relaxed">
+              <strong>For Non-Invasive Relationship Testing (NIPT)</strong>, you
+              must visit our medical facility for testing. This specialized test
+              cannot be performed with home-collected samples and requires
+              professional medical supervision.
+            </p>
           </div>
         </div>
       </div>
@@ -434,58 +617,283 @@ const Guide = () => {
         </div>
       </div>
 
-      {/* Order Timeline Section - Horizontal */}
+      {/* Order Timeline Section - Two Flows */}
       <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Order Timeline
+              Booking Timeline by Payment Method
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Track your order through each stage of the testing process
+              Track your booking through each stage based on your chosen payment
+              method
             </p>
           </div>
 
-          <div className="max-w-6xl mx-auto">
-            <div className="relative">
-              {/* Horizontal Timeline Line */}
-              <div
-                className="absolute top-8 left-8 right-8 h-0.5 hidden md:block"
-                style={{
-                  background:
-                    "linear-gradient(90deg, #023670 0%, #2563eb 100%)",
-                }}></div>
+          {/* VNPay Timeline */}
+          <div className="mb-16">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                VNPay Payment Flow
+              </h3>
+              <p className="text-gray-600">
+                For Postal Delivery, Staff Collection, and Walk-in Service
+              </p>
+            </div>
 
-              {/* Timeline Items */}
-              <div className="grid grid-cols-1 md:grid-cols-8 gap-8 md:gap-4">
-                {orderTimeline.map((stage, index) => (
-                  <div key={index} className="relative text-center">
-                    <div
-                      className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl mx-auto mb-4 relative z-10"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
-                      }}>
-                      {stage.icon}
-                    </div>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">
-                      {stage.status}
-                    </h3>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      {stage.description}
-                    </p>
+            <div className="max-w-6xl mx-auto">
+              <div className="relative">
+                {/* Horizontal Timeline Line */}
+                <div
+                  className="absolute top-8 left-8 right-8 h-0.5 hidden md:block"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)",
+                  }}></div>
 
-                    {/* Mobile connector line */}
-                    {index < orderTimeline.length - 1 && (
+                {/* Timeline Items */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4">
+                  {orderTimelineVNPay.map((stage, index) => (
+                    <div key={index} className="relative text-center">
                       <div
-                        className="w-0.5 h-8 mx-auto mt-4 md:hidden"
+                        className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl mx-auto mb-4 relative z-10"
                         style={{
                           background:
-                            "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
-                        }}></div>
-                    )}
-                  </div>
-                ))}
+                            "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)",
+                        }}>
+                        {stage.icon}
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900 mb-2">
+                        {stage.status}
+                      </h3>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        {stage.description}
+                      </p>
+
+                      {/* Mobile connector line */}
+                      {index < orderTimelineVNPay.length - 1 && (
+                        <div
+                          className="w-0.5 h-8 mx-auto mt-4 md:hidden"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)",
+                          }}></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cash Timeline */}
+          <div>
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Cash Payment Flow
+              </h3>
+              <p className="text-gray-600">
+                For Walk-in Service and Staff Collection only
+              </p>
+            </div>
+
+            <div className="max-w-6xl mx-auto">
+              <div className="relative">
+                {/* Horizontal Timeline Line */}
+                <div
+                  className="absolute top-8 left-8 right-8 h-0.5 hidden md:block"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #10b981 0%, #059669 100%)",
+                  }}></div>
+
+                {/* Timeline Items */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4">
+                  {orderTimelineCash.map((stage, index) => (
+                    <div key={index} className="relative text-center">
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl mx-auto mb-4 relative z-10"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                        }}>
+                        {stage.icon}
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900 mb-2">
+                        {stage.status}
+                      </h3>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        {stage.description}
+                      </p>
+
+                      {/* Mobile connector line */}
+                      {index < orderTimelineCash.length - 1 && (
+                        <div
+                          className="w-0.5 h-8 mx-auto mt-4 md:hidden"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                          }}></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Important Booking Policies */}
+      <div className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Important Booking Policies
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Please read these important policies regarding booking
+              cancellation and payment
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* Cancellation Policy */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+              <div className="flex items-center mb-6">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl mr-4"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                  }}>
+                  ⚠️
+                </div>
+                <h3
+                  className="text-2xl font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}>
+                  Booking Cancellation Policy
+                </h3>
+              </div>
+              <div
+                className="w-16 h-0.5 mb-6"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                }}></div>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div
+                    className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+                  <p className="text-gray-700">
+                    <strong>Cancellation is only allowed</strong> when your
+                    booking has not been confirmed yet.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div
+                    className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+                  <p className="text-gray-700">
+                    Please ensure you are certain about your booking details
+                    before confirmation.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div
+                    className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+                  <p className="text-gray-700">
+                    Once your booking is confirmed, cancellation is no longer
+                    possible.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* VNPay Policy */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+              <div className="flex items-center mb-6">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl mr-4"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                  }}>
+                  ⏱️
+                </div>
+                <h3
+                  className="text-2xl font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}>
+                  VNPay Payment Policy
+                </h3>
+              </div>
+              <div
+                className="w-16 h-0.5 mb-6"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                }}></div>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div
+                    className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+                  <p className="text-gray-700">
+                    <strong>15-minute payment window:</strong> You have exactly
+                    15 minutes to complete your VNPay payment.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div
+                    className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+                  <p className="text-gray-700">
+                    <strong>Automatic cancellation:</strong> If payment is not
+                    completed within 15 minutes, your booking will be
+                    automatically cancelled.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div
+                    className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #023670 0%, #2563eb 100%)",
+                    }}></div>
+                  <p className="text-gray-700">
+                    You will need to create a new booking if the payment window
+                    expires.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

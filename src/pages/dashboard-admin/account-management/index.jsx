@@ -59,14 +59,23 @@ import api from "../../../configs/axios";
  * - DELETE /admin/account/{id} - Delete account
  * - POST /admin/register - Create new account (username, password, email, phone, role, fullname)
  * - GET /admin/dashboard/customers - Get customer statistics
+ * - GET /booking/bookings - Get all bookings (used to check for active orders)
+ *   Active orders are bookings with status OTHER than 'Cancel' and 'Completed'
  */
 const AccountManagement = () => {
   // State management
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
+
+  // Xóa filter khi nhấn nút X
+  const handleClearFilter = (filterType) => {
+    if (filterType === "role") setRoleFilter(null);
+    if (filterType === "status") setStatusFilter(null);
+    if (filterType === "search") setSearchText("");
+  };
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [deletingAccounts, setDeletingAccounts] = useState(new Set());
@@ -88,27 +97,71 @@ const AccountManagement = () => {
   /**
    * Check if a customer account has active orders
    * This prevents deletion of accounts with pending orders
+   * Active orders are bookings with status OTHER than 'Cancel' and 'Completed'
    */
-  // Kiểm tra customer có booking nào chưa hoàn thành (status khác Completed/Cancel)
   const checkActiveOrders = async (accountId) => {
     try {
-      const response = await api.get("/booking/bookings", {
-        params: { customerID: accountId },
-      });
+      // Fetch all bookings from the API
+      const response = await api.get("/booking/bookings");
       const bookings = response.data?.data || response.data || [];
-      // Đếm số booking có status khác Completed và Cancel (không phân biệt hoa thường)
-      const hasActive = bookings.some((b) => {
-        const status = String(b.status || "").toLowerCase();
-        return (
+
+      // Debug log removed
+
+      // Normalize the account ID
+      const normalizedAccountId =
+        typeof accountId === "string"
+          ? isNaN(Number(accountId))
+            ? accountId
+            : Number(accountId)
+          : accountId;
+
+      // Filter bookings for this specific customer
+      const customerBookings = bookings.filter((booking) => {
+        // Try different possible field names for customer ID
+        const customerId =
+          booking.customerID ||
+          booking.customerId ||
+          booking.customer_id ||
+          booking.accountID ||
+          booking.accountId ||
+          booking.userId ||
+          booking.user_id;
+
+        if (customerId !== null && customerId !== undefined) {
+          // Normalize the customer ID from booking
+          const normalizedCustomerId =
+            typeof customerId === "string"
+              ? isNaN(Number(customerId))
+                ? customerId
+                : Number(customerId)
+              : customerId;
+
+          const match = normalizedCustomerId === normalizedAccountId;
+          return match;
+        }
+        return false;
+      });
+
+      // Check if customer has any active orders (status not 'Cancel' or 'Completed')
+      const hasActiveOrders = customerBookings.some((booking) => {
+        const status = String(booking.status || "")
+          .toLowerCase()
+          .trim();
+        const isActive =
           status !== "completed" &&
           status !== "cancel" &&
-          status !== "cancelled"
-        );
+          status !== "cancelled" &&
+          status !== "";
+        return isActive;
       });
-      return hasActive;
+      return hasActiveOrders;
     } catch (error) {
-      console.error("Error checking active orders:", error);
-      // Nếu lỗi, giả định không có active order để không chặn xóa
+      console.error(
+        "Error checking active orders for customer:",
+        accountId,
+        error
+      );
+      // If API fails, assume no active orders to avoid blocking deletion unnecessarily
       return false;
     }
   };
@@ -116,34 +169,80 @@ const AccountManagement = () => {
   /**
    * Fetch active orders status for all customer accounts
    * This helps determine which accounts can be safely deleted
+   * Uses /booking/bookings API to get all bookings and filter active ones
    */
   const fetchActiveOrdersStatus = useCallback(async (accountsData) => {
     try {
-      const customerAccounts = accountsData.filter(
-        (acc) => acc.role === "CUSTOMER"
-      );
-      const activeOrdersPromises = customerAccounts.map(async (account) => {
-        try {
-          const hasActiveOrders = await checkActiveOrders(account.id);
-          return { accountId: account.id, hasActiveOrders };
-        } catch (error) {
-          console.error(
-            `Error checking active orders for account ${account.id}:`,
-            error
-          );
-          return { accountId: account.id, hasActiveOrders: false };
+      // Fetch all bookings from the API
+      const response = await api.get("/booking/bookings");
+      const bookings = response.data?.data || response.data || [];
+
+      // Filter bookings that are considered "active" (not Cancel or Completed)
+      const activeBookings = bookings.filter((booking) => {
+        const status = String(booking.status || "")
+          .toLowerCase()
+          .trim();
+        const isActive =
+          status !== "completed" &&
+          status !== "cancel" &&
+          status !== "cancelled" &&
+          status !== ""; // Also exclude empty status
+        return isActive;
+      });
+
+      // Get unique customer IDs that have active bookings - try multiple possible field names
+      const customerIDsWithActiveOrders = new Set();
+
+      activeBookings.forEach((booking) => {
+        // Try different possible field names for customer ID
+        const customerId =
+          booking.customerID ||
+          booking.customerId ||
+          booking.customer_id ||
+          booking.accountID ||
+          booking.accountId ||
+          booking.userId ||
+          booking.user_id;
+
+        if (customerId !== null && customerId !== undefined) {
+          // Convert to number if it's a string number, keep as is if already number
+          const normalizedId =
+            typeof customerId === "string"
+              ? isNaN(Number(customerId))
+                ? customerId
+                : Number(customerId)
+              : customerId;
+
+          customerIDsWithActiveOrders.add(normalizedId);
         }
       });
 
-      const results = await Promise.all(activeOrdersPromises);
-      const accountsWithOrders = new Set(
-        results
-          .filter((result) => result.hasActiveOrders)
-          .map((result) => result.accountId)
+      // Filter customer accounts and check which ones have active orders
+      const customerAccounts = accountsData.filter(
+        (account) => String(account.role).toUpperCase() === "CUSTOMER"
       );
-      setAccountsWithActiveOrders(accountsWithOrders);
+
+      const accountsWithActiveOrdersSet = new Set();
+
+      customerAccounts.forEach((account) => {
+        // Normalize account ID the same way
+        const normalizedAccountId =
+          typeof account.id === "string"
+            ? isNaN(Number(account.id))
+              ? account.id
+              : Number(account.id)
+            : account.id;
+
+        if (customerIDsWithActiveOrders.has(normalizedAccountId)) {
+          accountsWithActiveOrdersSet.add(account.id); // Keep original ID format for the set
+        }
+      });
+
+      setAccountsWithActiveOrders(accountsWithActiveOrdersSet);
     } catch (error) {
       console.error("Error fetching active orders status:", error);
+      // Set empty set on error to avoid blocking functionality
+      setAccountsWithActiveOrders(new Set());
     }
   }, []);
 
@@ -174,7 +273,7 @@ const AccountManagement = () => {
     try {
       setLoading(true);
       const response = await api.get("/admin/account");
-      console.log("Accounts API raw response:", response);
+      //
       // Map API fields to UI fields
       const accountsData = (response.data?.data || response.data || []).map(
         (acc) => ({
@@ -190,11 +289,13 @@ const AccountManagement = () => {
               : acc.role,
           status: acc.enabled ? "ACTIVE" : "INACTIVE",
           createdAt: acc.createAt,
-          // Các trường khác nếu cần
+          address: acc.address || acc.diachi || "", // Bắt đúng address
+          payment_code:
+            acc.payment_code || acc.paymentCode || acc.paymentCode || "", // Bắt đúng payment_code
           ...acc,
         })
       );
-      console.log("Mapped accountsData:", accountsData);
+      //
       setAccounts(accountsData);
       // Fetch related data
       await fetchActiveOrdersStatus(accountsData);
@@ -240,15 +341,14 @@ const AccountManagement = () => {
 
     // Cannot delete if customer has active orders
     if (
-      account.role === "CUSTOMER" &&
+      String(account.role).toUpperCase() === "CUSTOMER" &&
       accountsWithActiveOrders.has(account.id)
     ) {
       return {
         canDelete: false,
-        reason: "Account has active orders that need to be completed first",
+        reason: "This customer has active orders and cannot be deleted.",
       };
     }
-
     return { canDelete: true, reason: null };
   };
 
@@ -330,8 +430,13 @@ const AccountManagement = () => {
     } catch (error) {
       console.error("Error deleting account:", error);
       let errorMessage = "Failed to delete account";
+      // Ưu tiên lấy message từ API response nếu có
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+      } else if (typeof error.response?.data === "string") {
+        errorMessage = error.response.data;
+      } else if (error.response?.data?.data) {
+        errorMessage = error.response.data.data;
       } else if (error.response?.status === 403) {
         errorMessage = "You don't have permission to delete this account";
       } else if (error.response?.status === 404) {
@@ -359,17 +464,17 @@ const AccountManagement = () => {
   const handleFormSubmit = async (values) => {
     try {
       if (editingAccount) {
+        // Đảm bảo data gửi đi đúng định dạng mẫu yêu cầu
         const accountData = {
-          fullName: values.fullName?.trim(),
           email: values.email?.trim(),
           phone: values.phone?.trim(),
           role: values.role,
           enabled: values.status,
+          fullname: values.fullName?.trim(), // Always send fullname
         };
         if (values.password && values.password.trim()) {
           accountData.password = values.password.trim();
         }
-
         // GỌI API
         const res = await api.patch(
           `/admin/account/${editingAccount.id}`,
@@ -547,28 +652,30 @@ const AccountManagement = () => {
       account.fullName?.toLowerCase().includes(searchText.toLowerCase());
 
     const matchesRole =
-      roleFilter === "" || roleFilter === "All" || account.role === roleFilter;
+      roleFilter === null ||
+      roleFilter === "All" ||
+      account.role === roleFilter;
     const matchesStatus =
-      statusFilter === "" || account.status === statusFilter;
+      statusFilter === null || account.status === statusFilter;
 
     const result = matchesSearch && matchesRole && matchesStatus;
     if (!result) {
-      // Log chi tiết filter nếu cần debug
-      // console.log('Filtered out:', account, {matchesSearch, matchesRole, matchesStatus});
+      //
     }
     return result;
   });
-  console.log("Filtered accounts for table:", filteredAccounts);
+  //
 
   /**
    * Calculate statistics for dashboard cards
    * Combines API data with local calculations
+   * Active orders data comes from /booking/bookings API
    */
   const stats = {
     total: accounts.length,
     active: accounts.filter((acc) => acc.status === "ACTIVE").length,
     inactive: accounts.filter((acc) => acc.status === "INACTIVE").length,
-    // Đếm customer không phân biệt hoa thường
+    // Count customers (case insensitive)
     customers:
       customerStats.totalCustomers ||
       accounts.filter((acc) => String(acc.role).toUpperCase() === "CUSTOMER")
@@ -579,7 +686,13 @@ const AccountManagement = () => {
     managers: accounts.filter(
       (acc) => String(acc.role).toUpperCase() === "MANAGER"
     ).length,
-    customersWithActiveOrders: accountsWithActiveOrders.size,
+    // Number of ACTIVE customers with active orders (from /booking/bookings API)
+    customersWithActiveOrders: accounts.filter(
+      (acc) =>
+        String(acc.role).toUpperCase() === "CUSTOMER" &&
+        acc.status === "ACTIVE" &&
+        accountsWithActiveOrders.has(acc.id)
+    ).length,
     // Use API data if available, fallback to local calculation
     totalCustomersFromAPI:
       customerStats.totalCustomers ||
@@ -629,9 +742,11 @@ const AccountManagement = () => {
           {text}
         </Space>
       ),
+      width: 260,
+      ellipsis: true,
     },
     {
-      title: "Phone",
+      title: "Phone Number",
       dataIndex: "phone",
       key: "phone",
       render: (text) => (
@@ -640,6 +755,8 @@ const AccountManagement = () => {
           {text || "N/A"}
         </Space>
       ),
+      width: 140,
+      ellipsis: true,
     },
     {
       title: "Role",
@@ -668,15 +785,18 @@ const AccountManagement = () => {
       render: (status, record) => {
         const color = status === "ACTIVE" ? "green" : "red";
         const hasActiveOrders =
-          record.role === "CUSTOMER" && accountsWithActiveOrders.has(record.id);
+          String(record.role).toUpperCase() === "CUSTOMER" &&
+          accountsWithActiveOrders.has(record.id);
 
         return (
           <Space direction="vertical" size="small">
             <Tag color={color}>{status}</Tag>
             {hasActiveOrders && (
-              <Tag color="orange" icon="📋">
-                Has Active Orders
-              </Tag>
+              <Tooltip title="This customer has bookings that are not 'Completed' or 'Cancel'">
+                <Tag color="orange" icon="📋">
+                  Has Active Orders
+                </Tag>
+              </Tooltip>
             )}
           </Space>
         );
@@ -692,7 +812,10 @@ const AccountManagement = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 200,
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
+      width: 160,
       render: (_, record) => (
         <Space size="small">
           {/* Edit Button */}
@@ -824,9 +947,16 @@ const AccountManagement = () => {
         </Title>
         <Space>
           <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportPDF}
+            type="default">
+            Export PDF
+          </Button>
+          <Button
             icon={<ReloadOutlined />}
             onClick={refreshAllData}
-            loading={loading}>
+            loading={loading}
+            type="primary">
             Refresh
           </Button>
           <Button
@@ -840,14 +970,65 @@ const AccountManagement = () => {
             }}>
             Create New Account
           </Button>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={handleExportPDF}
-            size="large"
-            type="default">
-            Export PDF
-          </Button>
         </Space>
+      </div>
+
+      {/* Hiển thị filter đang chọn */}
+      <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+        {searchText && (
+          <span
+            style={{
+              border: "1px solid #d9d9d9",
+              borderRadius: 20,
+              padding: "2px 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#fafafa",
+            }}>
+            Search: <b style={{ margin: "0 4px" }}>{searchText}</b>
+            <span
+              style={{ cursor: "pointer", marginLeft: 4 }}
+              onClick={() => handleClearFilter("search")}>
+              ✕
+            </span>
+          </span>
+        )}
+        {roleFilter && roleFilter !== "All" && (
+          <span
+            style={{
+              border: "1px solid #d9d9d9",
+              borderRadius: 20,
+              padding: "2px 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#fafafa",
+            }}>
+            Role: <b style={{ margin: "0 4px" }}>{roleFilter}</b>
+            <span
+              style={{ cursor: "pointer", marginLeft: 4 }}
+              onClick={() => handleClearFilter("role")}>
+              ✕
+            </span>
+          </span>
+        )}
+        {statusFilter && (
+          <span
+            style={{
+              border: "1px solid #d9d9d9",
+              borderRadius: 20,
+              padding: "2px 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#fafafa",
+            }}>
+            Status: <b style={{ margin: "0 4px" }}>{statusFilter}</b>
+            <span
+              style={{ cursor: "pointer", marginLeft: 4 }}
+              onClick={() => handleClearFilter("status")}>
+              ✕
+            </span>
+          </span>
+        )}
       </div>
 
       {/* Statistics Cards */}
@@ -917,36 +1098,27 @@ const AccountManagement = () => {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Customers With Active Orders"
-              value={stats.customersWithActiveOrders}
-              prefix="📋"
-              valueStyle={{ color: "#fa8c16" }}
-              suffix={`/ ${stats.customers}`}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card
-            style={{
-              backgroundColor: "#f6ffed",
-              border: "1px solid #b7eb8f",
-            }}>
-            <Statistic
-              valueStyle={{ color: "#389e0d" }}
-              formatter={() => (
-                <div style={{ fontSize: "14px" }}>
-                  <div style={{ fontWeight: "bold", color: "#389e0d" }}>
-                    🛡️Orders Protected
+          <Tooltip title="Customers with active orders are protected from deletion to maintain data integrity">
+            <Card
+              style={{
+                backgroundColor: "#f6ffed",
+                border: "1px solid #b7eb8f",
+              }}>
+              <Statistic
+                valueStyle={{ color: "#389e0d" }}
+                formatter={() => (
+                  <div style={{ fontSize: "14px" }}>
+                    <div style={{ fontWeight: "bold", color: "#389e0d" }}>
+                      🛡️Orders Protected
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#666" }}>
+                      Accounts with active orders cannot be deleted
+                    </div>
                   </div>
-                  <div style={{ fontSize: "12px", color: "#666" }}>
-                    Accounts with active orders cannot be deleted
-                  </div>
-                </div>
-              )}
-            />
-          </Card>
+                )}
+              />
+            </Card>
+          </Tooltip>
         </Col>
       </Row>
 
@@ -966,7 +1138,9 @@ const AccountManagement = () => {
             <Select
               placeholder="Filter by role"
               value={roleFilter}
-              onChange={setRoleFilter}
+              onChange={(value) =>
+                setRoleFilter(value === undefined ? null : value)
+              }
               style={{ width: "100%" }}
               allowClear>
               <Option value="All">All Roles</Option>
@@ -980,7 +1154,9 @@ const AccountManagement = () => {
             <Select
               placeholder="Filter by status"
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(value) =>
+                setStatusFilter(value === undefined ? null : value)
+              }
               style={{ width: "100%" }}
               allowClear>
               <Option value="ACTIVE">Active</Option>
@@ -1141,19 +1317,8 @@ const AccountManagement = () => {
             label={editingAccount ? "New Password (Optional)" : "Password"}
             rules={
               editingAccount
-                ? [
-                    {
-                      min: 6,
-                      message: "Password must be at least 6 characters",
-                    },
-                  ]
-                : [
-                    { required: true, message: "Please enter password" },
-                    {
-                      min: 6,
-                      message: "Password must be at least 6 characters",
-                    },
-                  ]
+                ? []
+                : [{ required: true, message: "Please enter password" }]
             }
             help={
               editingAccount

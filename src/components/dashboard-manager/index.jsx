@@ -52,7 +52,7 @@ const items = [
   ),
   getItem("Customer Feedback", "customer-feedback", <MessageOutlined />),
   getItem("Test Kit Inventory", "inventory", <InboxOutlined />),
-  getItem("View Staff's Reports", "view-staff-reports", <InboxOutlined />),
+  getItem("Reports Management", "view-staff-reports", <InboxOutlined />),
 ];
 
 const ManagerDashboard = () => {
@@ -134,7 +134,7 @@ const ManagerDashboard = () => {
           defaultSelectedKeys={["overview"]}
           mode="inline"
           items={items}
-          selectedKeys={[location.pathname.split("/").slice(1, 3).join("/")]}
+          selectedKeys={[location.pathname.split("/")[2] || "overview"]}
         />
       </Sider>
 
@@ -190,7 +190,6 @@ const ManagerDashboard = () => {
               style={{ height: 40 }}
               onLogoutSuccess={() => {
                 // Callback khi logout thành công (tùy chọn)
-                console.log("Logout completed successfully");
               }}
               onLogoutError={(error) => {
                 // Callback khi logout lỗi (tùy chọn)

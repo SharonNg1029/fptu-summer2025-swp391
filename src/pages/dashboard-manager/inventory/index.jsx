@@ -167,7 +167,7 @@ const Inventory = () => {
   };
 
   // Low stock threshold
-  const LOW_STOCK_THRESHOLD = 20;
+  const LOW_STOCK_THRESHOLD = 50;
 
   // Fetch inventory data
   const fetchInventory = async () => {
@@ -220,7 +220,7 @@ const Inventory = () => {
   const fetchTransactions = async () => {
     try {
       const response = await api.get("/manager/kit-transaction");
-      console.log("Transactions response:", response);
+      // console.log("Transactions response:", response); // Removed for clean console
 
       // Chuẩn hóa dữ liệu theo mẫu API mới
       const transactionsData = (response.data?.data || response.data || []).map(
@@ -300,11 +300,18 @@ const Inventory = () => {
   };
 
   const filteredInventory = inventory;
-  const filteredTransactions = transactions.filter((t) => {
-    if (typeFilter === "received") return t.received === true;
-    if (typeFilter === "not-received") return t.received === false;
-    return true;
-  });
+  const filteredTransactions = transactions
+    .filter((t) => {
+      if (typeFilter === "received") return t.received === true;
+      if (typeFilter === "unreceived") return t.received === false;
+      return true;
+    })
+    // Sắp xếp theo ngày mới nhất đến cũ nhất
+    .sort((a, b) => {
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateB - dateA;
+    });
 
   // Derived: Low stock kit names & items
   const lowStockKits = inventory.filter(
@@ -313,6 +320,9 @@ const Inventory = () => {
   const lowStockKitNames = lowStockKits
     .map((kit) => kit.kitID || kit.id || kit.name)
     .filter(Boolean);
+
+  // State for page size of transactions table
+  const [transactionPageSize, setTransactionPageSize] = useState(10);
 
   // Export PDF for Inventory
   const handleExportInventoryPDF = () => {
@@ -712,7 +722,7 @@ const Inventory = () => {
                         style={{ width: "100%" }}
                         allowClear>
                         <Option value="received">Received</Option>
-                        <Option value="not-received">Not Received</Option>
+                        <Option value="unreceived">Unreceived</Option>
                       </Select>
                     </Col>
                   </Row>
@@ -726,11 +736,18 @@ const Inventory = () => {
                     dataSource={filteredTransactions}
                     rowKey="transactionID"
                     pagination={{
-                      pageSize: 10,
+                      pageSize: transactionPageSize,
+                      pageSizeOptions: [5, 10, 20, 50, 100],
                       showSizeChanger: true,
                       showQuickJumper: true,
                       showTotal: (total, range) =>
                         `${range[0]}-${range[1]} of ${total} transactions`,
+                      onShowSizeChange: (current, size) =>
+                        setTransactionPageSize(size),
+                      onChange: (page, size) => {
+                        if (size !== transactionPageSize)
+                          setTransactionPageSize(size);
+                      },
                     }}
                   />
                 </Card>

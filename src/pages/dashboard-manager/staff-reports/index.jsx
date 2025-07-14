@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { selectManagerID } from "../../../redux/features/userSlice";
 import {
   Tabs,
   Table,
@@ -27,6 +29,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios";
 import { toast, ToastContainer } from "react-toastify";
@@ -42,98 +45,372 @@ const { RangePicker } = DatePicker;
 const ViewReports = () => {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState([]);
-  const [todayReports, setTodayReports] = useState([]);
+  const [bookingAssigned, setBookingAssigned] = useState([]);
   const [staffList, setStaffList] = useState([]);
-  const [activeTab, setActiveTab] = useState("today");
+  // Set initial tab from query string if present
+  const getInitialTab = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && ["assign", "approve", "all"].includes(tab)) return tab;
+    }
+    return "assign";
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [staffFilter, setStaffFilter] = useState("");
-  const [dateRange, setDateRange] = useState([]);
+  // Đã xóa lọc theo ngày, không cần dateRange
+  const managerID = useSelector(selectManagerID);
+
+  // Assign Staff Modal State
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [assignLoading, setAssignLoading] = useState(false);
 
   // Pagination states
-  const [todayPagination, setTodayPagination] = useState({
-    current: 1,
-    pageSize: 10,
-  });
   const [allPagination, setAllPagination] = useState({
     current: 1,
     pageSize: 10,
   });
 
-  // Get today's date
-  const today = dayjs().format("YYYY-MM-DD");
+  const [assignPagination, setAssignPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
-  // Status options
-  const reportStatusOptions = [
-    "Pending",
-    "Approved",
-    "Rejected",
-    "Resolved",
-    "Completed",
-    "Delay",
-    "Cancel",
+  // Pagination for Approve tab
+  const [approvePagination, setApprovePagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+  // --- Approve Report Functions ---
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [approvingReport, setApprovingReport] = useState(null);
+
+  const handleApproveReport = async (record) => {
+    setApproveLoading(true);
+    const reportId = record.reportID || record.id;
+    if (!reportId) {
+      toast.error("Cannot approve: missing reportID.");
+      setApproveLoading(false);
+      setApprovingReport(null);
+      return;
+    }
+    setApprovingReport(reportId);
+    try {
+      // Gửi isApproved lên query string thay vì body để backend nhận đúng
+      await api.patch(`/manager/${reportId}/report?isApproved=true`);
+      await fetchAllReports();
+      toast.success(`Report #${record.reportID} approved successfully!`);
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to approve report: " + error.message);
+      }
+    } finally {
+      setApproveLoading(false);
+      setApprovingReport(null);
+    }
+  };
+  // --- Approve Tab Columns ---
+  const approveColumns = [
+    {
+      title: "Report ID",
+      dataIndex: "reportID",
+      key: "reportID",
+      width: 100,
+    },
+    {
+      title: "Staff ID",
+      dataIndex: "staffID",
+      key: "staffID",
+      width: 120,
+      render: (id) => id || <Tag color="volcano">Unassigned</Tag>,
+    },
+    {
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      width: 100,
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (time) => time || "-",
+      width: 150,
+    },
+    {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
+      width: 120,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => {
+        let color = "default";
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancelled") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
+      },
+      width: 100,
+    },
+    {
+      title: "Note",
+      dataIndex: "note",
+      key: "note",
+      render: (note) => note || "-",
+      ellipsis: true,
+      width: 180,
+    },
+    {
+      title: "Approved",
+      dataIndex: "isApproved",
+      key: "isApproved",
+      render: (isApproved) =>
+        isApproved === true ? (
+          <Tag color="green">Approved</Tag>
+        ) : (
+          <Tag color="orange">Unapproved</Tag>
+        ),
+      width: 100,
+    },
+    {
+      title: "Action",
+      key: "action",
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
+      width: 120,
+      render: (_, record) => (
+        <Button
+          type="primary"
+          icon={<CheckCircleOutlined />}
+          loading={approveLoading && approvingReport === record.id}
+          disabled={record.isApproved}
+          onClick={() => handleApproveReport(record)}
+          size="small">
+          Approve
+        </Button>
+      ),
+    },
   ];
 
-  // Fetch staff list for filter dropdown
-  const fetchStaffList = useCallback(async () => {
-    try {
-      const response = await api.get("/manager/staff-list");
-      setStaffList(response.data?.data || response.data || []);
-    } catch (error) {
-      console.error("Failed to fetch staff list:", error);
+  // --- Data Fetching Functions ---
+
+  // Fetch all reports (for Approve/All tabs)
+  const fetchAllReports = useCallback(async () => {
+    if (!managerID) {
+      setLoading(false);
+      return;
     }
-  }, []);
-
-  // Fetch today's reports
-  const fetchTodayReports = useCallback(
-    async (filters = {}) => {
-      setLoading(true);
-      try {
-        const response = await api.get("/manager/today-reports", {
-          params: { date: today, ...filters },
-        });
-        setTodayReports(response.data?.data || response.data || []);
-      } catch (error) {
-        toast.error(
-          "Failed to fetch today's reports: " +
-            (error.response?.data?.message || error.message)
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [today]
-  );
-
-  // Fetch all reports with filters
-  const fetchAllReports = useCallback(async (filters = {}) => {
     setLoading(true);
     try {
-      const response = await api.get("/manager/all-reports", {
-        params: filters,
-      });
-      setReports(response.data?.data || response.data || []);
-    } catch (error) {
-      toast.error(
-        "Failed to fetch reports: " +
-          (error.response?.data?.message || error.message)
+      const response = await api.get(`/manager/report/${managerID}`);
+      const fetchedData = response.data?.data || response.data || [];
+      const normalized = fetchedData.map((item) => ({
+        id: item.reportID,
+        reportID: item.reportID,
+        bookingId: item.bookingID,
+        bookingID: item.bookingID,
+        appointmentTime: item.appointmentTime,
+        appointmentDate: item.appointmentDate,
+        customerName: item.customerName,
+        note: item.note,
+        status: item.status,
+        assignedId: item.assignedID,
+        assignedID: item.assignedID,
+        managerID: item.managerID,
+        staffID: item.staffID,
+        staffId: item.staffID,
+        staffName: item.staffID,
+        createdAt: item.createdAt,
+        // Chuyển đổi isApproved: 0 -> false, 1 -> true, còn lại giữ nguyên (fix: parseInt để tránh lỗi kiểu string)
+        isApproved:
+          parseInt(item.isApproved) === 1
+            ? true
+            : parseInt(item.isApproved) === 0
+            ? false
+            : item.isApproved,
+      }));
+      setReports(normalized);
+      let allStaff = [];
+      try {
+        const staffRes = await api.get("/manager/all-staff");
+        // Normalize API response based on the provided sample structure
+        if (Array.isArray(staffRes.data)) {
+          allStaff = staffRes.data.map((s) => ({
+            id: s.staffID,
+            fullname: s.fullname,
+            email: s.email,
+            phone: s.phone,
+            address: s.address,
+            gender: s.gender,
+            avatar: s.avatar,
+            dob: Array.isArray(s.dob)
+              ? new Date(s.dob[0], s.dob[1] - 1, s.dob[2])
+              : null,
+          }));
+        } else {
+          allStaff = [];
+        }
+      } catch {
+        // Fallback to extracting staff from reports if API fails
+        const staffFromReports = normalized
+          .filter((r) => r.staffID)
+          .map((r) => ({ id: r.staffID, fullname: r.staffID }));
+        allStaff = staffFromReports;
+      }
+      // Loại bỏ trùng lặp staff theo id
+      const uniqueStaff = Array.from(
+        new Map(allStaff.filter((s) => s.id).map((s) => [s.id, s])).values()
       );
+      setStaffList(uniqueStaff);
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to fetch all reports: " + error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [managerID]);
+
+  // Fetch bookingAssigned for Assign tab
+  const fetchBookingAssigned = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/manager/booking-assigned");
+      const data = response.data?.data || response.data || [];
+      // Chuẩn hóa dữ liệu bookingAssigned
+      const normalized = data.map((item) => ({
+        id: item.id || item.bookingID || item.bookingId,
+        reportID: item.reportID,
+        bookingID: item.bookingID,
+        bookingId: item.bookingID,
+        appointmentTime: item.appointmentTime,
+        appointmentDate: item.appointmentDate, // <-- Ensure appointmentDate is included
+        status: item.status,
+        assignedId: item.assignedID,
+        assignedID: item.assignedID,
+        staffID: item.staffID,
+        staffName: item.staffID,
+      }));
+      setBookingAssigned(normalized);
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to fetch booking assigned: " + error.message);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchStaffList();
-    fetchTodayReports();
     fetchAllReports();
-  }, [fetchStaffList, fetchTodayReports, fetchAllReports]);
+    fetchBookingAssigned();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managerID]);
 
-  // Handle search and filter for today's reports
-  // Removed unused handleTodaySearch, handleAllSearch, handleReset (no longer needed)
+  // --- Staff Assignment Functions ---
 
-  // Export today's reports to PDF
-  const handleExportTodayPDF = () => {
+  const showAssignModal = (record) => {
+    setSelectedBooking(record);
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setSelectedBooking(null);
+    setSelectedStaff(null);
+  };
+
+  const handleAssignStaff = async () => {
+    const assignId = selectedBooking?.assignedId || selectedBooking?.assignedID;
+    if (!selectedBooking || !assignId) {
+      toast.error("Invalid booking: missing assignedId.");
+      return;
+    }
+    if (!selectedStaff) {
+      toast.warn("Please select a staff member.");
+      return;
+    }
+    setAssignLoading(true);
+    try {
+      await api.patch(`/manager/assign-staff/${assignId}`, {
+        staffID: selectedStaff,
+        managerID: managerID,
+      });
+      setIsModalVisible(false);
+      setSelectedBooking(null);
+      setSelectedStaff(null);
+      // Refresh all reports and bookingAssigned after assign
+      await Promise.all([fetchAllReports(), fetchBookingAssigned()]);
+      toast.success(
+        `Successfully assigned ${selectedStaff} to report ${
+          selectedBooking?.reportID || selectedBooking?.id
+        }`
+      );
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        (typeof error.response.data === "string" || error.response.data.message)
+      ) {
+        toast.error(
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message
+        );
+      } else {
+        toast.error("Failed to assign staff: " + error.message);
+      }
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
+  // --- PDF Export Functions ---
+
+  const handleExportPDF = (data, title, filename) => {
     try {
       if (!jsPDF || !jsPDF.prototype.autoTable) {
         toast.error("jsPDF autoTable plugin is not available.");
@@ -141,10 +418,8 @@ const ViewReports = () => {
       }
 
       const doc = new jsPDF();
-
-      // Add title
       doc.setFontSize(16);
-      doc.text(`Today's Staff Reports - ${today}`, 14, 20);
+      doc.text(title, 14, 20);
 
       const tableColumns = [
         "Report ID",
@@ -155,11 +430,13 @@ const ViewReports = () => {
         "Note",
       ];
 
-      const tableRows = todayReports.map((row) => [
+      const tableRows = data.map((row) => [
         row.id || "-",
         row.staffName || "N/A",
         row.bookingId || "-",
-        row.appointmentTime || "-",
+        row.appointmentTime
+          ? dayjs(row.appointmentTime).format("HH:mm DD/MM/YYYY")
+          : "-",
         row.status || "-",
         row.note || "-",
       ]);
@@ -172,108 +449,46 @@ const ViewReports = () => {
         headStyles: { fillColor: [22, 119, 255] },
       });
 
-      doc.save(`today_reports_${today}.pdf`);
-      toast.success("Today's reports PDF exported successfully!");
+      doc.save(filename);
+      toast.success("PDF exported successfully!");
     } catch (error) {
       toast.error("Failed to export PDF: " + error.message);
     }
   };
 
-  // Export all reports to PDF
-  const handleExportAllPDF = () => {
-    try {
-      if (!jsPDF || !jsPDF.prototype.autoTable) {
-        toast.error("jsPDF autoTable plugin is not available.");
-        return;
-      }
+  // --- Table Column Definitions ---
 
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(16);
-      doc.text("All Staff Reports", 14, 20);
-
-      const tableColumns = [
-        "Report ID",
-        "Staff Name",
-        "Booking ID",
-        "Appointment Time",
-        "Status",
-        "Note",
-      ];
-
-      const tableRows = reports.map((row) => [
-        row.id || "-",
-        row.staffName || "N/A",
-        row.bookingId || "-",
-        row.appointmentTime || "-",
-        row.status || "-",
-        row.note || "-",
-      ]);
-
-      doc.autoTable({
-        head: [tableColumns],
-        body: tableRows,
-        startY: 30,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [22, 119, 255] },
-      });
-
-      doc.save(`all_staff_reports_${dayjs().format("YYYY-MM-DD")}.pdf`);
-      toast.success("All reports PDF exported successfully!");
-    } catch (error) {
-      toast.error("Failed to export PDF: " + error.message);
-    }
-  };
-
-  // Get statistics for today's reports
-  const getTodayStats = () => {
-    const completed = todayReports.filter(
-      (r) => r.status === "Completed" || r.status === "Resolved"
-    ).length;
-    const pending = todayReports.filter((r) => r.status === "Pending").length;
-    const delayed = todayReports.filter((r) => r.status === "Delay").length;
-    const cancelled = todayReports.filter(
-      (r) => r.status === "Cancel" || r.status === "Rejected"
-    ).length;
-
-    return {
-      completed,
-      pending,
-      delayed,
-      cancelled,
-      total: todayReports.length,
-    };
-  };
-
-  // Table columns for today's reports
-  const todayReportColumns = [
+  const baseReportColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
+      dataIndex: "reportID",
+      key: "reportID",
+      sorter: (a, b) =>
+        (a.reportID || "")
+          .toString()
+          .localeCompare((b.reportID || "").toString()),
       width: 100,
     },
     {
-      title: "Staff Name",
-      dataIndex: "staffName",
-      key: "staffName",
-      sorter: (a, b) => (a.staffName || "").localeCompare(b.staffName || ""),
+      title: "Staff ID",
+      dataIndex: "staffID",
+      key: "staffID",
+      sorter: (a, b) => (a.staffID || "").localeCompare(b.staffID || ""),
+      render: (id) => id || <Tag color="volcano">Unassigned</Tag>,
       width: 120,
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      render: (bookingID) => bookingID || "-",
       width: 100,
     },
     {
       title: "Appointment Time",
       dataIndex: "appointmentTime",
       key: "appointmentTime",
-      render: (time) => (time ? dayjs(time).format("HH:mm DD/MM/YYYY") : "-"),
+      render: (time) => time || "-",
       width: 150,
     },
     {
@@ -283,25 +498,18 @@ const ViewReports = () => {
       render: (status) => {
         let color = "default";
         let icon = null;
-        if (status === "Completed" || status === "Resolved") {
+        if (status === "Completed") {
           color = "green";
           icon = <CheckCircleOutlined />;
-        }
-        if (status === "Pending") {
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
           color = "orange";
           icon = <ClockCircleOutlined />;
-        }
-        if (status === "Delay") {
-          color = "orange";
-          icon = <ClockCircleOutlined />;
-        }
-        if (status === "Cancel" || status === "Rejected") {
+        } else if (status === "Cancelled") {
           color = "red";
           icon = <CloseCircleOutlined />;
-        }
-        if (status === "Approved") {
-          color = "blue";
-          icon = <CheckCircleOutlined />;
         }
         return (
           <Tag color={color} icon={icon}>
@@ -320,84 +528,26 @@ const ViewReports = () => {
     },
   ];
 
-  // Table columns for all reports
   const allReportColumns = [
+    ...baseReportColumns,
     {
-      title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
-      width: 100,
-    },
-    {
-      title: "Staff Name",
-      dataIndex: "staffName",
-      key: "staffName",
-      sorter: (a, b) => (a.staffName || "").localeCompare(b.staffName || ""),
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
       width: 120,
     },
     {
-      title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
+      title: "Approved",
+      dataIndex: "isApproved",
+      key: "isApproved",
+      render: (isApproved) =>
+        isApproved === true ? (
+          <Tag color="green">Approved</Tag>
+        ) : (
+          <Tag color="orange">Unapproved</Tag>
+        ),
       width: 100,
-    },
-    {
-      title: "Appointment Time",
-      dataIndex: "appointmentTime",
-      key: "appointmentTime",
-      render: (time) => (time ? dayjs(time).format("HH:mm DD/MM/YYYY") : "-"),
-      sorter: (a, b) =>
-        dayjs(a.appointmentTime).unix() - dayjs(b.appointmentTime).unix(),
-      width: 150,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        let color = "default";
-        let icon = null;
-        if (status === "Completed" || status === "Resolved") {
-          color = "green";
-          icon = <CheckCircleOutlined />;
-        }
-        if (status === "Pending") {
-          color = "orange";
-          icon = <ClockCircleOutlined />;
-        }
-        if (status === "Delay") {
-          color = "orange";
-          icon = <ClockCircleOutlined />;
-        }
-        if (status === "Cancel" || status === "Rejected") {
-          color = "red";
-          icon = <CloseCircleOutlined />;
-        }
-        if (status === "Approved") {
-          color = "blue";
-          icon = <CheckCircleOutlined />;
-        }
-        return (
-          <Tag color={color} icon={icon}>
-            {status}
-          </Tag>
-        );
-      },
-      filters: reportStatusOptions.map((status) => ({
-        text: status,
-        value: status,
-      })),
-      onFilter: (value, record) => record.status === value,
-      width: 100,
-    },
-    {
-      title: "Note",
-      dataIndex: "note",
-      key: "note",
-      render: (note) => note || "-",
-      ellipsis: true,
     },
     {
       title: "Created Date",
@@ -409,185 +559,283 @@ const ViewReports = () => {
     },
   ];
 
-  const stats = getTodayStats();
+  const assignBookingColumns = [
+    {
+      title: "Assigned ID",
+      dataIndex: "assignedID",
+      key: "assignedID",
+      width: 100,
+      render: (id) => id || "-",
+    },
+    {
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      width: 100,
+      render: (id) => id || "-",
+    },
+    {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
+      width: 120,
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      width: 140,
+      render: (time) => time || "-",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      width: 120,
+      render: (status) => {
+        let color = "blue";
+        if (status === "Delay") color = "orange";
+        else if (status === "Pending") color = "blue";
+        else if (status === "Completed") color = "green";
+        else if (status === "Cancelled") color = "red";
+        else if (status === "Awaiting Confirmation") color = "gold";
+        return <Tag color={color}>{status || "-"}</Tag>;
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
+      width: 120,
+      render: (_, record) => (
+        <Button
+          icon={<UserAddOutlined />}
+          onClick={() => showAssignModal(record)}
+          type="primary"
+          size="small">
+          Assign Staff
+        </Button>
+      ),
+    },
+  ];
 
-  // Tab items
+  // --- Tab Items ---
   const tabItems = [
     {
-      key: "today",
+      key: "assign",
       label: (
         <span>
-          <CalendarOutlined style={{ marginRight: 8 }} />
-          Today's Reports
+          <UserAddOutlined style={{ marginRight: 8 }} />
+          Assign Staff
         </span>
       ),
       children: (
         <>
-          {/* Statistics Cards */}
-          <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Total Reports"
-                  value={stats.total}
-                  prefix={<FileTextOutlined />}
-                  valueStyle={{ color: "#1677ff" }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Completed"
-                  value={stats.completed}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: "#52c41a" }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Pending"
-                  value={stats.pending}
-                  prefix={<ClockCircleOutlined />}
-                  valueStyle={{ color: "#faad14" }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Issues"
-                  value={stats.delayed + stats.cancelled}
-                  prefix={<CloseCircleOutlined />}
-                  valueStyle={{ color: "#ff4d4f" }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Table */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              Reports Awaiting Assignment (
+              {
+                bookingAssigned.filter(
+                  (b) =>
+                    b.status === "Awaiting Confirmation" ||
+                    b.status === "Awaiting confirm" ||
+                    b.status == "Payment Confirmed"
+                ).length
+              }
+              )
+            </Title>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchAllReports}
+              type="primary"
+              loading={loading}>
+              Refresh
+            </Button>
+          </div>
           <Card>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 16,
-                gap: 16,
-                flexWrap: "wrap",
-              }}>
-              <Title level={4} style={{ margin: 0, flex: 1 }}>
-                Today's Staff Reports ({todayReports.length})
-              </Title>
-              {/* Action buttons for Export PDF and Refresh (moved here) */}
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportAllPDF}
-                type="default">
-                Export PDF
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => fetchAllReports()}
-                loading={loading}
-                type="primary">
-                Refresh
-              </Button>
-            </div>
-
-            <div
-              style={{
-                marginBottom: 16,
-                display: "flex",
-                gap: 16,
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}>
-              <Input
-                placeholder="Search reports..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: statusFilter,
-                    search: e.target.value,
-                  };
-                  fetchTodayReports(filters);
-                }}
-                allowClear
-                style={{ width: 300 }}
-              />
-
-              <Select
-                placeholder="All Staff"
-                value={staffFilter}
-                onChange={(value) => {
-                  setStaffFilter(value);
-                  const filters = {
-                    staffId: value,
-                    status: statusFilter,
-                    search: searchText,
-                  };
-                  fetchTodayReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                {staffList.map((staff) => (
-                  <Option key={staff.id} value={staff.id}>
-                    {staff.name || staff.fullName}
-                  </Option>
-                ))}
-              </Select>
-
-              <Select
-                placeholder="All Statuses"
-                value={statusFilter}
-                onChange={(value) => {
-                  setStatusFilter(value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: value,
-                    search: searchText,
-                  };
-                  fetchTodayReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                <Option value="Pending">Pending</Option>
-                <Option value="Approved">Approved</Option>
-                <Option value="Rejected">Rejected</Option>
-                <Option value="Resolved">Resolved</Option>
-                <Option value="Completed">Completed</Option>
-                <Option value="Delay">Delay</Option>
-                <Option value="Cancel">Cancel</Option>
-              </Select>
-
-              {/* Action buttons for Export PDF and Refresh (moved here) */}
-            </div>
-
             <Table
               loading={loading}
-              columns={todayReportColumns}
-              dataSource={todayReports}
-              rowKey="id"
+              columns={assignBookingColumns}
+              dataSource={bookingAssigned
+                .filter(
+                  (b) =>
+                    b.status === "Awaiting confirm" ||
+                    b.status === "Awaiting Confirmation" ||
+                    b.status == "Payment Confirmed"
+                )
+                .sort((a, b) => {
+                  // 1. Sort by appointmentDate (closest first)
+                  const dateA = a.appointmentDate
+                    ? new Date(a.appointmentDate)
+                    : new Date(0);
+                  const dateB = b.appointmentDate
+                    ? new Date(b.appointmentDate)
+                    : new Date(0);
+                  if (dateA.getTime() !== dateB.getTime()) {
+                    return dateA - dateB;
+                  }
+                  // 2. If same date, sort by appointmentTime (closest first)
+                  const timeA = a.appointmentTime || "";
+                  const timeB = b.appointmentTime || "";
+                  const getMinutes = (t) => {
+                    if (!t) return 0;
+                    const match = t.match(/(\d{1,2}):(\d{2})/);
+                    if (match) {
+                      return (
+                        parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+                      );
+                    }
+                    return 0;
+                  };
+                  const minA = getMinutes(timeA);
+                  const minB = getMinutes(timeB);
+                  if (minA !== minB) {
+                    return minA - minB;
+                  }
+                  // 3. If same time, sort by bookingID (ascending)
+                  const bookingA = a.bookingID || a.bookingId || 0;
+                  const bookingB = b.bookingID || b.bookingId || 0;
+                  return bookingA.toString().localeCompare(bookingB.toString());
+                })}
+              rowKey={(record) =>
+                record.assignedID ||
+                record.id ||
+                record.bookingID ||
+                Math.random().toString()
+              }
               pagination={{
-                ...todayPagination,
+                ...assignPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50],
-                showQuickJumper: true,
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} reports`,
+                  `${range[0]}-${range[1]} of ${total} bookings`,
+                onShowSizeChange: (current, size) =>
+                  setAssignPagination({ current: 1, pageSize: size }),
+                onChange: (page, pageSize) =>
+                  setAssignPagination({ current: page, pageSize: pageSize }),
               }}
-              onChange={(paginationConfig) => {
-                setTodayPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
+              locale={{
+                emptyText: "Hiện tại chưa có booking nào cần phân công",
               }}
               scroll={{ x: 800 }}
+            />
+          </Card>
+        </>
+      ),
+    },
+    {
+      key: "approve",
+      label: (
+        <span>
+          <CheckCircleOutlined style={{ marginRight: 8 }} />
+          Approve Reports
+        </span>
+      ),
+      children: (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              Reports Awaiting Approval (
+              {
+                reports.filter(
+                  (r) =>
+                    (r.isApproved === false ||
+                      r.isApproved === 0 ||
+                      r.isApproved === null ||
+                      typeof r.isApproved === "undefined") &&
+                    r.status !== "Pending"
+                ).length
+              }
+              )
+            </Title>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchAllReports}
+              type="primary"
+              loading={loading}>
+              Refresh
+            </Button>
+          </div>
+          <Card>
+            <Table
+              loading={loading}
+              columns={approveColumns}
+              dataSource={reports
+                .filter(
+                  (r) =>
+                    (r.isApproved === false ||
+                      r.isApproved === 0 ||
+                      r.isApproved === null ||
+                      typeof r.isApproved === "undefined") &&
+                    r.status !== "Pending"
+                )
+                .sort((a, b) => {
+                  // 1. Sort by appointmentDate (closest first)
+                  const dateA = a.appointmentDate
+                    ? new Date(a.appointmentDate)
+                    : new Date(0);
+                  const dateB = b.appointmentDate
+                    ? new Date(b.appointmentDate)
+                    : new Date(0);
+                  if (dateA.getTime() !== dateB.getTime()) {
+                    return dateA - dateB;
+                  }
+                  // 2. If same date, sort by appointmentTime (closest first)
+                  const timeA = a.appointmentTime || "";
+                  const timeB = b.appointmentTime || "";
+                  const getMinutes = (t) => {
+                    if (!t) return 0;
+                    const match = t.match(/(\d{1,2}):(\d{2})/);
+                    if (match) {
+                      return (
+                        parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+                      );
+                    }
+                    return 0;
+                  };
+                  const minA = getMinutes(timeA);
+                  const minB = getMinutes(timeB);
+                  if (minA !== minB) {
+                    return minA - minB;
+                  }
+                  // 3. If same time, sort by bookingID (ascending)
+                  const bookingA = a.bookingID || a.bookingId || 0;
+                  const bookingB = b.bookingID || b.bookingId || 0;
+                  return bookingA.toString().localeCompare(bookingB.toString());
+                })}
+              rowKey={(record) =>
+                record.id || record.bookingId || Math.random().toString()
+              }
+              pagination={{
+                ...approvePagination,
+                showSizeChanger: true,
+                pageSizeOptions: [5, 10, 20, 50, 100],
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} reports`,
+                onShowSizeChange: (current, size) =>
+                  setApprovePagination({ current: 1, pageSize: size }),
+                onChange: (page, pageSize) =>
+                  setApprovePagination({ current: page, pageSize: pageSize }),
+              }}
+              locale={{
+                emptyText: "Hiện tại chưa có report nào cần duyệt",
+              }}
+              scroll={{ x: 900 }}
             />
           </Card>
         </>
@@ -597,181 +845,218 @@ const ViewReports = () => {
       key: "all",
       label: (
         <span>
-          <UserOutlined style={{ marginRight: 8 }} />
+          <FileTextOutlined style={{ marginRight: 8 }} />
           All Reports
         </span>
       ),
       children: (
         <>
-          {/* Table */}
-          <Card>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 16,
-                gap: 16,
-                flexWrap: "wrap",
-              }}>
-              <Title level={4} style={{ margin: 0, flex: 1 }}>
-                All Staff Reports ({reports.length})
-              </Title>
+          {/* Filter Controls */}
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={8}>
+              <Input
+                placeholder="Search by Report ID, Booking ID, Staff ID"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                prefix={<SearchOutlined />}
+              />
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Filter by Status"
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value)}
+                style={{ width: "100%" }}
+                allowClear={true}>
+                <Option value="Pending">Pending</Option>
+                <Option value="Completed">Completed</Option>
+                <Option value="Delay">Delay</Option>
+                <Option value="Cancelled">Cancelled</Option>
+              </Select>
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Filter by Staff"
+                value={staffFilter}
+                onChange={(value) => setStaffFilter(value)}
+                style={{ width: "100%" }}
+                allowClear={true}>
+                {staffList
+                  .filter(
+                    (staff) => staff.id !== null && staff.id !== undefined
+                  )
+                  .map((staff) => (
+                    <Option key={staff.id} value={staff.id}>
+                      {staff.fullname || staff.name}
+                    </Option>
+                  ))}
+              </Select>
+            </Col>
+          </Row>
+          {/* Action Buttons */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              All Staff Reports ({reports.length})
+            </Title>
+            <Space>
               <Button
                 icon={<DownloadOutlined />}
-                onClick={handleExportTodayPDF}
+                onClick={() =>
+                  handleExportPDF(
+                    reports,
+                    "All Staff Reports",
+                    "all_reports.pdf"
+                  )
+                }
                 type="default">
                 Export PDF
               </Button>
               <Button
                 icon={<ReloadOutlined />}
-                onClick={() => fetchTodayReports()}
-                loading={loading}
-                type="primary">
+                type="primary"
+                onClick={fetchAllReports}
+                loading={loading}>
                 Refresh
               </Button>
-            </div>
-
-            <div
-              style={{
-                marginBottom: 16,
-                display: "flex",
-                gap: 16,
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}>
-              <Input
-                placeholder="Search reports..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: statusFilter,
-                    search: e.target.value,
-                  };
-                  if (dateRange && dateRange.length === 2) {
-                    filters.startDate = dateRange[0].format("YYYY-MM-DD");
-                    filters.endDate = dateRange[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                allowClear
-                style={{ width: 300 }}
-              />
-
-              <Select
-                placeholder="All Staff"
-                value={staffFilter}
-                onChange={(value) => {
-                  setStaffFilter(value);
-                  const filters = {
-                    staffId: value,
-                    status: statusFilter,
-                    search: searchText,
-                  };
-                  if (dateRange && dateRange.length === 2) {
-                    filters.startDate = dateRange[0].format("YYYY-MM-DD");
-                    filters.endDate = dateRange[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                {staffList.map((staff) => (
-                  <Option key={staff.id} value={staff.id}>
-                    {staff.name || staff.fullName}
-                  </Option>
-                ))}
-              </Select>
-
-              <RangePicker
-                value={dateRange}
-                onChange={(range) => {
-                  setDateRange(range);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: statusFilter,
-                    search: searchText,
-                  };
-                  if (range && range.length === 2) {
-                    filters.startDate = range[0].format("YYYY-MM-DD");
-                    filters.endDate = range[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                style={{ width: 300 }}
-              />
-
-              <Select
-                placeholder="All Statuses"
-                value={statusFilter}
-                onChange={(value) => {
-                  setStatusFilter(value);
-                  const filters = {
-                    staffId: staffFilter,
-                    status: value,
-                    search: searchText,
-                  };
-                  if (dateRange && dateRange.length === 2) {
-                    filters.startDate = dateRange[0].format("YYYY-MM-DD");
-                    filters.endDate = dateRange[1].format("YYYY-MM-DD");
-                  }
-                  fetchAllReports(filters);
-                }}
-                allowClear
-                style={{ width: 200 }}>
-                <Option value="Pending">Pending</Option>
-                <Option value="Approved">Approved</Option>
-                <Option value="Rejected">Rejected</Option>
-                <Option value="Resolved">Resolved</Option>
-                <Option value="Completed">Completed</Option>
-                <Option value="Delay">Delay</Option>
-                <Option value="Cancel">Cancel</Option>
-              </Select>
-            </div>
-
+            </Space>
+          </div>
+          <Card>
             <Table
               loading={loading}
               columns={allReportColumns}
-              dataSource={reports}
-              rowKey="id"
+              dataSource={reports
+                .filter((r) => {
+                  let statusOk = true;
+                  let staffOk = true;
+                  let searchOk = true;
+                  if (statusFilter) statusOk = r.status === statusFilter;
+                  if (staffFilter) staffOk = r.staffID === staffFilter;
+                  if (searchText) {
+                    const search = searchText.trim().toLowerCase();
+                    searchOk =
+                      (r.reportID &&
+                        r.reportID.toString().toLowerCase().includes(search)) ||
+                      (r.bookingID &&
+                        r.bookingID
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (r.staffName &&
+                        r.staffName
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (r.staffID &&
+                        r.staffID.toString().toLowerCase().includes(search));
+                  }
+                  return statusOk && staffOk && searchOk;
+                })
+                // Sắp xếp theo ngày tạo mới nhất đến cũ nhất
+                .sort((a, b) => {
+                  const dateA = a.createdAt
+                    ? new Date(a.createdAt)
+                    : new Date(0);
+                  const dateB = b.createdAt
+                    ? new Date(b.createdAt)
+                    : new Date(0);
+                  return dateB - dateA;
+                })}
+              rowKey={(record) =>
+                record.id || record.bookingId || Math.random().toString()
+              }
               pagination={{
                 ...allPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50, 100],
-                showQuickJumper: true,
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
+                onShowSizeChange: (current, size) =>
+                  setAllPagination({ current: 1, pageSize: size }),
+                onChange: (page, pageSize) =>
+                  setAllPagination({ current: page, pageSize: pageSize }),
               }}
-              onChange={(paginationConfig) => {
-                setAllPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
-              }}
-              scroll={{ x: 1000 }}
+              scroll={{ x: 1200 }}
             />
           </Card>
         </>
       ),
     },
   ];
-
   return (
     <div style={{ padding: "0 24px" }}>
-      <Title level={2} style={{ marginBottom: 24 }}>
-        Staff Work Reports Management
+      <Title level={2} style={{ margin: 0, marginBottom: 24 }}>
+        Staff Reports Management
       </Title>
-
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
         type="card"
-        style={{ marginBottom: 24 }}
-        tabBarStyle={{ marginBottom: 32 }}
         items={tabItems}
       />
+
+      {/* Assign Staff Modal */}
+
+      <Modal
+        title={
+          <span style={{ fontSize: 24, fontWeight: 600 }}>
+            Assign Staff to Booking
+          </span>
+        }
+        open={isModalVisible}
+        onOk={handleAssignStaff}
+        onCancel={handleCancel}
+        confirmLoading={assignLoading}
+        centered
+        footer={[
+          <Button key="back" onClick={handleCancel}>
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={assignLoading}
+            onClick={handleAssignStaff}>
+            Assign
+          </Button>,
+        ]}
+        styles={{ body: { textAlign: "left" } }}>
+        <div>
+          <div>
+            <strong>Assigned ID:</strong>{" "}
+            {selectedBooking?.assignedID || selectedBooking?.assignedId}
+          </div>
+          <div>
+            <strong>Booking ID:</strong> {selectedBooking?.bookingId}
+          </div>
+          <Form layout="vertical" style={{ marginTop: 16, width: "100%" }}>
+            <Form.Item label="Select Staff Member" required>
+              <Select
+                showSearch
+                placeholder="Select a staff member"
+                value={selectedStaff}
+                onChange={(value) => setSelectedStaff(value)}
+                style={{ width: "100%" }}
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
+                  0
+                }>
+                {staffList.map((staff) => (
+                  <Option key={staff.id} value={staff.id}>
+                    {staff.fullname || staff.name}{" "}
+                    {/* Ensure fullname is displayed */}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
+        </div>
+      </Modal>
 
       <ToastContainer />
     </div>

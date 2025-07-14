@@ -9,6 +9,7 @@ import {
   Spin,
   Button,
   Divider,
+  Alert,
 } from "antd";
 import {
   DashboardOutlined,
@@ -20,7 +21,9 @@ import {
   PieChartOutlined,
   LineChartOutlined,
   TeamOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -47,6 +50,7 @@ import "react-toastify/dist/ReactToastify.css";
 const { Title } = Typography;
 
 const ManagerOverviewPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [overviewData, setOverviewData] = useState({
     totalTestsPerformed: 0,
@@ -64,156 +68,134 @@ const ManagerOverviewPage = () => {
     weeklyProgress: [],
     staffEfficiency: [],
   });
+  // State cho tổng revenue từ booking Completed
+  const [completedRevenue, setCompletedRevenue] = useState(0);
+  // State lưu tất cả bookings từ API /booking/bookings
+  const [allBookings, setAllBookings] = useState([]);
   // const [kitTransactions, setKitTransactions] = useState([]);
   const [assignedBookings, setAssignedBookings] = useState([]);
 
-  // Generate comprehensive chart data based on current stats and bookings
+  // --- Calculate reports needing assign/approve ---
+  // 1. Reports needing assign: status === "Awaiting Confirmation"
+  const reportsNeedAssign = assignedBookings.filter(
+    (b) =>
+      b.status === "Awaiting Confirmation" || b.status === "Awaiting confirm"
+  ).length;
+  // 2. Reports needing approve: status !== "Completed" && isApproved !== true
+  // (We don't have isApproved in assignedBookings, so only use status if needed)
+  // But for demo, let's count all assignedBookings with status !== "Completed"
+  const reportsNeedApprove = assignedBookings.filter(
+    (b) => b.status !== "Completed"
+  ).length;
+
+  // Generate chart data for 2 charts: Performance Metrics & Test Status Distribution
   const generateChartData = useCallback(() => {
-    // Performance metrics over time
-    const completed = overviewData.totalTestsPerformed || 0;
-    const pending = overviewData.staffReportsPending || 0;
-    const total = completed + pending;
-    const performanceMetrics = [
-      {
-        period: "Week 1",
-        performed: Math.floor(completed * 0.2),
-        pending: Math.floor(pending * 0.3),
-        efficiency: total ? Math.round((completed / total) * 100) : 0,
-      },
-      {
-        period: "Week 2",
-        performed: Math.floor(completed * 0.25),
-        pending: Math.floor(pending * 0.25),
-        efficiency: total ? Math.round((completed / total) * 100) : 0,
-      },
-      {
-        period: "Week 3",
-        performed: Math.floor(completed * 0.3),
-        pending: Math.floor(pending * 0.2),
-        efficiency: total ? Math.round((completed / total) * 100) : 0,
-      },
-      {
-        period: "Week 4",
-        performed: Math.floor(completed * 0.25),
-        pending: Math.floor(pending * 0.25),
-        efficiency: total ? Math.round((completed / total) * 100) : 0,
-      },
+    // Tính tổng revenue từ các booking có status là 'Completed' từ allBookings
+    const revenue = allBookings
+      .filter((b) => b.status === "Completed")
+      .reduce((sum, b) => sum + Number(b.totalCost || 0), 0);
+    setCompletedRevenue(Math.round(revenue));
+    // 1. Weekly Performance Metrics chart: mỗi tuần là số lượng booking thực tế theo tuần (dựa vào bookingAssigned)
+    // Giả sử booking có trường createdAt dạng ISO date
+    const weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4"];
+    const now = new Date();
+    // Lấy ngày đầu tháng hiện tại
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Tạo mốc tuần
+    const weekRanges = Array.from({ length: 4 }, (_, i) => {
+      const start = new Date(firstDayOfMonth);
+      start.setDate(start.getDate() + i * 7);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return { start, end };
+    });
+
+    // Đếm số lượng booking completed và pending theo tuần
+    const performanceMetrics = weekRanges.map((range, idx) => {
+      const bookingsInWeek = assignedBookings.filter((b) => {
+        if (!b.createdAt) return false;
+        const created = new Date(b.createdAt);
+        return created >= range.start && created <= range.end;
+      });
+      const performed = bookingsInWeek.filter(
+        (b) => b.status === "Completed"
+      ).length;
+      const pending = bookingsInWeek.filter(
+        (b) => b.status !== "Completed"
+      ).length;
+      const total = performed + pending;
+      return {
+        period: weekLabels[idx],
+        performed,
+        pending,
+        efficiency: total ? Math.round((performed / total) * 100) : 0,
+      };
+    });
+
+    // 2. Test Status Distribution chart: đếm số lượng booking theo status thực tế
+    const statusCountMap = {};
+    const validStatuses = [
+      "Awaiting Confirmation",
+      "Payment Confirmed",
+      "Booking Confirmed",
+      "Awaiting Sample",
+      "In Progress",
+      "Completed",
+      "Cancelled",
     ];
 
-    // Test status distribution: hiển thị toàn bộ status
-    const statusCountMap = {};
     assignedBookings.forEach((b) => {
-      if (!statusCountMap[b.status]) {
-        statusCountMap[b.status] = 0;
+      // Only count valid statuses
+      if (validStatuses.includes(b.status)) {
+        if (!statusCountMap[b.status]) statusCountMap[b.status] = 0;
+        statusCountMap[b.status] += 1;
       }
-      statusCountMap[b.status] += 1;
     });
+
     const statusColors = [
-      "#52c41a",
-      "#faad14",
-      "#ff4d4f",
-      "#1890ff",
-      "#722ed1",
-      "#13c2c2",
-      "#eb2f96",
-      "#b37feb",
-      "#fa8c16",
-      "#a0d911",
+      "#52c41a", // Green for Completed
+      "#faad14", // Orange for In Progress
+      "#ff4d4f", // Red for Cancelled
+      "#1890ff", // Blue for Booking Confirmed
+      "#722ed1", // Purple for Awaiting Sample
+      "#13c2c2", // Cyan for Payment Confirmed
+      "#eb2f96", // Pink for Awaiting Confirmation
     ];
+    const totalBookings = assignedBookings.filter((b) =>
+      validStatuses.includes(b.status)
+    ).length;
     const testStatusDistribution = Object.entries(statusCountMap).map(
       ([status, value], idx) => ({
         name: status,
         value,
         color: statusColors[idx % statusColors.length],
-        percentage: total ? Math.round((value / total) * 100) : 0,
+        percentage: totalBookings
+          ? Math.round((value / totalBookings) * 100)
+          : 0,
       })
     );
-
-    // Staff workload distribution thực tế
-    const staffWorkloadMap = {};
-    assignedBookings.forEach((b) => {
-      if (!staffWorkloadMap[b.staffName]) {
-        staffWorkloadMap[b.staffName] = {
-          staff: b.staffName,
-          assigned: 0,
-          completed: 0,
-        };
-      }
-      staffWorkloadMap[b.staffName].assigned += 1;
-      if (b.status === "Completed")
-        staffWorkloadMap[b.staffName].completed += 1;
-    });
-    const staffWorkload = Object.values(staffWorkloadMap).map((s) => ({
-      ...s,
-      efficiency: s.assigned ? Math.round((s.completed / s.assigned) * 100) : 0,
-    }));
-
-    // Weekly progress trends (chia đều cho 4 tuần)
-    const weeklyProgress = [
-      {
-        week: "W1",
-        testsCompleted: Math.floor(completed * 0.15),
-        target: Math.floor(completed * 0.2),
-      },
-      {
-        week: "W2",
-        testsCompleted: Math.floor(completed * 0.22),
-        target: Math.floor(completed * 0.25),
-      },
-      {
-        week: "W3",
-        testsCompleted: Math.floor(completed * 0.28),
-        target: Math.floor(completed * 0.25),
-      },
-      {
-        week: "W4",
-        testsCompleted: Math.floor(completed * 0.35),
-        target: Math.floor(completed * 0.3),
-      },
-    ];
-
-    // Staff efficiency radial chart
-    const staffEfficiency = [
-      {
-        name: "Overall Efficiency",
-        value: total ? Math.round((completed / total) * 100) : 0,
-        fill: "#1890ff",
-      },
-      {
-        name: "Completion Rate",
-        value: total ? Math.round((completed / total) * 100) : 0,
-        fill: "#52c41a",
-      },
-      {
-        name: "Staff Utilization",
-        value: overviewData.totalCustomers
-          ? Math.min(Math.round((overviewData.totalCustomers / 10) * 100), 100)
-          : 0,
-        fill: "#722ed1",
-      },
-    ];
 
     setChartData({
       performanceMetrics,
       testStatusDistribution,
-      staffWorkload,
-      weeklyProgress,
-      staffEfficiency,
     });
-  }, [overviewData, assignedBookings]);
+  }, [assignedBookings, allBookings]);
 
   const fetchManagerOverviewData = useCallback(async () => {
     setLoading(true);
     try {
-      // Gọi song song 2 API mới
-      const [kitRes, assignedRes] = await Promise.all([
+      // Gọi song song 3 API: kit, assigned, all bookings
+      const [kitRes, assignedRes, allBookingsRes] = await Promise.all([
         api.get("/manager/kit-transaction"),
         api.get("/manager/booking-assigned"),
+        api.get("/booking/bookings"),
       ]);
       const kitList = kitRes.data?.data || kitRes.data || [];
       const assignedList = assignedRes.data?.data || assignedRes.data || [];
-      // setKitTransactions(kitList);
+      const allBookingList =
+        allBookingsRes.data?.data || allBookingsRes.data || [];
       setAssignedBookings(assignedList);
+      setAllBookings(allBookingList);
 
       // Tổng số kit đã nhận
       const kitsReceived = kitList.filter((k) => k.received === true).length;
@@ -265,6 +247,58 @@ const ManagerOverviewPage = () => {
 
   return (
     <div style={{ padding: "0 24px" }}>
+      {/* Notification for reports needing assign */}
+      <Row gutter={[0, 16]} style={{ marginBottom: 8 }}>
+        <Col span={24}>
+          <Alert
+            type="info"
+            showIcon
+            message={
+              <span>
+                There are currently <b>{reportsNeedAssign}</b> reports that need
+                staff assignment.{" "}
+                <Button
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() =>
+                    navigate("/manager-dashboard/view-staff-reports")
+                  }
+                  style={{ padding: 0 }}>
+                  View details
+                </Button>
+              </span>
+            }
+            style={{ background: "#e6f7ff", border: "1px solid #91d5ff" }}
+          />
+        </Col>
+      </Row>
+      {/* Notification for reports needing approve */}
+      <Row gutter={[0, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <span>
+                There are <b>{reportsNeedApprove}</b> reports that need approval
+                review.{" "}
+                <Button
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() =>
+                    navigate(
+                      "/manager-dashboard/view-staff-reports?tab=approve"
+                    )
+                  }
+                  style={{ padding: 0 }}>
+                  View details
+                </Button>
+              </span>
+            }
+            style={{ background: "#fffbe6", border: "1px solid #ffe58f" }}
+          />
+        </Col>
+      </Row>
       <div
         style={{
           display: "flex",
@@ -295,7 +329,7 @@ const ManagerOverviewPage = () => {
         <div>
           {/* Enhanced Stats Cards */}
           <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-            <Col xs={24} sm={12} lg={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{
                   borderRadius: 16,
@@ -334,7 +368,7 @@ const ManagerOverviewPage = () => {
                 </div>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{
                   borderRadius: 16,
@@ -366,7 +400,8 @@ const ManagerOverviewPage = () => {
                 </div>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={8}>
+
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{
                   borderRadius: 16,
@@ -393,6 +428,39 @@ const ManagerOverviewPage = () => {
                 />
                 <div style={{ marginTop: 8, fontSize: 12, color: "#999" }}>
                   Available for assignments
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card
+                style={{
+                  borderRadius: 16,
+                  minHeight: 140,
+                  boxShadow: "0 4px 20px rgba(250, 173, 20, 0.1)",
+                  border: "1px solid #fffbe6",
+                }}>
+                <Statistic
+                  title={
+                    <span
+                      style={{ fontWeight: 600, fontSize: 16, color: "#666" }}>
+                      Revenue
+                    </span>
+                  }
+                  value={
+                    completedRevenue >= 1000000
+                      ? `$${(completedRevenue / 1000000).toFixed(1)}M`
+                      : completedRevenue >= 1000
+                      ? `$${(completedRevenue / 1000).toFixed(1)}K`
+                      : `$${completedRevenue}`
+                  }
+                  valueStyle={{
+                    color: "#faad14",
+                    fontSize: 32,
+                    fontWeight: 700,
+                  }}
+                />
+                <div style={{ marginTop: 8, fontSize: 12, color: "#999" }}>
+                  Revenue from completed bookings
                 </div>
               </Card>
             </Col>
@@ -500,212 +568,7 @@ const ManagerOverviewPage = () => {
             </Col>
           </Row>
 
-          {/* Staff Workload and Progress */}
-          <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-            {/* Staff Workload */}
-            <Col xs={24} lg={14}>
-              <Card
-                title={
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <TeamOutlined style={{ color: "#722ed1" }} />
-                    <span style={{ fontWeight: 600, fontSize: 18 }}>
-                      Staff Workload Distribution
-                    </span>
-                  </div>
-                }
-                style={{
-                  borderRadius: 16,
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-                }}>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={chartData.staffWorkload} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis type="number" tick={{ fontSize: 12 }} />
-                    <YAxis hide={true} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #d9d9d9",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      dataKey="assigned"
-                      fill="#1890ff"
-                      name="Assigned"
-                      radius={[0, 4, 4, 0]}
-                      label={{
-                        position: "right",
-                        fill: "#1890ff",
-                        fontSize: 12,
-                      }}
-                    />
-                    <Bar
-                      dataKey="completed"
-                      fill="#52c41a"
-                      name="Completed"
-                      radius={[0, 4, 4, 0]}
-                      label={{
-                        position: "right",
-                        fill: "#52c41a",
-                        fontSize: 12,
-                      }}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-
-            {/* Efficiency Metrics */}
-            <Col xs={24} lg={10}>
-              <Card
-                title={
-                  <span style={{ fontWeight: 600, fontSize: 18 }}>
-                    Efficiency Metrics
-                  </span>
-                }
-                style={{
-                  borderRadius: 16,
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-                }}>
-                <ResponsiveContainer width="100%" height={280}>
-                  <RadialBarChart
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="20%"
-                    outerRadius="80%"
-                    data={chartData.staffEfficiency}>
-                    <RadialBar
-                      minAngle={15}
-                      label={{
-                        position: "insideStart",
-                        fill: "#fff",
-                        fontSize: 12,
-                      }}
-                      background
-                      clockWise
-                      dataKey="value"
-                    />
-                    <Legend
-                      iconSize={10}
-                      layout="vertical"
-                      verticalAlign="bottom"
-                      align="center"
-                    />
-                    <Tooltip
-                      formatter={(value) => [`${value}%`, "Efficiency"]}
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #d9d9d9",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Weekly Progress Trend */}
-          <Row gutter={[24, 24]}>
-            <Col xs={24}>
-              <Card
-                title={
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <LineChartOutlined style={{ color: "#1890ff" }} />
-                    <span style={{ fontWeight: 600, fontSize: 18 }}>
-                      Weekly Progress vs Target
-                    </span>
-                  </div>
-                }
-                style={{
-                  borderRadius: 16,
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-                }}>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={chartData.weeklyProgress}>
-                    <defs>
-                      <linearGradient
-                        id="colorCompleted"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#52c41a"
-                          stopOpacity={0.8}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#52c41a"
-                          stopOpacity={0.1}
-                        />
-                      </linearGradient>
-                      <linearGradient
-                        id="colorTarget"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#1890ff"
-                          stopOpacity={0.8}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#1890ff"
-                          stopOpacity={0.1}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis
-                      dataKey="week"
-                      tick={{ fontSize: 12 }}
-                      axisLine={{ stroke: "#d9d9d9" }}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 12 }}
-                      axisLine={{ stroke: "#d9d9d9" }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #d9d9d9",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="testsCompleted"
-                      stroke="#52c41a"
-                      fillOpacity={1}
-                      fill="url(#colorCompleted)"
-                      name="Tests Completed"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="target"
-                      stroke="#1890ff"
-                      strokeWidth={3}
-                      strokeDasharray="5 5"
-                      dot={{ fill: "#1890ff", strokeWidth: 2, r: 4 }}
-                      name="Target"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
+          {/* Đã xóa các chart: Staff Workload Distribution, Efficiency Metrics, Weekly Progress vs Target */}
         </div>
       )}
     </div>

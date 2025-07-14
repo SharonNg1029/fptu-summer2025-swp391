@@ -46,13 +46,15 @@ const ServiceManagement = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [editForm] = Form.useForm();
+  // Filter by service type
+  const [serviceTypeFilter, setServiceTypeFilter] = useState(undefined);
 
   // Fetch services data from API
   const fetchServices = async () => {
     try {
       setLoading(true);
       const response = await api.get("/services/service");
-      console.log("Services response:", response);
+      // console.log("Services response:", response); // Remove or comment out in production
 
       const servicesData = response.data?.data || response.data || [];
       setServices(servicesData);
@@ -77,7 +79,17 @@ const ServiceManagement = () => {
       service.type?.toLowerCase().includes(searchText.toLowerCase()) ||
       service.description?.toLowerCase().includes(searchText.toLowerCase()) ||
       service.serviceID?.toLowerCase().includes(searchText.toLowerCase());
-    return matchesSearch;
+    let matchesType = true;
+    if (serviceTypeFilter === "Legal") {
+      matchesType =
+        service.type &&
+        service.name.toLowerCase().includes("legal") &&
+        !service.name.toLowerCase().includes("non-legal");
+    } else if (serviceTypeFilter === "Non-Legal") {
+      matchesType =
+        service.name && service.name.toLowerCase().includes("non-legal");
+    }
+    return matchesSearch && matchesType;
   });
 
   // Calculate statistics
@@ -102,7 +114,7 @@ const ServiceManagement = () => {
         : 0,
   };
 
-  // Service table columns
+  // Service table columns (bắt đúng dữ liệu từ API)
   const serviceColumns = [
     {
       title: "Service ID",
@@ -130,13 +142,24 @@ const ServiceManagement = () => {
         </Tag>
       ),
     },
+
     {
-      title: "Price",
+      title: "Standard Price",
       dataIndex: "cost",
       key: "cost",
       render: (cost) =>
         cost != null
           ? cost.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫"
+          : "0 ₫",
+    },
+    {
+      title: "Express Price",
+      dataIndex: "expressPrice",
+      key: "expressPrice",
+      render: (expressPrice) =>
+        expressPrice != null
+          ? expressPrice.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) +
+            " ₫"
           : "0 ₫",
     },
     {
@@ -153,6 +176,9 @@ const ServiceManagement = () => {
     {
       title: "Actions",
       key: "actions",
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Edit Price">
@@ -188,8 +214,9 @@ const ServiceManagement = () => {
       // Lấy dữ liệu từ filteredServices
       const tableColumn = [
         "Service ID",
-        "Service Type",
+
         "Service Name",
+        "Service Type",
         "Price",
         "Estimated Time",
       ];
@@ -289,25 +316,34 @@ const ServiceManagement = () => {
         </Col>
       </Row>{" "}
       <Card style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle" justify="space-between">
+        <Row
+          gutter={[16, 16]}
+          align="middle"
+          style={{ flexWrap: "wrap", width: "100%" }}>
           <Col
             xs={24}
             sm={16}
             lg={16}
-            style={{
-              display: "flex",
-              justifyContent: "flex-start",
-              alignItems: "center",
-            }}>
+            style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Input
-              placeholder="Search by Service ID, Name, Type, ..."
+              placeholder="Search by Booking ID, Customer ID, Service ID, Kit ID, Type, ..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
-              style={{ maxWidth: 350, borderRadius: 6 }}
-              size="large"
+              style={{ maxWidth: 260, borderRadius: 6 }}
             />
+            <Select
+              placeholder="Filter by Service Type"
+              value={serviceTypeFilter}
+              onChange={(value) =>
+                setServiceTypeFilter(value === undefined ? undefined : value)
+              }
+              allowClear
+              style={{ minWidth: 180, borderRadius: 6 }}>
+              <Option value="Legal">Legal</Option>
+              <Option value="Non-Legal">Non-Legal</Option>
+            </Select>
           </Col>
           <Col
             xs={24}
@@ -335,7 +371,7 @@ const ServiceManagement = () => {
             </Space>
           </Col>
         </Row>
-      </Card>{" "}
+      </Card>
       <Card>
         <Table
           columns={serviceColumns}
@@ -344,14 +380,7 @@ const ServiceManagement = () => {
           rowKey="serviceID"
           bordered
           scroll={{ x: true }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} of ${total} services`,
-            pageSizeOptions: ["10", "20", "50"],
-          }}
+          pagination={false}
         />
       </Card>
       {/* Modal chỉnh sửa giá */}

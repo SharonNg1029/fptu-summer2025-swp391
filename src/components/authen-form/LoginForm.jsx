@@ -123,6 +123,7 @@ function LoginForm() {
 
   async function handleNormalLogin(values) {
     try {
+      console.log("Attempting login with:", values);
       const response = await api.post("/auth/login", values);
       const userData = response.data;
 
@@ -184,12 +185,40 @@ function LoginForm() {
       }
     } catch (e) {
       console.error("Login error:", e);
-      const msg =
-        e.response?.data?.message ||
-        e.response?.data ||
-        e.message ||
-        "Login failed!";
-      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
+      console.error("Error response:", e.response);
+      console.error("Error response data:", e.response?.data);
+      console.error("Error response status:", e.response?.status);
+
+      let msg = "Login failed!";
+
+      if (e.response) {
+        // Ưu tiên kiểm tra status code trước
+        if (e.response.status === 401) {
+          msg = "Incorrect username or password";
+        } else if (e.response.status === 400) {
+          msg = "Invalid request. Please check your input.";
+        } else if (e.response.status >= 500) {
+          msg = "Server error. Please try again later.";
+        } else if (e.response.data) {
+          if (typeof e.response.data === "string") {
+            msg = e.response.data;
+          } else if (e.response.data.message) {
+            msg = e.response.data.message;
+          } else if (e.response.data.error) {
+            msg = e.response.data.error;
+          } else {
+            msg = JSON.stringify(e.response.data);
+          }
+        }
+      } else if (e.request) {
+        // Network error
+        msg = "Network error. Please check your connection.";
+      } else if (e.message) {
+        msg = e.message;
+      }
+
+      console.log("Final error message:", msg);
+      toast.error(msg);
     }
   }
 

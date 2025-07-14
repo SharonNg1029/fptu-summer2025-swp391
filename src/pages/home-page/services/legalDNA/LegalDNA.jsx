@@ -8,6 +8,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   legalServicesData,
   legalCollectionMethodsData,
@@ -92,6 +93,10 @@ const LegalServices = () => {
   const modalContentRef = useRef(null);
   const navigate = useNavigate();
 
+  const userState = useSelector((state) => state.user);
+  const isAuthenticated = userState?.isAuthenticated;
+  const currentUser = userState?.currentUser;
+
   const formatToVND = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -155,8 +160,11 @@ const LegalServices = () => {
     setIsScrolled(false);
   };
 
-  // ===== BOOKING: Dùng router để truyền serviceID =====
   const handleBookService = (service, isExpressService = false) => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     navigate(
       `/booking?serviceID=${encodeURIComponent(service.serviceID)}&express=${
         isExpressService ? "true" : "false"
@@ -490,18 +498,34 @@ const LegalServices = () => {
                   </div>
                 </div>
               </div>
+              
+              {!isAuthenticated && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <FaBalanceScale className="h-5 w-5 text-red-400" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-800">
+                        <strong>Legal DNA Testing requires authentication.</strong> Please <strong>sign in</strong> to book our legal services. You'll be redirected to the login page.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-4">
                 <CustomButton
                   onClick={() => handleBookService(selectedService, false)}
                   className="flex-1 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800"
                 >
-                  Book Standard Service
+                  {isAuthenticated ? 'Book Standard Service' : 'Sign In to Book Standard'}
                 </CustomButton>
                 <CustomButton
                   onClick={() => handleBookService(selectedService, true)}
                   className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
-                  Book Express Service
+                  {isAuthenticated ? 'Book Express Service' : 'Sign In to Book Express'}
                 </CustomButton>
               </div>
             </div>

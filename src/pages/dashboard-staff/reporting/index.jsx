@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
 import {
   Tabs,
   Table,
@@ -12,12 +13,18 @@ import {
   DatePicker,
   Card,
   Tag,
+  Modal,
 } from "antd";
 import {
   SendOutlined,
   HistoryOutlined,
   ReloadOutlined,
   DownloadOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import api from "../../../configs/axios"; // Import axios instance
 import { toast, ToastContainer } from "react-toastify";
@@ -31,38 +38,143 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 const StaffReporting = () => {
+  // Modal state for editing report (must be inside component)
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [workReports, setWorkReports] = useState([]);
   const [editingKey, setEditingKey] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [activeTab, setActiveTab] = useState("today");
 
-  // Lấy ngày hôm nay (YYYY-MM-DD)
-  const today = new Date().toISOString().slice(0, 10);
+  // Helper: get date string (YYYY-MM-DD) from appointmentDate or appointmentTime
+  const getReportDate = (report) => {
+    // Dữ liệu đã được chuẩn hóa trong fetchWorkReports, appointmentDate đã là string
+    if (report.appointmentDate) {
+      if (typeof report.appointmentDate === "string") {
+        // Đảm bảo trả về định dạng YYYY-MM-DD
+        return report.appointmentDate.slice(0, 10);
+      }
+      if (report.appointmentDate instanceof Date) {
+        return report.appointmentDate.toISOString().slice(0, 10);
+      }
+      // Fallback cho trường hợp vẫn còn mảng (không nên xảy ra sau khi chuẩn hóa)
+      if (
+        Array.isArray(report.appointmentDate) &&
+        report.appointmentDate.length >= 3
+      ) {
+        const y = report.appointmentDate[0];
+        const m = String(report.appointmentDate[1]).padStart(2, "0");
+        const d = String(report.appointmentDate[2]).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+    }
+    if (report.appointmentTime) {
+      const match = report.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+    }
+    return null;
+  };
 
-  // Lọc báo cáo trong ngày
-  const todayReports = workReports.filter(
-    (r) => (r.appointmentTime || "").slice(0, 10) === today
+  // Lấy ngày hôm nay (YYYY-MM-DD) - sử dụng local time để tránh vấn đề timezone
+  const today = new Date().toLocaleDateString("en-CA"); // 'en-CA' format: YYYY-MM-DD
+
+  // Lọc báo cáo trong ngày - chỉ lấy những báo cáo có status là Pending và appointment date = hôm nay
+  const todayReports = workReports.filter((r) => {
+    const reportDate = getReportDate(r);
+    return reportDate === today && r.status === "Pending";
+  });
+
+  // Lọc báo cáo trong tương lai - chỉ lấy những báo cáo có status là Pending và appointment date > hôm nay
+  const futureReports = workReports
+    .filter((r) => {
+      const reportDate = getReportDate(r);
+      if (!reportDate) return false;
+
+      // So sánh chuỗi ngày trực tiếp (YYYY-MM-DD)
+      return reportDate > today && r.status === "Pending";
+    })
+    .sort((a, b) => {
+      // So sánh ngày gần nhất ở trên, nếu trùng ngày thì so sánh giờ gần nhất ở trên
+      const dateA = getReportDate(a);
+      const dateB = getReportDate(b);
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      const timeA = a.appointmentTime || "";
+      const timeB = b.appointmentTime || "";
+      const dA = new Date(dateA);
+      const dB = new Date(dateB);
+      if (dA.getTime() !== dB.getTime()) {
+        return dA.getTime() - dB.getTime(); // gần nhất ở trên
+      }
+      // Nếu cùng ngày, so sánh giờ (giả sử appointmentTime dạng "HH:mm - HH:mm" hoặc "HH:mm")
+      const extractStartTime = (t) => {
+        if (!t) return 0;
+        const match = t.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+        }
+        return 0;
+      };
+      const tA = extractStartTime(timeA);
+      const tB = extractStartTime(timeB);
+      return tA - tB; // giờ gần nhất ở trên
+    });
+
+  // Lọc báo cáo đã hoàn thành - lấy những báo cáo có status khác Pending
+  const completedWorkReports = workReports.filter(
+    (r) => r.status && r.status !== "Pending"
   );
 
-  // Kiểm tra đã gửi chưa (giả sử có trường isSent hoặc tự xác định)
-  const allSent = todayReports.every((r) => r.isSent);
-
-  // Lọc báo cáo đã gửi
-  const sentReports = workReports.filter((r) => r.isSent);
-
   // Pagination state for Sent Reports
-  const [sentPagination, setSentPagination] = useState({
+  const [completedReportsPagination, setCompletedReportsPagination] = useState({
     current: 1,
     pageSize: 10,
   });
 
-  // Lấy danh sách báo cáo
-  const fetchWorkReports = async () => {
+  // Pagination state for Future Reports
+  const [futureReportsPagination, setFutureReportsPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+
+  // Lấy staffID từ redux
+  const staffID = useSelector(
+    (state) => state.user?.staffID || state.user?.id || ""
+  );
+
+  // Lấy danh sách báo cáo hôm nay cho staff
+  const fetchWorkReports = useCallback(async () => {
+    if (!staffID) {
+      toast.error("Can not find staffID!");
+      setWorkReports([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const response = await api.get("/staff/reports");
-      setWorkReports(response.data?.data || response.data || []);
+      const response = await api.get(`/staff/my-report/${staffID}`);
+      const rawData = response.data?.data || response.data || [];
+
+      // Chuẩn hóa dữ liệu: appointmentDate luôn là string YYYY-MM-DD
+      const normalized = rawData.map((item) => {
+        let appointmentDate = item.appointmentDate;
+
+        if (Array.isArray(appointmentDate) && appointmentDate.length >= 3) {
+          // [YYYY, MM, DD] => 'YYYY-MM-DD'
+          const y = appointmentDate[0];
+          const m = String(appointmentDate[1]).padStart(2, "0");
+          const d = String(appointmentDate[2]).padStart(2, "0");
+          appointmentDate = `${y}-${m}-${d}`;
+        }
+
+        return {
+          ...item,
+          appointmentDate,
+        };
+      });
+
+      setWorkReports(normalized);
     } catch (error) {
       toast.error(
         "Failed to fetch work reports: " +
@@ -72,66 +184,34 @@ const StaffReporting = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [staffID]);
 
   useEffect(() => {
     fetchWorkReports();
-  }, []);
+  }, [fetchWorkReports]);
 
-  // Cập nhật trạng thái/note từng báo cáo
+  // Cập nhật trạng thái/note từng báo cáo (PATCH)
   const handleSave = async (record) => {
     try {
       setLoading(true);
-      await api.put(`/staff/reports/${record.id}`, {
+      const payload = {
         status: record.status,
-        note: record.note,
-      });
+        note: record.note || "",
+      };
+
+      await api.patch(`/staff/my-report/${record.reportID}`, payload);
       toast.success("Update successfully!");
       fetchWorkReports();
     } catch (error) {
       toast.error(
         "Update failed: " + (error.response?.data?.message || error.message)
       );
+      console.error("Update error:", error);
     } finally {
       setLoading(false);
       setEditingKey("");
     }
   };
-
-  // Gửi báo cáo trong ngày
-  const handleSubmitReports = useCallback(async () => {
-    try {
-      setLoading(true);
-      await api.post("/staff/reports/submit", { date: today });
-      toast.success("Reports submitted successfully!");
-      setIsSubmitted(true);
-      fetchWorkReports();
-    } catch (error) {
-      toast.error(
-        "Failed to submit reports: " +
-          (error.response?.data?.message || error.message)
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [today]);
-
-  // Tự động gửi sau 18:30 nếu chưa gửi
-  useEffect(() => {
-    const now = new Date();
-    if (!allSent && !isSubmitted) {
-      const autoSend = () => handleSubmitReports();
-      const eighteenThirty = new Date();
-      eighteenThirty.setHours(18, 30, 0, 0);
-      if (now > eighteenThirty) {
-        autoSend();
-      } else {
-        const timeout = eighteenThirty - now;
-        const timer = setTimeout(autoSend, timeout);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [allSent, isSubmitted, workReports, handleSubmitReports]);
 
   // Table columns với editable cell
   const EditableCell = ({ editing, dataIndex, children, ...restProps }) => {
@@ -140,9 +220,9 @@ const StaffReporting = () => {
       inputNode = (
         <Select style={{ minWidth: 100 }}>
           <Option value="Pending">Pending</Option>
-          <Option value="Approved">Approved</Option>
-          <Option value="Rejected">Rejected</Option>
-          <Option value="Resolved">Resolved</Option>
+          <Option value="Completed">Completed</Option>
+          <Option value="Delay">Delay</Option>
+          <Option value="Cancel">Cancel</Option>
         </Select>
       );
     } else if (dataIndex === "note") {
@@ -157,8 +237,7 @@ const StaffReporting = () => {
             name={dataIndex}
             style={{ margin: 0 }}
             rules={[{ required: false }]}>
-            {" "}
-            {inputNode}{" "}
+            {inputNode}
           </Form.Item>
         ) : (
           children
@@ -168,38 +247,37 @@ const StaffReporting = () => {
   };
 
   const [form] = Form.useForm();
-  const isEditing = (record) => record.id === editingKey;
+  const isEditing = (record) => record.reportID === editingKey;
   const edit = (record) => {
-    form.setFieldsValue({ status: "", note: "", ...record });
-    setEditingKey(record.id);
+    // Open modal and set editing record only, do not change editingKey or table state
+    setEditingRecord(record);
+    setIsEditModalVisible(true);
+    form.setFieldsValue({
+      status: record.status || "",
+      note: record.note || "",
+    });
+    // Do NOT setEditingKey here
   };
-  const cancel = () => setEditingKey("");
+  // Remove unused cancel function
 
-  const save = async (id) => {
-    try {
-      const row = await form.validateFields();
-      const newData = [...workReports];
-      const index = newData.findIndex((item) => id === item.id);
-      if (index > -1) {
-        const item = newData[index];
-        newData.splice(index, 1, { ...item, ...row });
-        handleSave({ ...item, ...row });
-      }
-    } catch {
-      // ignore
-    }
-  };
+  // Remove unused save function
 
   const mergedColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "reportID",
+      key: "reportID",
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
+      dataIndex: "bookingID",
+      key: "bookingID",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
     },
     {
       title: "Appointment Time",
@@ -208,12 +286,52 @@ const StaffReporting = () => {
       render: (time) => time || "-",
     },
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        // Nếu là mảng [YYYY, MM, DD] thì format lại
+        if (Array.isArray(date) && date.length >= 3) {
+          const y = date[0];
+          const m = String(date[1]).padStart(2, "0");
+          const d = String(date[2]).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+        if (typeof date === "string" && date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
       editable: true,
-      render: (text, record) =>
-        record.isSent ? <Tag color="blue">Đã gửi</Tag> : text,
+      render: (status) => {
+        let color = "default";
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
+      },
     },
     {
       title: "Note",
@@ -224,19 +342,26 @@ const StaffReporting = () => {
     {
       title: "Actions",
       dataIndex: "actions",
+      fixed: "right",
+      align: "center",
+      responsive: ["md"],
       render: (_, record) => {
-        const editable = isEditing(record);
-        return record.isSent ? null : editable ? (
-          <span>
-            <a onClick={() => save(record.id)} style={{ marginRight: 8 }}>
-              Save
-            </a>
-            <a onClick={cancel}>Cancel</a>
-          </span>
-        ) : (
-          <a disabled={editingKey !== ""} onClick={() => edit(record)}>
+        return record.isSent ? null : (
+          <Button
+            key="submit"
+            type="primary"
+            disabled={editingKey !== ""}
+            onClick={() => edit(record)}
+            style={{
+              padding: "0 16px",
+              height: 28,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            icon={<EditOutlined />}>
             Edit
-          </a>
+          </Button>
         );
       },
     },
@@ -246,53 +371,286 @@ const StaffReporting = () => {
     if (!col.editable) return col;
     return {
       ...col,
-      onCell: (record) => ({
-        record,
-        inputType: col.dataIndex === "status" ? "select" : "text",
-        dataIndex: col.dataIndex,
-        title: col.title,
-        editing: isEditing(record),
-      }),
+      onCell: (record) => {
+        // Remove inputType to avoid React warning
+        return {
+          record,
+          dataIndex: col.dataIndex,
+          title: col.title,
+          editing: isEditing(record),
+        };
+      },
     };
   });
 
   const handleExportPDF = () => {
     try {
-      if (!jsPDF || !jsPDF.prototype.autoTable) {
-        toast.error(
-          "jsPDF autoTable plugin is not available. Please check your dependencies."
-        );
-        return;
-      }
       const doc = new jsPDF();
-      const columns = workReportColumns.map((col) => col.title);
-      const rows = workReports.map((row) => [
-        row.id,
-        row.bookingId || "-",
-        row.appointmentTime || "-",
-        row.status,
-        row.note || "-",
-      ]);
-      doc.autoTable({ head: [columns], body: rows });
-      doc.save("work_reports.pdf");
+
+      // Add professional header with background
+      doc.setFillColor(41, 128, 185); // Professional blue
+      doc.rect(0, 0, doc.internal.pageSize.width, 35, "F");
+
+      // Add title with enhanced styling
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255); // White text
+      doc.text("Staff Work Reports", 14, 20);
+
+      // Add subtitle
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Completed Reports Summary", 14, 28);
+
+      // Add date with different styling
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200); // Light gray text
+      const currentDate = new Date().toLocaleDateString();
+      doc.text(
+        `Generated on: ${currentDate}`,
+        doc.internal.pageSize.width - 55,
+        20
+      );
+
+      // Add report count
+      doc.text(
+        `Total Reports: ${completedWorkReports.length}`,
+        doc.internal.pageSize.width - 55,
+        28
+      );
+
+      // Reset text color for content
+      doc.setTextColor(51, 51, 51);
+
+      // Check if autoTable is available
+      if (doc.autoTable) {
+        const columns = ["ID", "Booking", "Customer", "Time", "Status", "Note"];
+        const rows = completedWorkReports.map((row) => [
+          row.reportID || "-",
+          row.bookingID || "-",
+          (row.customerName || "-").substring(0, 20),
+          (row.appointmentTime || "-").substring(0, 15),
+          row.status || "-",
+          (row.note || "-").substring(0, 25),
+        ]);
+
+        doc.autoTable({
+          head: [columns],
+          body: rows,
+          startY: 45,
+          styles: {
+            fontSize: 9,
+            cellPadding: 4,
+            overflow: "linebreak",
+            halign: "left",
+            lineColor: [200, 200, 200],
+            lineWidth: 0.3,
+            textColor: [51, 51, 51], // Dark gray text for better readability
+          },
+          headStyles: {
+            fillColor: [41, 128, 185], // Professional blue background
+            textColor: [255, 255, 255], // White text
+            fontStyle: "bold",
+            fontSize: 10,
+            halign: "center",
+            cellPadding: 5,
+            lineColor: [255, 255, 255],
+            lineWidth: 0.5,
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250], // Light gray for alternating rows
+          },
+          columnStyles: {
+            0: { halign: "center", cellWidth: 25 }, // ID column
+            1: { halign: "center", cellWidth: 25 }, // Booking column
+            2: { halign: "left", cellWidth: 35 }, // Customer column
+            3: { halign: "center", cellWidth: 30 }, // Time column
+            4: { halign: "center", cellWidth: 25 }, // Status column
+            5: { halign: "left", cellWidth: 40 }, // Note column
+          },
+          tableLineColor: [200, 200, 200],
+          tableLineWidth: 0.5,
+          margin: { left: 14, right: 14 },
+          theme: "grid", // Add grid theme for better structure
+        });
+      } else {
+        // Fallback: Enhanced text-based table with background styling
+        let yPosition = 50;
+
+        // Create header background rectangle
+        doc.setFillColor(41, 128, 185); // Professional blue background
+        doc.rect(14, yPosition - 8, 176, 12, "F"); // Filled rectangle for header
+
+        // Header text
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255); // White text for header
+
+        doc.text("ID", 20, yPosition);
+        doc.text("Booking", 35, yPosition);
+        doc.text("Customer", 65, yPosition);
+        doc.text("Time", 105, yPosition);
+        doc.text("Status", 135, yPosition);
+        doc.text("Note", 165, yPosition);
+
+        yPosition += 10;
+
+        // Reset text color for data rows
+        doc.setTextColor(51, 51, 51); // Dark gray text
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        // Data rows with alternating background colors
+        completedWorkReports.forEach((row, index) => {
+          if (yPosition > 280) {
+            doc.addPage();
+            yPosition = 20;
+
+            // Repeat styled header on new page
+            doc.setFillColor(41, 128, 185);
+            doc.rect(14, yPosition - 8, 176, 12, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+
+            doc.text("ID", 20, yPosition);
+            doc.text("Booking", 35, yPosition);
+            doc.text("Customer", 65, yPosition);
+            doc.text("Time", 105, yPosition);
+            doc.text("Status", 135, yPosition);
+            doc.text("Note", 165, yPosition);
+
+            yPosition += 10;
+            doc.setTextColor(51, 51, 51);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+          }
+
+          // Alternating row background
+          if (index % 2 === 0) {
+            doc.setFillColor(248, 249, 250); // Light gray for even rows
+            doc.rect(14, yPosition - 6, 176, 8, "F");
+          }
+
+          doc.text((row.reportID || "-").toString(), 20, yPosition);
+          doc.text((row.bookingID || "-").toString(), 35, yPosition);
+          doc.text((row.customerName || "-").substring(0, 15), 65, yPosition);
+          doc.text(
+            (row.appointmentTime || "-").substring(0, 12),
+            105,
+            yPosition
+          );
+          doc.text((row.status || "-").toString(), 135, yPosition);
+          doc.text((row.note || "-").substring(0, 20), 165, yPosition);
+
+          yPosition += 8;
+        });
+      }
+
+      // Add professional footer
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+
+        // Footer background
+        doc.setFillColor(245, 245, 245);
+        doc.rect(
+          0,
+          doc.internal.pageSize.height - 20,
+          doc.internal.pageSize.width,
+          20,
+          "F"
+        );
+
+        // Footer text
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        doc.text(
+          `Page ${i} of ${totalPages}`,
+          14,
+          doc.internal.pageSize.height - 8
+        );
+        doc.text(
+          `Generated: ${new Date().toLocaleDateString()} | Total Reports: ${
+            completedWorkReports.length
+          }`,
+          doc.internal.pageSize.width - 100,
+          doc.internal.pageSize.height - 8
+        );
+      }
+
+      doc.save("completed_reports.pdf");
       toast.success("PDF exported successfully!");
     } catch (error) {
+      console.error("PDF export error:", error);
       toast.error("Failed to export PDF: " + error.message);
     }
   };
 
-  const workReportColumns = [
+  // Cột cho bảng Future Schedule (ẩn Note, Assigned ID, Manager ID, Approved)
+  const futureReportColumns = [
     {
       title: "Report ID",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
+      dataIndex: "reportID",
+      key: "reportID",
+      sorter: (a, b) =>
+        (a.reportID || "")
+          .toString()
+          .localeCompare((b.reportID || "").toString()),
     },
     {
       title: "Booking ID",
-      dataIndex: "bookingId",
-      key: "bookingId",
-      render: (bookingId) => bookingId || "-",
+      dataIndex: "bookingID",
+      key: "bookingID",
+      render: (bookingID) => bookingID || "-",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
+    },
+    {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        if (date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
+      title: "Appointment Time",
+      dataIndex: "appointmentTime",
+      key: "appointmentTime",
+      render: (time) => time || "-",
+    },
+
+    // Approved column is hidden as requested
+  ];
+
+  // Columns for Completed Reports table (similar to mergedColumns but without Actions column)
+  const workReportColumns = [
+    {
+      title: "Report ID",
+      dataIndex: "reportID",
+      key: "reportID",
+    },
+    {
+      title: "Booking ID",
+      dataIndex: "bookingID",
+      key: "bookingID",
+    },
+    {
+      title: "Customer Name",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name) => name || "-",
     },
     {
       title: "Appointment Time",
@@ -301,22 +659,55 @@ const StaffReporting = () => {
       render: (time) => time || "-",
     },
     {
+      title: "Appointment Date",
+      dataIndex: "appointmentDate",
+      key: "appointmentDate",
+      render: (date, record) => {
+        if (Array.isArray(date) && date.length >= 3) {
+          const y = date[0];
+          const m = String(date[1]).padStart(2, "0");
+          const d = String(date[2]).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+        if (typeof date === "string" && date) return date;
+        if (record.appointmentTime) {
+          const match = record.appointmentTime.match(/(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : "-";
+        }
+        return "-";
+      },
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status) => {
         let color = "default";
-        if (status === "Approved" || status === "Resolved") color = "green";
-        if (status === "Pending") color = "orange";
-        if (status === "Rejected") color = "red";
-        return <Tag color={color}>{status}</Tag>;
+        let icon = null;
+        if (status === "Completed") {
+          color = "green";
+          icon = <CheckCircleOutlined />;
+        } else if (status === "Pending") {
+          color = "blue";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Delay") {
+          color = "orange";
+          icon = <ClockCircleOutlined />;
+        } else if (status === "Cancel") {
+          color = "red";
+          icon = <CloseCircleOutlined />;
+        }
+        return (
+          <Tag color={color} icon={icon}>
+            {status}
+          </Tag>
+        );
       },
     },
     {
       title: "Note",
       dataIndex: "note",
       key: "note",
-      render: (note) => note || "-",
     },
   ];
 
@@ -348,11 +739,7 @@ const StaffReporting = () => {
               icon={<ReloadOutlined />}
               onClick={fetchWorkReports}
               loading={loading}
-              style={{
-                background: "#1677ff",
-                color: "#fff",
-                border: "none",
-              }}>
+              type="primary">
               Refresh Reports
             </Button>
           </div>
@@ -363,40 +750,31 @@ const StaffReporting = () => {
                 components={{ body: { cell: EditableCell } }}
                 columns={columns}
                 dataSource={todayReports}
-                rowKey="id"
+                rowKey="reportID"
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
                   showQuickJumper: true,
+                  pageSizeOptions: [5, 10, 20, 50, 100],
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} reports`,
+                  onShowSizeChange: () => {
+                    // No state for current page in today tab, so just reload page
+                  },
                 }}
               />
             </Form>
           </Card>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              marginTop: 16,
-            }}>
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={handleSubmitReports}
-              disabled={allSent || isSubmitted}>
-              Submit Reports for Today
-            </Button>
-          </div>
+          {/* Submit Report button removed */}
         </>
       ),
     },
     {
-      key: "sent",
+      key: "future",
       label: (
         <span>
-          <HistoryOutlined style={{ marginRight: 8 }} />
-          Sent Reports
+          <CalendarOutlined style={{ marginRight: 8 }} />
+          Future Schedule
         </span>
       ),
       children: (
@@ -411,23 +789,76 @@ const StaffReporting = () => {
               gap: 16,
             }}>
             <Title level={3} style={{ margin: 0 }}>
-              Sent Reports ({sentReports.length})
+              Future Schedule ({futureReports.length})
+            </Title>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchWorkReports}
+              loading={loading}
+              type="primary">
+              Refresh Reports
+            </Button>
+          </div>
+          <Card>
+            <Table
+              loading={loading}
+              columns={futureReportColumns}
+              dataSource={futureReports}
+              rowKey="reportID"
+              pagination={{
+                ...futureReportsPagination,
+                showSizeChanger: true,
+                pageSizeOptions: [5, 10, 20, 50, 100],
+                showQuickJumper: true,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} reports`,
+                onShowSizeChange: (current, size) => {
+                  setFutureReportsPagination({ current: 1, pageSize: size });
+                },
+                onChange: (page, pageSize) => {
+                  setFutureReportsPagination({ current: page, pageSize });
+                },
+              }}
+              scroll={{ x: 1200 }}
+            />
+          </Card>
+        </>
+      ),
+    },
+    {
+      key: "sent",
+      label: (
+        <span>
+          <HistoryOutlined style={{ marginRight: 8 }} />
+          Completed Reports
+        </span>
+      ),
+      children: (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 24,
+              flexWrap: "wrap",
+              gap: 16,
+            }}>
+            <Title level={3} style={{ margin: 0 }}>
+              Completed Reports ({completedWorkReports.length})
             </Title>
             <Space>
               <Button
                 icon={<DownloadOutlined />}
                 onClick={handleExportPDF}
-                style={{
-                  background: "#1677ff",
-                  color: "#fff",
-                  border: "none",
-                }}>
+                className="custom-btn-export">
                 Export PDF
               </Button>
               <Button
                 icon={<ReloadOutlined />}
                 onClick={fetchWorkReports}
-                loading={loading}>
+                loading={loading}
+                type="primary">
                 Refresh Reports
               </Button>
             </Space>
@@ -436,21 +867,21 @@ const StaffReporting = () => {
             <Table
               loading={loading}
               columns={workReportColumns}
-              dataSource={sentReports}
-              rowKey="id"
+              dataSource={completedWorkReports}
+              rowKey="reportID"
               pagination={{
-                ...sentPagination,
+                ...completedReportsPagination,
                 showSizeChanger: true,
-                pageSizeOptions: [10, 20, 50, 100],
+                pageSizeOptions: [5, 10, 20, 50, 100],
                 showQuickJumper: true,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} reports`,
-              }}
-              onChange={(paginationConfig) => {
-                setSentPagination({
-                  current: paginationConfig.current,
-                  pageSize: paginationConfig.pageSize,
-                });
+                onShowSizeChange: (current, size) => {
+                  setCompletedReportsPagination({ current: 1, pageSize: size });
+                },
+                onChange: (page, pageSize) => {
+                  setCompletedReportsPagination({ current: page, pageSize });
+                },
               }}
               scroll={{ x: 1200 }}
             />
@@ -459,6 +890,28 @@ const StaffReporting = () => {
       ),
     },
   ];
+
+  // Modal handlers moved here so they are accessible INSIDE the component
+  const handleEditModalOk = async () => {
+    if (!editingRecord) return;
+    try {
+      const row = await form.validateFields();
+      // Merge with current editingRecord
+      const updatedItem = { ...editingRecord, ...row };
+      await handleSave(updatedItem);
+      setIsEditModalVisible(false);
+      setEditingRecord(null);
+      setEditingKey(""); // Reset editingKey after save
+    } catch {
+      // Validation error, do nothing
+    }
+  };
+
+  const handleEditModalCancel = () => {
+    setIsEditModalVisible(false);
+    setEditingRecord(null);
+    // Do NOT reset editingKey here
+  };
 
   return (
     <div style={{ padding: "0 24px" }}>
@@ -473,6 +926,63 @@ const StaffReporting = () => {
         tabBarStyle={{ marginBottom: 32 }}
         items={tabItems}
       />
+      {/* Edit Report Modal */}
+      {isEditModalVisible && (
+        <Modal
+          title={
+            <span style={{ fontSize: 24, fontWeight: 600 }}>Edit Report</span>
+          }
+          open={isEditModalVisible}
+          onOk={handleEditModalOk}
+          onCancel={handleEditModalCancel}
+          confirmLoading={loading}
+          centered
+          footer={[
+            <Button key="back" onClick={handleEditModalCancel}>
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              loading={loading}
+              onClick={handleEditModalOk}>
+              Save
+            </Button>,
+          ]}
+          styles={{ body: { textAlign: "left" } }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 12,
+              minWidth: 320,
+            }}>
+            <div>
+              <strong>Report ID:</strong> {editingRecord?.reportID}
+            </div>
+            <div>
+              <strong>Booking ID:</strong> {editingRecord?.bookingID}
+            </div>
+            <Form
+              form={form}
+              layout="vertical"
+              style={{ marginTop: 16, width: "100%" }}>
+              <Form.Item label="Status" name="status" required>
+                <Select placeholder="Select status">
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Completed">Completed</Option>
+                  <Option value="Delay">Delay</Option>
+                  <Option value="Cancel">Cancel</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item label="Note" name="note">
+                <Input placeholder="Enter note" />
+              </Form.Item>
+            </Form>
+          </div>
+        </Modal>
+      )}
       <ToastContainer />
     </div>
   );

@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import {
   Row,
@@ -41,7 +42,8 @@ import { toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 
-const Overview = () => {
+function Overview() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   // Removed dateRange state
   const [stats, setStats] = useState({
@@ -115,24 +117,42 @@ const Overview = () => {
       revenue: Math.round(monthlyMap[ym].revenue),
     }));
 
-    // Status distribution based on ALL bookings
+    // Status distribution based on ALL bookings - only include specific statuses
+    const allowedStatuses = [
+      "Awaiting Confirmation",
+      "Payment Confirmed",
+      "Booking Confirmed",
+      "Awaiting Sample",
+      "In Progress",
+      "Completed",
+      "Cancelled",
+    ];
+
     const statusCounts = bookings.reduce((acc, booking) => {
-      const status = booking.status || "Unknown";
-      acc[status] = (acc[status] || 0) + 1;
+      const status = booking.status;
+      // Only count bookings with allowed statuses
+      if (allowedStatuses.includes(status)) {
+        acc[status] = (acc[status] || 0) + 1;
+      }
       return acc;
     }, {});
+
+    // Define specific colors for each status
+    const statusColorMap = {
+      "Awaiting Confirmation": "#faad14", // Orange
+      "Payment Confirmed": "#1890ff", // Blue
+      "Booking Confirmed": "#52c41a", // Green
+      "Awaiting Sample": "#722ed1", // Purple
+      "In Progress": "#13c2c2", // Cyan
+      Completed: "#52c41a", // Green
+      Cancelled: "#ff4d4f", // Red
+    };
+
     const statusDistribution = Object.entries(statusCounts).map(
       ([status, count]) => ({
         name: status,
         value: count,
-        color:
-          status === "Completed"
-            ? "#52c41a"
-            : status === "Pending"
-            ? "#faad14"
-            : status === "Cancelled"
-            ? "#ff4d4f"
-            : "#1890ff",
+        color: statusColorMap[status],
       })
     );
 
@@ -177,13 +197,8 @@ const Overview = () => {
 
     const fetchRecentBookings = async () => {
       try {
-        const params = {
-          limit: 1000, // lấy nhiều để filter FE
-          sort: "desc",
-          sortBy: "appointmentTime",
-        };
-        console.log("fetchRecentBookings params:", params);
-        const response = await api.get("/booking/bookings", { params });
+        // Không truyền limit, sort, sortBy nếu backend không hỗ trợ
+        const response = await api.get("/booking/bookings");
         let bookingsData = response.data?.data || response.data || [];
         // FE filter nếu cần
         bookingsData = filterBookingsByDateRange(bookingsData)
@@ -225,15 +240,14 @@ const Overview = () => {
     const fetchTotalCustomers = async () => {
       try {
         const response = await api.get("/admin/dashboard/customers");
-        console.log("Total customers response:", response);
-
+        // Xoá log Total customers response
         const customerData = response.data || {};
         setStats((prev) => ({
           ...prev,
           totalCustomer: customerData.totalCustomer || 0,
         }));
       } catch (error) {
-        console.error("Error fetching total customers:", error);
+        // Xoá log error fetching total customers
         let errorMessage = "Error fetching total customers";
         if (error.response?.data?.data) {
           errorMessage = error.response.data.data;
@@ -250,9 +264,9 @@ const Overview = () => {
     const fetchCompletedTests = async () => {
       try {
         const response = await api.get("/booking/bookings");
-        console.log("Completed tests response:", response);
-
+        // Xoá log Completed tests response
         const bookings = response.data?.data || response.data || [];
+        // Only count bookings with "Completed" status (exact match)
         const completedCount = Array.isArray(bookings)
           ? bookings.filter((b) => b.status === "Completed").length
           : 0;
@@ -261,7 +275,7 @@ const Overview = () => {
           completedTests: completedCount,
         }));
       } catch (error) {
-        console.error("Error fetching completed tests:", error);
+        // Xoá log error fetching completed tests
         let errorMessage = "Error fetching completed tests";
         if (error.response?.data?.data) {
           errorMessage = error.response.data.data;
@@ -278,8 +292,7 @@ const Overview = () => {
     const fetchKitsSold = async () => {
       try {
         const response = await api.get("/admin/kitInventory/available");
-        console.log("Kits sold response:", response);
-
+        // Xoá log Kits sold response
         const kitsData = response.data?.data || response.data || [];
         const totalKitSold = Array.isArray(kitsData)
           ? kitsData.reduce((sum, kit) => sum + (kit.isSelled || 0), 0)
@@ -289,7 +302,7 @@ const Overview = () => {
           kitsSold: totalKitSold,
         }));
       } catch (error) {
-        console.error("Error fetching kits sold:", error);
+        // Xoá log error fetching kits sold
         let errorMessage = "Error fetching kits sold";
         if (error.response?.data?.data) {
           errorMessage = error.response.data.data;
@@ -305,13 +318,15 @@ const Overview = () => {
 
     const fetchRevenue = async () => {
       try {
-        const params = { limit: 10000 };
-        console.log("fetchRevenue params:", params);
-        const response = await api.get("/booking/bookings", { params });
+        // Không truyền limit nếu backend không hỗ trợ
+        const response = await api.get("/booking/bookings");
         let bookings = response.data?.data || response.data || [];
         bookings = filterBookingsByDateRange(bookings);
+        // Chỉ tính revenue từ các booking có status là 'Completed'
         const totalRevenue = Array.isArray(bookings)
-          ? bookings.reduce((sum, b) => sum + Number(b.totalCost || 0), 0)
+          ? bookings
+              .filter((b) => b.status === "Completed")
+              .reduce((sum, b) => sum + Number(b.totalCost || 0), 0)
           : 0;
         setStats((prev) => ({
           ...prev,
@@ -325,14 +340,14 @@ const Overview = () => {
 
     const fetchAllBookings = async () => {
       try {
-        const params = { limit: 10000 };
-        console.log("fetchAllBookings params:", params);
-        const response = await api.get("/booking/bookings", { params });
+        // Không truyền limit nếu backend không hỗ trợ
+        const response = await api.get("/booking/bookings");
         let bookings = response.data?.data || response.data || [];
         bookings = filterBookingsByDateRange(bookings);
         setAllBookings(bookings);
         window.__ALL_BOOKINGS__ = bookings;
       } catch (error) {
+        // Xoá log error fetching all bookings
         let errorMessage = "Error fetching all bookings";
         if (error.response?.data?.data) {
           errorMessage = error.response.data.data;
@@ -440,21 +455,43 @@ const Overview = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        let color = "blue";
-        let style = {};
-        if (status === "Completed") color = "green";
-        if (status === "Pending") color = "orange";
-        if (status === "Cancelled" || status === "Cancel") {
-          color = "red";
-          style = {
-            border: "1px solid #ff4d4f",
-            borderRadius: 4,
-            padding: "0 8px",
-          };
+        const allowedStatuses = [
+          "Awaiting Confirmation",
+          "Payment Confirmed",
+          "Booking Confirmed",
+          "Awaiting Sample",
+          "In Progress",
+          "Completed",
+          "Cancelled",
+        ];
+
+        // Only show tags for allowed statuses
+        if (!allowedStatuses.includes(status)) {
+          return <Tag color="default">Unknown</Tag>;
         }
+
+        const statusConfig = {
+          "Awaiting Confirmation": { color: "orange" },
+          "Payment Confirmed": { color: "blue" },
+          "Booking Confirmed": { color: "green" },
+          "Awaiting Sample": { color: "purple" },
+          "In Progress": { color: "cyan" },
+          Completed: { color: "green" },
+          Cancelled: {
+            color: "red",
+            style: {
+              border: "1px solid #ff4d4f",
+              borderRadius: 4,
+              padding: "0 8px",
+            },
+          },
+        };
+
+        const config = statusConfig[status] || { color: "default" };
+
         return (
-          <Tag color={color} style={style}>
-            {status || "Unknown"}
+          <Tag color={config.color} style={config.style || {}}>
+            {status}
           </Tag>
         );
       },
@@ -467,7 +504,15 @@ const Overview = () => {
     },
   ];
 
-  const COLORS = ["#52c41a", "#faad14", "#ff4d4f", "#1890ff", "#722ed1"];
+  const COLORS = [
+    "#faad14",
+    "#1890ff",
+    "#52c41a",
+    "#722ed1",
+    "#13c2c2",
+    "#ff4d4f",
+    "#d9d9d9",
+  ];
 
   return (
     <div>
@@ -521,7 +566,7 @@ const Overview = () => {
               }}
             />
             <div style={{ marginTop: 8, color: "#bfbfbf", fontSize: 14 }}>
-              Unique users this period
+              Total users registered in the system
             </div>
           </Card>
         </Col>
@@ -821,7 +866,22 @@ const Overview = () => {
               </span>
             }
             loading={loading}
-            extra={<Button type="link">View All</Button>}
+            extra={
+              <Button
+                type="default"
+                style={{
+                  padding: 0,
+                  height: "auto",
+                  border: "none",
+                  background: "none",
+                  color: "#1890ff",
+                  textDecoration: "underline",
+                  boxShadow: "none",
+                }}
+                onClick={() => navigate("/dashboard/services/booking")}>
+                View All
+              </Button>
+            }
             style={{
               borderRadius: 16,
               boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
@@ -844,6 +904,6 @@ const Overview = () => {
       </Row>
     </div>
   );
-};
+}
 
 export default Overview;

@@ -10,6 +10,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   nonLegalServicesData,
   nonLegalCollectionMethodsData,
@@ -120,6 +121,10 @@ const NonLegalServices = () => {
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
 
+  const userState = useSelector((state) => state.user);
+  const isAuthenticated = userState?.isAuthenticated;
+  const currentUser = userState?.currentUser;
+
   const formatToVND = (price) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -207,8 +212,11 @@ const NonLegalServices = () => {
     setIsScrolled(false);
   };
 
-  // ===== ĐẶT DỊCH VỤ: Dùng router truyền id =====
   const handleBookService = (service, isExpressService = false) => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     navigate(
       `/booking?serviceID=${encodeURIComponent(service.serviceID)}&express=${
         isExpressService ? "true" : "false"
@@ -216,7 +224,6 @@ const NonLegalServices = () => {
     );
   };
 
-  // ===== RENDER COMPONENT =====
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-sky-50">
       {/* ===== PHẦN ĐẦU TRANG (HERO SECTION) ===== */}
@@ -434,7 +441,6 @@ const NonLegalServices = () => {
                         </div>
                       </>
                     )}
-                  {/* Nếu không có mediation methods (ví dụ At Facility), vẫn hiện giá */}
                   {!method.mediationMethods && (
                     <div className="text-2xl font-bold text-blue-600 mt-6">
                       {method.price === 0 ? "FREE" : formatToVND(method.price)}
@@ -572,18 +578,36 @@ const NonLegalServices = () => {
                   </div>
                 </div>
               </div>
+              
+              {!isAuthenticated && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-800">
+                        Please <strong>sign in</strong> to book our services. You'll be redirected to the login page.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-4">
                 <CustomButton
                   onClick={() => handleBookService(selectedService, false)}
-                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700"
+                  className="flex-1 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800"
                 >
-                  Book Standard Service
+                  {isAuthenticated ? 'Book Standard Service' : 'Sign In to Book Standard'}
                 </CustomButton>
                 <CustomButton
                   onClick={() => handleBookService(selectedService, true)}
                   className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
-                  Book Express Service
+                  {isAuthenticated ? 'Book Express Service' : 'Sign In to Book Express'}
                 </CustomButton>
               </div>
             </div>

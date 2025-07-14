@@ -61,12 +61,28 @@ const SystemLogs = () => {
     fetchLogs();
   }, []);
 
+  // Helper: Convert API timestamp array to JS Date
+  const parseApiTimestamp = (ts) => {
+    if (!Array.isArray(ts) || ts.length < 6) return null;
+    // [year, month, day, hour, minute, second, nano]
+    // JS Date: month is 0-based
+    return new Date(
+      ts[0],
+      ts[1] - 1,
+      ts[2],
+      ts[3],
+      ts[4],
+      ts[5],
+      Math.floor((ts[6] || 0) / 1e6)
+    );
+  };
+
   // Filter logs by search text
   const filteredLogs = logs.filter(
     (log) =>
-      log.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-      log.action?.toLowerCase().includes(searchText.toLowerCase()) ||
-      log.ipAddress?.toLowerCase().includes(searchText.toLowerCase())
+      (log.username?.toLowerCase() || "").includes(searchText.toLowerCase()) ||
+      (log.action?.toLowerCase() || "").includes(searchText.toLowerCase()) ||
+      (log.ipAddress?.toLowerCase() || "").includes(searchText.toLowerCase())
   );
 
   // Statistics
@@ -80,13 +96,13 @@ const SystemLogs = () => {
     uniqueUsers: new Set(logs.map((l) => l.username)).size,
   };
 
-  // Helper to filter logs by range
+  // Helper to filter logs by range (using parsed timestamp)
   const getLogsByRange = (range) => {
     const now = new Date();
     if (range === "today") {
       return filteredLogs.filter((log) => {
-        if (!log.timestamp) return false;
-        const logDate = new Date(log.timestamp);
+        const logDate = parseApiTimestamp(log.timestamp);
+        if (!logDate) return false;
         return (
           logDate.getDate() === now.getDate() &&
           logDate.getMonth() === now.getMonth() &&
@@ -102,14 +118,14 @@ const SystemLogs = () => {
       lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
       lastDayOfWeek.setHours(23, 59, 59, 999);
       return filteredLogs.filter((log) => {
-        if (!log.timestamp) return false;
-        const logDate = new Date(log.timestamp);
+        const logDate = parseApiTimestamp(log.timestamp);
+        if (!logDate) return false;
         return logDate >= firstDayOfWeek && logDate <= lastDayOfWeek;
       });
     } else if (range === "month") {
       return filteredLogs.filter((log) => {
-        if (!log.timestamp) return false;
-        const logDate = new Date(log.timestamp);
+        const logDate = parseApiTimestamp(log.timestamp);
+        if (!logDate) return false;
         return (
           logDate.getMonth() === now.getMonth() &&
           logDate.getFullYear() === now.getFullYear()
@@ -132,10 +148,10 @@ const SystemLogs = () => {
     try {
       const doc = new jsPDF();
       let title = "System Logs Report";
-      if (range === "today") title += " - Hôm nay";
-      else if (range === "week") title += " - Tuần này";
-      else if (range === "month") title += " - Tháng này";
-      else title += " - Tất cả";
+      if (range === "today") title += " - Today";
+      else if (range === "week") title += " - This Week";
+      else if (range === "month") title += " - This Month";
+      else title += " - All Logs";
       doc.text(title, 14, 16);
       const tableColumn = ["ID", "User", "Action", "IP Address", "Timestamp"];
       const logsToExport = getLogsByRange(range);
@@ -144,7 +160,9 @@ const SystemLogs = () => {
         log.username,
         log.action,
         log.ipAddress,
-        log.timestamp ? new Date(log.timestamp).toLocaleString() : "N/A",
+        log.timestamp
+          ? parseApiTimestamp(log.timestamp)?.toLocaleString() || "N/A"
+          : "N/A",
       ]);
       autoTable(doc, {
         head: [tableColumn],
@@ -206,9 +224,15 @@ const SystemLogs = () => {
       title: "Timestamp",
       dataIndex: "timestamp",
       key: "timestamp",
-      render: (timestamp) =>
-        timestamp ? new Date(timestamp).toLocaleString() : "N/A",
-      sorter: (a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0),
+      render: (timestamp) => {
+        const date = parseApiTimestamp(timestamp);
+        return date ? date.toLocaleString() : "N/A";
+      },
+      sorter: (a, b) => {
+        const dateA = parseApiTimestamp(a.timestamp)?.getTime() || 0;
+        const dateB = parseApiTimestamp(b.timestamp)?.getTime() || 0;
+        return dateA - dateB;
+      },
       width: 180,
     },
   ];
@@ -222,7 +246,7 @@ const SystemLogs = () => {
           alignItems: "center",
           marginBottom: 24,
         }}>
-        <Title level={2}>System Logs & Monitoring</Title>
+        <Title level={2}>Monitoring System Logs</Title>
         <Space>
           <Dropdown
             menu={{
