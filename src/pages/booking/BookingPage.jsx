@@ -138,8 +138,7 @@ const ConfirmBookingModal = ({
       "Grandparent Testing": "Xét nghiệm ADN Huyết thống Ông-Bà/Cháu",
       "DNA Testing for Birth Registration":
         "Xét nghiệm ADN cho Đăng ký Khai sinh",
-      "DNA Testing for Birth Certificate":
-        "Xét nghiệm ADN cho Giấy khai sinh",
+      "DNA Testing for Birth Certificate": "Xét nghiệm ADN cho Giấy khai sinh",
       "DNA Testing for Immigration Cases": "Xét nghiệm ADN cho Vụ việc Nhập cư",
       "DNA Testing for Inheritance or Asset Division":
         "Xét nghiệm ADN cho Thừa kế hoặc Phân chia Tài sản",
@@ -193,9 +192,7 @@ const ConfirmBookingModal = ({
     return sampleTypeTranslations[sampleType] || sampleType;
   };
 
-
   useEffect(() => {
-
     if (visible) {
       if (paymentMethodProp) {
         setPaymentMethod(paymentMethodProp);
@@ -289,9 +286,9 @@ const ConfirmBookingModal = ({
         setPaymentCode(code);
 
         if (paymentMethod === "cash") {
-          setCurrentStep(3); 
+          setCurrentStep(3);
         } else {
-          setCurrentStep(2); 
+          setCurrentStep(2);
         }
       },
     });
@@ -349,10 +346,14 @@ const ConfirmBookingModal = ({
       setFinalBookingData(bookingDataWithSignature);
       setCurrentStep(4);
       setShowPDFOption(true);
-      message.success("Successful signature! Please download the PDF file to complete the registration process.");
+      message.success(
+        "Successful signature! Please download the PDF file to complete the registration process."
+      );
     } catch (error) {
       console.error("Error processing signature:", error);
-      message.error("An error occurred while processing the signature. Please try again!");
+      message.error(
+        "An error occurred while processing the signature. Please try again!"
+      );
     } finally {
       setIsProcessingSignature(false);
     }
@@ -449,10 +450,10 @@ const ConfirmBookingModal = ({
       const payload = {
         bookingID: null,
         collectionMethod: bookingData.collectionMethod?.name || "At Facility",
-        paymentMethod: "VNPay", 
+        paymentMethod: "VNPay",
         appointmentTime: appointmentTime,
         timeRange: bookingData.timeSlot || "",
-        status: "pending_payment", 
+        status: "pending_payment",
         note: "",
         cost: 0,
         mediationMethod: bookingData.medicationMethod || "",
@@ -482,7 +483,7 @@ const ConfirmBookingModal = ({
           2
         );
         tempBookingData.vnpayBookingCreated = true;
-        tempBookingData.vnpayBookingId = data.bookingId || null; 
+        tempBookingData.vnpayBookingId = data.bookingId || null;
         const updatedPendingBookings = JSON.parse(
           localStorage.getItem("pending_vnpay_bookings") || "[]"
         );
@@ -503,9 +504,7 @@ const ConfirmBookingModal = ({
       } else {
         console.error("No vnpUrl received from API:", data);
         processingMsg();
-        message.error(
-          "Unable to create VNPAY payment link. Please try again!"
-        );
+        message.error("Unable to create VNPAY payment link. Please try again!");
         setIsSubmittingPayment(false);
         setIsRedirectingToVNPAY(false);
       }
@@ -564,7 +563,7 @@ const ConfirmBookingModal = ({
       try {
         // Tạo PDF và đảm bảo download thành công
         const pdfDoc = await generatePDF(false); // Tạo PDF nhưng chưa download
-        
+
         // Download PDF một cách manual để có thể tracking
         await new Promise((resolve, reject) => {
           try {
@@ -573,21 +572,23 @@ const ConfirmBookingModal = ({
                 reject(new Error("Unable to create PDF blob"));
                 return;
               }
-              
+
               // Tạo URL tạm thời để download
               const url = window.URL.createObjectURL(blob);
-              const link = document.createElement('a');
+              const link = document.createElement("a");
               link.href = url;
-              link.download = `DonYeuCauXetNghiemADN_${paymentCode || "DNA"}.pdf`;
+              link.download = `DonYeuCauXetNghiemADN_${
+                paymentCode || "DNA"
+              }.pdf`;
               document.body.appendChild(link);
-              
+
               // Trigger download
               link.click();
-              
+
               // Cleanup
               document.body.removeChild(link);
               window.URL.revokeObjectURL(url);
-              
+
               // Đợi một chút để đảm bảo download đã bắt đầu
               setTimeout(() => {
                 resolve();
@@ -610,7 +611,7 @@ const ConfirmBookingModal = ({
         setFinalBookingData(updatedBookingData);
 
         // Gọi callback để đóng modal từ parent component
-        if (onModalClose && typeof onModalClose === 'function') {
+        if (onModalClose && typeof onModalClose === "function") {
           setTimeout(() => {
             onModalClose();
           }, 500);
@@ -731,8 +732,7 @@ const ConfirmBookingModal = ({
         }
       };
       const { isExpressService } = bookingData;
-      const { serviceCost, mediationCost, expressCost } =
-        getCostBreakdown();
+      const { serviceCost, mediationCost, expressCost } = getCostBreakdown();
       const kitTypes = [
         { value: "K001", label: "PowerPlex Fusion", price: 0 },
         { value: "K002", label: "Global Filer", price: 0 },
@@ -755,11 +755,11 @@ const ConfirmBookingModal = ({
       // Mediation Method Fee
       const medicationMethod =
         bookingData.selectedMedicationMethod || bookingData.medicationMethod;
-      
+
       // Chỉ hiển thị phí trung gian nếu không phải là express
       if (medicationMethod && medicationMethod !== "express") {
         let mediationMethodText = "Phí phương thức trung gian";
-        
+
         if (medicationMethod === "staff-collection") {
           mediationMethodText = "Phí nhân viên thu thập tại nhà";
         } else if (medicationMethod === "postal-delivery") {
@@ -767,11 +767,13 @@ const ConfirmBookingModal = ({
         } else if (medicationMethod === "walk-in") {
           mediationMethodText = "Phí dịch vụ tại cơ sở";
         }
-        
+
         costTableBody.push([
           { text: mediationMethodText, alignment: "left", bold: true },
           {
-            text: isExpressService ? "Miễn phí" : `${mediationCost.toLocaleString()} VND`,
+            text: isExpressService
+              ? "Miễn phí"
+              : `${mediationCost.toLocaleString()} VND`,
             alignment: "right",
             bold: true,
             color: isExpressService ? "#52c41a" : undefined,
@@ -788,14 +790,14 @@ const ConfirmBookingModal = ({
           bold: true,
         },
         {
-          text: isExpressService ? `${expressCost.toLocaleString()} VND` : "Không áp dụng",
+          text: isExpressService
+            ? `${expressCost.toLocaleString()} VND`
+            : "Không áp dụng",
           alignment: "right",
           color: isExpressService ? "#fa8c16" : undefined,
           bold: true,
         },
       ]);
-
-
 
       if (isExpressService) {
         costTableBody.push([
@@ -811,20 +813,17 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      const calculatedTotal =
-        serviceCost + mediationCost + expressCost;
-      costTableBody.push(
-        [
-          { text: "TỔNG CHI PHÍ", bold: true, alignment: "left", fontSize: 14 },
-          {
-            text: `${calculatedTotal.toLocaleString()} VND`,
-            bold: true,
-            alignment: "right",
-            color: "#e91e63",
-            fontSize: 14,
-          },
-        ]
-      );
+      const calculatedTotal = serviceCost + mediationCost + expressCost;
+      costTableBody.push([
+        { text: "TỔNG CHI PHÍ", bold: true, alignment: "left", fontSize: 14 },
+        {
+          text: `${calculatedTotal.toLocaleString()} VND`,
+          bold: true,
+          alignment: "right",
+          color: "#e91e63",
+          fontSize: 14,
+        },
+      ]);
 
       const docDefinition = {
         content: [
@@ -908,9 +907,7 @@ const ConfirmBookingModal = ({
               "Loại dịch vụ: ",
               {
                 text:
-                  bookingData.serviceType === "legal"
-                    ? "Hành Chính"
-                    : "Dân sự",
+                  bookingData.serviceType === "legal" ? "Hành Chính" : "Dân sự",
                 color: "#2196f3",
                 bold: true,
               },
@@ -1576,7 +1573,8 @@ const ConfirmBookingModal = ({
     }
   };
 
-  const _handleClose = () => { // Unused but kept for future reference
+  const _handleClose = () => {
+    // Unused but kept for future reference
     if (isRedirectingToVNPAY) {
       message.warning("Please wait for the payment redirection to complete!");
       return;
@@ -1601,7 +1599,9 @@ const ConfirmBookingModal = ({
     try {
       // Ngăn đóng modal khi đang ở step 4 (PDF download)
       if (currentStep === 4) {
-        message.warning("Vui lòng tải file PDF để hoàn tất quá trình đăng ký trước khi đóng!");
+        message.warning(
+          "Vui lòng tải file PDF để hoàn tất quá trình đăng ký trước khi đóng!"
+        );
         return;
       }
 
@@ -1655,8 +1655,7 @@ const ConfirmBookingModal = ({
       homeAddress,
       selectedKitType,
     } = bookingData;
-    const { serviceCost, mediationCost, expressCost } =
-      getCostBreakdown();
+    const { serviceCost, mediationCost, expressCost } = getCostBreakdown();
 
     return (
       <div>
@@ -2218,11 +2217,12 @@ const ConfirmBookingModal = ({
                 }}>
                 <Text>
                   🚚 Mediation Method Fee
-                  {medicationMethod && ` (${getMediationLabel(medicationMethod)})`}
+                  {medicationMethod &&
+                    ` (${getMediationLabel(medicationMethod)})`}
                 </Text>
                 {isExpressService ? (
                   <Text strong style={{ color: "#52c41a" }}>
-                  0 VND
+                    0 VND
                   </Text>
                 ) : (
                   <Text strong>{formatCurrency(mediationCost)}</Text>
@@ -2238,7 +2238,9 @@ const ConfirmBookingModal = ({
                 padding: "8px 12px",
                 backgroundColor: isExpressService ? "#fff2e8" : "#f6ffed",
                 borderRadius: 6,
-                border: isExpressService ? "1px solid #ffbb96" : "1px solid #b7eb8f",
+                border: isExpressService
+                  ? "1px solid #ffbb96"
+                  : "1px solid #b7eb8f",
               }}>
               <Text>⚡ Express Service Fee</Text>
               {isExpressService ? (
@@ -2678,7 +2680,8 @@ const ConfirmBookingModal = ({
                 display: "block",
                 marginBottom: "32px",
               }}>
-              Please download the DNA testing application form to complete the scheduling.
+              Please download the DNA testing application form to complete the
+              scheduling.
             </Text>
 
             {/* PDF Export Option */}
@@ -2718,21 +2721,23 @@ const ConfirmBookingModal = ({
                 signature.
               </div>
               <Button
-                  type="primary"
-                  size="large"
-                  icon={<DownloadOutlined />}
-                  onClick={handleDownloadPDF}
-                  loading={isGeneratingPDF}
-                  disabled={isGeneratingPDF}
-                  style={{
-                    backgroundColor: "#52c41a",
-                    borderColor: "#52c41a",
-                    height: "48px",
-                    padding: "0 32px",
-                    fontSize: "16px",
-                  }}>
-                  {isGeneratingPDF ? "Creating PDF..." : "Download PDF and complete"}
-                </Button>
+                type="primary"
+                size="large"
+                icon={<DownloadOutlined />}
+                onClick={handleDownloadPDF}
+                loading={isGeneratingPDF}
+                disabled={isGeneratingPDF}
+                style={{
+                  backgroundColor: "#52c41a",
+                  borderColor: "#52c41a",
+                  height: "48px",
+                  padding: "0 32px",
+                  fontSize: "16px",
+                }}>
+                {isGeneratingPDF
+                  ? "Creating PDF..."
+                  : "Download PDF and complete"}
+              </Button>
             </div>
 
             <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -2848,8 +2853,12 @@ const ConfirmBookingModal = ({
       destroyOnHidden
       centered
       closable={false}
-      maskClosable={!isRedirectingToVNPAY && !isSubmittingPayment && currentStep !== 4}
-      keyboard={!isRedirectingToVNPAY && !isSubmittingPayment && currentStep !== 4}
+      maskClosable={
+        !isRedirectingToVNPAY && !isSubmittingPayment && currentStep !== 4
+      }
+      keyboard={
+        !isRedirectingToVNPAY && !isSubmittingPayment && currentStep !== 4
+      }
       styles={{
         body: {
           padding: "0",
@@ -2951,7 +2960,9 @@ const BookingPage = () => {
     const relationship = form.getFieldValue(["secondPerson", "relationship"]);
 
     const shouldShowPersonalId =
-      (relationship === "Child" || relationship === "Grandchild") && age !== null && age > 15;
+      (relationship === "Child" || relationship === "Grandchild") &&
+      age !== null &&
+      age > 15;
     setShowSecondPersonPersonalId(shouldShowPersonalId);
 
     if (!shouldShowPersonalId) {
@@ -3015,48 +3026,48 @@ const BookingPage = () => {
   // Function to fetch slots from API
   const fetchSlots = useCallback(async (date) => {
     if (!date) return;
-    
+
     try {
       setLoadingSlots(true);
       console.log("🔄 Fetching slots for date:", date);
-      
+
       // API expects date format YYYY-MM-DD
       const response = await axios.get(`/services/slot?date=${date}`);
       console.log("✅ API Response:", response.data);
-      
+
       // Validate response format
       if (!Array.isArray(response.data)) {
         console.warn("⚠️ API response is not an array:", response.data);
         setApiSlots([]);
         return;
       }
-      
+
       // Filter slots for the selected date since API might return all slots
-      const selectedDateParts = date.split('-').map(Number); // [2025, 7, 13]
+      const selectedDateParts = date.split("-").map(Number); // [2025, 7, 13]
       console.log("📅 Looking for slots with date parts:", selectedDateParts);
-      
-      const filteredSlots = response.data.filter(slot => {
+
+      const filteredSlots = response.data.filter((slot) => {
         if (!slot.date || !Array.isArray(slot.date) || slot.date.length !== 3) {
           console.warn("⚠️ Invalid slot date format:", slot);
           return false;
         }
 
-        const isMatch = slot.date[0] === selectedDateParts[0] && // year
-                       slot.date[1] === selectedDateParts[1] && // month 
-                       slot.date[2] === selectedDateParts[2];   // day
-        
+        const isMatch =
+          slot.date[0] === selectedDateParts[0] && // year
+          slot.date[1] === selectedDateParts[1] && // month
+          slot.date[2] === selectedDateParts[2]; // day
+
         if (isMatch) {
           console.log("✅ Found matching slot:", slot);
         }
-        
+
         return isMatch;
       });
-      
+
       console.log("� Filtered slots for selected date:", filteredSlots);
       console.log(`📈 Total slots found: ${filteredSlots.length}`);
-      
+
       setApiSlots(filteredSlots);
-      
     } catch (error) {
       console.error("❌ Error fetching slots:", error);
       if (error.response) {
@@ -3081,36 +3092,28 @@ const BookingPage = () => {
 
   const isTimeSlotDisabled = (time) => {
     if (!appointmentDate) return false;
-    
-    // Check if time has passed (existing logic)
     const today = moment().format("YYYY-MM-DD");
     if (appointmentDate === today) {
+      // Lấy giờ bắt đầu của slot
       const [start] = time.split(" - ");
-      const [hour, minute] = start.split(":").map(Number);
+      const [startHour, startMinute] = start.split(":").map(Number);
       const now = moment();
-      const slotTime = moment().hour(hour).minute(minute).second(0);
-      if (slotTime.isBefore(now)) {
-        console.log(`⏰ Slot ${time} is disabled - past time`);
+      const slotStartTime = moment()
+        .hour(startHour)
+        .minute(startMinute)
+        .second(0);
+      if (slotStartTime.isBefore(now)) {
+        // Slot đã bắt đầu
         return true;
       }
     }
-    
     // Check if slot is fully booked (currentBooking >= 3)
-    const slotInfo = apiSlots.find(slot => slot.timeRange === time);
+    const slotInfo = apiSlots.find((slot) => slot.timeRange === time);
     if (slotInfo) {
-      console.log(`📊 Slot ${time} info:`, {
-        currentBooking: slotInfo.currentBooking,
-        isDisabled: slotInfo.currentBooking >= 3
-      });
-      
       if (slotInfo.currentBooking >= 3) {
-        console.log(`🚫 Slot ${time} is disabled - fully booked (${slotInfo.currentBooking}/3)`);
         return true;
       }
-    } else {
-      console.log(`ℹ️ No booking info found for slot ${time}, allowing selection`);
     }
-    
     return false;
   };
 
@@ -4298,7 +4301,7 @@ const BookingPage = () => {
         const payload = buildBookingPayload(finalBookingData);
         console.log("🔥 Creating new Cash booking with payload:", payload);
 
-        payload.status = "Awaiting Confirmation"; 
+        payload.status = "Awaiting Confirmation";
 
         const response = await axios.post(
           `/booking/bookings/${serviceID}/${customerID}`,
@@ -4356,7 +4359,7 @@ const BookingPage = () => {
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setBookingData(null);
-    setModalInitialStep(1); 
+    setModalInitialStep(1);
   };
 
   const handlePDFModalClose = () => {
@@ -4395,7 +4398,8 @@ const BookingPage = () => {
           currentBooking = pendingBookings.find((booking) => {
             const match =
               booking.paymentCode && orderInfo.includes(booking.paymentCode);
-            console.log(`🔎 Checking paymentCode: ${booking.paymentCode} - Match: ${match}`
+            console.log(
+              `🔎 Checking paymentCode: ${booking.paymentCode} - Match: ${match}`
             );
             return match;
           });
@@ -4436,7 +4440,7 @@ const BookingPage = () => {
               "Setting booking data and opening modal at step 3 (Sign)"
             );
             setBookingData(updatedBookingData);
-            setModalInitialStep(3); 
+            setModalInitialStep(3);
             setPaymentMethod("vnpay");
 
             setTimeout(() => {
@@ -5152,12 +5156,14 @@ const BookingPage = () => {
                       disabledDate={disabledDate}
                       value={form.getFieldValue("appointmentDate")}
                       onChange={(date) => {
-                        const formattedDate = date ? date.format("YYYY-MM-DD") : "";
+                        const formattedDate = date
+                          ? date.format("YYYY-MM-DD")
+                          : "";
                         form.setFieldsValue({ appointmentDate: date });
                         setAppointmentDate(formattedDate);
                         form.setFieldsValue({ timeSlot: undefined });
                         setTimeSlot("");
-                        
+
                         // Fetch slots for the selected date
                         if (formattedDate) {
                           console.log("📅 User selected date:", formattedDate);
@@ -5187,12 +5193,14 @@ const BookingPage = () => {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {loadingSlots ? (
                             <div className="col-span-full text-center py-4">
-                              <span className="text-gray-500">Loading slots...</span>
+                              <span className="text-gray-500">
+                                Loading slots...
+                              </span>
                             </div>
                           ) : (
                             timeSlots.map((time) => {
                               const isDisabled = isTimeSlotDisabled(time);
-                              
+
                               return (
                                 <div
                                   key={time}
@@ -5228,7 +5236,8 @@ const BookingPage = () => {
                           <div className="flex items-center">
                             <ClockCircleOutlined className="text-yellow-600 mr-2" />
                             <span className="text-yellow-800 font-medium">
-                              All slots for today have been filled. Please choose another day!
+                              All slots for today have been filled. Please
+                              choose another day!
                             </span>
                           </div>
                         </div>
