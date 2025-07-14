@@ -268,19 +268,13 @@ const OrderProcessing = () => {
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      const dateA = a.date ? moment(a.date) : moment(0);
-      const dateB = b.date ? moment(b.date) : moment(0);
-      if (dateA.isSame(dateB, "day")) {
-        const getStartHour = (timeRange) => {
-          if (!timeRange) return 0;
-          const match = timeRange.match(/(\d{1,2}):(\d{2})/);
-          if (match)
-            return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
-          return 0;
-        };
-        return getStartHour(b.timeRange) - getStartHour(a.timeRange);
+      // Sort by bookingID ascending (smallest first)
+      const idA = Number(a.bookingID);
+      const idB = Number(b.bookingID);
+      if (!isNaN(idA) && !isNaN(idB)) {
+        return idA - idB;
       }
-      return dateB.diff(dateA);
+      return (a.bookingID || "").localeCompare(b.bookingID || "");
     });
 
   // Filter orders for completed tab (only "Completed" status)
@@ -307,19 +301,13 @@ const OrderProcessing = () => {
       return matchesSearch;
     })
     .sort((a, b) => {
-      const dateA = a.date ? moment(a.date) : moment(0);
-      const dateB = b.date ? moment(b.date) : moment(0);
-      if (dateA.isSame(dateB, "day")) {
-        const getStartHour = (timeRange) => {
-          if (!timeRange) return 0;
-          const match = timeRange.match(/(\d{1,2}):(\d{2})/);
-          if (match)
-            return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
-          return 0;
-        };
-        return getStartHour(b.timeRange) - getStartHour(a.timeRange);
+      // Sort by bookingID ascending (smallest first)
+      const idA = Number(a.bookingID);
+      const idB = Number(b.bookingID);
+      if (!isNaN(idA) && !isNaN(idB)) {
+        return idA - idB;
       }
-      return dateB.diff(dateA);
+      return (a.bookingID || "").localeCompare(b.bookingID || "");
     });
 
   const getStatusTag = (status) => {
