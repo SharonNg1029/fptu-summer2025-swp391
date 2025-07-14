@@ -71,15 +71,46 @@ const OrderProcessing = () => {
     setLoading(true);
     try {
       const response = await api.get(`/staff/my-assignment/${staffID}`);
+      let rawData = [];
       if (Array.isArray(response.data)) {
-        setOrders(response.data);
+        rawData = response.data;
       } else if (response.data && Array.isArray(response.data.data)) {
-        setOrders(response.data.data);
-      } else {
-        setOrders([]);
-        if (response.data && response.data.length === 0) {
-          toast.info("No assignments found for this staff member.");
-        }
+        rawData = response.data.data;
+      }
+      // Chuẩn hóa date từ array về moment object
+      const normalized = rawData.map((order) => ({
+        ...order,
+        date:
+          order.appointmentDate &&
+          Array.isArray(order.appointmentDate) &&
+          order.appointmentDate.length === 3
+            ? moment({
+                year: order.appointmentDate[0],
+                month: order.appointmentDate[1] - 1,
+                day: order.appointmentDate[2],
+              })
+            : Array.isArray(order.date) && order.date.length === 3
+            ? moment({
+                year: order.date[0],
+                month: order.date[1] - 1,
+                day: order.date[2],
+              })
+            : order.date
+            ? moment(order.date)
+            : null,
+        timeRange: order.appointmentTime
+          ? Array.isArray(order.appointmentTime) &&
+            order.appointmentTime.length === 3
+            ? `${order.appointmentTime[1]}-${order.appointmentTime[2]}` // fallback nếu là array, cần backend trả string
+            : order.appointmentTime
+          : order.timeRange || "",
+      }));
+      setOrders(normalized);
+      // Reset phân trang về trang đầu tiên mỗi lần fetch
+      setCurrentPage(1);
+      setCompletedCurrentPage(1);
+      if (rawData.length === 0) {
+        toast.info("No assignments found for this staff member.");
       }
     } catch (error) {
       toast.error(
@@ -135,7 +166,7 @@ const OrderProcessing = () => {
       setIsModalVisible(false);
       setEditingOrder(null);
       form.resetFields();
-      fetchOrders();
+      await fetchOrders(); // Đảm bảo table luôn lấy dữ liệu mới nhất
     } catch (error) {
       toast.error(
         "Failed to update booking: " +
@@ -743,7 +774,14 @@ const OrderProcessing = () => {
             <DatePicker style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="timeRange" label="Appointment Time">
-            <Input placeholder="e.g. 09:00" />
+            <Select placeholder="Select time range">
+              <Option value="8:15 - 9:15">8:15 - 9:15</Option>
+              <Option value="9:30 - 10:30">9:30 - 10:30</Option>
+              <Option value="10:45 - 11:45">10:45 - 11:45</Option>
+              <Option value="13:15 - 14:15">13:15 - 14:15</Option>
+              <Option value="14:30 - 15:30">14:30 - 15:30</Option>
+              <Option value="15:45 - 16:45">15:45 - 16:45</Option>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>
