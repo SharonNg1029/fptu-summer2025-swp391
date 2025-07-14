@@ -460,7 +460,12 @@ const ConfirmBookingModal = ({
         additionalCost: 0,
         totalCost: bookingData.totalCost || 0,
         expressService: bookingData.isExpressService || false,
-        address: bookingData.homeAddress || "",
+        address:
+          bookingData.collectionMethod?.name === "At Home"
+            ? bookingData.homeAddress
+            : bookingData.collectionMethod?.name === "At Facility"
+            ? "7 D1 Street, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City"
+            : bookingData.homeAddress || "",
         kitID: bookingData.selectedKitType || "",
         serviceID: bookingData.service?.serviceID || "",
         customerID: bookingData.customerID || "",
@@ -1690,7 +1695,8 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}>
+                }}
+              >
                 <UserOutlined style={{ color: "white", fontSize: 16 }} />
               </div>
               <span style={{ fontSize: 18, fontWeight: 600, color: "#1890ff" }}>
@@ -1710,7 +1716,8 @@ const ConfirmBookingModal = ({
               borderBottom: "1px solid #e8f4fd",
               borderRadius: "12px 12px 0 0",
             },
-          }}>
+          }}
+        >
           <Row gutter={[16, 16]}>
             <Col span={12}>
               <div
@@ -1719,10 +1726,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   SERVICE TYPE
                 </Text>
                 <Text strong style={{ fontSize: 14, color: "#1890ff" }}>
@@ -1739,10 +1748,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   SERVICE NAME
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1757,10 +1768,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   COLLECTION METHOD
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1776,10 +1789,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   TESTING KIT
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1802,10 +1817,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#f6ffed",
                   borderRadius: 8,
                   border: "1px solid #b7eb8f",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   📍 COLLECTION ADDRESS
                 </Text>
                 <Text strong style={{ fontSize: 14, color: "#52c41a" }}>
@@ -1822,10 +1839,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#fafafa",
                   borderRadius: 8,
                   border: "1px solid #f0f0f0",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   MEDIATION METHOD
                 </Text>
                 <Text strong style={{ fontSize: 14 }}>
@@ -1844,10 +1863,12 @@ const ConfirmBookingModal = ({
                   border: `1px solid ${
                     isExpressService ? "#ffbb96" : "#f0f0f0"
                   }`,
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 4 }}
+                >
                   EXPRESS SERVICE
                 </Text>
                 <Text
@@ -1855,7 +1876,8 @@ const ConfirmBookingModal = ({
                   style={{
                     fontSize: 14,
                     color: isExpressService ? "#fa8c16" : "#666",
-                  }}>
+                  }}
+                >
                   {isExpressService ? "⚡ Yes" : "❌ No"}
                 </Text>
               </div>
@@ -1872,10 +1894,12 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#e6f7ff",
                   borderRadius: 8,
                   border: "1px solid #91d5ff",
-                }}>
+                }}
+              >
                 <Text
                   type="secondary"
-                  style={{ fontSize: 12, display: "block", marginBottom: 8 }}>
+                  style={{ fontSize: 12, display: "block", marginBottom: 8 }}
+                >
                   📅 APPOINTMENT
                 </Text>
                 <div
@@ -1884,9 +1908,11 @@ const ConfirmBookingModal = ({
                     alignItems: "center",
                     gap: 16,
                     flexWrap: "wrap",
-                  }}>
+                  }}
+                >
                   <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
                     <CalendarOutlined
                       style={{ color: "#1890ff", fontSize: 16 }}
                     />
@@ -1904,7 +1930,8 @@ const ConfirmBookingModal = ({
                         padding: "6px 12px",
                         borderRadius: 20,
                         border: "1px solid #b7eb8f",
-                      }}>
+                      }}
+                    >
                       <ClockCircleOutlined
                         style={{ color: "#52c41a", fontSize: 16 }}
                       />
@@ -1932,7 +1959,8 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}>
+                }}
+              >
                 <TeamOutlined style={{ color: "white", fontSize: 16 }} />
               </div>
               <span style={{ fontSize: 18, fontWeight: 600, color: "#52c41a" }}>
@@ -1952,7 +1980,8 @@ const ConfirmBookingModal = ({
               borderBottom: "1px solid #d9f7be",
               borderRadius: "12px 12px 0 0",
             },
-          }}>
+          }}
+        >
           <Row gutter={[16, 16]}>
             {/* Person 1 */}
             <Col span={12}>
@@ -1963,7 +1992,8 @@ const ConfirmBookingModal = ({
                   borderRadius: 8,
                   border: "2px solid #1890ff",
                   position: "relative",
-                }}>
+                }}
+              >
                 <div
                   style={{
                     position: "absolute",
@@ -1975,7 +2005,8 @@ const ConfirmBookingModal = ({
                     borderRadius: 12,
                     fontSize: 12,
                     fontWeight: 600,
-                  }}>
+                  }}
+                >
                   👤 REPRESENTATIVE
                 </div>
                 <div style={{ marginTop: 8 }}>
@@ -2071,7 +2102,8 @@ const ConfirmBookingModal = ({
                   borderRadius: 8,
                   border: "2px solid #52c41a",
                   position: "relative",
-                }}>
+                }}
+              >
                 <div
                   style={{
                     position: "absolute",
@@ -2083,7 +2115,8 @@ const ConfirmBookingModal = ({
                     borderRadius: 12,
                     fontSize: 12,
                     fontWeight: 600,
-                  }}>
+                  }}
+                >
                   👥 SECOND PERSON
                 </div>
                 <div style={{ marginTop: 8 }}>
@@ -2169,7 +2202,8 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}>
+                }}
+              >
                 <CreditCardOutlined style={{ color: "white", fontSize: 16 }} />
               </div>
               <span style={{ fontSize: 18, fontWeight: 600, color: "#fa8c16" }}>
@@ -2189,7 +2223,8 @@ const ConfirmBookingModal = ({
               borderBottom: "1px solid #ffbb96",
               borderRadius: "12px 12px 0 0",
             },
-          }}>
+          }}
+        >
           <div style={{ padding: "8px 0" }}>
             {/* Service Fee */}
             <Row
@@ -2199,7 +2234,8 @@ const ConfirmBookingModal = ({
                 padding: "8px 12px",
                 backgroundColor: "#fafafa",
                 borderRadius: 6,
-              }}>
+              }}
+            >
               <Text>💰 Service Fee</Text>
               <Text strong>{formatCurrency(serviceCost)}</Text>
             </Row>
@@ -2214,7 +2250,8 @@ const ConfirmBookingModal = ({
                   backgroundColor: isExpressService ? "#f6ffed" : "#fafafa",
                   borderRadius: 6,
                   border: isExpressService ? "1px solid #b7eb8f" : "none",
-                }}>
+                }}
+              >
                 <Text>
                   🚚 Mediation Method Fee
                   {medicationMethod &&
@@ -2241,7 +2278,8 @@ const ConfirmBookingModal = ({
                 border: isExpressService
                   ? "1px solid #ffbb96"
                   : "1px solid #b7eb8f",
-              }}>
+              }}
+            >
               <Text>⚡ Express Service Fee</Text>
               {isExpressService ? (
                 <Text strong style={{ color: "#fa8c16" }}>
@@ -2263,7 +2301,8 @@ const ConfirmBookingModal = ({
                   backgroundColor: "#f6ffed",
                   borderRadius: 6,
                   border: "1px dashed #52c41a",
-                }}>
+                }}
+              >
                 <Text
                   style={{
                     color: "#389e0d",
@@ -2271,7 +2310,8 @@ const ConfirmBookingModal = ({
                     fontStyle: "italic",
                     width: "100%",
                     textAlign: "center",
-                  }}>
+                  }}
+                >
                   💡 When using Express Service, all collection methods and
                   transportation are free (0 VND)
                 </Text>
@@ -2286,7 +2326,8 @@ const ConfirmBookingModal = ({
                 backgroundColor: "#e6f7ff",
                 borderRadius: 8,
                 border: "2px solid #1890ff",
-              }}>
+              }}
+            >
               <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
                 💎 TOTAL COST
               </Text>
@@ -2311,7 +2352,8 @@ const ConfirmBookingModal = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}>
+                }}
+              >
                 {paymentMethod === "cash" ? (
                   <CreditCardOutlined
                     style={{ color: "white", fontSize: 16 }}
@@ -2325,7 +2367,8 @@ const ConfirmBookingModal = ({
                   fontSize: 18,
                   fontWeight: 600,
                   color: paymentMethod === "cash" ? "#52c41a" : "#1890ff",
-                }}>
+                }}
+              >
                 Payment Method
               </span>
             </div>
@@ -2345,7 +2388,8 @@ const ConfirmBookingModal = ({
               }`,
               borderRadius: "12px 12px 0 0",
             },
-          }}>
+          }}
+        >
           <div
             style={{
               padding: "16px",
@@ -2355,7 +2399,8 @@ const ConfirmBookingModal = ({
                 paymentMethod === "cash" ? "#52c41a" : "#1890ff"
               }`,
               textAlign: "center",
-            }}>
+            }}
+          >
             {paymentMethod === "cash" ? (
               <div
                 style={{
@@ -2363,7 +2408,8 @@ const ConfirmBookingModal = ({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 12,
-                }}>
+                }}
+              >
                 <CreditCardOutlined
                   style={{ fontSize: 24, color: "#52c41a" }}
                 />
@@ -2378,7 +2424,8 @@ const ConfirmBookingModal = ({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 12,
-                }}>
+                }}
+              >
                 <QrcodeOutlined style={{ fontSize: 24, color: "#1890ff" }} />
                 <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
                   📱 Payment via VNPAY
@@ -2401,7 +2448,8 @@ const ConfirmBookingModal = ({
         alignItems: "center",
         justifyContent: "center",
         minHeight: "400px",
-      }}>
+      }}
+    >
       {/* Hiển thị thông báo VNPay thành công nếu có */}
       {bookingData?.status === "paid" &&
         bookingData?.paymentMethod === "vnpay" && (
@@ -2414,7 +2462,8 @@ const ConfirmBookingModal = ({
               marginBottom: "24px",
               maxWidth: "500px",
               width: "100%",
-            }}>
+            }}
+          >
             <CheckCircleOutlined
               style={{ fontSize: "24px", color: "#52c41a", marginRight: "8px" }}
             />
@@ -2431,7 +2480,8 @@ const ConfirmBookingModal = ({
           color: "#1890ff",
           fontSize: "24px",
           fontWeight: "bold",
-        }}>
+        }}
+      >
         ✍️ Please sign to confirm your Payment
       </Title>
 
@@ -2446,7 +2496,8 @@ const ConfirmBookingModal = ({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-        }}>
+        }}
+      >
         <SignatureCanvas
           ref={signatureRef}
           canvasProps={{
@@ -2477,7 +2528,8 @@ const ConfirmBookingModal = ({
             display: "flex",
             alignItems: "center",
             gap: "8px",
-          }}>
+          }}
+        >
           🗑️ Clear signature
         </Button>
       </Space>
@@ -2492,7 +2544,8 @@ const ConfirmBookingModal = ({
             alignItems: "center",
             gap: "8px",
             marginBottom: "16px",
-          }}>
+          }}
+        >
           <span>⏳ Processing signature...</span>
         </div>
       )}
@@ -2508,7 +2561,8 @@ const ConfirmBookingModal = ({
           padding: "16px 24px",
           borderRadius: "8px",
           border: "1px solid #d9f7be",
-        }}>
+        }}
+      >
         💡 Draw your signature in the box above using your mouse or finger.
         <br />
         Your signature will be used to confirm your registration form.
@@ -2549,7 +2603,8 @@ const ConfirmBookingModal = ({
                 />
                 <Title
                   level={3}
-                  style={{ color: "#52c41a", marginBottom: "16px" }}>
+                  style={{ color: "#52c41a", marginBottom: "16px" }}
+                >
                   VNPay Payment Successful!
                 </Title>
                 <Text
@@ -2558,7 +2613,8 @@ const ConfirmBookingModal = ({
                     color: "#666",
                     display: "block",
                     marginBottom: "32px",
-                  }}>
+                  }}
+                >
                   Chuyển đến bước ký tên...
                 </Text>
               </div>
@@ -2577,7 +2633,8 @@ const ConfirmBookingModal = ({
                   marginBottom: "24px",
                   maxWidth: "500px",
                   margin: "0 auto 24px auto",
-                }}>
+                }}
+              >
                 <QrcodeOutlined
                   style={{
                     fontSize: "48px",
@@ -2594,7 +2651,8 @@ const ConfirmBookingModal = ({
                     color: "#666",
                     display: "block",
                     marginBottom: "24px",
-                  }}>
+                  }}
+                >
                   You will be redirected to VNPAY to complete your payment.
                 </Text>
 
@@ -2610,7 +2668,8 @@ const ConfirmBookingModal = ({
                     height: "48px",
                     padding: "0 32px",
                     fontSize: "16px",
-                  }}>
+                  }}
+                >
                   {isRedirectingToVNPAY ? "Processing..." : "Pay with VNPAY"}
                 </Button>
 
@@ -2622,7 +2681,8 @@ const ConfirmBookingModal = ({
                       backgroundColor: "#e6f7ff",
                       borderRadius: "8px",
                       border: "1px solid #91d5ff",
-                    }}>
+                    }}
+                  >
                     <div
                       style={{
                         display: "flex",
@@ -2630,7 +2690,8 @@ const ConfirmBookingModal = ({
                         justifyContent: "center",
                         gap: "12px",
                         marginBottom: "8px",
-                      }}>
+                      }}
+                    >
                       <div
                         className="vnpay-loading-spinner"
                         style={{
@@ -2639,10 +2700,12 @@ const ConfirmBookingModal = ({
                           border: "2px solid #1890ff",
                           borderTopColor: "transparent",
                           borderRadius: "50%",
-                        }}></div>
+                        }}
+                      ></div>
                       <Text
                         strong
-                        style={{ color: "#1890ff", fontSize: "16px" }}>
+                        style={{ color: "#1890ff", fontSize: "16px" }}
+                      >
                         Processing VNPAY payment...
                       </Text>
                     </div>
@@ -2679,7 +2742,8 @@ const ConfirmBookingModal = ({
                 color: "#666",
                 display: "block",
                 marginBottom: "32px",
-              }}>
+              }}
+            >
               Please download the DNA testing application form to complete the
               scheduling.
             </Text>
@@ -2694,7 +2758,8 @@ const ConfirmBookingModal = ({
                 marginBottom: "24px",
                 maxWidth: "500px",
                 margin: "0 auto 24px auto",
-              }}>
+              }}
+            >
               <FileTextOutlined
                 style={{
                   fontSize: "32px",
@@ -2708,7 +2773,8 @@ const ConfirmBookingModal = ({
                   fontSize: "18px",
                   fontWeight: "bold",
                   color: "#52c41a",
-                }}>
+                }}
+              >
                 Download DNA test application
               </div>
               <div
@@ -2716,7 +2782,8 @@ const ConfirmBookingModal = ({
                   marginBottom: "20px",
                   color: "#666",
                   fontSize: "14px",
-                }}>
+                }}
+              >
                 The PDF file will contain your full registration information and
                 signature.
               </div>
@@ -2733,7 +2800,8 @@ const ConfirmBookingModal = ({
                   height: "48px",
                   padding: "0 32px",
                   fontSize: "16px",
-                }}>
+                }}
+              >
                 {isGeneratingPDF
                   ? "Creating PDF..."
                   : "Download PDF and complete"}
@@ -2767,7 +2835,8 @@ const ConfirmBookingModal = ({
             type="primary"
             onClick={handleConfirm}
             loading={isSubmittingPayment}
-            disabled={isSubmittingPayment}>
+            disabled={isSubmittingPayment}
+          >
             {isSubmittingPayment ? "Processing..." : "Confirm"}
           </Button>,
         ];
@@ -2788,7 +2857,8 @@ const ConfirmBookingModal = ({
                 setCurrentStep(2);
               }
             }}
-            disabled={isProcessingSignature}>
+            disabled={isProcessingSignature}
+          >
             Back
           </Button>,
           <Button
@@ -2796,7 +2866,8 @@ const ConfirmBookingModal = ({
             type="primary"
             onClick={handleSignatureComplete}
             loading={isProcessingSignature}
-            disabled={isProcessingSignature}>
+            disabled={isProcessingSignature}
+          >
             Continue
           </Button>,
         ];
@@ -2865,7 +2936,8 @@ const ConfirmBookingModal = ({
           maxHeight: "80vh",
           overflowY: "auto",
         },
-      }}>
+      }}
+    >
       <div style={{ padding: "32px" }}>
         <Steps
           current={getCurrentStepIndex()}
@@ -4525,7 +4597,8 @@ const BookingPage = () => {
           style={{
             zIndex: 9999,
             animation: "slideInRight 0.3s ease-out",
-          }}>
+          }}
+        >
           <div
             className={`px-4 py-3 rounded-lg shadow-lg max-w-sm min-w-0 flex items-center space-x-3 ${
               currentNotification.type === "success"
@@ -4535,7 +4608,8 @@ const BookingPage = () => {
                 : currentNotification.type === "warning"
                 ? "bg-yellow-500 text-white border-l-4 border-yellow-700"
                 : "bg-blue-500 text-white border-l-4 border-blue-700"
-            }`}>
+            }`}
+          >
             <div className="flex-shrink-0 text-lg">
               {currentNotification.type === "success" && "✅"}
               {currentNotification.type === "error" && "❌"}
@@ -4547,7 +4621,8 @@ const BookingPage = () => {
             </div>
             <button
               onClick={hideNotification}
-              className="flex-shrink-0 text-white hover:text-gray-200 ml-2 text-lg font-bold">
+              className="flex-shrink-0 text-white hover:text-gray-200 ml-2 text-lg font-bold"
+            >
               ×
             </button>
           </div>
@@ -4560,12 +4635,14 @@ const BookingPage = () => {
         style={{
           background:
             "linear-gradient(135deg, #002F5E 0%, #004494 50%, #1677FF 100%)",
-        }}>
+        }}
+      >
         <div className="flex items-center mb-2">
           <button
             onClick={() => navigate(-1)}
             className="p-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center mr-4"
-            aria-label="Go back">
+            aria-label="Go back"
+          >
             <FaArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold">DNA Testing Booking</h1>
@@ -4602,7 +4679,8 @@ const BookingPage = () => {
                     isServicePreSelected
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-blue-500 hover:text-white cursor-pointer"
-                  }`}>
+                  }`}
+                >
                   Legal DNA Testing
                   {isServicePreSelected && selectedServiceType === "legal" && (
                     <span className="ml-2 text-xs bg-blue-800 px-2 py-1 rounded">
@@ -4623,7 +4701,8 @@ const BookingPage = () => {
                     isServicePreSelected
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-blue-500 hover:text-white cursor-pointer"
-                  }`}>
+                  }`}
+                >
                   Non-Legal DNA Testing
                   {isServicePreSelected &&
                     selectedServiceType === "non-legal" && (
@@ -4662,7 +4741,8 @@ const BookingPage = () => {
                       isServicePreSelected && selectedService?.id !== service.id
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}>
+                    }`}
+                  >
                     <div className="flex items-center">
                       <div className="mr-3 text-blue-600">{service.icon}</div>
                       <div>
@@ -4705,7 +4785,8 @@ const BookingPage = () => {
                   isStandardPreSelected
                     ? "border-orange-200 bg-orange-50"
                     : "border-orange-200 bg-orange-50"
-                }`}>
+                }`}
+              >
                 <input
                   type="checkbox"
                   id="expressService"
@@ -4809,7 +4890,8 @@ const BookingPage = () => {
                     selectedCollectionMethod?.name !== "At Home"
                       ? "border-orange-200 hover:border-orange-300 hover:bg-orange-50"
                       : ""
-                  }`}>
+                  }`}
+                >
                   <div className="flex items-center mb-2">
                     <FaUser className="text-blue-600 mr-2" />
                     <span className="font-medium">At Home</span>
@@ -4865,7 +4947,8 @@ const BookingPage = () => {
                     selectedCollectionMethod?.name !== "At Facility"
                       ? "border-orange-200 hover:border-orange-300 hover:bg-orange-50"
                       : ""
-                  }`}>
+                  }`}
+                >
                   <div className="flex items-center mb-2">
                     <FaMapMarkerAlt className="text-blue-600 mr-2" />
                     <span className="font-medium">At Facility</span>
@@ -4956,7 +5039,8 @@ const BookingPage = () => {
                           isExpressPreSelected
                             ? "opacity-50 cursor-not-allowed"
                             : "cursor-pointer"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center">
                           <FaUser className="text-blue-600 mr-2" />
                           <div>
@@ -4982,7 +5066,8 @@ const BookingPage = () => {
                           selectedMedicationMethod === "staff-collection"
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-gray-300"
-                        }`}>
+                        }`}
+                      >
                         <div className="flex items-center">
                           <FaUser className="text-blue-600 mr-2" />
                           <div>
@@ -5018,7 +5103,8 @@ const BookingPage = () => {
                             selectedMedicationMethod === "postal-delivery"
                               ? "border-blue-500 bg-blue-50"
                               : "border-gray-200 hover:border-gray-300"
-                          }`}>
+                          }`}
+                        >
                           <div className="flex items-center">
                             <FaEnvelope className="text-blue-600 mr-2" />
                             <div>
@@ -5071,7 +5157,8 @@ const BookingPage = () => {
                             `Selected kit: ${kit.label}`,
                             3000
                           );
-                        }}>
+                        }}
+                      >
                         <div className="font-medium">{kit.label}</div>
                         <p className="text-sm text-gray-600 mb-2">
                           {kit.value === "K001"
@@ -5088,7 +5175,8 @@ const BookingPage = () => {
                             <svg
                               className="w-4 h-4 mr-1"
                               fill="currentColor"
-                              viewBox="0 0 20 20">
+                              viewBox="0 0 20 20"
+                            >
                               <path
                                 fillRule="evenodd"
                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -5110,7 +5198,8 @@ const BookingPage = () => {
                         <svg
                           className="w-5 h-5 text-blue-600 mr-2 mt-0.5"
                           fill="currentColor"
-                          viewBox="0 0 20 20">
+                          viewBox="0 0 20 20"
+                        >
                           <path
                             fillRule="evenodd"
                             d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -5142,13 +5231,15 @@ const BookingPage = () => {
                     <span>Appointment</span>
                   </Space>
                 }
-                style={{ marginBottom: 24 }}>
+                style={{ marginBottom: 24 }}
+              >
                 {/* Date Selection */}
                 <div className="mb-6">
                   <Form.Item
                     name="appointmentDate"
                     label="Appointment date"
-                    rules={[{ validator: validateAppointmentDate }]}>
+                    rules={[{ validator: validateAppointmentDate }]}
+                  >
                     <DatePicker
                       style={{ width: "100%" }}
                       placeholder="Select appointment date"
@@ -5189,7 +5280,8 @@ const BookingPage = () => {
                             required: true,
                             message: "Please select a time slot!",
                           },
-                        ]}>
+                        ]}
+                      >
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {loadingSlots ? (
                             <div className="col-span-full text-center py-4">
@@ -5219,7 +5311,8 @@ const BookingPage = () => {
                                       setTimeSlot(time);
                                       form.setFieldsValue({ timeSlot: time });
                                     }
-                                  }}>
+                                  }}
+                                >
                                   <span className="text-base font-medium">
                                     {time}
                                   </span>
@@ -5270,10 +5363,12 @@ const BookingPage = () => {
                 <TeamOutlined style={{ color: "#1890ff" }} />
                 <span>Test Subject Information</span>
               </Space>
-            }>
+            }
+          >
             <Text
               type="secondary"
-              style={{ display: "block", marginBottom: 16 }}>
+              style={{ display: "block", marginBottom: 16 }}
+            >
               📋 Please fill in the information completely and accurately to
               ensure test results.
             </Text>
@@ -5289,7 +5384,8 @@ const BookingPage = () => {
                 secondPerson: {
                   gender: "male",
                 },
-              }}>
+              }}
+            >
               {/* First Person */}
               <Card
                 type="inner"
@@ -5299,10 +5395,12 @@ const BookingPage = () => {
                     <span>First Person (Representative)</span>
                   </Space>
                 }
-                style={{ marginBottom: 24 }}>
+                style={{ marginBottom: 24 }}
+              >
                 <Text
                   type="warning"
-                  style={{ display: "block", marginBottom: 16 }}>
+                  style={{ display: "block", marginBottom: 16 }}
+                >
                   ⚠️ The representative must be over 18 years of age and will be
                   responsible for this booking.
                 </Text>
@@ -5322,7 +5420,8 @@ const BookingPage = () => {
                           message:
                             "First and last name must be at least 2 characters!",
                         },
-                      ]}>
+                      ]}
+                    >
                       <Input
                         placeholder="Enter your Full Name"
                         prefix={<UserOutlined />}
@@ -5334,7 +5433,8 @@ const BookingPage = () => {
                     <Form.Item
                       name={["firstPerson", "dateOfBirth"]}
                       label="Date of birth"
-                      rules={[{ validator: validateAge18 }]}>
+                      rules={[{ validator: validateAge18 }]}
+                    >
                       <DatePicker
                         style={{ width: "100%" }}
                         placeholder="Enter date of birth"
@@ -5355,7 +5455,8 @@ const BookingPage = () => {
                       label="Biological Sex"
                       rules={[
                         { required: true, message: "Vui lòng chọn giới tính!" },
-                      ]}>
+                      ]}
+                    >
                       <Radio.Group
                         onChange={() => {
                           setTimeout(() => {
@@ -5363,7 +5464,8 @@ const BookingPage = () => {
                               ["firstPerson", "relationship"],
                             ]);
                           }, 0);
-                        }}>
+                        }}
+                      >
                         <Radio value="male">Male</Radio>
                         <Radio value="female">Female</Radio>
                       </Radio.Group>
@@ -5374,7 +5476,8 @@ const BookingPage = () => {
                     <Form.Item
                       name={["firstPerson", "phoneNumber"]}
                       label="Phone number"
-                      rules={[{ validator: validatePhoneNumber }]}>
+                      rules={[{ validator: validatePhoneNumber }]}
+                    >
                       <Input
                         placeholder="0123456789 or +84123456789"
                         prefix={<PhoneOutlined />}
@@ -5389,7 +5492,8 @@ const BookingPage = () => {
                       rules={[
                         { required: true, message: "Please enter email!" },
                         { type: "email", message: "Invalid email!" },
-                      ]}>
+                      ]}
+                    >
                       <Input
                         placeholder="Enter your email"
                         prefix={<MailOutlined />}
@@ -5402,7 +5506,8 @@ const BookingPage = () => {
                       name={["firstPerson", "relationship"]}
                       label="Relationship"
                       rules={[{ validator: validateGenderRelationship }]}
-                      dependencies={[["firstPerson", "gender"]]}>
+                      dependencies={[["firstPerson", "gender"]]}
+                    >
                       <Select
                         placeholder="Select relationship"
                         onChange={(value) => {
@@ -5491,7 +5596,8 @@ const BookingPage = () => {
                               }
                             }
                           }
-                        }}>
+                        }}
+                      >
                         {availableRelationships.map((rel) => (
                           <Option key={rel} value={rel}>
                             {rel}
@@ -5531,7 +5637,8 @@ const BookingPage = () => {
                             return Promise.resolve();
                           },
                         }),
-                      ]}>
+                      ]}
+                    >
                       {selectedService?.name ===
                         "Non-Invasive Relationship Testing (NIPT)" &&
                       form.getFieldValue(["firstPerson", "relationship"]) ===
@@ -5580,7 +5687,8 @@ const BookingPage = () => {
                           message: "Please enter your Personal ID!",
                         },
                         { validator: validatePersonalId },
-                      ]}>
+                      ]}
+                    >
                       <Input
                         placeholder="Enter your Personal ID"
                         prefix={<IdcardOutlined />}
@@ -5604,7 +5712,8 @@ const BookingPage = () => {
                     <span>Second Person</span>
                   </Space>
                 }
-                style={{ marginBottom: 24 }}>
+                style={{ marginBottom: 24 }}
+              >
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
                     <Form.Item
@@ -5620,7 +5729,8 @@ const BookingPage = () => {
                           message:
                             "First and last name must be at least 2 characters!",
                         },
-                      ]}>
+                      ]}
+                    >
                       <Input
                         placeholder="Enter your Full Name"
                         prefix={<UserOutlined />}
@@ -5633,7 +5743,8 @@ const BookingPage = () => {
                       name={["secondPerson", "dateOfBirth"]}
                       label="Date of birth"
                       rules={[{ validator: validateSecondPersonAge }]}
-                      dependencies={[["secondPerson", "relationship"]]}>
+                      dependencies={[["secondPerson", "relationship"]]}
+                    >
                       <DatePicker
                         style={{ width: "100%" }}
                         placeholder="Select date of birth"
@@ -5655,7 +5766,8 @@ const BookingPage = () => {
                           required: true,
                           message: "Please select biological sex!",
                         },
-                      ]}>
+                      ]}
+                    >
                       <Radio.Group
                         onChange={() => {
                           setTimeout(() => {
@@ -5663,7 +5775,8 @@ const BookingPage = () => {
                               ["secondPerson", "relationship"],
                             ]);
                           }, 0);
-                        }}>
+                        }}
+                      >
                         <Radio value="male">Male</Radio>
                         <Radio value="female">Female</Radio>
                       </Radio.Group>
@@ -5680,7 +5793,8 @@ const BookingPage = () => {
                       dependencies={[
                         ["firstPerson", "relationship"],
                         ["secondPerson", "gender"],
-                      ]}>
+                      ]}
+                    >
                       <Select
                         placeholder="Select relationship"
                         onChange={(value) => {
@@ -5740,7 +5854,8 @@ const BookingPage = () => {
                               }
                             }
                           }
-                        }}>
+                        }}
+                      >
                         {availableSecondPersonRelationships.map((rel) => (
                           <Option key={rel} value={rel}>
                             {rel}
@@ -5780,7 +5895,8 @@ const BookingPage = () => {
                             return Promise.resolve();
                           },
                         }),
-                      ]}>
+                      ]}
+                    >
                       {selectedService?.name ===
                         "Non-Invasive Relationship Testing (NIPT)" &&
                       form.getFieldValue(["secondPerson", "relationship"]) ===
@@ -5825,7 +5941,8 @@ const BookingPage = () => {
                       <Form.Item
                         name={["secondPerson", "personalId"]}
                         label="Personal ID"
-                        rules={[{ validator: validatePersonalId }]}>
+                        rules={[{ validator: validatePersonalId }]}
+                      >
                         <Input
                           placeholder="Enter Personal ID"
                           prefix={<IdcardOutlined />}
@@ -6002,7 +6119,8 @@ const BookingPage = () => {
                     selectedMedicationMethod === "postal-delivery"
                       ? "opacity-50 cursor-not-allowed"
                       : ""
-                  }`}>
+                  }`}
+                >
                   <input
                     type="radio"
                     value="cash"
@@ -6051,7 +6169,8 @@ const BookingPage = () => {
                 htmlType="submit"
                 loading={isSubmitting}
                 className="w-full h-12 text-lg font-semibold"
-                onClick={() => form.submit()}>
+                onClick={() => form.submit()}
+              >
                 {isSubmitting ? "Processing..." : "Confirm booking"}
               </Button>
             </div>
