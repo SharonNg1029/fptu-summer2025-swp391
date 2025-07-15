@@ -29,14 +29,19 @@ const Footer = () => {
           </p>
           <div className="flex gap-3 text-[30px] mt-[15px]">
             <a
-              href="https://www.facebook.com/elgus030214"
+              href="https://www.facebook.com/SeoLanhtalkshow"
               target="_blank"
               rel="noopener noreferrer">
               <FacebookFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
             </a>
             <TwitterOutlined className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
             <InstagramOutlined className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
-            <YoutubeFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
+            <a
+              href="https://www.youtube.com/@Nngan204"
+              target="_blank"
+              rel="noopener noreferrer">
+              <YoutubeFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
+            </a>
           </div>
         </div>
 

@@ -255,8 +255,8 @@ const ManagerOverviewPage = () => {
             showIcon
             message={
               <span>
-                There are currently <b>{reportsNeedAssign}</b> reports that need
-                staff assignment.{" "}
+                There are currently <b>{reportsNeedAssign}</b> bookings that
+                need staff assignment.{" "}
                 <Button
                   type="link"
                   icon={<ArrowRightOutlined />}

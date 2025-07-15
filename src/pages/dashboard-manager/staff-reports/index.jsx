@@ -60,6 +60,9 @@ const ViewReports = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [staffFilter, setStaffFilter] = useState("");
+  // Assign tab filters
+  const [assignSearchText, setAssignSearchText] = useState("");
+  const [assignStatusFilter, setAssignStatusFilter] = useState("");
   // Đã xóa lọc theo ngày, không cần dateRange
   const managerID = useSelector(selectManagerID);
 
@@ -126,6 +129,11 @@ const ViewReports = () => {
       dataIndex: "reportID",
       key: "reportID",
       width: 100,
+      sorter: (a, b) => {
+        const reportA = parseInt(a.reportID) || 0;
+        const reportB = parseInt(b.reportID) || 0;
+        return reportA - reportB;
+      },
     },
     {
       title: "Staff ID",
@@ -133,12 +141,22 @@ const ViewReports = () => {
       key: "staffID",
       width: 120,
       render: (id) => id || <Tag color="volcano">Unassigned</Tag>,
+      sorter: (a, b) => {
+        const staffA = a.staffID || "";
+        const staffB = b.staffID || "";
+        return staffA.toString().localeCompare(staffB.toString());
+      },
     },
     {
       title: "Booking ID",
       dataIndex: "bookingID",
       key: "bookingID",
       width: 100,
+      sorter: (a, b) => {
+        const bookingA = parseInt(a.bookingID) || 0;
+        const bookingB = parseInt(b.bookingID) || 0;
+        return bookingA - bookingB;
+      },
     },
     {
       title: "Appointment Time",
@@ -188,7 +206,7 @@ const ViewReports = () => {
       key: "note",
       render: (note) => note || "-",
       ellipsis: true,
-      width: 180,
+      width: 150,
     },
     {
       title: "Approved",
@@ -463,10 +481,11 @@ const ViewReports = () => {
       title: "Report ID",
       dataIndex: "reportID",
       key: "reportID",
-      sorter: (a, b) =>
-        (a.reportID || "")
-          .toString()
-          .localeCompare((b.reportID || "").toString()),
+      sorter: (a, b) => {
+        const reportA = parseInt(a.reportID) || 0;
+        const reportB = parseInt(b.reportID) || 0;
+        return reportA - reportB;
+      },
       width: 100,
     },
     {
@@ -482,6 +501,11 @@ const ViewReports = () => {
       dataIndex: "bookingID",
       key: "bookingID",
       render: (bookingID) => bookingID || "-",
+      sorter: (a, b) => {
+        const bookingA = parseInt(a.bookingID || a.bookingId) || 0;
+        const bookingB = parseInt(b.bookingID || b.bookingId) || 0;
+        return bookingA - bookingB;
+      },
       width: 100,
     },
     {
@@ -523,6 +547,7 @@ const ViewReports = () => {
       title: "Note",
       dataIndex: "note",
       key: "note",
+      width: 160,
       render: (note) => note || "-",
       ellipsis: true,
     },
@@ -549,14 +574,6 @@ const ViewReports = () => {
         ),
       width: 100,
     },
-    {
-      title: "Created Date",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "-"),
-      sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
-      width: 120,
-    },
   ];
 
   const assignBookingColumns = [
@@ -566,6 +583,11 @@ const ViewReports = () => {
       key: "assignedID",
       width: 100,
       render: (id) => id || "-",
+      sorter: (a, b) => {
+        const assignedA = parseInt(a.assignedID || a.assignedId) || 0;
+        const assignedB = parseInt(b.assignedID || b.assignedId) || 0;
+        return assignedA - assignedB;
+      },
     },
     {
       title: "Booking ID",
@@ -573,6 +595,11 @@ const ViewReports = () => {
       key: "bookingID",
       width: 100,
       render: (id) => id || "-",
+      sorter: (a, b) => {
+        const bookingA = parseInt(a.bookingID || a.bookingId) || 0;
+        const bookingB = parseInt(b.bookingID || b.bookingId) || 0;
+        return bookingA - bookingB;
+      },
     },
     {
       title: "Appointment Date",
@@ -644,12 +671,44 @@ const ViewReports = () => {
             <Title level={3} style={{ margin: 0 }}>
               Reports Awaiting Assignment (
               {
-                bookingAssigned.filter(
-                  (b) =>
-                    b.status === "Awaiting Confirmation" ||
-                    b.status === "Awaiting confirm" ||
-                    b.status == "Payment Confirmed"
-                ).length
+                bookingAssigned.filter((b) => {
+                  // Status filter logic
+                  let statusOk = true;
+                  if (assignStatusFilter) {
+                    statusOk = b.status === assignStatusFilter;
+                  } else {
+                    // Default filter when no status filter is selected
+                    statusOk =
+                      b.status === "Awaiting Confirmation" ||
+                      b.status === "Payment Confirmed";
+                  }
+
+                  // Search filter logic
+                  let searchOk = true;
+                  if (assignSearchText) {
+                    const search = assignSearchText.trim().toLowerCase();
+                    searchOk =
+                      (b.assignedID &&
+                        b.assignedID
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (b.assignedId &&
+                        b.assignedId
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (b.bookingID &&
+                        b.bookingID
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (b.bookingId &&
+                        b.bookingId.toString().toLowerCase().includes(search));
+                  }
+
+                  return statusOk && searchOk;
+                }).length
               }
               )
             </Title>
@@ -661,50 +720,78 @@ const ViewReports = () => {
               Refresh
             </Button>
           </div>
+          {/* Filter Controls for Assign Tab */}
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={8}>
+              <Input
+                placeholder="Search by Assigned ID, Booking ID"
+                value={assignSearchText}
+                onChange={(e) => setAssignSearchText(e.target.value)}
+                prefix={<SearchOutlined />}
+              />
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Filter by Status"
+                value={assignStatusFilter}
+                onChange={(value) => setAssignStatusFilter(value)}
+                style={{ width: "100%" }}
+                allowClear={true}>
+                <Option value="Awaiting Confirmation">
+                  Awaiting Confirmation
+                </Option>
+                <Option value="Payment Confirmed">Payment Confirmed</Option>
+              </Select>
+            </Col>
+          </Row>
           <Card>
             <Table
               loading={loading}
               columns={assignBookingColumns}
               dataSource={bookingAssigned
-                .filter(
-                  (b) =>
-                    b.status === "Awaiting confirm" ||
-                    b.status === "Awaiting Confirmation" ||
-                    b.status == "Payment Confirmed"
-                )
+                .filter((b) => {
+                  // Status filter logic
+                  let statusOk = true;
+                  if (assignStatusFilter) {
+                    statusOk = b.status === assignStatusFilter;
+                  } else {
+                    // Default filter when no status filter is selected
+                    statusOk =
+                      b.status === "Awaiting Confirmation" ||
+                      b.status === "Payment Confirmed";
+                  }
+
+                  // Search filter logic
+                  let searchOk = true;
+                  if (assignSearchText) {
+                    const search = assignSearchText.trim().toLowerCase();
+                    searchOk =
+                      (b.assignedID &&
+                        b.assignedID
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (b.assignedId &&
+                        b.assignedId
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (b.bookingID &&
+                        b.bookingID
+                          .toString()
+                          .toLowerCase()
+                          .includes(search)) ||
+                      (b.bookingId &&
+                        b.bookingId.toString().toLowerCase().includes(search));
+                  }
+
+                  return statusOk && searchOk;
+                })
                 .sort((a, b) => {
-                  // 1. Sort by appointmentDate (closest first)
-                  const dateA = a.appointmentDate
-                    ? new Date(a.appointmentDate)
-                    : new Date(0);
-                  const dateB = b.appointmentDate
-                    ? new Date(b.appointmentDate)
-                    : new Date(0);
-                  if (dateA.getTime() !== dateB.getTime()) {
-                    return dateA - dateB;
-                  }
-                  // 2. If same date, sort by appointmentTime (closest first)
-                  const timeA = a.appointmentTime || "";
-                  const timeB = b.appointmentTime || "";
-                  const getMinutes = (t) => {
-                    if (!t) return 0;
-                    const match = t.match(/(\d{1,2}):(\d{2})/);
-                    if (match) {
-                      return (
-                        parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
-                      );
-                    }
-                    return 0;
-                  };
-                  const minA = getMinutes(timeA);
-                  const minB = getMinutes(timeB);
-                  if (minA !== minB) {
-                    return minA - minB;
-                  }
-                  // 3. If same time, sort by bookingID (ascending)
+                  // Sort by bookingID (descending)
                   const bookingA = a.bookingID || a.bookingId || 0;
                   const bookingB = b.bookingID || b.bookingId || 0;
-                  return bookingA.toString().localeCompare(bookingB.toString());
+                  return bookingB.toString().localeCompare(bookingA.toString());
                 })}
               rowKey={(record) =>
                 record.assignedID ||
@@ -724,7 +811,7 @@ const ViewReports = () => {
                   setAssignPagination({ current: page, pageSize: pageSize }),
               }}
               locale={{
-                emptyText: "Hiện tại chưa có booking nào cần phân công",
+                emptyText: "Don't have any bookings to assign",
               }}
               scroll={{ x: 800 }}
             />
@@ -785,38 +872,10 @@ const ViewReports = () => {
                     r.status !== "Pending"
                 )
                 .sort((a, b) => {
-                  // 1. Sort by appointmentDate (closest first)
-                  const dateA = a.appointmentDate
-                    ? new Date(a.appointmentDate)
-                    : new Date(0);
-                  const dateB = b.appointmentDate
-                    ? new Date(b.appointmentDate)
-                    : new Date(0);
-                  if (dateA.getTime() !== dateB.getTime()) {
-                    return dateA - dateB;
-                  }
-                  // 2. If same date, sort by appointmentTime (closest first)
-                  const timeA = a.appointmentTime || "";
-                  const timeB = b.appointmentTime || "";
-                  const getMinutes = (t) => {
-                    if (!t) return 0;
-                    const match = t.match(/(\d{1,2}):(\d{2})/);
-                    if (match) {
-                      return (
-                        parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
-                      );
-                    }
-                    return 0;
-                  };
-                  const minA = getMinutes(timeA);
-                  const minB = getMinutes(timeB);
-                  if (minA !== minB) {
-                    return minA - minB;
-                  }
-                  // 3. If same time, sort by bookingID (ascending)
+                  // Sort by bookingID (descending)
                   const bookingA = a.bookingID || a.bookingId || 0;
                   const bookingB = b.bookingID || b.bookingId || 0;
-                  return bookingA.toString().localeCompare(bookingB.toString());
+                  return bookingB.toString().localeCompare(bookingA.toString());
                 })}
               rowKey={(record) =>
                 record.id || record.bookingId || Math.random().toString()
@@ -833,7 +892,7 @@ const ViewReports = () => {
                   setApprovePagination({ current: page, pageSize: pageSize }),
               }}
               locale={{
-                emptyText: "Hiện tại chưa có report nào cần duyệt",
+                emptyText: "Don't have any reports to approve",
               }}
               scroll={{ x: 900 }}
             />
@@ -957,15 +1016,11 @@ const ViewReports = () => {
                   }
                   return statusOk && staffOk && searchOk;
                 })
-                // Sắp xếp theo ngày tạo mới nhất đến cũ nhất
+                // Sắp xếp theo bookingID giảm dần
                 .sort((a, b) => {
-                  const dateA = a.createdAt
-                    ? new Date(a.createdAt)
-                    : new Date(0);
-                  const dateB = b.createdAt
-                    ? new Date(b.createdAt)
-                    : new Date(0);
-                  return dateB - dateA;
+                  const bookingA = a.bookingID || a.bookingId || 0;
+                  const bookingB = b.bookingID || b.bookingId || 0;
+                  return bookingB.toString().localeCompare(bookingA.toString());
                 })}
               rowKey={(record) =>
                 record.id || record.bookingId || Math.random().toString()
