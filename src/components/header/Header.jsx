@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -12,16 +12,26 @@ const Header = () => {
 
   const location = useLocation();
 
-  const userState = useSelector((state) => state.user);
-  const user = userState?.currentUser;
-  const isAuthenticated = userState?.isAuthenticated;
+  // CHUẨN HÓA LẤY USER
+  const { currentUser: user, isAuthenticated } = useSelector((state) => state.user || {});
 
-  // CHỈ LẤY FULLNAME hoặc name, KHÔNG LẤY EMAIL
-  const userDisplayName =
-    user?.fullName ||
-    user?.name ||
-    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
-    "Guest";
+  // Tên hiển thị ưu tiên: fullName > name > firstName lastName > Guest
+  const userDisplayName = useMemo(() => {
+    if (!user) return "Guest";
+    if (user.fullName && user.fullName.trim()) return user.fullName;
+    if (user.name && user.name.trim()) return user.name;
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
+    const full = `${firstName} ${lastName}`.trim();
+    return full || "Guest";
+  }, [user]);
+
+  // Avatar ưu tiên: file /media > avatar url > mặc định
+  const userAvatar = useMemo(() => {
+    if (!user) return "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
+    if (user.avatar?.startsWith("/media")) return `/api${user.avatar}`;
+    return user.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg";
+  }, [user]);
 
   const navItems = [
     { id: 1, label: "Home", href: "/" },
@@ -309,11 +319,7 @@ const Header = () => {
                     tabIndex={-1}
                   >
                     <img
-                      src={
-                        user?.avatar?.startsWith("/media")
-                        ? `/api${user.avatar}`
-                        : user?.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"
-                      }
+                      src={userAvatar}
                       alt={userDisplayName}
                       className="h-12 w-12 rounded-full object-cover border-2 border-gray-300"
                       onError={(e) => {
