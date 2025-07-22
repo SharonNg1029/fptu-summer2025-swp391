@@ -18,6 +18,7 @@ import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { login } from "../../redux/features/userSlice";
 import { useDispatch } from "react-redux";
 import * as yup from 'yup';
+import moment from "moment";
 
 // ✅ Yup validation schema với vanilla JavaScript date validation
 const validationSchema = yup.object().shape({
@@ -118,6 +119,32 @@ const validationSchema = yup.object().shape({
         return dateToCheck > hundredYearsAgo && dateToCheck <= today;
       } catch (error) {
         console.error('DOB reasonable validation error:', error);
+        return false;
+      }
+    })
+    .test('dob-minimum-age', 'You must be at least 18 years old to register', (value) => {
+      if (!value) return false;
+      
+      try {
+        let dateToCheck;
+        
+        if (value && typeof value === 'object' && value.format) {
+          dateToCheck = new Date(value.format('YYYY-MM-DD'));
+        } else if (value instanceof Date) {
+          dateToCheck = value;
+        } else if (typeof value === 'string') {
+          dateToCheck = new Date(value);
+        } else {
+          return false;
+        }
+
+        const today = new Date();
+        const eighteenYearsAgo = new Date();
+        eighteenYearsAgo.setFullYear(today.getFullYear() - 18);
+        
+        return dateToCheck <= eighteenYearsAgo;
+      } catch (error) {
+        console.error('DOB minimum age validation error:', error);
         return false;
       }
     }),
@@ -340,8 +367,85 @@ function RegisterForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [currentToastId, setCurrentToastId] = useState(null);
+  const [form] = Form.useForm();
 
   const GOOGLE_CLIENT_ID = "26142191146-7u8f63rgtupdv8v6kv8ug307j55hjfob.apps.googleusercontent.com";
+
+  // Real-time validation handlers
+  const handleFieldValidation = async (fieldName, value) => {
+    try {
+      const result = await validateField(fieldName, value);
+      if (!result.isValid) {
+        toast.error(result.message);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      toast.error(`Validation error: ${error.message}`);
+      return false;
+    }
+  };
+
+  const handleFullNameBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('fullname', value);
+    }
+  };
+
+  const handleUsernameBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('username', value);
+    }
+  };
+
+  const handleEmailBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('email', value);
+    }
+  };
+
+  const handlePasswordBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('password', value);
+    }
+  };
+
+  const handlePhoneBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('phone', value);
+    }
+  };
+
+  const handleDobChange = (date) => {
+    if (date) {
+      handleFieldValidation('dob', date);
+    }
+  };
+
+  const handleAddressBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('address', value);
+    }
+  };
+
+  const handleGenderChange = (value) => {
+    if (value !== undefined && value !== null) {
+      handleFieldValidation('gender', value);
+    }
+  };
+
+  const handleAgreementChange = (e) => {
+    const checked = e.target.checked;
+    if (!checked) {
+      toast.error("You must agree to the Terms and Privacy Policy");
+    }
+  };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -506,6 +610,13 @@ function RegisterForm() {
   const handlePhoneChange = (e) => {
     const formatted = formatPhoneNumber(e.target.value);
     e.target.value = formatted;
+    
+    // Validate phone format while typing
+    if (formatted.length === 10) {
+      handleFieldValidation('phone', formatted);
+    } else if (formatted.length > 0) {
+      toast.error("Phone number must start with 0 and have exactly 10 digits");
+    }
   };
 
   return (
@@ -537,6 +648,7 @@ function RegisterForm() {
             onFinishFailed={onFinishFailed}
             autoComplete="off"
             size="small"
+            form={form}
           >
             <div className="form-row">
               <div className="form-col">
@@ -558,7 +670,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Enter your full name" />
+                  <Input 
+                    placeholder="Enter your full name" 
+                    onBlur={handleFullNameBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -579,7 +694,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Choose a username" />
+                  <Input 
+                    placeholder="Choose a username" 
+                    onBlur={handleUsernameBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -601,7 +719,10 @@ function RegisterForm() {
                   ]}
                   hasFeedback
                 >
-                  <Input.Password placeholder="Create a password" />
+                  <Input.Password 
+                    placeholder="Create a password" 
+                    onBlur={handlePasswordBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -623,7 +744,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Enter your email" />
+                  <Input 
+                    placeholder="Enter your email" 
+                    onBlur={handleEmailBlur}
+                  />
                 </Form.Item>
               </div>
 
@@ -649,6 +773,7 @@ function RegisterForm() {
                   <Input 
                     placeholder="Enter your phone number (0xxxxxxxxx)"
                     onChange={handlePhoneChange}
+                    onBlur={handlePhoneBlur}
                     maxLength={10}
                   />
                 </Form.Item>
@@ -672,9 +797,10 @@ function RegisterForm() {
                   ]}
                 >
                   <DatePicker
-                    placeholder="Select date of birth"
+                    placeholder="Enter date of birth"
                     style={{ width: "100%" }}
-                    format="YYYY/MM/DD"
+                    format="DD/MM/YYYY"
+                    onChange={handleDobChange}
                     disabledDate={(current) => {
                       // ✅ Vanilla JavaScript date validation
                       if (!current) return false;
@@ -683,9 +809,13 @@ function RegisterForm() {
                       const hundredYearsAgo = new Date();
                       hundredYearsAgo.setFullYear(today.getFullYear() - 100);
                       
+                      // ✅ Minimum age 18 years
+                      const eighteenYearsAgo = new Date();
+                      eighteenYearsAgo.setFullYear(today.getFullYear() - 18);
+                      
                       const currentDate = current.toDate();
                       
-                      return currentDate > today || currentDate < hundredYearsAgo;
+                      return currentDate > today || currentDate < hundredYearsAgo || currentDate > eighteenYearsAgo;
                     }}
                   />
                 </Form.Item>
@@ -708,7 +838,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Enter your address" />
+                  <Input 
+                    placeholder="Enter your address" 
+                    onBlur={handleAddressBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -729,7 +862,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Select placeholder="Select gender">
+                  <Select 
+                    placeholder="Select gender"
+                    onChange={handleGenderChange}
+                  >
                     <Select.Option value={0}>Male</Select.Option>
                     <Select.Option value={1}>Female</Select.Option>
                   </Select>

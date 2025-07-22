@@ -6,107 +6,125 @@ import { FaCalendar, FaUser, FaArrowRight, FaFilter, FaDna, FaFlask, FaGavel, Fa
 const articles = [
   {
     id: 1,
-    title: "Next-Generation DNA Testing Technology in 2024",
+    title: "ILLUMINA - Công nghệ và tiên phong về xét nghiệm Gen tại Việt Nam",
     category: "Knowledge",
-    excerpt: "Discover the latest breakthroughs in DNA testing technology with 99.99% accuracy and rapid processing speed.",
+    excerpt: "Illumina được ví như 'người khổng lồ' trong lĩnh vực giải trình tự Gen, là công ty thế giới về giải trình tự DNA và công nghệ sinh học phục vụ khách hàng trong việc nghiên cứu, lâm sàng và ứng dụng.",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop",
-    slug: "next-generation-dna-testing-technology-2024",
-    author: "Dr. Nguyen Minh Khoa",
+
+    slug: "illumina-cong-nghe-tien-phong-xet-nghiem-gen-viet-nam",
+    author: "DNA Testing",
+
     date: "2024-01-25",
-    readTime: "8 min read",
+    readTime: "10 min read",
     featured: true
   },
   {
     id: 2,
-    title: "Administrative Procedures for DNA Testing in Vietnam",
+    title: "Xét nghiệm ADN dân sự và pháp lý: so sánh điểm giống và khác nhau",
     category: "Administration",
-    excerpt: "A detailed guide to the required administrative procedures for conducting DNA tests as regulated by the Ministry of Health.",
+    excerpt: "Tìm hiểu sự khác biệt giữa xét nghiệm ADN dân sự và pháp lý để lựa chọn đúng loại xét nghiệm phù hợp với mục đích sử dụng của bạn.",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&fit=crop",
-    slug: "administrative-procedures-dna-testing-vietnam",
-    author: "Lawyer Tran Van Minh",
-    date: "2024-01-23",
+
+    slug: "xet-nghiem-adn-dan-su-va-phap-ly-so-sanh-diem-giong-va-khac-nhau",
+    author: "GeneViet",
+    date: "2024-03-15",
+
     readTime: "10 min read",
-    featured: false
+    featured: true
   },
   {
     id: 3,
-    title: "Breaking News: DNA Law 2024 Effective from March",
-    category: "News",
-    excerpt: "The new DNA testing law officially takes effect, bringing many positive changes for the public.",
+    title: "Xét nghiệm ADN cha con dân sự là gì?",
+    category: "Knowledge",
+    excerpt: "Ngày nay, dịch vụ xét nghiệm ADN cha con dân sự được rất nhiều người quan tâm. Vậy, xét nghiệm ADN là gì? Chi phí hết bao nhiêu? Có thể sử dụng mẫu phẩm gì?",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
-    slug: "breaking-news-dna-law-2025-effective-march",
-    author: "Reporter Le Thi Hoa",
-    date: "2024-01-22",
-    readTime: "5 min read",
+
+    slug: "xet-nghiem-adn-cha-con-dan-su-la-gi",
+    author: "DNA Testing",
+    date: "2024-06-25",
+    readTime: "8 min read",
+
     featured: true
   },
   {
     id: 4,
-    title: "Resolving Inheritance Disputes Using DNA Testing",
-    category: "Civil",
-    excerpt: "The crucial role of DNA testing in resolving family inheritance disputes.",
+    title: "Phân Biệt Xét Nghiệm ADN Dân Sự Và Hành Chính",
+    category: "Knowledge",
+    excerpt: "Hiểu rõ sự khác biệt giữa xét nghiệm ADN dân sự và hành chính để lựa chọn đúng loại xét nghiệm phù hợp với nhu cầu của bạn.",
     image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=600&fit=crop",
-    slug: "resolving-inheritance-disputes-through-dna-testing",
-    author: "Judge Pham Thi Lan",
-    date: "2024-01-20",
-    readTime: "12 min read",
-    featured: false
+
+    slug: "phan-biet-xet-nghiem-adn-dan-su-va-hanh-chinh",
+    author: "TS. Nguyễn Văn Minh",
+    date: "2024-06-20",
+    readTime: "8 phút đọc",
+    featured: true
+
   },
   {
     id: 5,
-    title: "How DNA Testing Works: Scientific Principles Explained",
-    category: "Knowledge",
-    excerpt: "Explore the scientific principles behind DNA testing and how this technology operates.",
+    title: "Bảng giá dịch vụ của Genetix",
+    category: "News",
+    excerpt: "Trung tâm xét nghiệm ADN Genetix cung cấp đa dạng các gói dịch vụ xét nghiệm ADN với mức giá cạnh tranh và ưu đãi hấp dẫn.",
     image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&h=600&fit=crop",
-    slug: "decoding-life-understanding-dna-testing-mechanism",
-    author: "Prof. Vu Thanh Son",
-    date: "2024-01-18",
-    readTime: "15 min read",
+
+    slug: "bang-gia-dich-vu-genetix",
+    author: "Genetix DNA Center",
+    date: "2024-06-15",
+    readTime: "5 phút đọc",
+
     featured: true
   },
   {
     id: 6,
-    title: "How to Register for DNA Testing Online",
+    title: "Thủ tục xét nghiệm - Xét nghiệm ADN",
     category: "Administration",
-    excerpt: "Step-by-step guide to conveniently register for DNA testing online via the Ministry of Health's electronic system.",
+    excerpt: "Hướng dẫn chi tiết về thủ tục xét nghiệm ADN cho mục đích dân sự, cá nhân và mục đích pháp lý tại Trung tâm công nghệ sinh học phân tử ADNchacon.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    slug: "online-dna-testing-registration",
-    author: "Specialist Nguyen Van Duc",
+
+    slug: "thu-tuc-xet-nghiem-adn",
+    author: "ADNchacon",
+
     date: "2024-01-16",
     readTime: "7 min read",
     featured: false
   },
   {
     id: 7,
-    title: "Update: DNA Test Prices Cut by 30% This February",
+    title: "Phân Tích Sâu Hệ Thống Booking Xét Nghiệm ADN: Từ Yêu Cầu Đến Triển Khai",
     category: "News",
-    excerpt: "Great news! DNA testing centers nationwide are offering 30% discounts throughout February 2024.",
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop",
-    slug: "update-dna-testing-fees-reduced-30-percent-february",
-    author: "Reporter Hoang Minh Tuan",
+
+    excerpt: "Phân tích chi tiết về quy trình thiết kế và triển khai hệ thống đặt lịch xét nghiệm ADN, từ yêu cầu nghiệp vụ đến trải nghiệm người dùng và quản lý trạng thái.",
+    image: "/images/big-data.png",
+    slug: "phan-tich-he-thong-booking-xet-nghiem-adn",
+    author: "Phòng Phát Triển Sản Phẩm",
+
     date: "2024-01-15",
-    readTime: "4 min read",
+    readTime: "15 min read",
     featured: false
   },
   {
     id: 8,
-    title: "Legal Rights When Performing DNA Testing",
+    title: "THÔNG TIN CHI TIẾT VỀ XÉT NGHIỆM ADN PHÁP LÝ TẠI DNA TESTING",
     category: "Civil",
-    excerpt: "Understand the legal rights and obligations of all parties involved in DNA testing under current laws.",
+    excerpt: "Ngày nay, bản kết quả của xét nghiệm ADN huyết thống không chỉ được sử dụng để xác định mối quan hệ huyết thống giữa cha và con trong gia đình, cũng như trong các thủ tục hành chính đăng ký khai sinh ở cấp xã/phường, mà còn được sử dụng làm bằng chứng trong các tranh chấp về quyền nuôi con, quyền cấp dưỡng và quyền thừa kế tại tòa án nhân dân các cấp.",
     image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800&h=600&fit=crop",
-    slug: "legal-rights-obligations-conducting-dna-testing",
-    author: "Lawyer Do Thi Mai",
+
+    slug: "thong-tin-chi-tiet-xet-nghiem-adn-phap-ly-dna-testing",
+    author: "DNA Testing",
+
     date: "2024-01-12",
     readTime: "9 min read",
     featured: true
   },
   {
     id: 9,
-    title: "AI Applications in DNA Result Analysis",
+    title: "AI thiết kế chuỗi ADN, mở ra kỷ nguyên mới công nghệ sinh học",
     category: "Knowledge",
-    excerpt: "Artificial intelligence is revolutionizing the analysis and processing of DNA test results.",
+    excerpt: "Trí tuệ nhân tạo đang cách mạng hóa lĩnh vực sinh học bằng cách thiết kế các chuỗi ADN mới, mở ra kỷ nguyên mới cho công nghệ sinh học và y học.",
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-    slug: "ai-applications-dna-analysis",
+
+    slug: "ai-thiet-ke-chuoi-adn-ky-nguyen-moi-cong-nghe-sinh-hoc",
+
     author: "Dr. Le Minh Hai",
     date: "2024-01-10",
     readTime: "11 min read",
@@ -126,7 +144,7 @@ const Blog = () => {
     { name: "Knowledge", icon: "🧬", color: "from-green-500 to-green-600" },
     { name: "Administration", icon: "🏛️", color: "from-red-500 to-red-600" },
     { name: "News", icon: "📰", color: "from-purple-500 to-purple-600" },
-    { name: "Civil", icon: "⚖️", color: "from-orange-500 to-orange-600" }
+    { name: "Civil", icon: "⚖️", color: "from-orange-500 to-orange-600" },
   ];
 
   // Lọc và sắp xếp bài viết

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { DatePicker } from "antd";
+import moment from "moment";
 import {
   selectUserRole,
   selectCustomerID,
@@ -28,345 +30,6 @@ import {
 import api from "../../configs/axios";
 import { updateUser } from "../../redux/features/userSlice";
 import toast from "react-hot-toast";
-
-// Custom DatePicker Component
-const CustomDatePicker = ({ value, onChange, min, max, className, placeholder, disabled = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [selectedDate, setSelectedDate] = useState(value ? new Date(value) : null);
-  const dropdownRef = useRef(null);
-
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-
-  const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-  // Initialize date from value prop
-  useEffect(() => {
-    if (value) {
-      const date = new Date(value);
-      setSelectedDate(date);
-      setCurrentMonth(date.getMonth());
-      setCurrentYear(date.getFullYear());
-    }
-  }, [value]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Get min/max dates
-  const minDate = min ? new Date(min) : new Date(new Date().getFullYear() - 100, 0, 1);
-  const maxDate = max ? new Date(max) : new Date();
-
-  // Generate calendar days
-  const getDaysInMonth = (month, year) => {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    const days = [];
-
-    // Previous month's trailing days
-    const prevMonth = month === 0 ? 11 : month - 1;
-    const prevYear = month === 0 ? year - 1 : year;
-    const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
-    
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      days.push({
-        day: daysInPrevMonth - i,
-        isCurrentMonth: false,
-        isNextMonth: false,
-        date: new Date(prevYear, prevMonth, daysInPrevMonth - i)
-      });
-    }
-
-    // Current month days
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push({
-        day,
-        isCurrentMonth: true,
-        isNextMonth: false,
-        date: new Date(year, month, day)
-      });
-    }
-
-    // Next month's leading days
-    const remainingDays = 42 - days.length; // 6 weeks * 7 days
-    const nextMonth = month === 11 ? 0 : month + 1;
-    const nextYear = month === 11 ? year + 1 : year;
-    
-    for (let day = 1; day <= remainingDays; day++) {
-      days.push({
-        day,
-        isCurrentMonth: false,
-        isNextMonth: true,
-        date: new Date(nextYear, nextMonth, day)
-      });
-    }
-
-    return days;
-  };
-
-  const handleDateClick = (day) => {
-    if (!day.isCurrentMonth || disabled) return;
-    
-    const newDate = new Date(currentYear, currentMonth, day.day);
-    
-    // Check if date is within min/max bounds
-    if (newDate < minDate || newDate > maxDate) return;
-    
-    setSelectedDate(newDate);
-    const formattedDate = newDate.toISOString().split('T')[0];
-    onChange(formattedDate);
-    setIsOpen(false);
-  };
-
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
-    } else {
-      setCurrentMonth(currentMonth - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear(currentYear + 1);
-    } else {
-      setCurrentMonth(currentMonth + 1);
-    }
-  };
-
-  const handleClear = () => {
-    if (disabled) return;
-    setSelectedDate(null);
-    onChange('');
-    setIsOpen(false);
-  };
-
-  const handleToday = () => {
-    if (disabled) return;
-    const today = new Date();
-    if (today >= minDate && today <= maxDate) {
-      setSelectedDate(today);
-      setCurrentMonth(today.getMonth());
-      setCurrentYear(today.getFullYear());
-      onChange(today.toISOString().split('T')[0]);
-      setIsOpen(false);
-    }
-  };
-
-  const formatDisplayDate = (date) => {
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  const isDateDisabled = (date) => {
-    return date < minDate || date > maxDate;
-  };
-
-  const isDateSelected = (day) => {
-    if (!selectedDate || !day.isCurrentMonth) return false;
-    return selectedDate.getDate() === day.day &&
-           selectedDate.getMonth() === currentMonth &&
-           selectedDate.getFullYear() === currentYear;
-  };
-
-  const isToday = (day) => {
-    if (!day.isCurrentMonth) return false;
-    const today = new Date();
-    return today.getDate() === day.day &&
-           today.getMonth() === currentMonth &&
-           today.getFullYear() === currentYear;
-  };
-
-  const days = getDaysInMonth(currentMonth, currentYear);
-
-  // Generate year options from current year to 100 years ago
-  const yearOptions = [];
-  const currentYearNum = new Date().getFullYear();
-  for (let i = 0; i <= 100; i++) {
-    yearOptions.push(currentYearNum - i);
-  }
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Input Field */}
-      <div
-        className={`w-full px-4 py-2.5 border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer bg-white'} flex items-center justify-between ${className || ''}`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-      >
-        <span className={`vietnamese-text ${selectedDate ? 'text-gray-900' : 'text-gray-500'}`}>
-          {selectedDate ? formatDisplayDate(selectedDate) : (placeholder || 'Select date')}
-        </span>
-        <Calendar className="h-5 w-5 text-gray-400" />
-      </div>
-
-      {/* Dropdown Calendar */}
-      {isOpen && !disabled && (
-        <div 
-          className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl date-picker-dropdown p-4 w-80"
-          style={{ 
-            pointerEvents: 'auto', 
-            zIndex: 99999,
-            position: 'absolute'
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header with Month/Year Dropdowns */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={handlePrevMonth}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              type="button"
-              style={{ pointerEvents: 'auto' }}
-            >
-              <ChevronLeft className="h-5 w-5 text-gray-600" />
-            </button>
-            
-            <div className="flex items-center space-x-2">
-              {/* Month Selector */}
-              <select
-                value={currentMonth}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setCurrentMonth(parseInt(e.target.value));
-                }}
-                className="px-2 py-1 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 vietnamese-text cursor-pointer"
-                style={{ pointerEvents: 'auto', zIndex: 100000 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {months.map((month, index) => (
-                  <option key={index} value={index} className="vietnamese-text">
-                    {month}
-                  </option>
-                ))}
-              </select>
-              
-              {/* Year Selector */}
-              <select
-                value={currentYear}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setCurrentYear(parseInt(e.target.value));
-                }}
-                className="px-2 py-1 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 vietnamese-text cursor-pointer"
-                style={{ pointerEvents: 'auto', zIndex: 100000 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {yearOptions.map((year) => (
-                  <option key={year} value={year} className="vietnamese-text">
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <button
-              onClick={handleNextMonth}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              type="button"
-              style={{ pointerEvents: 'auto' }}
-            >
-              <ChevronRight className="h-5 w-5 text-gray-600" />
-            </button>
-          </div>
-
-          {/* Week Days Header */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {weekDays.map((day) => (
-              <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((day, index) => {
-              const dayDisabled = !day.isCurrentMonth || isDateDisabled(day.date);
-              const selected = isDateSelected(day);
-              const todayDate = isToday(day);
-              
-              return (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDateClick(day);
-                  }}
-                  disabled={dayDisabled}
-                  type="button"
-                  style={{ pointerEvents: 'auto' }}
-                  className={`
-                    w-8 h-8 text-sm rounded transition-colors relative
-                    ${day.isCurrentMonth 
-                      ? dayDisabled
-                        ? 'text-gray-300 cursor-not-allowed'
-                        : selected
-                          ? 'bg-blue-600 text-white font-semibold'
-                          : todayDate
-                            ? 'bg-blue-100 text-blue-800 font-semibold'
-                            : 'text-gray-700 hover:bg-gray-100'
-                      : 'text-gray-300 cursor-default'
-                    }
-                  `}
-                >
-                  {day.day}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Footer Buttons */}
-          <div className="flex justify-between mt-4 pt-3 border-t border-gray-200">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear();
-              }}
-              type="button"
-              style={{ pointerEvents: 'auto' }}
-              className="text-blue-600 hover:text-blue-800 font-medium vietnamese-text transition-colors"
-            >
-              Clear
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToday();
-              }}
-              type="button"
-              style={{ pointerEvents: 'auto' }}
-              className="text-blue-600 hover:text-blue-800 font-medium vietnamese-text transition-colors"
-            >
-              Today
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
@@ -427,28 +90,18 @@ const ProfilePage = () => {
     message: "",
   });
 
-  const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, "0");
-    const day = today.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const getMinDate = () => {
-    const today = new Date();
-    const minYear = today.getFullYear() - 100;
-    return `${minYear}-01-01`;
-  };
-
   const validateDateOfBirth = (dateValue) => {
     if (!dateValue) return { isValid: true, message: "" };
     const selectedDate = new Date(dateValue);
     const today = new Date();
     const hundredYearsAgo = new Date();
     hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+    const eighteenYearsAgo = new Date();
+    eighteenYearsAgo.setFullYear(today.getFullYear() - 18);
+    
     today.setHours(23, 59, 59, 999);
     selectedDate.setHours(0, 0, 0, 0);
+    
     if (selectedDate > today) {
       return {
         isValid: false,
@@ -459,6 +112,12 @@ const ProfilePage = () => {
       return {
         isValid: false,
         message: "Please enter a valid date of birth",
+      };
+    }
+    if (selectedDate > eighteenYearsAgo) {
+      return {
+        isValid: false,
+        message: "You must be at least 18 years old",
       };
     }
     return { isValid: true, message: "" };
@@ -703,6 +362,11 @@ const ProfilePage = () => {
     }));
   }, []);
 
+  const handleDateChange = (date) => {
+    const dateValue = date ? date.format('YYYY-MM-DD') : '';
+    handleInputChange("dob", dateValue);
+  };
+
   const handleSaveProfile = async () => {
     if (!userID) return;
     const dobValidationResult = validateDateOfBirth(editForm.dob);
@@ -926,6 +590,10 @@ const ProfilePage = () => {
     navigate(passwordResetPath);
   };
 
+  // Check if login method is google to hide Quick Actions
+  const loginMethod = userProfile?.account?.loginMethod || userProfile?.loginMethod || currentUser?.loginMethod;
+  const shouldShowQuickActions = loginMethod !== "google";
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -999,25 +667,44 @@ const ProfilePage = () => {
             letter-spacing: -0.01em !important;
           }
 
-          .date-picker-dropdown {
-            pointer-events: auto !important;
-            z-index: 99999 !important;
-            position: absolute !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+          /* Antd DatePicker Styling */
+          .ant-picker {
+            height: 42px !important;
+            border-radius: 8px !important;
+            border: 1px solid #d1d5db !important;
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: 16px !important;
+            padding: 8px 16px !important;
+            transition: all 0.2s ease !important;
           }
           
-          .date-picker-dropdown * {
-            pointer-events: auto !important;
+          .ant-picker:hover {
+            border-color: #3b82f6 !important;
           }
           
-          .date-picker-dropdown select {
-            pointer-events: auto !important;
-            z-index: 100000 !important;
-            position: relative !important;
+          .ant-picker-focused {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
           }
-
-          .date-picker-dropdown button {
-            pointer-events: auto !important;
+          
+          .ant-picker.border-red-500 {
+            border-color: #ef4444 !important;
+          }
+          
+          .ant-picker.border-red-500:hover,
+          .ant-picker.border-red-500.ant-picker-focused {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+          }
+          
+          .ant-picker-input > input {
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: 16px !important;
+            color: #374151 !important;
+          }
+          
+          .ant-picker-input > input::placeholder {
+            color: #9ca3af !important;
           }
           
           @keyframes slideIn {
@@ -1155,21 +842,33 @@ const ProfilePage = () => {
                       />
                     </div>
 
-                    {/* Date of Birth with Custom DatePicker */}
+                    {/* Date of Birth with Antd DatePicker */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
                         Date of Birth
                       </label>
-                      <CustomDatePicker
-                        value={editForm.dob}
-                        onChange={(value) => handleInputChange("dob", value)}
-                        min={getMinDate()}
-                        max={getTodayDate()}
-                        placeholder="Select your date of birth"
-                        className={`${
+                      <DatePicker
+                        style={{ width: "100%" }}
+                        placeholder="Enter date of birth"
+                        format="DD/MM/YYYY"
+                        value={editForm.dob ? moment(editForm.dob, 'YYYY-MM-DD') : null}
+                        disabledDate={(current) => {
+                          if (!current) return false;
+                          const today = new Date();
+                          const hundredYearsAgo = new Date();
+                          hundredYearsAgo.setFullYear(today.getFullYear() - 100);
+                          const eighteenYearsAgo = new Date();
+                          eighteenYearsAgo.setFullYear(today.getFullYear() - 18);
+                          
+                          const currentDate = current.toDate();
+                          
+                          return currentDate > today || currentDate < hundredYearsAgo || currentDate > eighteenYearsAgo;
+                        }}
+                        onChange={handleDateChange}
+                        className={`vietnamese-input ${
                           !dobValidation.isValid
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300"
+                            ? "border-red-500"
+                            : ""
                         }`}
                       />
                       {!dobValidation.isValid && (
@@ -1398,19 +1097,21 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 vietnamese-text vietnamese-header">
-                  Quick Actions
-                </h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={handleChangePassword}
-                    className="w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center space-x-3 text-gray-700 font-medium hover:bg-gray-100 hover:text-blue-800 vietnamese-button">
-                    <Shield className="h-5 w-5 text-blue-700" />
-                    <span className="vietnamese-text">Change Password</span>
-                  </button>
+              {shouldShowQuickActions && (
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 vietnamese-text vietnamese-header">
+                    Quick Actions
+                  </h3>
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleChangePassword}
+                      className="w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center space-x-3 text-gray-700 font-medium hover:bg-gray-100 hover:text-blue-800 vietnamese-button">
+                      <Shield className="h-5 w-5 text-blue-700" />
+                      <span className="vietnamese-text">Change Password</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
