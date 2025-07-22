@@ -310,14 +310,19 @@ const Header = () => {
                   >
                     <img
                       src={
-                        user?.avatar?.startsWith("/media")
-                        ? `/api${user.avatar}`
-                        : user?.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg"
+                        user?.avatar
+                          ? (user.avatar.startsWith("http") || user.avatar.startsWith("https"))
+                            ? user.avatar // URL đầy đủ từ Google
+                            : user.avatar.startsWith("/")
+                              ? `/api${user.avatar}` // Đường dẫn tương đối từ API nội bộ
+                              : `/api/${user.avatar}` // Đường dẫn không có dấu / ở đầu
+                          : "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg" // Fallback image
                       }
                       alt={userDisplayName}
                       className="h-12 w-12 rounded-full object-cover border-2 border-gray-300"
                       onError={(e) => {
                         e.target.onerror = null;
+                        console.log("Avatar load failed, using fallback image");
                         e.target.src =
                           "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
                       }}

@@ -40,6 +40,27 @@ function LoginForm() {
         return;
       }
 
+      // Kiểm tra log để debug
+      console.log("Google login response:", userData);
+      
+      // Phân tích để xác định nguồn avatar
+      let avatarSource = null;
+      // Nếu có avatar từ database (không phải URL Google) thì ưu tiên dùng
+      if (userData.avatar && !userData.avatar.includes('googleusercontent.com')) {
+        avatarSource = userData.avatar;
+        console.log("Using DB avatar:", avatarSource);
+      } 
+      // Nếu không có avatar từ DB hoặc avatar là từ Google, kiểm tra xem có nên dùng avatar từ Google không
+      else if (userData.useGoogleAvatar !== false && userData.picture) {
+        avatarSource = userData.picture;
+        console.log("Using Google avatar:", avatarSource);
+      }
+      // Fallback nếu không có avatar
+      else {
+        avatarSource = userData.avatar || null;
+        console.log("Using fallback avatar:", avatarSource);
+      }
+
       // Lấy đúng field fullName từ backend (ưu tiên fullName, fallback fullname, name, username)
       const enhancedUserData = {
         id: userData.id,
@@ -51,7 +72,11 @@ function LoginForm() {
           userData.name ||
           userData.username,
         role: userData.role,
-        avatar: userData.avatar || userData.picture,
+        avatar: avatarSource,
+        customerID: userData.customerId || userData.customerID || "",
+        staffID: userData.staffId || userData.staffID || "",
+        managerID: userData.managerId || userData.managerID || "",
+        adminID: userData.adminId || userData.adminID || "",
         phone: userData.phone,
         isEmailVerified: userData.isEmailVerified || true,
         lastLogin: new Date().toISOString(),
