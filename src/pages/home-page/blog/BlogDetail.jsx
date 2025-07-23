@@ -1301,7 +1301,7 @@ const BlogDetail = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .blog-content h2 {
           font-size: 1.75rem;
           font-weight: 700;

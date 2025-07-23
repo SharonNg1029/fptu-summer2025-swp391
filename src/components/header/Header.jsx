@@ -28,7 +28,7 @@ const Header = () => {
 
   // Avatar ưu tiên: file /media > avatar url > mặc định
   const userAvatar = useMemo(() => {
-    if (!user) return "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
+    if (!user) return "/images/logo.png";
     if (user.avatar?.startsWith("/media")) return `/api${user.avatar}`;
     return user.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg";
   }, [user]);
@@ -177,7 +177,7 @@ const Header = () => {
                   className="h-12 w-auto cursor-pointer"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/32";
+                    e.target.src = "/images/logo.png";
                   }}
                 />
               </Link>
@@ -324,8 +324,7 @@ const Header = () => {
                       className="h-12 w-12 rounded-full object-cover border-2 border-gray-300"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src =
-                          "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
+                        e.target.src = "/images/logo.png";
                       }}
                     />
                   </button>
