@@ -610,13 +610,6 @@ function RegisterForm() {
   const handlePhoneChange = (e) => {
     const formatted = formatPhoneNumber(e.target.value);
     e.target.value = formatted;
-    
-    // Validate phone format while typing
-    if (formatted.length === 10) {
-      handleFieldValidation('phone', formatted);
-    } else if (formatted.length > 0) {
-      toast.error("Phone number must start with 0 and have exactly 10 digits");
-    }
   };
 
   return (
