@@ -28,12 +28,16 @@ import {
   CommentOutlined,
   StopOutlined,
   ArrowLeftOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import api from "../../configs/axios";
 import { toast } from "react-toastify";
 import BookingDetailModal from "./BookingDetailModal";
 import { FaArrowLeft } from "react-icons/fa";
+import FeedbackModal from "./FeedbackModal";
+import ViewFeedbackModal from "./ViewFeedbackModal";
+import { checkMultipleBookingsFeedback } from "../../services/feedbackService";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -50,6 +54,12 @@ const MyBooking = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("");
   const [pagination, setPagination] = useState({ current: 1, pageSize: 6 });
+  const [feedbackStatus, setFeedbackStatus] = useState({});
+  
+  // State for feedback modals
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showViewFeedbackModal, setShowViewFeedbackModal] = useState(false);
+  const [selectedFeedbackBookingId, setSelectedFeedbackBookingId] = useState(null);
 
   const statusList = [
     "Awaiting Confirmation", 
@@ -105,9 +115,15 @@ const MyBooking = () => {
 
   const user = useSelector((state) => state.user.currentUser);
   const { customerID } = useSelector(state => state.user);
+
   useEffect(() => {
     fetchMyBookings();
   }, [user?.id]);
+
+  // Check feedback status when bookings change
+  useEffect(() => {
+    checkFeedbackStatus();
+  }, [bookings]);
 
   const fetchMyBookings = async () => {
     if (!user?.id) return;
@@ -129,6 +145,22 @@ const MyBooking = () => {
       setBookings([]); // Ensure bookings is always an array even on error
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Check feedback status for completed bookings
+  const checkFeedbackStatus = async () => {
+    const completedBookings = bookings.filter(booking => booking.status === "Completed");
+    
+    if (completedBookings.length === 0) return;
+    
+    const bookingIds = completedBookings.map(booking => booking.bookingId);
+    
+    try {
+      const response = await checkMultipleBookingsFeedback(bookingIds);
+      setFeedbackStatus(response);
+    } catch (error) {
+      console.error("Error checking feedback status:", error);
     }
   };
 
@@ -168,25 +200,58 @@ const MyBooking = () => {
   };
 
   const handleDownloadResult = async (record) => {
-  try {
-    const res = await api.get(`/booking/export-pdf/${record.bookingId}`, {
-      responseType: "blob",
-    });
+    try {
+      const res = await api.get(`/booking/export-pdf/${record.bookingId}`, {
+        responseType: "blob",
+      });
 
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `Result_DNA_${record.bookingId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (err) {
-    //toast.error("Download failed. Please try again!");
-  }
-};
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Result_DNA_${record.bookingId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      //toast.error("Download failed. Please try again!");
+    }
+  };
 
-  const handleNavigateToFeedback = (bookingId) => {
-    navigate(`/feedback?bookingId=${bookingId}`);
+  const handleFeedbackButtonClick = (bookingId, hasFeedback) => {
+    setSelectedFeedbackBookingId(bookingId);
+    
+    if (hasFeedback) {
+      setShowViewFeedbackModal(true);
+    } else {
+      setShowFeedbackModal(true);
+    }
+  };
+
+  // Sửa hàm này để xử lý đúng thông tin từ FeedbackModal
+  const handleFeedbackModalClose = (success = false, viewFeedback = false) => {
+    console.log("FeedbackModal closed with success:", success, "viewFeedback:", viewFeedback);
+    
+    if (success) {
+      // Nếu feedback đã được gửi thành công, cập nhật trạng thái ngay lập tức
+      console.log("Updating feedback status for bookingId:", selectedFeedbackBookingId);
+      setFeedbackStatus(prev => ({
+        ...prev,
+        [selectedFeedbackBookingId]: true
+      }));
+    }
+    
+    setShowFeedbackModal(false);
+    
+    if (success && viewFeedback) {
+      // Nếu cần chuyển sang xem feedback
+      setTimeout(() => {
+        setShowViewFeedbackModal(true);
+      }, 300);
+    }
+  };
+
+  const handleViewFeedbackModalClose = () => {
+    setShowViewFeedbackModal(false);
   };
 
   const getStatusTag = (status) => {
@@ -283,53 +348,57 @@ const MyBooking = () => {
         : "",
   },
   {
-  title: "Action",
-  key: "action",
-  render: (_, record) => (
-    <Space>
-      <Button
-        icon={<EyeOutlined />}
-        onClick={() => handleViewDetail(record)}
-      >
-        View
-      </Button>
+    title: "Action",
+    key: "action",
+    render: (_, record) => {
+      // Check if this booking has feedback
+      const hasFeedback = feedbackStatus[record.bookingId] === true;
       
-      {record.status === "Completed" && (
-        <>
+      return (
+        <Space>
           <Button
-            icon={<DownloadOutlined />}
-            type="primary"
-            onClick={() => handleDownloadResult(record)}
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetail(record)}
           >
-            Download Result
+            View
           </Button>
           
-          <Button
-            icon={<CommentOutlined />}
-            type="default"
-            style={{ backgroundColor: '#13c2c2', color: 'white' }}
-            onClick={() => handleNavigateToFeedback(record.bookingId)}
-          >
-            Feedback
-          </Button>
-        </>
-      )}
-      
-      {!nonCancelableStatuses.includes(record.status) && (
-        <Button
-          icon={<StopOutlined />}
-          type="primary"
-          danger
-          onClick={() => handleCancelBooking(record)}
-        >
-          Cancel
-        </Button>
-      )}
-    </Space>
-  ),
-},
+          {record.status === "Completed" && (
+            <>
+              <Button
+                icon={<DownloadOutlined />}
+                type="primary"
+                onClick={() => handleDownloadResult(record)}
+              >
+                Download Result
+              </Button>
+              
+              <Button
+                icon={hasFeedback ? <EyeOutlined /> : <CommentOutlined />}
+                type="default"
+                style={{ backgroundColor: hasFeedback ? '#52c41a' : '#13c2c2', color: 'white' }}
+                onClick={() => handleFeedbackButtonClick(record.bookingId, hasFeedback)}
+              >
+                {hasFeedback ? 'View Feedback' : 'Feedback'}
+              </Button>
+            </>
+          )}
+          
+          {!nonCancelableStatuses.includes(record.status) && (
+            <Button
+              icon={<StopOutlined />}
+              type="primary"
+              danger
+              onClick={() => handleCancelBooking(record)}
+            >
+              Cancel
+            </Button>
+          )}
+        </Space>
+      );
+    },
+  },
 ];
-
 
   const filteredBookings = Array.isArray(bookings) ? bookings.filter((booking) => {
     // Convert search text to lowercase for case-insensitive search
@@ -516,14 +585,21 @@ const MyBooking = () => {
           open={showModal}
           onClose={() => setShowModal(false)}
           bookingDetail={selectedBooking}
-        >
-          {/* 👇 Paste nội dung các Card chi tiết tại đây 👇 */}
-          {/* <Card>Thông tin dịch vụ...</Card>
-              <Card>Thông tin người xét nghiệm...</Card>
-              <Card>Chi phí chi tiết...</Card>
-              <Card>Phương thức thanh toán...</Card> 
-          */}
-        </BookingDetailModal>
+        />
+
+        {/* Feedback Modal */}
+        <FeedbackModal
+          visible={showFeedbackModal}
+          onClose={handleFeedbackModalClose}
+          bookingId={selectedFeedbackBookingId}
+        />
+
+        {/* View Feedback Modal */}
+        <ViewFeedbackModal
+          visible={showViewFeedbackModal}
+          onClose={handleViewFeedbackModalClose}
+          bookingId={selectedFeedbackBookingId}
+        />
       </div>
     </div>
   );
