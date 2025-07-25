@@ -16,6 +16,17 @@ const Header = () => {
   const { currentUser: user, isAuthenticated } = useSelector((state) => state.user || {});
 
   // Tên hiển thị ưu tiên: fullName > name > firstName lastName > Guest
+  const userDisplayName = useMemo(() => {
+    if (!user) return "Guest";
+    if (user.fullName && user.fullName.trim()) return user.fullName;
+    if (user.name && user.name.trim()) return user.name;
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
+    const full = `${firstName} ${lastName}`.trim();
+    return full || "Guest";
+  }, [user]);
+
+  // Avatar ưu tiên: URL > đường dẫn tương đối > mặc định
   const userAvatar = useMemo(() => {
     if (!user) return "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
     if (user.avatar) {
@@ -28,13 +39,6 @@ const Header = () => {
       return `/api/${user.avatar}`;
     }
     return "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg";
-  }, [user]);
-
-  // Avatar ưu tiên: file /media > avatar url > mặc định
-  const userAvatar = useMemo(() => {
-    if (!user) return "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
-    if (user.avatar?.startsWith("/media")) return `/api${user.avatar}`;
-    return user.avatar || "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg";
   }, [user]);
 
   const navItems = [

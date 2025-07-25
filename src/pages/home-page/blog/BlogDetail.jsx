@@ -6,73 +6,70 @@ import { FaCalendar, FaUser, FaArrowLeft, FaClock, FaTag, FaChevronRight, FaHome
 const articles = [
   {
     id: 1,
-    title: "ILLUMINA - Công nghệ và tiên phong về xét nghiệm Gen tại Việt Nam",
+    title: "ILLUMINA - Pioneer Technology in Genetic Testing in Vietnam",
     category: "Knowledge",
-    excerpt: "Illumina được ví như 'người khổng lồ' trong lĩnh vực giải trình tự Gen, là công ty thế giới về giải trình tự DNA và công nghệ sinh học phục vụ khách hàng trong việc nghiên cứu, lâm sàng và ứng dụng.",
+    excerpt: "Illumina is considered a 'giant' in the field of gene sequencing, a global company specializing in DNA sequencing and biotechnology serving customers in research, clinical applications, and practical implementations.",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&h=800&fit=crop",
-
-    slug: "illumina-cong-nghe-tien-phong-xet-nghiem-gen-viet-nam",
+    slug: "illumina-pioneer-technology-genetic-testing-vietnam",
     author: "DNA Testing",
-
     date: "2024-01-25",
     readTime: "10 min read",
     featured: true,
     tableOfContents: [
-      { id: "1", title: "Illumina - Người khổng lồ trong lĩnh vực giải trình tự Gen", level: 1 },
-      { id: "2", title: "Cuộc chiến pháp lý chống vi phạm bản quyền của Illumina", level: 1 }
+      { id: "1", title: "Illumina - The giant in the field of Gene sequencing", level: 1 },
+      { id: "2", title: "The legal battle against copyright infringement by Illumina", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <p class="lead-paragraph">Illumina được ví như 'người khổng lồ' trong lĩnh vực giải trình tự Gen, là công ty thế giới về giải trình tự DNA và công nghệ sinh học phục vụ khách hàng trong việc nghiên cứu, lâm sàng và ứng dụng. Với những cống hiến và nỗ lực phát triển của mình, Illumina ngày càng khẳng định vị thế trong lĩnh vực giải trình tự gen và được sử dụng cho các ứng dụng trong khoa học đời sống, ung thư, sức khỏe sinh sản, nông nghiệp và các ứng dụng đời sống khác.</p>
+        <p class="lead-paragraph">Illumina is considered a 'giant' in the field of gene sequencing, a global company specializing in DNA sequencing and biotechnology serving customers in research, clinical applications, and practical implementations. With its contributions and development efforts, Illumina increasingly affirms its position in the field of gene sequencing and is used for applications in life sciences, cancer, reproductive health, agriculture, and other life applications.</p>
 
-        <p>Illumina là hãng công nghệ hàng đầu thế giới về giải mã và phân tích gen có trụ sở tại San Diego, California, được thành lập vào năm 1998 với sứ mệnh: "Cải thiện sức khỏe con người bằng cách mở khóa sức mạnh của bộ gen". Hơn hai thập kỷ qua, Illumina đã phát triển các công nghệ tiên phong, chất lượng vượt trội được sử dụng trong nghiên cứu bệnh học, phát triển thuốc và phát triển các xét nghiệm trong lĩnh vực sinh học phân tử.</p>
-
-        <div style="text-align: center; margin: 20px auto; display: flex; justify-content: center;">
-          <img src="/images/about-illumina-web-graphic.jpg" alt="Trụ sở Illumina" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
-        </div>
-
-        <p>Illumina đã liên kết với hơn 115 quốc gia và lãnh thổ trên thế giới trong đó có Việt Nam và tiếp tục tối ưu các giải pháp trở nên đơn giản hơn, mở rộng và dễ tiếp cận với ngày càng nhiều các nhà nghiên cứu khoa học.</p>
-
-        <h2 id="1">1. Người khổng lồ trong lĩnh vực giải trình tự Gen</h2>
-        <p>Nhắc đến giải trình tự gen là nghĩ đến Illumina. Theo thống kê từ Illumina có tới 90% dữ liệu giải trình tự gen trên thế giới được giải trình tự từ hệ thống giải trình tự thế hệ tiếp theo (NGS – Next Generation Sequencing) của Illumina. Được biết, Illumina sử dụng hệ thống NGS Illumina từ năm 2007, được xây dựng dựa trên các phương pháp giải trình tự bộ gen trước đó để giảm đáng kể thời gian cần thiết.</p>
-
-        <p>Illumina đã góp phần vào sự phát triển của các công nghệ, mở ra một kỷ nguyên quan trọng, đặc biệt công nghệ giải trình tự gen của hãng được ứng dụng vào một loạt các nghiên cứu và các xét nghiệm liên quan đến lâm sàng.</p>
+        <p>Illumina is the world's leading technology company in gene decoding and analysis based in San Diego, California, founded in 1998 with the mission: "Improve human health by unlocking the power of the genome". For over two decades, Illumina has developed pioneering technologies of superior quality used in pathological research, drug development, and the development of tests in the field of molecular biology.</p>
 
         <div style="text-align: center; margin: 20px auto; display: flex; justify-content: center;">
-          <img src="/images/so-lieu-illumina.jpg" alt="Số liệu Illumina" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
+          <img src="/images/about-illumina-web-graphic.jpg" alt="Illumina Headquarters" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
         </div>
-        <p style="font-style: italic; margin-top: 8px; font-size: 0.9em; text-align: center;">Illumina kết thúc quý 4 năm 2020 với thu nhập ròng tăng 7,5% so với cùng kỳ năm trước (Nguồn: Illumina)</p>
 
-        <p>Nghiên cứu của Illumina tập trung vào việc phát triển các giải pháp công nghệ, cho phép các nhà nghiên cứu tiếp tục thực hiện những tiến bộ khoa học trong bệnh di truyền, rối loạn di truyền phổ biến, di truyền dân số và sinh học tế bào; nghiên cứu phân tử cơ bản liên quan đến các ứng dụng lâm sàng như sức khỏe sinh sản, xét nghiệm ung thư, xét nghiệm và giám sát bệnh truyền nhiễm.</p>
+        <p>Illumina has partnerships with over 115 countries and territories worldwide, including Vietnam, and continues to optimize solutions to become simpler, more expansive, and more accessible to an increasing number of scientific researchers.</p>
 
-        <p>Theo đó, công nghệ NGS của Illumina đã giúp cách mạng hóa nghiên cứu bộ gen và có các ứng dụng rộng rãi trong nhiều lĩnh vực như bệnh truyền nhiễm, ung thư, bệnh di truyền, nông nghiệp và trong các môi trường như phòng khám, bệnh viện, phòng thí nghiệm nghiên cứu và các cơ quan chính phủ.</p>
+        <h2 id="1">1. The giant in the field of Gene sequencing</h2>
+        <p>When mentioning gene sequencing, one thinks of Illumina. According to statistics from Illumina, up to 90% of gene sequencing data worldwide is sequenced from Illumina's Next Generation Sequencing (NGS) system. It is known that Illumina has used the Illumina NGS system since 2007, built on previous genome sequencing methods to significantly reduce the necessary time.</p>
 
-        <p>Trong các nỗ lực kiểm soát dịch bệnh do virus corona gây ra bùng phát đầu năm 2020, hệ thống giải trình tự gen của Illumina được sử dụng để xác định và công bố hồ sơ genome của corona virus trong cơ sở dữ liệu công cộng, đây là bước đầu tiên quan trọng phát triển các xét nghiệm chẩn đoán, tạo tiền đề cho việc điều chế ra vắc xin.</p>
+        <p>Illumina has contributed to the development of technologies, opening an important era, especially as the company's gene sequencing technology is applied to a series of research and tests related to clinical practice.</p>
 
         <div style="text-align: center; margin: 20px auto; display: flex; justify-content: center;">
-          <img src="/images/thu-nghiem-DNA.jpg" alt="Illumina và IDbyDNA Khởi chạy thử nghiệm DNA" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
+          <img src="/images/so-lieu-illumina.jpg" alt="Illumina Statistics" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
         </div>
-        <p style="font-style: italic; margin-top: 8px; font-size: 0.9em; text-align: center;">Illumina và IDbyDNA Khởi chạy thử nghiệm DNA có thể tìm thấy dịch tiếp theo (Nguồn: IDbyDNA)</p>
+        <p style="font-style: italic; margin-top: 8px; font-size: 0.9em; text-align: center;">Illumina ended Q4 2020 with a 7.5% increase in net income compared to the same period last year (Source: Illumina)</p>
 
-        <p>Cùng với rất nhiều những cống hiến và nỗ lực của mình, Illumina đang ngày càng khẳng định vị thế trong lĩnh vực giải trình tự gen với các ứng dụng quan trọng về sàng lọc trước sinh không xâm lấn VeriSeq NIPT; sàng lọc di truyền trước chuyển phôi VeriSeq PGS; sàng lọc, chẩn đoán ung thư sớm TSO500.</p>
+        <p>Illumina's research focuses on developing technological solutions that allow researchers to continue making scientific advances in genetic diseases, common genetic disorders, population genetics, and cell biology; basic molecular research related to clinical applications such as reproductive health, cancer testing, infectious disease testing and monitoring.</p>
 
-        <h2 id="2">2. Cuộc chiến pháp lý chống vi phạm bản quyền của Illumina</h2>
-        <p>Với những cống hiến quan trọng và mở ra một kỷ nguyên mới cho nền y học thế giới, Illumina đang nắm giữ phần lớn thị phần lĩnh vực giải trình tự gen. Chính vì thế vấn đề về bảo vệ quyền sở hữu các bằng sáng chế và tác quyền cũng trở nên bức thiết hơn bao giờ hết. Thực tế cho thấy nhiều công ty đã sử dụng trái phép các bằng sáng chế này dưới danh nghĩa nghiên cứu khoa học để sao chép và tạo ra các giải pháp công nghệ cho riêng mình. Hành động này đã vi phạm nghiêm trọng bản quyền sáng chế và hãng này đã có những đơn đệ trình để bảo vệ tài sản trí tuệ của mình.</p>
+        <p>Accordingly, Illumina's NGS technology has helped revolutionize genome research and has wide applications in many fields such as infectious diseases, cancer, genetic diseases, agriculture, and in environments such as clinics, hospitals, research laboratories, and government agencies.</p>
 
-        <p>Cụ thể, theo thông tin truyền thông quốc tế, vào tháng 2 năm 2020, Illumina đã đệ đơn kiện vi phạm bằng sáng chế chống lại BGI liên quan đến các sản phẩm giải trình tự gen. Đầu tháng 1 năm 2021, tại tòa án Công lý Tối cao nước Anh, Phòng Cơ hội và Tòa án Bằng sáng chế đã phán quyết Illumina thắng kiện.</p>
+        <p>In efforts to control the outbreak of the coronavirus disease in early 2020, Illumina's gene sequencing system was used to identify and publish the genome profile of the coronavirus in a public database, which was the first important step in developing diagnostic tests, laying the groundwork for vaccine formulation.</p>
 
-        <p>Theo đó, 4/5 bằng sáng chế được khẳng định là hợp lệ và bị BGI vi phạm. Những bằng sáng chế này đề câp đến các khía cạnh khác nhau của phương pháp giải trình tự bằng sinh học tổng hợp độc quyền của Illumina, bao gồm giải trình tự 2 đầu và đánh dấu các nucleotide.</p>
+        <div style="text-align: center; margin: 20px auto; display: flex; justify-content: center;">
+          <img src="/images/thu-nghiem-DNA.jpg" alt="Illumina and IDbyDNA Launch DNA Test" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
+        </div>
+        <p style="font-style: italic; margin-top: 8px; font-size: 0.9em; text-align: center;">Illumina and IDbyDNA Launch DNA Test That Can Find the Next Pandemic (Source: IDbyDNA)</p>
+
+        <p>Along with many contributions and efforts, Illumina is increasingly affirming its position in the field of gene sequencing with important applications in non-invasive prenatal screening VeriSeq NIPT; preimplantation genetic screening VeriSeq PGS; early cancer screening and diagnosis TSO500.</p>
+
+        <h2 id="2">2. The legal battle against copyright infringement by Illumina</h2>
+        <p>With important contributions and opening a new era for world medicine, Illumina holds a large market share in the field of gene sequencing. Because of this, the issue of protecting ownership of patents and copyrights has become more urgent than ever. In reality, many companies have illegally used these patents under the guise of scientific research to copy and create technological solutions for themselves. This action has seriously violated patent rights, and the company has submitted applications to protect its intellectual property.</p>
+
+        <p>Specifically, according to international media information, in February 2020, Illumina filed a patent infringement lawsuit against BGI related to gene sequencing products. In early January 2021, at the UK Supreme Court of Justice, the Chancery Division and Patents Court ruled in favor of Illumina.</p>
+
+        <p>Accordingly, 4/5 patents were confirmed to be valid and infringed by BGI. These patents refer to different aspects of Illumina's proprietary synthetic biology sequencing method, including paired-end sequencing and nucleotide labeling.</p>
       </div>
     `
   },
    {
     id: 2,
-    title: "Xét nghiệm ADN dân sự và pháp lý: so sánh điểm giống và khác nhau",
+    title: "Non-legal vs. Legal DNA Testing: Similarities and Differences",
     category: "Administration",
-    excerpt: "Tìm hiểu sự khác biệt giữa xét nghiệm ADN dân sự và pháp lý để lựa chọn đúng loại xét nghiệm phù hợp với mục đích sử dụng của bạn.",
+    excerpt: "Understand the differences between non-legal and legal DNA testing to choose the right type of test for your specific needs.",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&h=800&fit=crop",
-
-    slug: "xet-nghiem-adn-dan-su-va-phap-ly-so-sanh-diem-giong-va-khac-nhau",
+    slug: "civil-vs-legal-dna-testing-similarities-differences",
     author: "GeneViet",
     date: "2024-03-15",
     readTime: "10 min read",
@@ -80,149 +77,148 @@ const articles = [
     views: 2250,
     likes: 178,
     comments: 42,
-
     tableOfContents: [
-      { id: "1", title: "Tìm hiểu về xét nghiệm ADN cho mục đích dân sự và mục đích pháp lý", level: 1 },
-      { id: "2", title: "Xét nghiệm ADN dân sự và pháp lý giống và khác nhau như thế nào?", level: 1 },
-      { id: "3", title: "Điểm giống nhau giữa xét nghiệm ADN dân sự và pháp lý", level: 1 },
-      { id: "4", title: "Điểm khác nhau giữa xét nghiệm ADN dân sự và pháp lý", level: 1 },
-      { id: "5", title: "Lưu ý", level: 1 }
+      { id: "1", title: "Understanding DNA testing for non-legal and legal purposes", level: 1 },
+      { id: "2", title: "How are non-legal and legal DNA testing similar and different?", level: 1 },
+      { id: "3", title: "Similarities between non-legal and legal DNA testing", level: 1 },
+      { id: "4", title: "Differences between non-legal and legal DNA testing", level: 1 },
+      { id: "5", title: "Important notes", level: 1 }
     ],
     content: `
       <div class="blog-content">
-        <p class="lead-paragraph">Xét nghiệm ADN ngày càng trở nên phổ biến với nhiều mục đích khác nhau và được chia làm hai nhóm chính là dân sự và pháp lý. Tuy nhiên, nhiều người vẫn còn mơ hồ về sự khác biệt giữa hai loại xét nghiệm này.</p>
+        <p class="lead-paragraph">DNA testing is becoming increasingly popular for various purposes and is divided into two main groups: non-legal and legal. However, many people are still unclear about the differences between these two types of testing.</p>
         
-        <p>Để hiểu rõ hơn về điểm giống và khác nhau giữa xét nghiệm ADN dân sự và pháp lý, mời bạn đọc theo dõi thông tin trong bài viết dưới đây của GeneViet.</p>
+        <p>To better understand the similarities and differences between non-legal and legal DNA testing, please follow the information in the article below from GeneViet.</p>
         
 
 
-        <h2 id="1">1. Tìm hiểu về xét nghiệm ADN cho mục đích dân sự và mục đích pháp lý</h2>
+        <h2 id="1">1. Understanding DNA testing for non-legal and legal purposes</h2>
         
-        <p><strong>Xét nghiệm ADN cho mục đích dân sự</strong></p>
-        <p>Xét nghiệm ADN cho mục đích dân sự là việc sử dụng công nghệ phân tích ADN để xác định mối quan hệ huyết thống giữa các cá nhân cho mục đích cá nhân, không sử dụng trong các thủ tục hành chính pháp lý.</p>
+        <p><strong>DNA testing for non-legal purposes</strong></p>
+        <p>DNA testing for non-legal purposes is the use of DNA analysis technology to determine blood relationships between individuals for personal purposes, not used in legal administrative procedures.</p>
         
-        <p><strong>Những ứng dụng của xét nghiệm ADN cho mục đích dân sự bao gồm:</strong></p>
+        <p><strong>Applications of DNA testing for non-legal purposes include:</strong></p>
         <ul>
-          <li><strong>Xác định quan hệ huyết thống:</strong> Đây là ứng dụng phổ biến nhất, giúp giải đáp các nghi ngờ hoặc xác nhận mối quan hệ huyết thống trong gia đình. Nó đặc biệt hữu ích trong các trường hợp cần xác định cha mẹ, anh chị em, họ hàng.</li>
-          <li><strong>Nghiên cứu phả hệ và tổ tiên:</strong> Xét nghiệm này giúp mọi người tìm hiểu về nguồn gốc gia đình và tổ tiên của mình. Thông qua kết quả xét nghiệm ADN có thể giúp kết nối với các thành viên gia đình xa xôi hoặc hiểu rõ hơn về lịch sử dòng họ.</li>
-          <li><strong>Sức khỏe và y tế:</strong> Xét nghiệm ADN dân sự có thể giúp phát hiện sớm các nguy cơ di truyền, từ đó giúp mọi người có kế hoạch phòng ngừa và quản lý sức khỏe tốt hơn. Ngoài ra, xét nghiệm ADN cũng giúp xác định tính tương thích trong ghép tạng hoặc tìm người hiến tạng phù hợp.</li>
-          <li><strong>Tìm kiếm người thân thất lạc:</strong> Trong những trường hợp như nhận con nuôi, mất tích, hoặc các trường hợp thiên tai, xét nghiệm ADN có thể giúp kết nối lại các thành viên gia đình với nhau.</li>
+          <li><strong>Determining blood relationships:</strong> This is the most common application, helping to resolve doubts or confirm blood relationships within families. It is particularly useful in cases where paternity, maternity, siblings, or relatives need to be determined.</li>
+          <li><strong>Genealogy and ancestry research:</strong> This testing helps people learn about their family origins and ancestors. Through DNA test results, it can help connect with distant family members or better understand family history.</li>
+          <li><strong>Health and medicine:</strong> Non-legal DNA testing can help detect genetic risks early, thereby helping people plan better prevention and health management. In addition, DNA testing also helps determine compatibility in organ transplantation or finding suitable organ donors.</li>
+          <li><strong>Finding missing relatives:</strong> In cases such as adoption, disappearance, or natural disasters, DNA testing can help reconnect family members.</li>
         </ul>
         
 
         
-        <p><strong>Xét nghiệm ADN cho mục đích pháp lý: </strong></p>
-        <p>Xét nghiệm ADN cho mục đích pháp lý là việc sử dụng công nghệ phân tích ADN để xác định mối quan hệ huyết thống giữa các cá nhân nhằm phục vụ cho các thủ tục hành chính pháp lý, ví dụ như làm giấy khai sinh, nhập cư, thừa kế, v.v.</p>
+        <p><strong>DNA testing for legal purposes: </strong></p>
+        <p>DNA testing for legal purposes is the use of DNA analysis technology to determine blood relationships between individuals to serve legal administrative procedures, such as birth certificates, immigration, inheritance, etc.</p>
         
-        <p><strong>Những ứng dụng cụ thể của xét nghiệm ADN pháp lý có thể kể đến bao gồm:</strong></p>
+        <p><strong>Specific applications of legal DNA testing include:</strong></p>
         <ul>
-          <li><strong>Hỗ trợ điều tra tội phạm:</strong> Xét nghiệm ADN là một công cụ quan trọng trong việc xác định hoặc loại trừ nghi phạm trong các vụ án hình sự. ADN thu được từ hiện trường tội phạm có thể được so sánh với ADN của nghi phạm hoặc cơ sở dữ liệu tội phạm để tìm ra kẻ gây án.</li>
-          <li><strong>Giải quyết tranh chấp gia đình:</strong> Trong các vụ án tranh chấp quyền nuôi con, nhận con nuôi, hoặc tranh chấp di sản, xét nghiệm ADN giúp xác định mối quan hệ huyết thống chính xác, từ đó cung cấp căn cứ pháp lý cho các quyết định của tòa án.</li>
-          <li><strong>Nhận diện nạn nhân trong tai nạn hoặc thảm họa:</strong> Khi các phương pháp nhận diện truyền thống không khả thi, xét nghiệm ADN có thể giúp xác định danh tính các nạn nhân, giúp gia đình nhận lại thi thể người thân và hỗ trợ quá trình điều tra nguyên nhân tai nạn.</li>
-          <li><strong>Xác minh quan hệ gia đình trong hồ sơ nhập cư:</strong> Các hồ sơ nhập cư thường yêu cầu xác minh mối quan hệ huyết thống giữa người bảo lãnh và người được bảo lãnh. Xét nghiệm ADN cung cấp bằng chứng rõ ràng và chính xác để hỗ trợ quá trình xem xét hồ sơ.</li>
-        </ul>
-
-        <h2 id="2">2. Xét nghiệm ADN dân sự và pháp lý giống và khác nhau như thế nào?</h2>
-        <p>Có thể khẳng định, xét nghiệm ADN xác định huyết thống cho nhu cầu dân sự/cá nhân và pháp lý/hành chính là hai mục đích chính hiện nay. Điểm giống và khác nhau của hai hình thức này như sau.</p>
-
-        <h2 id="3">3. Điểm giống nhau giữa xét nghiệm ADN dân sự và pháp lý</h2>
-        <ul>
-          <li><strong>Công nghệ và phương pháp:</strong> Cả xét nghiệm ADN dân sự và pháp lý đều sử dụng cùng công nghệ và phương pháp phân tích ADN. Các bước chính bao gồm thu thập mẫu, chiết xuất ADN, khuếch đại ADN và phân tích mẫu ADN để xác định các đặc điểm di truyền.</li>
-          <li><strong>Độ chính xác:</strong> Độ chính xác của kết quả xét nghiệm ADN trong cả hai trường hợp đều rất cao, thường đạt trên 99.99%. Điều này đảm bảo rằng các kết quả đưa ra là đáng tin cậy và có giá trị sử dụng.</li>
-          <li><strong>Loại mẫu xét nghiệm:</strong> Các loại mẫu được sử dụng, chẳng hạn như máu, nước bọt, tóc, hoặc móng tay, đều có thể áp dụng cho cả xét nghiệm dân sự và pháp lý.</li>
+          <li><strong>Criminal investigation support:</strong> DNA testing is an important tool in identifying or excluding suspects in criminal cases. DNA collected from crime scenes can be compared with suspects' DNA or criminal databases to find perpetrators.</li>
+          <li><strong>Resolving family disputes:</strong> In cases of child custody disputes, adoption, or inheritance disputes, DNA testing helps determine accurate blood relationships, thereby providing legal basis for court decisions.</li>
+          <li><strong>Victim identification in accidents or disasters:</strong> When traditional identification methods are not feasible, DNA testing can help identify victims, helping families reclaim the bodies of their loved ones and supporting the investigation process into accident causes.</li>
+          <li><strong>Verifying family relationships in immigration files:</strong> Immigration files often require verification of blood relationships between sponsors and sponsored individuals. DNA testing provides clear and accurate evidence to support the file review process.</li>
         </ul>
         
+        <h2 id="2">2. How are non-legal and legal DNA testing similar and different?</h2>
+        <p>It can be affirmed that DNA testing to determine blood relationships for non-legal/personal and legal/administrative needs are the two main purposes today. The similarities and differences between these two forms are as follows.</p>
+
+        <h2 id="3">3. Similarities between non-legal and legal DNA testing</h2>
+        <ul>
+          <li><strong>Technology and methods:</strong> Both non-legal and legal DNA testing use the same technology and DNA analysis methods. The main steps include sample collection, DNA extraction, DNA amplification, and DNA sample analysis to determine genetic characteristics.</li>
+          <li><strong>Accuracy:</strong> The accuracy of DNA test results in both cases is very high, usually reaching over 99.99%. This ensures that the results provided are reliable and valuable.</li>
+          <li><strong>Types of test samples:</strong> The types of samples used, such as blood, saliva, hair, or fingernails, can all be applied to both non-legal and legal testing.</li>
+        </ul>
+
         <div style="text-align: center; margin: 20px 0;">
-          <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&h=800&fit=crop" alt="Xét nghiệm huyết thống dân sự và pháp lý" style="max-width: 100%; height: auto; border-radius: 8px;">
+          <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&h=800&fit=crop" alt="Non-legal and legal blood relationship testing" style="max-width: 100%; height: auto; border-radius: 8px;">
         </div>
 
-        <h2 id="4">4. Điểm khác nhau giữa xét nghiệm ADN dân sự và pháp lý</h2>
+        <h2 id="4">4. Differences between non-legal and legal DNA testing</h2>
         
-        <p><strong>Mục đích sử dụng:</strong></p>
+        <p><strong>Purpose of use:</strong></p>
         <ul>
-          <li><strong>Xét nghiệm ADN dân sự:</strong> Thường được thực hiện cho các mục đích cá nhân hoặc gia đình, như xác định quan hệ huyết thống (cha con, mẹ con, anh chị em), nghiên cứu phả hệ hoặc xác định nguồn gốc tổ tiên.</li>
-          <li><strong>Xét nghiệm ADN pháp lý:</strong> Được sử dụng trong các tình huống liên quan đến pháp luật, chẳng hạn như các vụ án hình sự (xác định danh tính nghi phạm), vụ án dân sự (tranh chấp tài sản, quyền nuôi con) và các yêu cầu pháp lý khác (nhập cư, nhận con nuôi).</li>
+          <li><strong>Non-legal DNA testing:</strong> Usually performed for personal or family purposes, such as determining blood relationships (father-child, mother-child, siblings), genealogy research, or determining ancestral origins.</li>
+          <li><strong>Legal DNA testing:</strong> Used in situations related to law, such as criminal cases (identifying suspects), civil cases (property disputes, child custody) and other legal requirements (immigration, adoption).</li>
         </ul>
         
-        <p><strong>Quy trình thu thập mẫu:</strong></p>
+        <p><strong>Sample collection process:</strong></p>
         <ul>
-          <li><strong>Xét nghiệm ADN dân sự:</strong> Thường cho phép tự thu thập mẫu tại nhà theo hướng dẫn của phòng xét nghiệm. Người dùng sẽ nhận được bộ kit thu thập mẫu, tự lấy mẫu và gửi lại phòng xét nghiệm.</li>
-          <li><strong>Xét nghiệm ADN pháp lý:</strong> Đòi hỏi quy trình thu thập mẫu nghiêm ngặt hơn, thường được thực hiện bởi các chuyên gia hoặc nhân viên pháp y để đảm bảo tính toàn vẹn của mẫu và độ chính xác của kết quả. Mẫu phải được thu thập và lưu trữ theo quy trình chuẩn để tránh sự can thiệp hoặc làm sai lệch.</li>
+          <li><strong>Non-legal DNA testing:</strong> Usually allows self-collection of samples at home according to laboratory instructions. Users will receive a sample collection kit, collect samples themselves and send them back to the laboratory.</li>
+          <li><strong>Legal DNA testing:</strong> Requires stricter sample collection procedures, usually performed by experts or forensic personnel to ensure sample integrity and result accuracy. Samples must be collected and stored according to standard procedures to avoid interference or distortion.</li>
+        </ul>
+
+        <p><strong>Legal validity of results:</strong></p>
+        <ul>
+          <li><strong>Non-legal DNA testing:</strong> Provides results mainly for personal purposes and usually has no legal value in disputes or lawsuits.</li>
+          <li><strong>Legal DNA testing:</strong> Provides results with legal value that can be used as evidence in court. These results are usually accompanied by detailed reports and signatures from forensic experts.</li>
         </ul>
         
-        <p><strong>Tính pháp lý của kết quả:</strong></p>
+        <p><strong>Cost:</strong></p>
         <ul>
-          <li><strong>Xét nghiệm ADN dân sự:</strong> Cung cấp kết quả chủ yếu cho mục đích cá nhân và thường không có giá trị pháp lý trong các tranh chấp hoặc vụ án.</li>
-          <li><strong>Xét nghiệm ADN pháp lý:</strong> Cung cấp kết quả có giá trị pháp lý, có thể được sử dụng làm bằng chứng trước tòa án. Kết quả này thường đi kèm với báo cáo chi tiết và chữ ký của chuyên gia pháp y.</li>
+          <li><strong>Non-legal DNA testing:</strong> Blood relationship testing for non-legal purposes is usually lower in cost due to simpler sample collection processes and less stringent security and management requirements.</li>
+          <li><strong>Legal DNA testing:</strong> Has higher costs due to strict sample collection and preservation procedures, and high professional requirements of forensic experts.</li>
         </ul>
         
-        <p><strong>Chi phí:</strong></p>
+        <p><strong>Result delivery time:</strong></p>
         <ul>
-          <li><strong>Xét nghiệm ADN dân sự:</strong> Giá xét nghiệm huyết thống cho mục đích dân sự thường thấp hơn do quy trình thu thập mẫu và yêu cầu về bảo mật, quản lý ít nghiêm ngặt hơn.</li>
-          <li><strong>Xét nghiệm ADN pháp lý:</strong> Có chi phí cao hơn vì quy trình thu thập, bảo quản mẫu nghiêm ngặt, và yêu cầu chuyên môn cao của các chuyên gia pháp y.</li>
-        </ul>
-        
-        <p><strong>Thời gian trả kết quả:</strong></p>
-        <ul>
-          <li><strong>Xét nghiệm ADN dân sự:</strong> Thời gian trả kết quả thường nhanh hơn do quy trình đơn giản và ít yêu cầu nghiêm ngặt.</li>
-          <li><strong>Xét nghiệm ADN pháp lý:</strong> Thời gian trả kết quả có thể lâu hơn do quy trình kiểm tra nghiêm ngặt và việc phải tuân thủ các quy định pháp lý.</li>
+          <li><strong>Non-legal DNA testing:</strong> Result delivery time is usually faster due to simpler processes and fewer stringent requirements.</li>
+          <li><strong>Legal DNA testing:</strong> Result delivery time may be longer due to strict verification processes and compliance with legal regulations.</li>
         </ul>
         
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr style="background-color: #f8f9fa;">
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Tiêu chí</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Xét nghiệm ADN dân sự</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Xét nghiệm ADN pháp lý</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Criteria</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Non-legal DNA testing</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Legal DNA testing</th>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Mục đích</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Cá nhân, gia đình</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Thủ tục pháp lý, hành chính</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Purpose</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Personal, family</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Legal procedures, administrative</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Thu thập mẫu</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Tự thu thập tại nhà</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Thực hiện bởi chuyên gia</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Sample collection</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Self-collection at home</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Performed by experts</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Giá trị pháp lý</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Không</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Có</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Legal value</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">No</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Yes</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Chi phí</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Thấp hơn</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Cao hơn</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Cost</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Lower</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Higher</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Thời gian trả kết quả</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Nhanh hơn (3-5 ngày)</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Lâu hơn (7-10 ngày)</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Result delivery time</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Faster (3-5 days)</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Longer (7-10 days)</td>
           </tr>
         </table>
-
-        <h2 id="5">5. Lưu ý</h2>
+        
+        <h2 id="5">5. Important notes</h2>
         <div class="warning-box" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #dc3545;">
-          <p><strong>Lưu ý:</strong></p>
+          <p><strong>Note:</strong></p>
           <ul>
-            <li>Thông tin trong bài viết này chỉ mang tính chất tham khảo. Để biết thêm chi tiết về xét nghiệm ADN dân sự và pháp lý, bạn nên liên hệ với các phòng xét nghiệm ADN uy tín để được tư vấn cụ thể.</li>
-            <li>Các quy định về xét nghiệm ADN pháp lý có thể khác nhau tùy theo quốc gia hoặc khu vực. Do đó, bạn cần tìm hiểu kỹ các quy định này trước khi thực hiện xét nghiệm.</li>
-          </ul>
+            <li>The information in this article is for reference only. For more details about non-legal and legal DNA testing, you should contact reputable DNA testing laboratories for specific consultation.</li>
+            <li>Regulations on legal DNA testing may vary by country or region. Therefore, you need to carefully understand these regulations before conducting testing.</li>
+        </ul>
         </div>
         
-        <p>Như vậy có thể khẳng định, dù việc xét nghiệm ADN được sử dụng theo mục đích nào thì yêu cầu về tính chính xác của kết quả cũng được đặt lên cao nhất. Nếu quý khách hàng đang tìm kiếm một địa chỉ xét nghiệm ADN uy tín cho các mục đích về dân sự hay pháp lý, hãy liên hệ ngay với GeneViet để được hỗ trợ.</p>
+        <p>Thus, it can be confirmed that regardless of the purpose for which DNA testing is used, the requirement for accuracy of results is always set at the highest level. If you are looking for a reputable DNA testing address for non-legal or legal purposes, please contact GeneViet immediately for support.</p>
         
         
         <div class="conclusion-box" style="background-color: #f0f8ff; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #ccc;">
-          <h3 style="color: #1976D2; margin-top: 0;">Về GeneViet</h3>
-          <p>Với hơn 10 năm hoạt động trong lĩnh vực xét nghiệm ADN, GeneViet đã thực hiện hàng triệu các xét nghiệm huyết thống cho khách hàng trong và ngoài nước. Những ưu điểm khi sử dụng dịch vụ tại GeneViet có thể kể đến như:</p>
+          <h3 style="color: #1976D2; margin-top: 0;">About GeneViet</h3>
+          <p>With more than 10 years operating in the field of DNA testing, GeneViet has performed millions of blood relationship tests for customers domestically and internationally. The advantages of using services at GeneViet include:</p>
           
           <ul>
-            <li><strong>Độ chính xác cao:</strong> GeneViet sử dụng công nghệ phân tích ADN tiên tiến nhất, đảm bảo kết quả xét nghiệm có độ chính xác trên 99.99%. Các mẫu được xử lý bởi đội ngũ chuyên gia giàu kinh nghiệm và phòng thí nghiệm đạt tiêu chuẩn quốc tế.</li>
-            <li><strong>Bảo mật tuyệt đối:</strong> GeneViet cam kết bảo mật thông tin khách hàng ở mức cao nhất. Tất cả các mẫu và dữ liệu xét nghiệm được mã hóa và lưu trữ an toàn, chỉ có những người có thẩm quyền mới được truy cập. Chúng tôi hiểu rằng thông tin di truyền là riêng tư và nhạy cảm, do đó, bảo mật thông tin là ưu tiên hàng đầu của chúng tôi.</li>
-            <li><strong>Quy trình linh hoạt và nhanh chóng:</strong> Với các xét nghiệm cho mục đích pháp lý, GeneViet cung cấp bộ kit thu thập mẫu tại nhà, giúp khách hàng dễ dàng tự lấy mẫu và gửi lại cho trung tâm. Quy trình này không chỉ đơn giản, tiết kiệm thời gian mà còn đảm bảo tính riêng tư cho khách hàng. Kết quả xét nghiệm thường được trả trong thời gian ngắn, đáp ứng nhu cầu kịp thời của khách hàng.</li>
-            <li><strong>Hỗ trợ tư vấn chuyên nghiệp:</strong> Đội ngũ tư vấn viên của GeneViet luôn sẵn sàng hỗ trợ khách hàng từ khâu thu thập mẫu, giải thích kết quả xét nghiệm đến các khía cạnh pháp lý liên quan. GeneViet cam kết cung cấp dịch vụ tận tâm và chuyên nghiệp.</li>
-          </ul>
+            <li><strong>High accuracy:</strong> GeneViet uses the most advanced DNA analysis technology, ensuring test results have accuracy over 99.99%. Samples are processed by experienced expert teams and laboratories meeting international standards.</li>
+            <li><strong>Absolute confidentiality:</strong> GeneViet commits to protecting customer information at the highest level. All samples and test data are encrypted and stored securely, with access only by authorized personnel. We understand that genetic information is private and sensitive, therefore, information security is our top priority.</li>
+            <li><strong>Flexible and fast process:</strong> For legal testing purposes, GeneViet provides home sample collection kits, helping customers easily collect samples themselves and send them back to the center. This process is not only simple and time-saving but also ensures privacy for customers. Test results are usually returned in a short time, meeting customers' timely needs.</li>
+            <li><strong>Professional consulting support:</strong> GeneViet's consulting team is always ready to support customers from sample collection, explaining test results to related legal aspects. GeneViet commits to providing dedicated and professional service.</li>
+        </ul>
         </div>
       </div>
     `
@@ -230,173 +226,173 @@ const articles = [
 
 {
   id: 3,
-  title: "Xét nghiệm ADN cha con dân sự là gì?",
+  title: "What is non-legal father-child DNA testing?",
   category: "Knowledge",
-  excerpt: "Ngày nay, dịch vụ xét nghiệm ADN cha con dân sự được rất nhiều người quan tâm. Vậy, xét nghiệm ADN là gì? Chi phí hết bao nhiêu? Có thể sử dụng mẫu phẩm gì?",
+  excerpt: "Today, non-legal father-child DNA testing services are of great interest to many people. So, what is DNA testing? How much does it cost? What samples can be used?",
   image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=800&fit=crop",
   slug: "xet-nghiem-adn-cha-con-dan-su-la-gi",
   author: "DNA Testing",
   date: "2024-06-25",
-  readTime: "8 min read",
+    readTime: "8 min read",
   featured: true,
-  tableOfContents: [
-    { id: "1", title: "Xét nghiệm ADN cha con dân sự là gì?", level: 1 },
-    { id: "2", title: "Các thông tin cần biết khi cần làm xét nghiệm ADN cha con dân sự", level: 1 }
-  ],
-  content: `
-    <div class="blog-content">
-      <p class="lead-paragraph">Ngày nay, dịch vụ xét nghiệm ADN cha con dân sự được rất nhiều người quan tâm. Vậy, xét nghiệm ADN là gì? Chi phí hết bao nhiêu? Có thể sử dụng mẫu phẩm gì? Hãy cùng tìm hiểu chi tiết ngay trong bài viết dưới đây.</p>
+    tableOfContents: [
+    { id: "1", title: "What is non-legal father-child DNA testing?", level: 1 },
+    { id: "2", title: "Information you need to know when doing non-legal father-child DNA testing", level: 1 }
+    ],
+    content: `
+      <div class="blog-content">
+      <p class="lead-paragraph">Today, non-legal father-child DNA testing services are of great interest to many people. So, what is DNA testing? How much does it cost? What samples can be used? Let's learn in detail in the article below.</p>
 
       <div style="text-align: center; margin: 20px auto; display: flex; justify-content: center;">
-        <img src="/images/xet-nghiem-adn-cha-con-dan-su-la-gi-2.jpg" alt="Xét nghiệm ADN cha con dân sự" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
+        <img src="/images/xet-nghiem-adn-cha-con-dan-su-la-gi-2.jpg" alt="Non-legal father-child DNA testing" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
       </div>
 
-      <h2 id="1">1. Xét nghiệm ADN cha con dân sự là gì?</h2>
+      <h2 id="1">1. What is non-legal father-child DNA testing?</h2>
       
-      <p>Xét nghiệm ADN cha con dân là loại xét nghiệm tự nguyện, giúp xác minh quan hệ huyết thống giữa người con và người cha giả định mà sau đó, giấy xác nhận kết quả sẽ không được/không có giá trị sử dụng làm bằng chứng pháp lý hoặc sử dụng trong các thủ tục hành chính.</p>
+      <p>Non-legal father-child DNA testing is a voluntary type of testing that helps verify the blood relationship between a child and presumed father, where the result confirmation certificate will not be/has no value for use as legal evidence or in administrative procedures.</p>
 
-      <p>Thường, xét nghiệm ADN cha con dân sự sẽ được tiến hành trong các trường hợp sau:</p>
+      <p>Usually, non-legal father-child DNA testing will be conducted in the following cases:</p>
       
       <ul>
-        <li>Có sự nghi ngờ về quan hệ huyết thống của cha và con, cần được xác minh rõ ràng để giải tỏa nghi ngờ, giái quyết mâu thuẫn, hiểu lầm trong gia đình.</li>
-        <li>Người mẹ đơn thân muốn xác nhận huyết thống của con với cha để yêu cầu về trách nhiệm nuôi dưỡng, chu cấp.</li>
-        <li>Có xảy ra tranh chấp quyền nuôi con khi cha/mẹ không đăng ký kết hôn, hoặc người cha bị phủ nhận vai trò, không được quyền thăm nuôi, chu cấp con.</li>
-      </ul>
+        <li>There are doubts about the blood relationship between father and child, which need to be clearly verified to dispel doubts and resolve conflicts and misunderstandings within the family.</li>
+        <li>Single mothers want to confirm their child's blood relationship with the father to request parenting and support responsibilities.</li>
+        <li>Child custody disputes occur when parents are not registered for marriage, or the father is denied his role and not granted visiting, parenting, or child support rights.</li>
+        </ul>
 
-      <h2 id="2">2. Các thông tin cần biết khi cần làm xét nghiệm ADN cha con dân sự</h2>
+      <h2 id="2">2. Information you need to know when doing non-legal father-child DNA testing</h2>
       
-      <p>Dưới đây là một số thông tin quan trọng mà bạn cần nắm khi cần làm xét nghiệm ADN cha con dân sự:</p>
+      <p>Below is some important information you need to know when doing non-legal father-child DNA testing:</p>
       
-      <p><strong>- Mẫu phẩm và hình thức lấy mẫu xét nghiệm</strong></p>
+      <p><strong>- Test samples and sample collection methods</strong></p>
       
-      <p>Nếu như với mục đích xét nghiệm ADN cha con hành chính, chỉ có 2 loại mẫu phẩm là máu và tế bào niêm mạc miệng được sư dụng, thì với xét nghiệm ADN cha con dân sự, chúng ta có thể chuẩn bị bất cứ loại mẫu phẩm nào để sử dụng cho quá trình xét nghiệm: tóc, móng, máu, nước bọt, cuống rốn, nước ối, nhau thai,… thậm chí là các mẫu phẩm đặc biệt như bã kẹo cao su, đầu lọc thuốc lá hay thậm chí là bao cao su đã qua sử dụng bởi người cần được xác minh huyết thống.</p>
+      <p>If for administrative father-child DNA testing purposes, only 2 types of samples are used: blood and oral mucosal cells, then for non-legal father-child DNA testing, we can prepare any type of sample for the testing process: hair, nails, blood, saliva, umbilical cord, amniotic fluid, placenta... even special samples like chewed gum, cigarette filters, or even used condoms by the person whose blood relationship needs to be verified.</p>
       
-      <p>Về hình thức lấy mẫu, vì xét nghiệm ADN cha con dân sự chỉ phục vụ cho mục đích cá nhân, không sử dụng cho các mục đích pháp lý, hành chính, nên việc thu thập mẫu phẩm có thể tiến hành bí mật, tại nhà, hoặc trực tiếp đến tại trung tâm xét nghiệm ADN để được hướng dẫn, hỗ trợ, hoặc yêu cầu nhân viên trung tâm xét nghiệm đến tại nhà để hỗ trợ lấy mẫu,… nhìn chung là tùy vào mong muốn, điều kiện của từng người, từng trường hợp.</p>
+      <p>Regarding sample collection methods, since non-legal father-child DNA testing only serves personal purposes and is not used for legal or administrative purposes, sample collection can be conducted secretly, at home, or directly at the DNA testing center for guidance and support, or request testing center staff to come home to assist with sample collection... generally depending on each person's wishes and conditions, each case.</p>
       
-      <p><strong>- Thủ tục</strong></p>
+      <p><strong>- Procedures</strong></p>
       
       <div style="text-align: center; margin: 20px auto; display: flex; justify-content: center;">
-        <img src="/images/xet-nghiem-adn-cha-con-dan-su-nhung-thong-tin-can-biet-1.jpg" alt="Thủ tục xét nghiệm ADN cha con dân sự" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
+        <img src="/images/xet-nghiem-adn-cha-con-dan-su-nhung-thong-tin-can-biet-1.jpg" alt="Non-legal father-child DNA testing procedures" style="max-width: 100%; height: auto; border-radius: 8px; margin: 0 auto;">
       </div>
       
-      <p>Thủ tục cho xét nghiệm ADN cha con dân sự rất đơn giản do không có yếu tố pháp lý. Người tham gia, yêu cầu làm xét nghiệm không cần mang theo bất kỳ giấy tờ tùy thân nào, cũng không cần phải khai chính xác thông tin cá nhân mà có thể dùng biệt danh, lựa chọn xét nghiệm ẩn danh. Tất cả những gì cần làm chỉ là liên hệ với trung tâm xét nghiệm để đăng ký xét nghiệm ADN cha con dân sự, nộp phí và chờ đợi kết quả được trả về.</p>
+      <p>Procedures for non-legal father-child DNA testing are very simple due to the absence of legal elements. Participants requesting testing do not need to bring any identification documents, nor do they need to declare accurate personal information but can use aliases and choose anonymous testing. All that needs to be done is contact the testing center to register for non-legal father-child DNA testing, pay the fee and wait for results to be returned.</p>
       
-      <strong>- Chi phí xét nghiệm ADN cha con dân sự</strong>
+      <strong>- Non-legal father-child DNA testing costs</strong>
       
-      <p>Chi phí xét nghiệm ADN cha con dân sự hiện dao động ở mức từ 2,5 triệu, tùy vào yêu cầu thời gian trả kết quả.</p>
+      <p>The cost of non-legal father-child DNA testing currently ranges from 2.5 million VND, depending on the required result delivery time.</p>
       
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background-color: #f8f9fa;">
       </table>
       </p>
       <div class="conclusion-box" style="background-color: #f0f8ff; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #ccc;">
-        <h3 style="color: #1976D2; margin-top: 0;">Kết luận</h3>
-        <p>Xét nghiệm ADN cha con dân sự là một giải pháp hiệu quả để xác định mối quan hệ huyết thống giữa cha và con cho mục đích cá nhân. Với quy trình đơn giản, chi phí hợp lý và khả năng sử dụng nhiều loại mẫu phẩm khác nhau, dịch vụ này đang ngày càng được nhiều người lựa chọn. Tuy nhiên, cần lưu ý rằng kết quả xét nghiệm ADN dân sự không có giá trị pháp lý và không thể sử dụng trong các thủ tục hành chính.</p>
+        <h3 style="color: #1976D2; margin-top: 0;">Conclusion</h3>
+        <p>Non-legal father-child DNA testing is an effective solution for determining blood relationships between father and child for personal purposes. With simple procedures, reasonable costs and the ability to use many different types of samples, this service is increasingly chosen by many people. However, it should be noted that non-legal DNA test results have no legal value and cannot be used in administrative procedures.</p>
         
-        <p>Nếu bạn có nhu cầu làm xét nghiệm ADN cha con dân sự, hãy liên hệ với các trung tâm xét nghiệm ADN uy tín để được tư vấn và hỗ trợ tốt nhất.</p>
+        <p>If you need non-legal father-child DNA testing, please contact reputable DNA testing centers for the best consultation and support.</p>
+        </div>
       </div>
-    </div>
-  `
-},
+    `
+  },
 
   {
     id: 4,
-    title: "Phân Biệt Xét Nghiệm ADN Dân Sự Và Hành Chính",
+    title: "Distinguishing Non-Legal and Administrative DNA Testing",
     category: "Knowledge",
-    excerpt: "Hiểu rõ sự khác biệt giữa xét nghiệm ADN dân sự và hành chính để lựa chọn đúng loại xét nghiệm phù hợp với nhu cầu của bạn.",
+    excerpt: "Understand the differences between non-legal and administrative DNA testing to choose the right type of testing that suits your needs.",
     image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&h=800&fit=crop",
 
     slug: "phan-biet-xet-nghiem-adn-dan-su-va-hanh-chinh",
     author: "TS. Nguyễn Văn Minh",
     date: "2024-06-20",
     readTime: "8 phút đọc",
-    featured: true,
+  featured: true,
     views: 1580,
     likes: 167,
     comments: 38,
 
-    tableOfContents: [
-      { id: "1", title: "So sánh xét nghiệm ADN dân sự và hành chính", level: 1 },
-      { id: "2", title: "Xét nghiệm ADN dân sự - thử nghiệm 'vì mục đích cá nhân'", level: 1 },
-      { id: "3", title: "Xét nghiệm ADN hành chính - chính xác và có hiệu lực pháp lý", level: 1 }
-    ],
-    content: `
-      <div class="blog-content">
-        <p class="lead-paragraph">Trong xã hội hiện đại, xét nghiệm ADN đóng vai trò quan trọng trong nhiều khía cạnh của cuộc sống, từ giải quyết các vấn đề thừa kế đến xác định mối quan hệ huyết thống. Tuy nhiên, nhiều người vẫn còn nhầm lẫn giữa hai loại xét nghiệm ADN phổ biến: dân sự và hành chính. Hiểu rõ sự khác biệt giữa chúng sẽ giúp bạn lựa chọn đúng loại xét nghiệm phù hợp với nhu cầu của mình.</p>
+  tableOfContents: [
+      { id: "1", title: "Comparing non-legal and administrative DNA testing", level: 1 },
+      { id: "2", title: "Non-legal DNA testing - testing 'for personal purposes'", level: 1 },
+      { id: "3", title: "Administrative DNA testing - accurate and legally valid", level: 1 }
+  ],
+  content: `
+    <div class="blog-content">
+        <p class="lead-paragraph">In modern society, DNA testing plays an important role in many aspects of life, from resolving inheritance issues to determining blood relationships. However, many people are still confused between two common types of DNA testing: non-legal and administrative. Understanding the differences between them will help you choose the right type of testing that suits your needs.</p>
         
-        <h2 id="1">1. So sánh xét nghiệm ADN dân sự và hành chính</h2>
-        <p>Trước khi đi sâu vào chi tiết, hãy cùng tìm hiểu sự khác biệt cơ bản giữa hai loại xét nghiệm này qua bảng so sánh sau:</p>
+        <h2 id="1">1. Comparing non-legal and administrative DNA testing</h2>
+        <p>Before going into details, let's explore the basic differences between these two types of testing through the following comparison table:</p>
         
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr style="background-color: #f8f9fa;">
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Tiêu chí</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Xét nghiệm ADN dân sự</th>
-            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Xét nghiệm ADN hành chính</th>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="background-color: #f8f9fa;">
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Criteria</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Non-legal DNA testing</th>
+            <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Administrative DNA testing</th>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Purpose of use</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Only for personal purposes</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Used for legal or administrative purposes</td>
+        </tr>
+        <tr style="background-color: #f8f9fa;">
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Legal value</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">No legal value</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Has legal value</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Sample collection</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Self-collection at home</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Must be performed at authorized medical facilities</td>
+        </tr>
+        <tr style="background-color: #f8f9fa;">
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Identity verification</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Not required</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Requires identification documents and identity verification</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Mục đích sử dụng</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Chỉ sử dụng cho mục đích cá nhân</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Sử dụng cho mục đích pháp lý hoặc hành chính</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Cost</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Lower (1-2 million VND)</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Higher (3-5 million VND)</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Giá trị pháp lý</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Không có giá trị pháp lý</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Có giá trị pháp lý</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Processing time</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-5 days</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 working days</td>
           </tr>
           <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Lấy mẫu</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Tự lấy mẫu tại nhà</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Phải thực hiện tại cơ sở y tế được ủy quyền</td>
-          </tr>
-          <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Xác minh danh tính</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Không yêu cầu</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Yêu cầu giấy tờ tùy thân và chứng minh danh tính</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Chi phí</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Thấp hơn (1-2 triệu đồng)</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Cao hơn (3-5 triệu đồng)</td>
-          </tr>
-          <tr style="background-color: #f8f9fa;">
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Thời gian xử lý</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-5 ngày</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">5-7 ngày làm việc</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #dee2e6; padding: 12px;">Quy trình</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Đơn giản, ít thủ tục</td>
-            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Nghiêm ngặt, tuân thủ quy định pháp luật</td>
-          </tr>
-        </table>
+            <td style="border: 1px solid #dee2e6; padding: 12px;">Process</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Simple, fewer procedures</td>
+            <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Strict, compliant with legal regulations</td>
+        </tr>
+      </table>
+      
+        <h2 id="2">2. Non-legal DNA testing - testing 'for personal purposes'</h2>
+        <p>Non-legal DNA testing (also called personal DNA testing) is a type of testing designed to meet the need to learn information about blood relationships for personal purposes. This is a suitable choice for those who want to determine parent-child, sibling, or other relationships without needing to use the results for legal purposes.</p>
         
-        <h2 id="2">2. Xét nghiệm ADN dân sự - thử nghiệm 'vì mục đích cá nhân'</h2>
-        <p>Xét nghiệm ADN dân sự (hay còn gọi là xét nghiệm ADN cá nhân) là loại xét nghiệm được thiết kế để đáp ứng nhu cầu tìm hiểu thông tin về mối quan hệ huyết thống cho mục đích cá nhân. Đây là lựa chọn phù hợp cho những người muốn xác định quan hệ cha con, anh chị em, hoặc các mối quan hệ khác mà không cần sử dụng kết quả cho mục đích pháp lý.</p>
-        
-        <p><strong>Đặc điểm của xét nghiệm ADN dân sự:</strong></p>
+        <p><strong>Characteristics of non-legal DNA testing:</strong></p>
         <ul>
-          <li><strong>Tính riêng tư cao:</strong> Thông tin cá nhân và kết quả xét nghiệm được bảo mật tuyệt đối</li>
-          <li><strong>Lấy mẫu tại nhà:</strong> Có thể tự lấy mẫu tại nhà bằng bộ kit được cung cấp</li>
-          <li><strong>Quy trình đơn giản:</strong> Không yêu cầu giấy tờ tùy thân hoặc chứng minh danh tính</li>
-          <li><strong>Chi phí hợp lý:</strong> Chi phí thấp hơn so với xét nghiệm ADN hành chính</li>
-          <li><strong>Kết quả nhanh chóng:</strong> Thời gian xử lý và trả kết quả nhanh hơn</li>
-        </ul>
-        
-        <p><strong>Ứng dụng của xét nghiệm ADN dân sự:</strong></p>
+          <li><strong>High privacy:</strong> Personal information and test results are kept absolutely confidential</li>
+          <li><strong>Home sample collection:</strong> Can self-collect samples at home using provided kits</li>
+          <li><strong>Simple process:</strong> No identification documents or identity verification required</li>
+          <li><strong>Reasonable cost:</strong> Lower cost compared to administrative DNA testing</li>
+          <li><strong>Quick results:</strong> Faster processing and result delivery time</li>
+      </ul>
+      
+        <p><strong>Applications of non-legal DNA testing:</strong></p>
         <ul>
-          <li>Xác định mối quan hệ cha con cho mục đích an tâm cá nhân</li>
-          <li>Tìm hiểu mối quan hệ huyết thống giữa anh chị em</li>
-          <li>Xác định quan hệ họ hàng xa (như ông bà-cháu, cô dì chú bác-cháu)</li>
-          <li>Tìm hiểu nguồn gốc gia đình hoặc dòng tộc</li>
-          <li>Giải đáp nghi ngờ về mối quan hệ huyết thống trong gia đình</li>
-        </ul>
-        
+          <li>Determining parent-child relationships for personal peace of mind</li>
+          <li>Learning about blood relationships between siblings</li>
+          <li>Determining distant family relationships (such as grandparent-grandchild, aunt/uncle-niece/nephew)</li>
+          <li>Learning about family origins or lineage</li>
+          <li>Resolving doubts about blood relationships within the family</li>
+      </ul>
+      
         <div class="important-note" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #dc3545;">
-          <p><strong>Lưu ý quan trọng:</strong> Kết quả xét nghiệm ADN dân sự không có giá trị pháp lý và không thể sử dụng trong các thủ tục hành chính, tố tụng tại tòa án, hay thủ tục di trú.</p>
-        </div>
-
-        <h2 id="3">3. Xét nghiệm ADN hành chính - chính xác và có hiệu lực pháp lý</h2>
-        <p>Xét nghiệm ADN hành chính (còn gọi là xét nghiệm ADN pháp lý) là loại xét nghiệm được thực hiện theo các quy trình nghiêm ngặt, tuân thủ quy định pháp luật, nhằm đảm bảo kết quả có giá trị pháp lý và có thể sử dụng trong các thủ tục hành chính, tố tụng tại tòa án.</p>
+          <p><strong>Important note:</strong> Non-legal DNA test results have no legal value and cannot be used in administrative procedures, litigation in court, or immigration procedures.</p>
+      </div>
+      
+        <h2 id="3">3. Administrative DNA testing - accurate and legally valid</h2>
+        <p>Administrative DNA testing (also called legal DNA testing) is a type of testing performed according to strict procedures, complying with legal regulations, to ensure results have legal value and can be used in administrative procedures and litigation in court.</p>
         
         <p><strong>Quy trình xét nghiệm ADN hành chính:</strong></p>
         <ul>
@@ -407,55 +403,55 @@ const articles = [
           <li><strong>Phân tích mẫu:</strong> Sử dụng công nghệ tiên tiến, phân tích ít nhất 16-24 vị trí STR</li>
           <li><strong>Kiểm tra chất lượng:</strong> Kết quả được kiểm tra bởi ít nhất 2 chuyên gia</li>
           <li><strong>Cấp giấy chứng nhận:</strong> Kết quả được cấp kèm giấy chứng nhận có con dấu hợp pháp</li>
-        </ul>
-        
-        <p><strong>Ứng dụng của xét nghiệm ADN hành chính:</strong></p>
+      </ul>
+
+        <p><strong>Applications of administrative DNA testing:</strong></p>
         <ul>
-          <li><strong>Giải quyết tranh chấp thừa kế:</strong> Xác định quan hệ huyết thống để phân chia tài sản thừa kế</li>
-          <li><strong>Đăng ký khai sinh:</strong> Bổ sung thông tin cha/mẹ trên giấy khai sinh</li>
-          <li><strong>Thủ tục nhập quốc tịch:</strong> Chứng minh quan hệ gia đình trong hồ sơ di trú</li>
-          <li><strong>Tranh chấp quyền nuôi con:</strong> Xác định quan hệ cha/mẹ-con trong các vụ kiện ly hôn</li>
-          <li><strong>Giải quyết tranh chấp dân sự:</strong> Làm bằng chứng trong các vụ kiện dân sự</li>
-          <li><strong>Xác minh danh tính:</strong> Trong các trường hợp nghi ngờ về danh tính hoặc tráo đổi trẻ sơ sinh</li>
-        </ul>
-        
-        <p><strong>Các cơ sở thực hiện xét nghiệm ADN hành chính:</strong></p>
+          <li><strong>Resolving inheritance disputes:</strong> Determining blood relationships for inheritance asset distribution</li>
+          <li><strong>Birth registration:</strong> Adding father/mother information to birth certificates</li>
+          <li><strong>Citizenship procedures:</strong> Proving family relationships in immigration files</li>
+          <li><strong>Child custody disputes:</strong> Determining parent-child relationships in divorce cases</li>
+          <li><strong>Resolving legal disputes:</strong> Evidence in legal cases</li>
+          <li><strong>Identity verification:</strong> In cases of suspected identity or newborn baby switching</li>
+      </ul>
+      
+        <p><strong>Facilities performing administrative DNA testing:</strong></p>
         <ul>
-          <li>Viện Pháp y Quốc gia và các chi nhánh trên toàn quốc</li>
-          <li>Các bệnh viện đa khoa tuyến trung ương và tuyến tỉnh được cấp phép</li>
-          <li>Các trung tâm xét nghiệm ADN được Bộ Y tế cấp phép</li>
-          <li>Các phòng thí nghiệm có chứng nhận ISO 17025 về xét nghiệm ADN</li>
-        </ul>
-        
+          <li>National Institute of Forensic Medicine and branches nationwide</li>
+          <li>Licensed central and provincial general hospitals</li>
+          <li>DNA testing centers licensed by the Ministry of Health</li>
+          <li>Laboratories with ISO 17025 certification for DNA testing</li>
+      </ul>
+      
         <div class="warning-box" style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #2196F3;">
-          <p><strong>Tiêu chí lựa chọn cơ sở xét nghiệm ADN uy tín:</strong></p>
+          <p><strong>Criteria for choosing reputable DNA testing facilities:</strong></p>
           <ul>
-            <li>Được cấp phép bởi Bộ Y tế và có chứng nhận quốc tế (ISO, AABB, CAP)</li>
-            <li>Có đội ngũ chuyên gia được đào tạo chuyên sâu và có kinh nghiệm</li>
-            <li>Sử dụng công nghệ xét nghiệm hiện đại và thiết bị tiên tiến</li>
-            <li>Có quy trình bảo mật thông tin và kết quả xét nghiệm nghiêm ngặt</li>
-            <li>Có dịch vụ tư vấn trước và sau xét nghiệm chuyên nghiệp</li>
-            <li>Có nhiều năm kinh nghiệm trong lĩnh vực xét nghiệm di truyền</li>
-          </ul>
+            <li>Licensed by the Ministry of Health and has international certifications (ISO, AABB, CAP)</li>
+            <li>Has a team of experts with specialized training and experience</li>
+            <li>Uses modern testing technology and advanced equipment</li>
+            <li>Has strict information security procedures and test results</li>
+            <li>Provides professional pre and post-test counseling services</li>
+            <li>Has many years of experience in genetic testing</li>
+      </ul>
         </div>
 
-        <p><strong>Những lưu ý khi thực hiện xét nghiệm ADN hành chính:</strong></p>
+        <p><strong>Notes when performing administrative DNA testing:</strong></p>
         <ul>
-          <li><strong>Đặt lịch trước:</strong> Nên đặt lịch hẹn trước để tránh chờ đợi và đảm bảo đủ thời gian cho thủ tục</li>
-          <li><strong>Mang theo giấy tờ đầy đủ:</strong> CMND/CCCD/Hộ chiếu gốc và bản sao công chứng, giấy khai sinh của trẻ em</li>
-          <li><strong>Đảm bảo sự có mặt của các bên:</strong> Tất cả các bên liên quan phải có mặt để lấy mẫu</li>
-          <li><strong>Không ăn uống trước khi lấy mẫu:</strong> Tránh ăn, uống, hút thuốc ít nhất 30 phút trước khi lấy mẫu</li>
-          <li><strong>Tư vấn trước xét nghiệm:</strong> Nên tham gia buổi tư vấn để hiểu rõ về quy trình và ý nghĩa của kết quả</li>
-          <li><strong>Chi phí cao hơn:</strong> Chuẩn bị sẵn kinh phí vì chi phí xét nghiệm ADN hành chính cao hơn xét nghiệm dân sự</li>
-        </ul>
-        
+          <li><strong>Schedule in advance:</strong> Should schedule appointments in advance to avoid waiting and ensure sufficient time for procedures</li>
+          <li><strong>Bring complete documents:</strong> Original ID card/Citizen ID/Passport and notarized copies, children's birth certificates</li>
+          <li><strong>Ensure presence of all parties:</strong> All related parties must be present for sample collection</li>
+          <li><strong>No eating or drinking before sampling:</strong> Avoid eating, drinking, smoking at least 30 minutes before sampling</li>
+          <li><strong>Pre-test counseling:</strong> Should participate in counseling sessions to understand the process and meaning of results</li>
+          <li><strong>Higher cost:</strong> Prepare budget as administrative DNA testing costs are higher than non-legal testing</li>
+      </ul>
+      
         <div class="conclusion-box" style="background-color: #f0f8ff; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #ccc;">
-          <h3 style="color: #1976D2; margin-top: 0;">Kết luận</h3>
-          <p>Việc hiểu rõ sự khác biệt giữa xét nghiệm ADN dân sự và xét nghiệm ADN hành chính sẽ giúp người dân chọn đúng loại xét nghiệm phù hợp với mục đích của mình, tránh mất thời gian, chi phí và rắc rối pháp lý. Nếu bạn cần xác nhận huyết thống chỉ để biết cho bản thân, xét nghiệm dân sự là lựa chọn đơn giản và kín đáo. Ngược lại, nếu cần dùng kết quả cho mục đích pháp lý – hãy chọn xét nghiệm hành chính tại các trung tâm uy tín, được cấp phép thực hiện và cung cấp kết quả hợp pháp.</p>
+          <h3 style="color: #1976D2; margin-top: 0;">Conclusion</h3>
+          <p>Understanding the differences between non-legal and administrative DNA testing will help people choose the right type of testing suitable for their purposes, avoiding wasted time, costs and legal complications. If you need to confirm blood relationships just for personal knowledge, non-legal testing is a simple and discreet choice. Conversely, if you need to use results for legal purposes - choose administrative testing at reputable centers that are licensed to perform and provide legal results.</p>
           
          
-        </div>
-        
+      </div>
+      
         
 
 
@@ -493,42 +489,42 @@ const articles = [
         <h2 id="1">1. Xét nghiệm ADN không đủ giá trị pháp lý (Non-Legal DNA Testing)</h2>
         <p>Phù hợp với các mục đích cá nhân mà không cần sử dụng kết quả cho thủ tục pháp lý. Thủ tục đơn giản, chi phí thấp và bảo mật cao.</p>
         
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr style="background-color: #f8f9fa;">
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="background-color: #f8f9fa;">
             <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Dịch vụ</th>
             <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Số lượng mẫu cần lấy</th>
             <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Giá niêm yết</th>
             <th style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">Giá ưu đãi</th>
-          </tr>
-          <tr>
+        </tr>
+        <tr>
             <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm cha - con</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2-3 người (cha con)</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3,000,000 VNĐ</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2,000,000 VNĐ</td>
-          </tr>
-          <tr style="background-color: #f8f9fa;">
+        </tr>
+        <tr style="background-color: #f8f9fa;">
             <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm mẹ - con</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2-3 người (mẹ con)</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3,000,000 VNĐ</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2,000,000 VNĐ</td>
-          </tr>
-          <tr>
+        </tr>
+        <tr>
             <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm anh/chị/em (không cần mẹ/cha)</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2-3 người (anh em)</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3,500,000 VNĐ</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2,500,000 VNĐ</td>
-          </tr>
-          <tr style="background-color: #f8f9fa;">
+        </tr>
+        <tr style="background-color: #f8f9fa;">
             <td style="border: 1px solid #dee2e6; padding: 12px;">Xét nghiệm cô/dì/chú bác...</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3-4 người</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">3,500,000 VNĐ</td>
             <td style="border: 1px solid #dee2e6; padding: 12px; text-align: center;">2,500,000 VNĐ</td>
-          </tr>
-        </table>
-        
+        </tr>
+      </table>
+      
         <div class="important-note" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #007bff;">
           <p><strong>Đặc điểm xét nghiệm ADN không đủ giá trị pháp lý:</strong> Phù hợp với các mục đích cá nhân như: xác minh quan hệ huyết thống, để biết thông tin cho bản thân, tìm hiểu về nguồn gốc dòng họ. Thủ tục đơn giản, chi phí thấp, có thể tự lấy mẫu tại nhà, thời gian xử lý nhanh chóng.</p>
-        </div>
+    </div>
 
         <h2 id="2">2. Xét nghiệm ADN pháp lý (Legal DNA Testing)</h2>
         <p>Đáp ứng các yêu cầu pháp lý khi cần xác định quan hệ huyết thống cho các thủ tục hành chính, tố tụng tại tòa án, thủ tục di trú.</p>
@@ -661,10 +657,10 @@ const articles = [
               <li>Đối với người mang quốc tịch Việt Nam xin vui lòng mang theo giấy tờ tùy thân bản gốc khi đến thực hiện xét nghiệm</li>
               <li>Đối với trẻ em dưới 16 tuổi chưa có Căn cước công dân hoặc hộ chiếu thì có thể mang theo giấy khai sinh có xác nhận của chính quyền, hoặc giấy chứng sinh của bệnh viện bản gốc.</li>
               <li>Đối với người nước ngoài vui lòng mang Hộ chiếu bản gốc theo để photo sao lưu.</li>
-            </ul>
+        </ul>
           </li>
         </ul>
-        
+
         <p><strong>Bước 2: Lấy mẫu xét nghiệm ADN</strong></p>
         <p>Quý khách bắt buộc phải đến văn phòng chúng tôi thu mẫu trực tiếp, trong trường hợp đi lại gặp khó khăn, quý khách vui lòng gọi điện tới tổng đài 24/7 1900 8043 hoặc 098 604 3113 để được trợ giúp</p>
         
@@ -762,7 +758,7 @@ const articles = [
           <li>Express Service (Dịch vụ ưu tiên trả kết quả sớm) chỉ áp dụng cho Staff Collection và Walk-in Service.</li>
           <li>Đối với Postal Delivery, khách hàng có 3 ngày để gửi lại bộ kit chứa mẫu sau khi nhận. Quá hạn, lịch hẹn sẽ tự động bị hủy.</li>
         </ul>
-        
+
         <h2 id="3">Phần 3: Thiết Kế Giao Diện và Trải Nghiệm Người Dùng (UI/UX)</h2>
         <p>Sau khi khách hàng chọn một dịch vụ cụ thể và nhấn "Đặt lịch", họ sẽ được chuyển đến trang Booking với một biểu mẫu thông minh, hiển thị các lựa chọn dựa trên quy tắc đã định.</p>
         
@@ -773,7 +769,7 @@ const articles = [
             <ul>
               <li>Nếu chọn At Home, một ô nhập địa chỉ sẽ xuất hiện.</li>
               <li>Nếu chọn At Facility, hệ thống sẽ hiển thị địa chỉ cố định của CSYT.</li>
-            </ul>
+        </ul>
           </li>
           <li>Phương thức vận chuyển (Mediation Method): Đây là phần có logic phức tạp nhất, các lựa chọn sẽ được lọc tự động:
             <ul>
@@ -781,13 +777,13 @@ const articles = [
                 <ul>
                   <li>At Home → Chỉ có lựa chọn Staff Collection.</li>
                   <li>At Facility → Chỉ có lựa chọn Walk-in Service.</li>
-                </ul>
+        </ul>
               </li>
               <li>Nếu dịch vụ là Non-Legal (Dân sự):
                 <ul>
                   <li>At Home → Có 2 lựa chọn: Postal Delivery hoặc Staff Collection.</li>
                   <li>At Facility → Chỉ có lựa chọn Walk-in Service.</li>
-                </ul>
+        </ul>
               </li>
             </ul>
           </li>
@@ -796,7 +792,7 @@ const articles = [
             <ul>
               <li>Postal Delivery: Khách hàng chọn ngày nhận kit.</li>
               <li>Staff Collection / Walk-in Service: Khách hàng chọn ngày và khung giờ cụ thể. Hệ thống sẽ vô hiệu hóa các khung giờ đã qua trong ngày hiện tại.</li>
-            </ul>
+        </ul>
           </li>
           <li>Chi phí (Cost): Được tính toán tự động và minh bạch.
             <ul>
@@ -813,7 +809,7 @@ const articles = [
             </ul>
           </li>
         </ul>
-        
+
         <p><strong>Lưu ý đặc biệt:</strong> Nếu khách hàng chọn Staff Collection và Express Service, Total Cost = Service Cost + Express Service Cost. Phí Mediation Method (500,000 VND) sẽ được miễn.</p>
         
         <p><strong>Thông tin người xét nghiệm (Test Subject Information):</strong></p>
@@ -885,7 +881,7 @@ const articles = [
               <li>Khách hàng xác nhận thông tin.</li>
               <li>Hệ thống yêu cầu ký tên điện tử.</li>
               <li>Thông báo đặt lịch thành công, kèm theo mã thanh toán (paymentCode) để cung cấp cho nhân viên khi thu mẫu.</li>
-            </ul>
+        </ul>
           </li>
           <li>QR Code (VNPay):
             <ul>
@@ -894,7 +890,7 @@ const articles = [
               <li>Nếu quá 15 phút, mã QR hết hạn. Nếu quá 30 phút mà chưa thanh toán, booking sẽ bị hủy.</li>
               <li>Sau khi hệ thống nhận được thanh toán thành công, khách hàng sẽ ký tên điện tử.</li>
               <li>Thông báo đặt lịch thành công.</li>
-            </ul>
+        </ul>
           </li>
         </ul>
         
@@ -955,7 +951,7 @@ const articles = [
   {
     id: 8,
     title: "THÔNG TIN CHI TIẾT VỀ XÉT NGHIỆM ADN PHÁP LÝ TẠI DNA TESTING",
-    category: "Civil Law",
+    category: "Legal",
     excerpt: "Ngày nay, bản kết quả của xét nghiệm ADN huyết thống không chỉ được sử dụng để xác định mối quan hệ huyết thống giữa cha và con trong gia đình, cũng như trong các thủ tục hành chính đăng ký khai sinh ở cấp xã/phường, mà còn được sử dụng làm bằng chứng trong các tranh chấp về quyền nuôi con, quyền cấp dưỡng và quyền thừa kế tại tòa án nhân dân các cấp.",
     image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200&h=800&fit=crop",
 
@@ -1253,8 +1249,8 @@ const BlogDetail = () => {
                           relatedArticle.category === 'Knowledge' ? 'bg-green-500' :
                           relatedArticle.category === 'Administration' ? 'bg-red-500' :
                           relatedArticle.category === 'News' ? 'bg-purple-500' :
-                          relatedArticle.category === 'Service' ? 'bg-yellow-500' :
-                          'bg-orange-500'
+                          relatedArticle.category === 'Legal' ? 'bg-orange-500' :
+                          'bg-yellow-500'
                         }`}>
                           {relatedArticle.category}
                         </span>
