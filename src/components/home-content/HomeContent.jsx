@@ -15,12 +15,6 @@ const HomeContent = () => {
     api.get("/feedback/feedbacks")
       .then(res => setFeedbacks(res.data))
       .catch(() => setFeedbacks([]));
-    // Nếu muốn test nhanh thì gán array cứng:
-    // setFeedbacks([
-    //   { customerID: "CUST012", bookingID: "B001", rating: 5, content: "Great service!", createAt: [2025, 7, 20] },
-    //   { customerID: "CUST001", bookingID: "B002", rating: 5, content: "Nhanh và uy tín", createAt: [2025, 7, 21] },
-    //   { customerID: "CUST005", bookingID: "B003", rating: 5, content: "Kết quả chính xác", createAt: [2025, 7, 22] },
-    // ]);
   }, []);
 
 
