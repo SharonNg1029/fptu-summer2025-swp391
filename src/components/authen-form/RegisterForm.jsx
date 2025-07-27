@@ -198,13 +198,13 @@ const formatPhoneNumber = (value) => {
   
   return numbers.slice(0, 10);
 };
-
+const RESEND_OTP_TIME = 300; // thời gian chờ resend OTP (giây)
 // Custom OTP Verification Component
 const OTPVerification = ({ email, onVerify, onClose }) => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(RESEND_OTP_TIME);
   const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
@@ -256,7 +256,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
       await api.post("auth/resend-otp", { email });
       toast.success("New OTP code has been sent to your email");
       setOtp("");
-      setTimeLeft(300);
+      setTimeLeft(RESEND_OTP_TIME);
       setCanResend(false);
     } catch (error) {
       console.error(error);
@@ -356,7 +356,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
           lineHeight: "1.4",
         }}
       >
-        💡 Didn't receive the code? Check your spam folder or click "Resend OTP"
+        💡 Didn't receive the code? Check your spam folder or click "Resend OTP" after 5 minutes
       </div>
     </div>
   );
@@ -545,38 +545,45 @@ function RegisterForm() {
   };
 
   const showOTPVerification = (email) => {
-    if (currentToastId) {
-      toast.dismiss(currentToastId);
+  if (currentToastId) {
+    toast.dismiss(currentToastId);
+  }
+
+  const toastId = toast(
+    <OTPVerification
+      email={email}
+      onVerify={() => {
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      }}
+      onResend={async () => {
+        try {
+          await api.post("auth/resend-otp", { email });
+          toast.success("New OTP code has been sent to your email");
+        } catch (error) {
+          toast.error("Failed to resend OTP. Please try again.");
+        }
+      }}
+      onClose={() => {
+        toast.dismiss(toastId);
+        setCurrentToastId(null);
+      }}
+    />,
+    {
+      position: "top-center",
+      autoClose: false,
+      hideProgressBar: true,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: false,
+      closeButton: false,
+      className: "Toastify__toast--otp",
     }
+  );
 
-    const toastId = toast(
-      <OTPVerification
-        email={email}
-        onVerify={() => {
-          setTimeout(() => {
-            navigate("/login");
-          }, 2000);
-        }}
-        onResend={() => {}}
-        onClose={() => {
-          toast.dismiss(toastId);
-          setCurrentToastId(null);
-        }}
-      />,
-      {
-        position: "top-center",
-        autoClose: false,
-        hideProgressBar: true,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: false,
-        closeButton: false,
-        className: "Toastify__toast--otp",
-      }
-    );
-
-    setCurrentToastId(toastId);
-  };
+  setCurrentToastId(toastId);
+};
 
   const onFinish = async (values) => {
     setIsSubmitting(true);
