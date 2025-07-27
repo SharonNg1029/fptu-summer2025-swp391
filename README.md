@@ -1,3 +1,7 @@
+![React](https://img.shields.io/badge/React-18.3.1-blue)
+![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 # Genetix DNA Testing Platform
 
 Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ khách hàng đăng ký, quản lý, và theo dõi quá trình xét nghiệm DNA phục vụ các mục đích dân sự và hành chính.
@@ -12,16 +16,16 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
 - **Đặt lịch xét nghiệm DNA:**  
   - Xét nghiệm dân sự (không pháp lý) cho mục đích cá nhân, gia đình.
   - Xét nghiệm hành chính (hợp lệ cho giấy tờ, nhập cư, tòa án).
-  - Theo dõi trạng thái từng đơn hàng: Waiting Confirmed → Booking Confirmed → Awaiting Sample → In Progress → Ready → Pending Payment → Completed hoặc Cancel.
+  - Theo dõi trạng thái từng đơn hàng: Awaiting Confirmation → Pending Payment → Booking Confirmed → Awaiting Sample → In Progress → Completed hoặc Cancelled.
 
-- **Thanh toán QR đa nền tảng:**  
-  Tích hợp QR code thanh toán qua VNPay.
+- **Thanh toán online qua VNPay:**  
+  Tích hợp thanh toán qua VNPay.
 
 - **Quản lý kết quả & tải báo cáo:**  
   Xem kết quả online, tải về file PDF, tra cứu lịch sử xét nghiệm.
 
 - **Chuyên mục kiến thức & blog:**  
-  Đọc, bình luận, gửi bài viết về DNA, kinh nghiệm thực tế, pháp luật liên quan.
+  Các bài viết về DNA, kinh nghiệm thực tế, pháp luật liên quan.
 
 - **Quản trị hệ thống:**  
   Dashboard quản lý khách hàng, booking, dịch vụ, kho kit, tài khoản, log hệ thống.
@@ -30,11 +34,27 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
 
 ## 🛠️ Công nghệ sử dụng
 
-- **Frontend:** ReactJS, Redux Toolkit, Ant Design, Tailwind CSS, React Router, React Toastify, React Hot Toast, Lucide React, React Icons.
-- **Backend:** Repository này chưa bao gồm source code Back-end.
-- **Authentication:** Google OAuth, xác thực JWT, xác minh OTP qua email.
-- **Quản lý state:** Redux + Redux Persist.
-- **Build Tool:** Vite.
+### Frameworks & UI Libraries
+
+- React 18.3.1, Vite 6.3.5, Tailwind CSS 4.1.8
+- Ant Design 5.25.3, @ant-design/plots
+- Redux Toolkit, React Router DOM
+- Formik + Yup, Axios
+
+### PDF, Charts, Auth & Others
+
+- jsPDF, pdfmake
+- recharts, @ant-design/plots
+- Google OAuth (`@react-oauth/google`)
+
+---
+
+## 📦 Backend API
+
+Dự án này sử dụng RESTful API từ Genetix Backend (Express.js). Bạn có thể tham khảo thêm hoặc cài đặt backend tại:
+
+[https://github.com/baothanh4/swp391](https://github.com/baothanh4/swp391)
+
 
 ---
 
@@ -56,7 +76,7 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
    ```
 
 4. **Cấu hình endpoint API:**  
- 
+
    Thay đổi địa chỉ của const api trong `src/configs/axios.js` nếu muốn trỏ sang api khác.
 
 5. **Chạy ứng dụng:**
