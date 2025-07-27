@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LogOut from "../authen-form/LogOut";
+import { User } from "lucide-react";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,16 +13,26 @@ const Header = () => {
 
   const location = useLocation();
 
-  const userState = useSelector((state) => state.user);
-  const user = userState?.currentUser;
-  const isAuthenticated = userState?.isAuthenticated;
+  // CHUẨN HÓA LẤY USER
+  const { currentUser: user, isAuthenticated } = useSelector((state) => state.user || {});
 
-  // CHỈ LẤY FULLNAME hoặc name, KHÔNG LẤY EMAIL
-  const userDisplayName =
-    user?.fullName ||
-    user?.name ||
-    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
-    "Guest";
+  // Tên hiển thị ưu tiên: fullName > name > firstName lastName > Guest
+  const userDisplayName = useMemo(() => {
+    if (!user) return "Guest";
+    if (user.fullName && user.fullName.trim()) return user.fullName;
+    if (user.name && user.name.trim()) return user.name;
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
+    const full = `${firstName} ${lastName}`.trim();
+    return full || "Guest";
+  }, [user]);
+
+  // Avatar ưu tiên: file /media > avatar url > mặc định
+  const userAvatar = useMemo(() => {
+    if (!user) return "";
+    if (user.avatar?.startsWith("/media")) return `/api${user.avatar}`;
+    return user.avatar || "";
+  }, [user]);
 
   const navItems = [
     { id: 1, label: "Home", href: "/" },
@@ -167,7 +178,7 @@ const Header = () => {
                   className="h-12 w-auto cursor-pointer"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/32";
+                    e.target.src = "/images/logo.png";
                   }}
                 />
               </Link>
@@ -308,25 +319,21 @@ const Header = () => {
                     style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
                     tabIndex={-1}
                   >
-                    <img
-                      src={
-                        user?.avatar
-                          ? (user.avatar.startsWith("http") || user.avatar.startsWith("https"))
-                            ? user.avatar // URL đầy đủ từ Google
-                            : user.avatar.startsWith("/")
-                              ? `/api${user.avatar}` // Đường dẫn tương đối từ API nội bộ
-                              : `/api/${user.avatar}` // Đường dẫn không có dấu / ở đầu
-                          : "https://i.pinimg.com/1200x/59/95/a7/5995a77843eb9f5752a0004b1c1250fb.jpg" // Fallback image
-                      }
-                      alt={userDisplayName}
-                      className="h-12 w-12 rounded-full object-cover border-2 border-gray-300"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        console.log("Avatar load failed, using fallback image");
-                        e.target.src =
-                          "https://via.placeholder.com/48x48/6B7280/FFFFFF?text=U";
-                      }}
-                    />
+                    {user && (user.avatar || user.avatar?.startsWith("/media")) ? (
+                      <img
+                        src={userAvatar}
+                        alt={userDisplayName}
+                        className="h-12 w-12 rounded-full object-cover border-2 border-gray-300"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "/images/logo.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center border-2 border-blue-200">
+                        <User className="h-7 w-7 text-blue-800" />
+                      </div>
+                    )}
                   </button>
 
                   {showDropdown && (

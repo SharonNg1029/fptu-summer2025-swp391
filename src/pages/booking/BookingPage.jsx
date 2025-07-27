@@ -3174,8 +3174,12 @@ const BookingPage = () => {
         .hour(startHour)
         .minute(startMinute)
         .second(0);
-      if (slotStartTime.isBefore(now)) {
-        // Slot đã bắt đầu
+      
+      // Yêu cầu đặt lịch trước ít nhất 1 tiếng 30 phút
+      const minimumAdvanceTime = moment().add(1, 'hour').add(30, 'minutes');
+      
+      if (slotStartTime.isBefore(minimumAdvanceTime)) {
+        // Slot không đủ thời gian advance hoặc đã bắt đầu
         return true;
       }
     }
@@ -3442,16 +3446,6 @@ const BookingPage = () => {
       return Promise.reject(
         new Error("The CCCD/ID number must have 9 or 12 digits!")
       );
-    }
-    return Promise.resolve();
-  };
-
-  const validateAppointmentDate = (_, value) => {
-    if (!value) {
-      return Promise.reject(new Error("Please select an appointment date!"));
-    }
-    if (moment(value).isBefore(moment(), "day")) {
-      return Promise.reject(new Error("Do not select a date in the past!"));
     }
     return Promise.resolve();
   };
@@ -3965,8 +3959,21 @@ const BookingPage = () => {
   }, [selectedService, form]);
 
   const handleConfirmBooking = (values) => {
-    const appointmentDateValue = form.getFieldValue("appointmentDate");
-    const timeSlotValue = form.getFieldValue("timeSlot");
+    // Use state variables instead of form values for date and time
+    const appointmentDateValue = appointmentDate;
+    const timeSlotValue = timeSlot;
+
+    // Early validation for appointment date and time
+    if (selectedMedicationMethod !== "postal-delivery") {
+      if (!appointmentDateValue) {
+        showNotification("error", "Please select an appointment date!");
+        return;
+      }
+      if (!timeSlotValue) {
+        showNotification("error", "Please select a time slot!");
+        return;
+      }
+    }
 
     if (selectedService?.name === "Non-Invasive Relationship Testing (NIPT)") {
       if (
@@ -4175,9 +4182,7 @@ const BookingPage = () => {
         selectedCollectionMethod: selectedCollectionMethod,
         medicationMethod: selectedMedicationMethod,
         selectedMedicationMethod: selectedMedicationMethod,
-        appointmentDate: appointmentDateValue
-          ? appointmentDateValue.format("YYYY-MM-DD")
-          : "",
+        appointmentDate: appointmentDateValue || "",
         timeSlot:
           selectedMedicationMethod === "postal-delivery" ? null : timeSlotValue,
         firstPerson: values.firstPerson,
@@ -5233,26 +5238,33 @@ const BookingPage = () => {
                 }
                 style={{ marginBottom: 24 }}
               >
+                {/* Information about booking advance time requirement */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <ClockCircleOutlined className="text-blue-600 mr-2" />
+                    <span className="text-blue-800 text-sm font-medium">
+                      ⚠️ Important: Please book your appointment at least 1 hour and 30 minutes in advance.
+                    </span>
+                  </div>
+                </div>
+
                 {/* Date Selection */}
                 <div className="mb-6">
-                  <Form.Item
-                    name="appointmentDate"
-                    label="Appointment date"
-                    rules={[{ validator: validateAppointmentDate }]}
-                  >
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Appointment date
+                    </label>
                     <DatePicker
                       style={{ width: "100%" }}
                       placeholder="Select appointment date"
                       format="DD/MM/YYYY"
                       disabledDate={disabledDate}
-                      value={form.getFieldValue("appointmentDate")}
+                      value={appointmentDate ? moment(appointmentDate) : null}
                       onChange={(date) => {
                         const formattedDate = date
                           ? date.format("YYYY-MM-DD")
                           : "";
-                        form.setFieldsValue({ appointmentDate: date });
                         setAppointmentDate(formattedDate);
-                        form.setFieldsValue({ timeSlot: undefined });
                         setTimeSlot("");
 
                         // Fetch slots for the selected date
@@ -5265,23 +5277,17 @@ const BookingPage = () => {
                         }
                       }}
                     />
-                  </Form.Item>
+                  </div>
                 </div>
 
                 {/* Time Selection - Only show when date is selected AND not postal delivery */}
                 {appointmentDate &&
                   selectedMedicationMethod !== "postal-delivery" && (
                     <div>
-                      <Form.Item
-                        name="timeSlot"
-                        label="Time frame"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please select a time slot!",
-                          },
-                        ]}
-                      >
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Time frame
+                        </label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {loadingSlots ? (
                             <div className="col-span-full text-center py-4">
@@ -5321,7 +5327,7 @@ const BookingPage = () => {
                             })
                           )}
                         </div>
-                      </Form.Item>
+                      </div>
 
                       {/* Message when all time slots are disabled */}
                       {areAllTimeSlotsDisabled() && (
@@ -5329,8 +5335,7 @@ const BookingPage = () => {
                           <div className="flex items-center">
                             <ClockCircleOutlined className="text-yellow-600 mr-2" />
                             <span className="text-yellow-800 font-medium">
-                              All slots for today have been filled. Please
-                              choose another day!
+                              All slots for today are unavailable. Please book at least 1 hour and 30 minutes in advance, or choose another day!
                             </span>
                           </div>
                         </div>

@@ -1,8 +1,4 @@
 import {
-  FacebookFilled,
-  TwitterOutlined,
-  InstagramOutlined,
-  YoutubeFilled,
   EnvironmentOutlined,
   PhoneOutlined,
   MailOutlined,
@@ -27,22 +23,6 @@ const Footer = () => {
           <p className="mt-[30px] mb-3 leading-[1.6] text-[17px]">
             Genetix - Vietnam's Leading Trusted DNA Testing Center
           </p>
-          <div className="flex gap-3 text-[30px] mt-[15px]">
-            <a
-              href="https://www.facebook.com/SeoLanhtalkshow"
-              target="_blank"
-              rel="noopener noreferrer">
-              <FacebookFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
-            </a>
-            <TwitterOutlined className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
-            <InstagramOutlined className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
-            <a
-              href="https://www.youtube.com/@Nngan204"
-              target="_blank"
-              rel="noopener noreferrer">
-              <YoutubeFilled className="cursor-pointer hover:text-[#3fa9f5] transition-colors" />
-            </a>
-          </div>
         </div>
 
         {/* Liên kết nhanh */}

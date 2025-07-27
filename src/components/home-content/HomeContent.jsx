@@ -1,12 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { nonLegalServicesData } from "../../pages/home-page/services/non-legalDNA/data-non-legal/nonLegalData";
 import { legalServicesData } from "../../pages/home-page/services/legalDNA/data-legal/legalData";
 import { guideSteps } from "../../pages/home-page/guide/guideSteps";
 import { Link } from "react-router-dom";
 
+import api from "../../configs/axios";
+import FeedbackList from "../FeedbackList/FeedbackList";
+
 const HomeContent = () => {
   // State cho FAQ
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
+  useEffect(() => {
+    api.get("/feedback/feedbacks")
+      .then(res => setFeedbacks(res.data))
+      .catch(() => setFeedbacks([]));
+    // Nếu muốn test nhanh thì gán array cứng:
+    // setFeedbacks([
+    //   { customerID: "CUST012", bookingID: "B001", rating: 5, content: "Great service!", createAt: [2025, 7, 20] },
+    //   { customerID: "CUST001", bookingID: "B002", rating: 5, content: "Nhanh và uy tín", createAt: [2025, 7, 21] },
+    //   { customerID: "CUST005", bookingID: "B003", rating: 5, content: "Kết quả chính xác", createAt: [2025, 7, 22] },
+    // ]);
+  }, []);
+
+
 
   // Hàm toggle FAQ
   const toggleFAQ = (index) => {
@@ -481,6 +498,7 @@ const HomeContent = () => {
           View Full Guide
         </Link>
       </div>
+      <FeedbackList feedbacks={feedbacks} />
 
       {/* ✅ FAQ SECTION - UPDATED */}
       <div className="py-20 bg-white">

@@ -1,0 +1,36 @@
+/* Custom styles for feedback modals */
+
+/* Override Ant Design modal styles to remove white borders */
+.feedback-modal .ant-modal-content {
+  padding: 0 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.feedback-modal .ant-modal-body {
+  padding: 0 !important;
+}
+
+/* Hide default close icon */
+.feedback-modal .ant-modal-close {
+  display: none;
+}
+
+/* Make sure our custom close button works properly */
+.feedback-modal button[aria-label="Close"] {
+  position: absolute;
+  z-index: 1000;
+}
+
+/* Fix hover effects */
+.feedback-modal button[aria-label="Close"]:hover {
+  background-color: transparent;
+  opacity: 0.8;
+}
+
+/* Make the modal centered properly */
+.feedback-modal .ant-modal-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 

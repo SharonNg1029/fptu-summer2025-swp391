@@ -40,55 +40,44 @@ function LoginForm() {
         return;
       }
 
-      // Kiểm tra log để debug
-      console.log("Google login response:", userData);
-      
-      // Phân tích để xác định nguồn avatar
-      let avatarSource = null;
-      // Nếu có avatar từ database (không phải URL Google) thì ưu tiên dùng
-      if (userData.avatar && !userData.avatar.includes('googleusercontent.com')) {
-        avatarSource = userData.avatar;
-        console.log("Using DB avatar:", avatarSource);
-      } 
-      // Nếu không có avatar từ DB hoặc avatar là từ Google, kiểm tra xem có nên dùng avatar từ Google không
-      else if (userData.useGoogleAvatar !== false && userData.picture) {
-        avatarSource = userData.picture;
-        console.log("Using Google avatar:", avatarSource);
-      }
-      // Fallback nếu không có avatar
-      else {
-        avatarSource = userData.avatar || null;
-        console.log("Using fallback avatar:", avatarSource);
-      }
-
       // Lấy đúng field fullName từ backend (ưu tiên fullName, fallback fullname, name, username)
       const enhancedUserData = {
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
+        id: userData.id || userData.userId || `user_${Date.now()}`,
+        username: userData.username || userData.email || "google_user",
+        email: userData.email || "",
         fullName:
           userData.fullName ||
           userData.fullname ||
           userData.name ||
-          userData.username,
-        role: userData.role,
-        avatar: avatarSource,
+          userData.username ||
+          "Google User",
+        role: userData.role || "Customer",
         customerID: userData.customerId || userData.customerID || "",
         staffID: userData.staffId || userData.staffID || "",
         managerID: userData.managerId || userData.managerID || "",
         adminID: userData.adminId || userData.adminID || "",
-        phone: userData.phone,
-        isEmailVerified: userData.isEmailVerified || true,
+        token:
+          userData.token || userData.accessToken || `mock_token_${Date.now()}`,
+        avatar: userData.avatar || userData.picture || "",
+        phone: userData.phone || "",
+        isEmailVerified: userData.isEmailVerified || userData.enabled || true,
         lastLogin: new Date().toISOString(),
         loginMethod: "google",
+        createdAt:
+          userData.createAt || userData.createdAt || new Date().toISOString(),
+        updatedAt: userData.updatedAt || new Date().toISOString(),
       };
 
       dispatch(login(enhancedUserData));
-      saveAuthData({
-        token: userData.token,
-        refreshToken: userData.refreshToken,
+
+      const authData = {
+        token:
+          userData.token || userData.accessToken || `mock_token_${Date.now()}`,
+        refreshToken: userData.refreshToken || userData.refresh_token,
         user: enhancedUserData,
-      });
+      };
+
+      saveAuthData(authData);
 
       toast.success("Google login successful!");
 
