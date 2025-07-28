@@ -47,6 +47,7 @@ import ProtectedRoute from "./components/routes/ProtectedRoute";
 import ResultManagementPage from "./pages/dashboard-staff/result-management";
 
 import FeedbackPage from "./pages/feedback/feedback";
+import ViewFeedback from "./pages/feedback/ViewFeedback";
 
 
 function App() {
@@ -113,6 +114,10 @@ function App() {
     {
     path: "/feedback",
     element: <FeedbackPage />,
+    },
+    {
+    path: "/view-feedback",
+    element: <ViewFeedback />,
     },
     {
       path: "/booking",

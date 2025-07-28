@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Button,
   Checkbox,
@@ -18,6 +18,8 @@ import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { login } from "../../redux/features/userSlice";
 import { useDispatch } from "react-redux";
 import * as yup from 'yup';
+import moment from "moment";
+import { CheckCircle, XCircle } from "lucide-react";
 
 // ✅ Yup validation schema với vanilla JavaScript date validation
 const validationSchema = yup.object().shape({
@@ -43,9 +45,7 @@ const validationSchema = yup.object().shape({
 
   password: yup
     .string()
-    .required('Password is required')
-    .min(6, 'Password must be at least 6 characters')
-    .max(50, 'Password must not exceed 50 characters'),
+    .required('Password is required'), // Bỏ .min() để không bị lỗi lặp
 
   // ✅ Phone validation - bắt đầu bằng 0 và đủ 10 số
   phone: yup
@@ -120,6 +120,32 @@ const validationSchema = yup.object().shape({
         console.error('DOB reasonable validation error:', error);
         return false;
       }
+    })
+    .test('dob-minimum-age', 'You must be at least 18 years old to register', (value) => {
+      if (!value) return false;
+      
+      try {
+        let dateToCheck;
+        
+        if (value && typeof value === 'object' && value.format) {
+          dateToCheck = new Date(value.format('YYYY-MM-DD'));
+        } else if (value instanceof Date) {
+          dateToCheck = value;
+        } else if (typeof value === 'string') {
+          dateToCheck = new Date(value);
+        } else {
+          return false;
+        }
+
+        const today = new Date();
+        const eighteenYearsAgo = new Date();
+        eighteenYearsAgo.setFullYear(today.getFullYear() - 18);
+        
+        return dateToCheck <= eighteenYearsAgo;
+      } catch (error) {
+        console.error('DOB minimum age validation error:', error);
+        return false;
+      }
     }),
 
   address: yup
@@ -172,13 +198,13 @@ const formatPhoneNumber = (value) => {
   
   return numbers.slice(0, 10);
 };
-
+const RESEND_OTP_TIME = 300; // thời gian chờ resend OTP (giây)
 // Custom OTP Verification Component
 const OTPVerification = ({ email, onVerify, onClose }) => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(RESEND_OTP_TIME);
   const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
@@ -230,7 +256,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
       await api.post("auth/resend-otp", { email });
       toast.success("New OTP code has been sent to your email");
       setOtp("");
-      setTimeLeft(300);
+      setTimeLeft(RESEND_OTP_TIME);
       setCanResend(false);
     } catch (error) {
       console.error(error);
@@ -330,7 +356,7 @@ const OTPVerification = ({ email, onVerify, onClose }) => {
           lineHeight: "1.4",
         }}
       >
-        💡 Didn't receive the code? Check your spam folder or click "Resend OTP"
+        💡 Didn't receive the code? Check your spam folder or click "Resend OTP" after 5 minutes
       </div>
     </div>
   );
@@ -340,8 +366,130 @@ function RegisterForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [currentToastId, setCurrentToastId] = useState(null);
+  const [form] = Form.useForm();
+  const [passwordValue, setPasswordValue] = useState('');
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const passwordInputRef = useRef(null);
+
+  // Password requirements check
+  const passwordChecks = [
+    {
+      label: "At least 8 characters",
+      test: (pw) => pw.length >= 8,
+    },
+    {
+      label: "Uppercase letter (A-Z)",
+      test: (pw) => /[A-Z]/.test(pw),
+    },
+    {
+      label: "Lowercase letter (a-z)",
+      test: (pw) => /[a-z]/.test(pw),
+    },
+    {
+      label: "Number (0-9)",
+      test: (pw) => /[0-9]/.test(pw),
+    },
+    {
+      label: "Special character",
+      test: (pw) => /[^A-Za-z0-9]/.test(pw),
+    },
+  ];
+
+  // Check if all requirements are met
+  const isPasswordStrong = passwordChecks.every((item) => item.test(passwordValue));
+
+  // Thêm useEffect để handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (passwordInputRef.current && !passwordInputRef.current.contains(event.target)) {
+        setIsPasswordFocused(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const GOOGLE_CLIENT_ID = "26142191146-7u8f63rgtupdv8v6kv8ug307j55hjfob.apps.googleusercontent.com";
+
+  // Real-time validation handlers
+  const handleFieldValidation = async (fieldName, value) => {
+    try {
+      const result = await validateField(fieldName, value);
+      if (!result.isValid) {
+        toast.error(result.message);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      toast.error(`Validation error: ${error.message}`);
+      return false;
+    }
+  };
+
+  const handleFullNameBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('fullname', value);
+    }
+  };
+
+  const handleUsernameBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('username', value);
+    }
+  };
+
+  const handleEmailBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('email', value);
+    }
+  };
+
+  const handlePasswordBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('password', value);
+    }
+  };
+
+  const handlePhoneBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('phone', value);
+    }
+  };
+
+  const handleDobChange = (date) => {
+    if (date) {
+      handleFieldValidation('dob', date);
+    }
+  };
+
+  const handleAddressBlur = (e) => {
+    const value = e.target.value;
+    if (value) {
+      handleFieldValidation('address', value);
+    }
+  };
+
+  const handleGenderChange = (value) => {
+    if (value !== undefined && value !== null) {
+      handleFieldValidation('gender', value);
+    }
+  };
+
+  const handleAgreementChange = (e) => {
+    const checked = e.target.checked;
+    if (!checked) {
+      toast.error("You must agree to the Terms and Privacy Policy");
+    }
+  };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -397,40 +545,48 @@ function RegisterForm() {
   };
 
   const showOTPVerification = (email) => {
-    if (currentToastId) {
-      toast.dismiss(currentToastId);
+  if (currentToastId) {
+    toast.dismiss(currentToastId);
+  }
+
+  const toastId = toast(
+    <OTPVerification
+      email={email}
+      onVerify={() => {
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      }}
+      onResend={async () => {
+        try {
+          await api.post("auth/resend-otp", { email });
+          toast.success("New OTP code has been sent to your email");
+        } catch (error) {
+          toast.error("Failed to resend OTP. Please try again.");
+        }
+      }}
+      onClose={() => {
+        toast.dismiss(toastId);
+        setCurrentToastId(null);
+      }}
+    />,
+    {
+      position: "top-center",
+      autoClose: false,
+      hideProgressBar: true,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: false,
+      closeButton: false,
+      className: "Toastify__toast--otp",
     }
+  );
 
-    const toastId = toast(
-      <OTPVerification
-        email={email}
-        onVerify={() => {
-          setTimeout(() => {
-            navigate("/login");
-          }, 2000);
-        }}
-        onResend={() => {}}
-        onClose={() => {
-          toast.dismiss(toastId);
-          setCurrentToastId(null);
-        }}
-      />,
-      {
-        position: "top-center",
-        autoClose: false,
-        hideProgressBar: true,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: false,
-        closeButton: false,
-        className: "Toastify__toast--otp",
-      }
-    );
-
-    setCurrentToastId(toastId);
-  };
+  setCurrentToastId(toastId);
+};
 
   const onFinish = async (values) => {
+    setIsSubmitting(true);
     if (values.dob && values.dob.format) {
       values.dob = values.dob.format("YYYY-MM-DD");
     }
@@ -442,6 +598,11 @@ function RegisterForm() {
       console.log("Yup validation errors:", validation.errors);
       const firstError = Object.values(validation.errors)[0];
       toast.error(firstError);
+      // Xóa password khi validation thất bại
+      setPasswordValue('');
+      setIsPasswordFocused(false);
+      form.setFieldsValue({ password: '' });
+      setIsSubmitting(false);
       return;
     }
 
@@ -489,6 +650,11 @@ function RegisterForm() {
           : errorMessage;
 
       toast.error(finalErrorMessage);
+      setIsSubmitting(false);
+      // Xóa password khi có lỗi
+      setPasswordValue('');
+      setIsPasswordFocused(false);
+      form.setFieldsValue({ password: '' });
     }
   };
 
@@ -501,6 +667,11 @@ function RegisterForm() {
     if (termsError) {
       toast.error("Please agree to the Terms and Privacy Policy to continue");
     }
+    
+    // Xóa password khi form validation thất bại
+    setPasswordValue('');
+    setIsPasswordFocused(false);
+    form.setFieldsValue({ password: '' });
   };
 
   const handlePhoneChange = (e) => {
@@ -537,6 +708,7 @@ function RegisterForm() {
             onFinishFailed={onFinishFailed}
             autoComplete="off"
             size="small"
+            form={form}
           >
             <div className="form-row">
               <div className="form-col">
@@ -558,7 +730,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Enter your full name" />
+                  <Input 
+                    placeholder="Enter your full name" 
+                    onBlur={handleFullNameBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -579,29 +754,62 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Choose a username" />
+                  <Input 
+                    placeholder="Choose a username" 
+                    onBlur={handleUsernameBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
                   label="Password"
                   name="password"
                   className="form-field"
+                  validateTrigger={['onBlur', 'onSubmit']}
+                  validateFirst
+                  help={form.getFieldError('password')[0] || null}
                   rules={[
-                    { required: true, message: "Required" },
                     {
-                      validator: async (_, value) => {
-                        if (!value) return Promise.resolve();
-                        const result = await validateField('password', value);
-                        if (!result.isValid) {
-                          return Promise.reject(new Error(result.message));
-                        }
+                      validator: (_, value) => {
+                        if (!value) return Promise.reject("Required");
+                        if (value.length < 8) return Promise.resolve();
+                        if (!/[A-Z]/.test(value)) return Promise.resolve();
+                        if (!/[a-z]/.test(value)) return Promise.resolve();
+                        if (!/[0-9]/.test(value)) return Promise.resolve();
+                        if (!/[^A-Za-z0-9]/.test(value)) return Promise.resolve();
                         return Promise.resolve();
                       }
                     }
                   ]}
-                  hasFeedback
                 >
-                  <Input.Password placeholder="Create a password" />
+                  <div ref={passwordInputRef}>
+                    <Input.Password
+                      placeholder="Create a password"
+                      onBlur={() => setIsPasswordFocused(false)}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      value={passwordValue}
+                      onChange={e => setPasswordValue(e.target.value)}
+                    />
+                    <div 
+                      className={`password-requirements-container ${isPasswordFocused ? 'show' : 'hide'}`}
+                    >
+                      {isPasswordFocused && (
+                        <div className="p-3">
+                          <div className="text-xs font-semibold text-gray-600 mb-2">Password Requirements</div>
+                          <ul className="space-y-1">
+                            {passwordChecks.map((item, idx) => {
+                              const ok = item.test(passwordValue);
+                              return (
+                                <li key={item.label} className="flex items-center text-xs" style={{color: ok ? '#22c55e' : '#ef4444'}}>
+                                  {ok ? <CheckCircle className="w-4 h-4 mr-1" /> : <XCircle className="w-4 h-4 mr-1" />}
+                                  {item.label}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </Form.Item>
 
                 <Form.Item
@@ -623,7 +831,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Enter your email" />
+                  <Input 
+                    placeholder="Enter your email" 
+                    onBlur={handleEmailBlur}
+                  />
                 </Form.Item>
               </div>
 
@@ -649,6 +860,7 @@ function RegisterForm() {
                   <Input 
                     placeholder="Enter your phone number (0xxxxxxxxx)"
                     onChange={handlePhoneChange}
+                    onBlur={handlePhoneBlur}
                     maxLength={10}
                   />
                 </Form.Item>
@@ -672,9 +884,10 @@ function RegisterForm() {
                   ]}
                 >
                   <DatePicker
-                    placeholder="Select date of birth"
+                    placeholder="Enter date of birth"
                     style={{ width: "100%" }}
-                    format="YYYY/MM/DD"
+                    format="DD/MM/YYYY"
+                    onChange={handleDobChange}
                     disabledDate={(current) => {
                       // ✅ Vanilla JavaScript date validation
                       if (!current) return false;
@@ -683,9 +896,13 @@ function RegisterForm() {
                       const hundredYearsAgo = new Date();
                       hundredYearsAgo.setFullYear(today.getFullYear() - 100);
                       
+                      // ✅ Minimum age 18 years
+                      const eighteenYearsAgo = new Date();
+                      eighteenYearsAgo.setFullYear(today.getFullYear() - 18);
+                      
                       const currentDate = current.toDate();
                       
-                      return currentDate > today || currentDate < hundredYearsAgo;
+                      return currentDate > today || currentDate < hundredYearsAgo || currentDate > eighteenYearsAgo;
                     }}
                   />
                 </Form.Item>
@@ -708,7 +925,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Input placeholder="Enter your address" />
+                  <Input 
+                    placeholder="Enter your address" 
+                    onBlur={handleAddressBlur}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -729,7 +949,10 @@ function RegisterForm() {
                     }
                   ]}
                 >
-                  <Select placeholder="Select gender">
+                  <Select 
+                    placeholder="Select gender"
+                    onChange={handleGenderChange}
+                  >
                     <Select.Option value={0}>Male</Select.Option>
                     <Select.Option value={1}>Female</Select.Option>
                   </Select>
@@ -758,8 +981,13 @@ function RegisterForm() {
             </Form.Item>
 
             <Form.Item className="form-actions">
-              <Button type="primary" htmlType="submit" block>
-                Sign Up
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                loading={isSubmitting}
+              >
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
               </Button>
             </Form.Item>
           </Form>

@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import api from "../../configs/axios";
+import { checkBookingHasFeedback, submitFeedback } from "../../services/feedbackService";
 
 // Dòng chữ luôn hiện cạnh logo
 const defaultTitleTop = "We appreciate your trust";
@@ -44,8 +45,31 @@ const FeedbackPage = () => {
   const [submitted, setSubmitted] = React.useState(false);
   const [error, setError] = React.useState("");
   const [alreadyFeedback, setAlreadyFeedback] = React.useState(false);
+  const [loading, setLoading] = useState(true);
 
   const createAt = new Date().toISOString().slice(0, 10);
+
+  // Check if booking already has feedback when component mounts
+  useEffect(() => {
+    const checkFeedbackStatus = async () => {
+      if (!bookingID || !customerID) return;
+      
+      try {
+        const response = await checkBookingHasFeedback(bookingID);
+        if (response && response.hasFeedback) {
+          setAlreadyFeedback(true);
+          // Redirect to view feedback
+          navigate(`/view-feedback?bookingId=${bookingID}`);
+        }
+      } catch (error) {
+        console.error("Error checking feedback status:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkFeedbackStatus();
+  }, [bookingID, customerID, navigate]);
 
   const handleBack = () => {
     navigate(-1);
@@ -55,6 +79,17 @@ const FeedbackPage = () => {
     content: Yup.string().required("Please enter your feedback."),
     rating: Yup.number().min(1, "Please select a rating.").required("Please select a rating."),
   });
+
+  if (loading) {
+    return (
+      <FeedbackBox>
+        <div className="flex flex-col items-center justify-center py-6">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="mt-4 text-blue-700">Loading...</p>
+        </div>
+      </FeedbackBox>
+    );
+  }
 
   if (!bookingID) {
     return (
@@ -94,12 +129,20 @@ const FeedbackPage = () => {
         <div className="mb-4 text-blue-700 font-semibold text-center">
           You have already submitted feedback. You cannot submit again.
         </div>
-        <button
-          onClick={handleBack}
-          className="mt-4 px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold border border-blue-200 transition"
-        >
-          Back
-        </button>
+        <div className="flex justify-between">
+          <button
+            onClick={handleBack}
+            className="mt-4 px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold border border-blue-200 transition"
+          >
+            Back
+          </button>
+          <button
+            onClick={() => navigate(`/view-feedback?bookingId=${bookingID}`)}
+            className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold border border-blue-600 transition"
+          >
+            View My Feedback
+          </button>
+        </div>
       </FeedbackBox>
     );
   }
@@ -128,8 +171,9 @@ const FeedbackPage = () => {
         onSubmit={async (values, { setSubmitting }) => {
           setError("");
           try {
-            await api.post(
-              `/customer/feedback/${bookingID}/${customerID}`,
+            await submitFeedback(
+              bookingID, 
+              customerID, 
               {
                 title: "We appreciate your trust\nPlease provide your feedback on our service.",
                 content: values.content,

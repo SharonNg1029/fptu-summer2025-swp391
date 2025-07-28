@@ -48,7 +48,6 @@ const filteredError = (message, ...args) => {
     return;
   }
 
-  // Skip stack traces related to React DOM and scheduler
   if (args && args.length > 0) {
     const stackArg = args.find(arg => 
       typeof arg === 'string' && 
@@ -63,23 +62,18 @@ const filteredError = (message, ...args) => {
   originalConsole.error(message, ...args);
 };
 
-// Completely suppress console in browser
-// Disable all console methods in all environments
+
 console.log = () => {};
 console.info = () => {};
 console.warn = () => {};
 console.debug = () => {};
 console.error = filteredError;
 
-// Set up a MutationObserver to remove the browser's console error UI
 if (typeof window !== 'undefined') {
-  // Override browser console panel UI
   try {
-    // Intercept browser error events to prevent them from showing in the console
     window.addEventListener('error', (event) => {
       const errorMsg = event.message || '';
       
-      // Check if the error is one we want to suppress
       if (errorMsg.includes('-ms-high-contrast') || 
           errorMsg.includes('Tracking Prevention') ||
           errorMsg.includes('Violation') ||
@@ -90,11 +84,9 @@ if (typeof window !== 'undefined') {
       }
     }, true);
 
-    // Handle unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
       const errorMsg = event.reason?.message || String(event.reason);
       
-      // Check if the rejection is one we want to suppress
       if (errorMsg.includes('-ms-high-contrast') || 
           errorMsg.includes('Deprecation') ||
           errorMsg.includes('Tracking Prevention') ||
