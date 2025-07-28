@@ -3032,7 +3032,7 @@ const BookingPage = () => {
     const relationship = form.getFieldValue(["secondPerson", "relationship"]);
 
     const shouldShowPersonalId =
-      (relationship === "Child" || relationship === "Grandchild") &&
+      (relationship === "Child" || relationship === "Grandchild" || relationship === "Sibling") &&
       age !== null &&
       age > 15;
     setShowSecondPersonPersonalId(shouldShowPersonalId);
@@ -3340,6 +3340,14 @@ const BookingPage = () => {
       return Promise.reject(new Error("Invalid date of birth!"));
     }
 
+    // Lấy relationship của first person để kiểm tra
+    const relationship = form.getFieldValue(["firstPerson", "relationship"]);
+
+    // Nếu là Child thì không cần kiểm tra tuổi 18
+    if (relationship === "Child") {
+      return Promise.resolve();
+    }
+
     const today = new Date();
 
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -3395,7 +3403,9 @@ const BookingPage = () => {
       age--;
     }
 
-    if (relationship !== "Child" && relationship !== "Grandchild" && age < 18) {
+    // Không yêu cầu tuổi tối thiểu cho Child và Grandchild
+    // Sibling cũng không cần tuổi tối thiểu
+    if (relationship !== "Child" && relationship !== "Grandchild" && relationship !== "Sibling" && age < 18) {
       return Promise.reject(
         new Error(
           `People with relationships "${relationship}" must be 18 years or older!`
