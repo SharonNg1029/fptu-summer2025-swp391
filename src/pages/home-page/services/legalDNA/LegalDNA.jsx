@@ -476,7 +476,7 @@ const LegalServices = () => {
                     <div className="flex items-center gap-2">
                       <FaBolt className="text-orange-500" />
                       <span className="text-gray-700">
-                        24-Hour Expedited Service (surcharge):
+                        Express Service (surcharge):
                       </span>
                     </div>
                     <span className="text-lg font-bold text-orange-700">
