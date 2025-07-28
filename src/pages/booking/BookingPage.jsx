@@ -744,7 +744,6 @@ const ConfirmBookingModal = ({
 
       const costTableBody = [];
 
-      // Service Fee
       if (serviceCost > 0) {
         costTableBody.push([
           { text: "Phí dịch vụ", alignment: "left", bold: true },
@@ -756,11 +755,9 @@ const ConfirmBookingModal = ({
         ]);
       }
 
-      // Mediation Method Fee
       const medicationMethod =
         bookingData.selectedMedicationMethod || bookingData.medicationMethod;
 
-      // Chỉ hiển thị phí trung gian nếu không phải là express
       if (medicationMethod && medicationMethod !== "express") {
         let mediationMethodText = "Phí phương thức trung gian";
 
@@ -3339,10 +3336,8 @@ const BookingPage = () => {
       return Promise.reject(new Error("Invalid date of birth!"));
     }
 
-    // Lấy relationship của first person để kiểm tra
     const relationship = form.getFieldValue(["firstPerson", "relationship"]);
 
-    // Nếu là Child thì không cần kiểm tra tuổi 18
     if (relationship === "Child") {
       return Promise.resolve();
     }
