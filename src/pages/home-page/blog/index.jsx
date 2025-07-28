@@ -6,11 +6,11 @@ import { FaCalendar, FaUser, FaArrowRight, FaFilter, FaDna, FaFlask, FaGavel, Fa
 const articles = [
   {
     id: 1,
-    title: "ILLUMINA - Công nghệ và tiên phong về xét nghiệm Gen tại Việt Nam",
+    title: "ILLUMINA - Technology and Pioneer in Genetic Testing in Vietnam",
     category: "Knowledge",
-    excerpt: "Illumina được ví như 'người khổng lồ' trong lĩnh vực giải trình tự Gen, là công ty thế giới về giải trình tự DNA và công nghệ sinh học phục vụ khách hàng trong việc nghiên cứu, lâm sàng và ứng dụng.",
+    excerpt: "Illumina is considered a 'giant' in the field of genetic sequencing, being the world's leading company in DNA sequencing and biotechnology serving customers in research, clinical, and applications.",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop",
-    slug: "illumina-cong-nghe-tien-phong-xet-nghiem-gen-viet-nam",
+    slug: "illumina-technology-pioneer-genetic-testing-vietnam",
     author: "DNA Testing",
     date: "2024-01-25",
     readTime: "10 min read",
@@ -18,11 +18,11 @@ const articles = [
   },
   {
     id: 2,
-    title: "Xét nghiệm ADN dân sự và pháp lý: so sánh điểm giống và khác nhau",
+    title: "Non-legal and Legal DNA Testing: Comparing Similarities and Differences",
     category: "Administration",
-    excerpt: "Tìm hiểu sự khác biệt giữa xét nghiệm ADN dân sự và pháp lý để lựa chọn đúng loại xét nghiệm phù hợp với mục đích sử dụng của bạn.",
+    excerpt: "Learn about the differences between non-legal and legal DNA testing to choose the right type of test that suits your intended purpose.",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=600&fit=crop",
-    slug: "xet-nghiem-adn-dan-su-va-phap-ly-so-sanh-diem-giong-va-khac-nhau",
+    slug: "non-legal-legal-dna-testing-comparing-similarities-differences",
     author: "GeneViet",
     date: "2024-03-15",
     readTime: "10 min read",
@@ -30,11 +30,11 @@ const articles = [
   },
   {
     id: 3,
-    title: "Xét nghiệm ADN cha con dân sự là gì?",
+    title: "What is Non-legal Father-Child DNA Testing?",
     category: "Knowledge",
-    excerpt: "Ngày nay, dịch vụ xét nghiệm ADN cha con dân sự được rất nhiều người quan tâm. Vậy, xét nghiệm ADN là gì? Chi phí hết bao nhiêu? Có thể sử dụng mẫu phẩm gì?",
+    excerpt: "Today, non-legal father-child DNA testing services are of great interest to many people. So, what is DNA testing? How much does it cost? What samples can be used?",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
-    slug: "xet-nghiem-adn-cha-con-dan-su-la-gi",
+    slug: "what-is-non-legal-father-child-dna-testing",
     author: "DNA Testing",
     date: "2024-06-25",
     readTime: "8 min read",
@@ -42,35 +42,35 @@ const articles = [
   },
   {
     id: 4,
-    title: "Phân Biệt Xét Nghiệm ADN Dân Sự Và Hành Chính",
+    title: "Distinguishing Between Non-legal and Legal DNA Testing",
     category: "Knowledge",
-    excerpt: "Hiểu rõ sự khác biệt giữa xét nghiệm ADN dân sự và hành chính để lựa chọn đúng loại xét nghiệm phù hợp với nhu cầu của bạn.",
+    excerpt: "Understand the clear differences between non-legal and legal DNA testing to choose the right type of test that suits your needs.",
     image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=600&fit=crop",
-    slug: "phan-biet-xet-nghiem-adn-dan-su-va-hanh-chinh",
-    author: "TS. Nguyễn Văn Minh",
+    slug: "distinguishing-non-legal-legal-dna-testing",
+    author: "Dr. Nguyen Van Minh",
     date: "2024-06-20",
-    readTime: "8 phút đọc",
+    readTime: "8 min read",
     featured: true
   },
   {
     id: 5,
-    title: "Bảng giá dịch vụ của Genetix",
+    title: "Genetix Service Price List",
     category: "News",
-    excerpt: "Trung tâm xét nghiệm ADN Genetix cung cấp đa dạng các gói dịch vụ xét nghiệm ADN với mức giá cạnh tranh và ưu đãi hấp dẫn.",
+    excerpt: "Genetix DNA Testing Center provides diverse DNA testing service packages with competitive prices and attractive offers.",
     image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&h=600&fit=crop",
-    slug: "bang-gia-dich-vu-genetix",
+    slug: "genetix-service-price-list",
     author: "Genetix DNA Center",
     date: "2024-06-15",
-    readTime: "5 phút đọc",
+    readTime: "5 min read",
     featured: true
   },
   {
     id: 6,
-    title: "Thủ tục xét nghiệm - Xét nghiệm ADN",
+    title: "Testing Procedures - DNA Testing",
     category: "Administration",
-    excerpt: "Hướng dẫn chi tiết về thủ tục xét nghiệm ADN cho mục đích dân sự, cá nhân và mục đích pháp lý tại Trung tâm công nghệ sinh học phân tử ADNchacon.",
+    excerpt: "Detailed guide on DNA testing procedures for non-legal, personal purposes and legal purposes at ADNchacon Molecular Biotechnology Center.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    slug: "thu-tuc-xet-nghiem-adn",
+    slug: "testing-procedures-dna-testing",
     author: "ADNchacon",
     date: "2024-01-16",
     readTime: "7 min read",
@@ -78,23 +78,23 @@ const articles = [
   },
   {
     id: 7,
-    title: "Phân Tích Sâu Hệ Thống Booking Xét Nghiệm ADN: Từ Yêu Cầu Đến Triển Khai",
+    title: "In-depth Analysis of DNA Testing Booking System: From Requirements to Implementation",
     category: "News",
-    excerpt: "Phân tích chi tiết về quy trình thiết kế và triển khai hệ thống đặt lịch xét nghiệm ADN, từ yêu cầu nghiệp vụ đến trải nghiệm người dùng và quản lý trạng thái.",
+    excerpt: "Detailed analysis of the design and implementation process of DNA testing appointment scheduling system, from business requirements to user experience and state management.",
     image: "/images/big-data.png",
-    slug: "phan-tich-he-thong-booking-xet-nghiem-adn",
-    author: "Phòng Phát Triển Sản Phẩm",
+    slug: "in-depth-analysis-dna-testing-booking-system-requirements-implementation",
+    author: "Product Development Department",
     date: "2024-01-15",
     readTime: "15 min read",
     featured: false
   },
   {
     id: 8,
-    title: "THÔNG TIN CHI TIẾT VỀ XÉT NGHIỆM ADN PHÁP LÝ TẠI DNA TESTING",
+    title: "DETAILED INFORMATION ABOUT LEGAL DNA TESTING AT DNA TESTING",
     category: "Civil",
-    excerpt: "Ngày nay, bản kết quả của xét nghiệm ADN huyết thống không chỉ được sử dụng để xác định mối quan hệ huyết thống giữa cha và con trong gia đình, cũng như trong các thủ tục hành chính đăng ký khai sinh ở cấp xã/phường, mà còn được sử dụng làm bằng chứng trong các tranh chấp về quyền nuôi con, quyền cấp dưỡng và quyền thừa kế tại tòa án nhân dân các cấp.",
+    excerpt: "Today, DNA paternity test results are not only used to determine blood relationships between father and child within families, as well as in administrative procedures for birth registration at commune/ward level, but are also used as evidence in disputes over child custody rights, alimony rights, and inheritance rights in people's courts at all levels.",
     image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800&h=600&fit=crop",
-    slug: "thong-tin-chi-tiet-xet-nghiem-adn-phap-ly-dna-testing",
+    slug: "detailed-information-legal-dna-testing-dna-testing",
     author: "DNA Testing",
     date: "2024-01-12",
     readTime: "9 min read",
@@ -102,11 +102,11 @@ const articles = [
   },
   {
     id: 9,
-    title: "AI thiết kế chuỗi ADN, mở ra kỷ nguyên mới công nghệ sinh học",
+    title: "AI Designs DNA Sequences, Opening a New Era of Biotechnology",
     category: "Knowledge",
-    excerpt: "Trí tuệ nhân tạo đang cách mạng hóa lĩnh vực sinh học bằng cách thiết kế các chuỗi ADN mới, mở ra kỷ nguyên mới cho công nghệ sinh học và y học.",
+    excerpt: "Artificial intelligence is revolutionizing the field of biology by designing new DNA sequences, opening a new era for biotechnology and medicine.",
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-    slug: "ai-thiet-ke-chuoi-adn-ky-nguyen-moi-cong-nghe-sinh-hoc",
+    slug: "ai-designs-dna-sequences-new-era-biotechnology",
     author: "Dr. Le Minh Hai",
     date: "2024-01-10",
     readTime: "11 min read",
@@ -114,7 +114,7 @@ const articles = [
   }
 ];
 
-// Component Blog
+// Blog Component
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
@@ -129,16 +129,16 @@ const Blog = () => {
     { name: "Civil", icon: "⚖️", color: "from-orange-500 to-orange-600" },
   ];
 
-  // Lọc và sắp xếp bài viết
+  // Filter and sort articles
   const filteredAndSortedArticles = () => {
     let filtered = articles;
 
-    // Lọc theo danh mục
+    // Filter by category
     if (selectedCategory !== "All") {
       filtered = filtered.filter(article => article.category === selectedCategory);
     }
 
-    // Sắp xếp
+    // Sort
     switch (sortBy) {
       case "newest":
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -370,7 +370,7 @@ const Blog = () => {
             <h3 className="text-3xl font-bold text-gray-800 mb-4">No articles found</h3>
             <p className="text-gray-600 mb-8 text-lg">
               {selectedCategory !== "All"
-                ? `No articles found"${selectedCategory}"`
+                ? `No articles found in "${selectedCategory}" category`
                 : "There are no articles available"}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

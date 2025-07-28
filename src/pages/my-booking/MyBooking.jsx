@@ -14,6 +14,8 @@ import {
   Modal,
   Descriptions,
   Select,
+  Dropdown,
+  Menu,
 } from "antd";
 import {
   SearchOutlined,
@@ -38,6 +40,8 @@ import { FaArrowLeft } from "react-icons/fa";
 import FeedbackModal from "./FeedbackModal";
 import ViewFeedbackModal from "./ViewFeedbackModal";
 import { checkMultipleBookingsFeedback } from "../../services/feedbackService";
+import DnaResultModal from "./DnaResultModal";
+import { getDnaResultByBooking } from "../../services/dnaResultService";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -60,6 +64,11 @@ const MyBooking = () => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showViewFeedbackModal, setShowViewFeedbackModal] = useState(false);
   const [selectedFeedbackBookingId, setSelectedFeedbackBookingId] = useState(null);
+
+  // State for DNA result modal
+  const [showDnaResultModal, setShowDnaResultModal] = useState(false);
+  const [dnaResultData, setDnaResultData] = useState(null);
+  const [resultAvailableMap, setResultAvailableMap] = useState({});
 
   const statusList = [
     "Awaiting Confirmation", 
@@ -123,6 +132,20 @@ const MyBooking = () => {
   // Check feedback status when bookings change
   useEffect(() => {
     checkFeedbackStatus();
+  }, [bookings]);
+
+  // Kiểm tra trạng thái available của kết quả cho các booking Completed
+  useEffect(() => {
+    const checkResults = async () => {
+      const completed = bookings.filter(b => b.status === "Completed");
+      const map = {};
+      await Promise.all(completed.map(async (b) => {
+        const result = await getDnaResultByBooking(b.bookingId);
+        map[b.bookingId] = result && result.available;
+      }));
+      setResultAvailableMap(map);
+    };
+    if (bookings.length > 0) checkResults();
   }, [bookings]);
 
   const fetchMyBookings = async () => {
@@ -254,6 +277,19 @@ const MyBooking = () => {
     setShowViewFeedbackModal(false);
   };
 
+  // Hàm lấy kết quả DNA cho 1 booking
+  const fetchDnaResult = async (bookingId) => {
+    const result = await getDnaResultByBooking(bookingId);
+    if (result && result.available) {
+      setDnaResultData(result);
+      setShowDnaResultModal(true);
+    } else {
+      setDnaResultData(null);
+      setShowDnaResultModal(false);
+      toast.info("Result is not available");
+    }
+  };
+
   const getStatusTag = (status) => {
     let color = "default";
     let icon = <ClockCircleOutlined />;
@@ -353,48 +389,38 @@ const MyBooking = () => {
     render: (_, record) => {
       // Check if this booking has feedback
       const hasFeedback = feedbackStatus[record.bookingId] === true;
-      
-      return (
-        <Space>
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(record)}
-          >
+      const canViewResult = record.status === "Completed" && resultAvailableMap[record.bookingId];
+      const menu = (
+        <Menu>
+          <Menu.Item key="view" icon={<EyeOutlined />} onClick={() => handleViewDetail(record)}>
             View
-          </Button>
-          
+          </Menu.Item>
+          {canViewResult && (
+            <Menu.Item key="view-result" icon={<ExperimentOutlined />} onClick={() => fetchDnaResult(record.bookingId)}>
+              View Result
+            </Menu.Item>
+          )}
           {record.status === "Completed" && (
             <>
-              <Button
-                icon={<DownloadOutlined />}
-                type="primary"
-                onClick={() => handleDownloadResult(record)}
-              >
+              <Menu.Item key="download" icon={<DownloadOutlined />} onClick={() => handleDownloadResult(record)}>
                 Download Result
-              </Button>
-              
-              <Button
-                icon={hasFeedback ? <EyeOutlined /> : <CommentOutlined />}
-                type="default"
-                style={{ backgroundColor: hasFeedback ? '#52c41a' : '#13c2c2', color: 'white' }}
-                onClick={() => handleFeedbackButtonClick(record.bookingId, hasFeedback)}
-              >
+              </Menu.Item>
+              <Menu.Item key="feedback" icon={hasFeedback ? <EyeOutlined /> : <CommentOutlined />} onClick={() => handleFeedbackButtonClick(record.bookingId, hasFeedback)}>
                 {hasFeedback ? 'View Feedback' : 'Feedback'}
-              </Button>
+              </Menu.Item>
             </>
           )}
-          
           {!nonCancelableStatuses.includes(record.status) && (
-            <Button
-              icon={<StopOutlined />}
-              type="primary"
-              danger
-              onClick={() => handleCancelBooking(record)}
-            >
+            <Menu.Item key="cancel" icon={<StopOutlined />} danger onClick={() => handleCancelBooking(record)}>
               Cancel
-            </Button>
+            </Menu.Item>
           )}
-        </Space>
+        </Menu>
+      );
+      return (
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button type="primary">Actions</Button>
+        </Dropdown>
       );
     },
   },
@@ -599,6 +625,13 @@ const MyBooking = () => {
           visible={showViewFeedbackModal}
           onClose={handleViewFeedbackModalClose}
           bookingId={selectedFeedbackBookingId}
+        />
+
+        {/* DNA Result Modal */}
+        <DnaResultModal
+          visible={showDnaResultModal}
+          onClose={() => setShowDnaResultModal(false)}
+          resultData={dnaResultData}
         />
       </div>
     </div>

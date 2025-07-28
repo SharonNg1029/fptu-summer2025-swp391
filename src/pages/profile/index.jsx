@@ -178,32 +178,37 @@ const ProfilePage = () => {
   };
 
   const convertDatabaseGenderToUI = (dbGender) => {
+    console.log("🔍 convertDatabaseGenderToUI input:", dbGender, "type:", typeof dbGender);
+    
+    // Chỉ xử lý cho tài khoản: 0 = Male, 1 = Female
     if (dbGender === 0 || dbGender === "0") {
-      return "1";
+      return "1"; // Male
     }
     if (dbGender === 1 || dbGender === "1") {
-      return "2";
+      return "2"; // Female
     }
-    if (dbGender === 1073741824) {
-      return "";
-    }
+    // Nếu không match với case nào, trả về empty
     return "";
   };
 
   const convertUIGenderToDatabase = (uiGender) => {
+    console.log("🔍 convertUIGenderToDatabase input:", uiGender, "type:", typeof uiGender);
+    
     if (uiGender === "1" || uiGender === 1) {
-      return 0;
+      return 0; // Male
     }
     if (uiGender === "2" || uiGender === 2) {
-      return 1;
+      return 1; // Female
     }
     return null;
   };
 
   const getGenderDisplayText = (dbGender) => {
-    if (dbGender === 1 || dbGender === "0") return "Male";
-    if (dbGender === 2 || dbGender === "1") return "Female";
-    if (dbGender === 1073741824) return "Not specified";
+    console.log("🔍 getGenderDisplayText input:", dbGender, "type:", typeof dbGender);
+    
+    // Chỉ xử lý cho tài khoản: 0 = Male, 1 = Female
+    if (dbGender === 0 || dbGender === "0") return "Male";
+    if (dbGender === 1 || dbGender === "1") return "Female";
     return "Not provided";
   };
 
