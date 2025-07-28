@@ -60,10 +60,11 @@ const LogOut = ({
       }
       sessionStorage.clear();
       delete api.defaults.headers.common["Authorization"];
-      toast.success("Sign out successfully!", {
-        autoClose: 1000, // Chuyển hướng sau 1 giây
-        onClose: () => navigate("/"),
-      });
+      // toast.success("Sign out successfully!", {
+      //   autoClose: 1000, // Chuyển hướng sau 1 giây
+      //   onClose: () => navigate("/"),
+      // });
+      navigate("/");
       if (onLogoutSuccess) {
         onLogoutSuccess();
       }
