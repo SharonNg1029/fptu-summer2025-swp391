@@ -654,7 +654,9 @@ const AccountManagement = () => {
     const matchesRole =
       roleFilter === null ||
       roleFilter === "All" ||
-      account.role === roleFilter;
+      (account.role &&
+        roleFilter &&
+        account.role.toLowerCase() === roleFilter.toLowerCase());
     const matchesStatus =
       statusFilter === null || account.status === statusFilter;
 
