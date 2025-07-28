@@ -161,25 +161,38 @@ const StaffOverviewPage = () => {
       // Lấy số lượng báo cáo hôm nay từ API /staff/my-report/{staffID}
       let appointmentsToday = 0;
       try {
-        const today = new Date().toISOString().slice(0, 10);
+        // Lấy ngày hôm nay theo local time, không dùng UTC để khớp với backend
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        const todayStr = `${yyyy}-${mm}-${dd}`;
         const reportRes = await api.get(`/staff/my-report/${staffID}`);
         const reports = reportRes.data?.data || reportRes.data || [];
-        // Chuẩn hóa appointmentDate nếu là mảng
+        // Normalize appointmentDate for both array and string formats
         const normalized = reports.map((item) => {
           let appointmentDate = item.appointmentDate;
+          let normalizedDate = "";
           if (Array.isArray(appointmentDate) && appointmentDate.length >= 3) {
             const y = appointmentDate[0];
             const m = String(appointmentDate[1]).padStart(2, "0");
             const d = String(appointmentDate[2]).padStart(2, "0");
-            appointmentDate = `${y}-${m}-${d}`;
+            normalizedDate = `${y}-${m}-${d}`;
+          } else if (
+            typeof appointmentDate === "string" &&
+            appointmentDate.length >= 10
+          ) {
+            normalizedDate = appointmentDate.slice(0, 10);
           }
-          return { ...item, appointmentDate };
+          return { ...item, normalizedDate };
         });
         appointmentsToday = normalized.filter(
           (r) =>
-            r.status === "Pending" &&
-            r.appointmentDate &&
-            r.appointmentDate.slice(0, 10) === today
+            (r.status === "Pending" ||
+              r.status === "Awaiting Sample" ||
+              r.status === "Awaiting Confirmation" ||
+              r.status === "Payment Confirmed") &&
+            r.normalizedDate === todayStr
         ).length;
       } catch {
         // Nếu lỗi thì giữ appointmentsToday = 0

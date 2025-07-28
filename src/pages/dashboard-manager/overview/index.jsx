@@ -95,27 +95,46 @@ const ManagerOverviewPage = () => {
       .filter((b) => b.status === "Completed")
       .reduce((sum, b) => sum + Number(b.totalCost || 0), 0);
     setCompletedRevenue(Math.round(revenue));
-    // 1. Weekly Performance Metrics chart: mỗi tuần là số lượng booking thực tế theo tuần (dựa vào bookingAssigned)
-    // Giả sử booking có trường createdAt dạng ISO date
-    const weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4"];
+    // Weekly Performance Metrics chart: dynamic week calculation for current month
     const now = new Date();
-    // Lấy ngày đầu tháng hiện tại
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    // Tạo mốc tuần
-    const weekRanges = Array.from({ length: 4 }, (_, i) => {
-      const start = new Date(firstDayOfMonth);
-      start.setDate(start.getDate() + i * 7);
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      return { start, end };
-    });
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+    // Calculate week ranges dynamically (each week: 7 days, last week may be shorter)
+    const weekRanges = [];
+    let startDay = 1;
+    let weekIdx = 1;
+    while (startDay <= daysInMonth) {
+      const start = new Date(year, month, startDay);
+      const end = new Date(year, month, Math.min(startDay + 6, daysInMonth));
+      weekRanges.push({ start, end, label: `Week ${weekIdx}` });
+      startDay += 7;
+      weekIdx++;
+    }
 
-    // Đếm số lượng booking completed và pending theo tuần
-    const performanceMetrics = weekRanges.map((range, idx) => {
+    // Count bookings per week
+    const performanceMetrics = weekRanges.map((range) => {
+      // Ưu tiên dùng appointmentDate nếu có, nếu không dùng createdAt
       const bookingsInWeek = assignedBookings.filter((b) => {
-        if (!b.createdAt) return false;
-        const created = new Date(b.createdAt);
-        return created >= range.start && created <= range.end;
+        let bookingDate = null;
+        if (Array.isArray(b.appointmentDate) && b.appointmentDate.length >= 3) {
+          // appointmentDate: [year, month, day] (month: 1-based)
+          bookingDate = new Date(
+            b.appointmentDate[0],
+            b.appointmentDate[1] - 1,
+            b.appointmentDate[2]
+          );
+        } else if (b.createdAt) {
+          bookingDate = new Date(b.createdAt);
+        }
+        if (!bookingDate) return false;
+        return (
+          bookingDate.getFullYear() === year &&
+          bookingDate.getMonth() === month &&
+          bookingDate >= range.start &&
+          bookingDate <= range.end
+        );
       });
       const performed = bookingsInWeek.filter(
         (b) => b.status === "Completed"
@@ -125,7 +144,7 @@ const ManagerOverviewPage = () => {
       ).length;
       const total = performed + pending;
       return {
-        period: weekLabels[idx],
+        period: range.label,
         performed,
         pending,
         efficiency: total ? Math.round((performed / total) * 100) : 0,

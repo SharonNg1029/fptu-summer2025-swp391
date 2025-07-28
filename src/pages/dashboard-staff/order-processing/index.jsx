@@ -362,14 +362,18 @@ const OrderProcessing = () => {
       dataIndex: "bookingID",
       key: "bookingID",
       width: 110,
-      sorter: (a, b) => (a.bookingID || "").localeCompare(b.bookingID || ""),
+      sorter: (a, b) =>
+        String(a.bookingID ?? "").localeCompare(String(b.bookingID ?? "")),
+      defaultSortOrder: "descend",
     },
     {
       title: "Customer Name",
       dataIndex: "customerName",
       key: "customerName",
       sorter: (a, b) =>
-        (a.customerName || "").localeCompare(b.customerName || ""),
+        String(a.customerName ?? "").localeCompare(
+          String(b.customerName ?? "")
+        ),
     },
     {
       title: "Service",
@@ -449,14 +453,18 @@ const OrderProcessing = () => {
       dataIndex: "bookingID",
       key: "bookingID",
       width: 110,
-      sorter: (a, b) => (a.bookingID || "").localeCompare(b.bookingID || ""),
+      sorter: (a, b) =>
+        String(a.bookingID ?? "").localeCompare(String(b.bookingID ?? "")),
+      defaultSortOrder: "descend",
     },
     {
       title: "Customer Name",
       dataIndex: "customerName",
       key: "customerName",
       sorter: (a, b) =>
-        (a.customerName || "").localeCompare(b.customerName || ""),
+        String(a.customerName ?? "").localeCompare(
+          String(b.customerName ?? "")
+        ),
     },
     {
       title: "Service",
@@ -515,7 +523,6 @@ const OrderProcessing = () => {
         onChange={setActiveTab}
         type="card"
         style={{ marginBottom: 24 }}
-        tabBarStyle={{ marginBottom: 32 }}
         items={[
           {
             key: "in-progress",

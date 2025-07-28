@@ -133,7 +133,8 @@ const Inventory = () => {
       dataIndex: "transactionID",
       key: "transactionID",
       sorter: (a, b) =>
-        (Number(a.transactionID) || 0) - (Number(b.transactionID) || 0),
+        (Number(b.transactionID) || 0) - (Number(a.transactionID) || 0), // Descending
+      defaultSortOrder: "descend",
     },
     {
       title: "Kit ID",
