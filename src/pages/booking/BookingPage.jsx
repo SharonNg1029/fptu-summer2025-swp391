@@ -111,7 +111,7 @@ const ConfirmBookingModal = ({
   paymentMethod: paymentMethodProp,
   initialStep,
   navigate,
-  onModalClose, // Thêm callback để đóng modal từ parent
+  onModalClose, 
 }) => {
   const [currentStep, setCurrentStep] = useState(initialStep || 1);
   const [paymentMethod, setPaymentMethod] = useState(
