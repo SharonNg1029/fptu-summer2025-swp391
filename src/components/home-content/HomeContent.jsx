@@ -15,7 +15,6 @@ const HomeContent = () => {
     api.get("/feedback/feedbacks")
       .then(res => setFeedbacks(res.data))
       .catch(() => setFeedbacks([]));
-    
   }, []);
 
 
