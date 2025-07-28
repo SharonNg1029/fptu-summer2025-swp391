@@ -8,7 +8,9 @@ const getTop5StarFeedbacks = (feedbacks) => {
   return feedbacks
     .filter((fb) => fb.rating === 5)
     .sort((a, b) => dateToNumber(b.createAt) - dateToNumber(a.createAt))
-    .slice(0, 5)
+
+    //Trả về một mảng con gồm các phần tử từ chỉ số bắt đầu đến chỉ số kết thúc (không bao gồm chỉ số kết thúc).
+    .slice(0, 4) //Lấy 4 feedback mới nhất
     .map((fb) => ({
       fullName: fb.customerName || "Khách hàng", // dùng luôn customerName
       bookingID: fb.bookingID,
@@ -16,7 +18,9 @@ const getTop5StarFeedbacks = (feedbacks) => {
       content: fb.content,
       rating: fb.rating,
       date: fb.createAt
-        ? `${String(fb.createAt[2]).padStart(2, "0")}/${String(fb.createAt[1]).padStart(2, "0")}/${fb.createAt[0]}`
+        ? `${String(fb.createAt[2]).padStart(2, "0")}/${String(
+            fb.createAt[1]
+          ).padStart(2, "0")}/${fb.createAt[0]}`
         : "",
     }));
 };
@@ -40,7 +44,14 @@ const FeedbackList = ({ feedbacks }) => {
       >
         Customer Feedback
       </h2>
-      <div className="max-w-3xl mx-auto grid gap-6">
+
+      {/* 
+  grid-cols-1: 1 cột trên mobile
+  sm:grid-cols-2: 2 cột trên màn hình nhỏ trở lên
+  md:grid-cols-4: 4 cột trên màn hình vừa trở lên
+  gap-6: khoảng cách giữa các feedback
+*/}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
         {topFeedbacks.length === 0 ? (
           <div className="text-center text-gray-400">
             No feedback available.
@@ -59,7 +70,6 @@ const FeedbackList = ({ feedbacks }) => {
               </div>
               <div className="flex items-center mb-1">
                 <span className="mr-2">{getStars(fb.rating)}</span>
-                
               </div>
               <p className="text-gray-700 mt-2">{fb.content}</p>
             </div>

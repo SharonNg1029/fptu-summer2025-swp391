@@ -3,9 +3,15 @@
 /* Override Ant Design modal styles to remove white borders */
 .feedback-modal .ant-modal-content {
   padding: 0 !important;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: #fff !important;  
 }
+.feedback-modal .ant-modal {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
 
 .feedback-modal .ant-modal-body {
   padding: 0 !important;

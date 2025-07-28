@@ -14,7 +14,7 @@ const defaultTitleBottom = "Please provide your feedback on our service.";
 
 // Header: luôn luôn có logo và 2 dòng chữ bên phải logo
 const FeedbackHeader = () => (
-  <div className="bg-blue-600 rounded-t-lg flex items-center px-8 py-6 min-h-[110px] relative">
+<div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 rounded-t-2xl flex items-center px-8 py-6 min-h-[110px] relative">
     <div className="flex-shrink-0">
       <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-blue-600">
         <img
@@ -32,7 +32,7 @@ const FeedbackHeader = () => (
 );
 
 const FeedbackBox = ({ children }) => (
-  <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden">
     <FeedbackHeader />
     <div className="py-8 px-8">{children}</div>
   </div>
@@ -139,7 +139,7 @@ const FeedbackModal = ({ visible, onClose, bookingId }) => {
           <div className="flex justify-between">
             <button
               onClick={() => handleClose()}
-              className="mt-4 px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold border border-blue-200 transition"
+              className="mt-4 px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-semibold border border-blue-200 transition"
             >
               Back
             </button>
@@ -174,7 +174,7 @@ const FeedbackModal = ({ visible, onClose, bookingId }) => {
           </div>
           <button
             onClick={() => handleClose(true)}
-            className="mt-6 px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold border border-blue-200 transition w-full"
+            className="mt-6 px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-semibold border border-blue-200 transition w-full"
           >
             Close
           </button>
@@ -250,14 +250,14 @@ const FeedbackModal = ({ visible, onClose, bookingId }) => {
               type="button"
               disabled={submitting}
               onClick={handleSubmit}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200 disabled:opacity-60"
+              className="bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold py-2 px-4 rounded-xl transition-colors duration-200 disabled:opacity-60"
             >
               {submitting ? "Submitting..." : "Submit Feedback"}
             </button>
             <button
               type="button"
               onClick={() => handleClose()}
-              className="ml-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-medium border border-blue-200 transition"
+              className="ml-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-semibold border border-blue-200 transition"
             >
               Cancel
             </button>
