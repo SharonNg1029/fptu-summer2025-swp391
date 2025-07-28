@@ -958,8 +958,8 @@ function RegisterForm() {
                     placeholder="Select gender"
                     onChange={handleGenderChange}
                   >
-                    <Select.Option value={0}>Male</Select.Option>
-                    <Select.Option value={1}>Female</Select.Option>
+                    <Select.Option value={1}>Male</Select.Option>
+                    <Select.Option value={2}>Female</Select.Option>
                   </Select>
                 </Form.Item>
               </div>

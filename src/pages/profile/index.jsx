@@ -201,8 +201,8 @@ const ProfilePage = () => {
   };
 
   const getGenderDisplayText = (dbGender) => {
-    if (dbGender === 0 || dbGender === "0") return "Male";
-    if (dbGender === 1 || dbGender === "1") return "Female";
+    if (dbGender === 1 || dbGender === "0") return "Male";
+    if (dbGender === 2 || dbGender === "1") return "Female";
     if (dbGender === 1073741824) return "Not specified";
     return "Not provided";
   };
@@ -277,6 +277,26 @@ const ProfilePage = () => {
       return "Unknown";
     }
   };
+
+  const formatDateOfBirth = (dateValue) => {
+  if (!dateValue) return "Not provided";
+  let date;
+  if (Array.isArray(dateValue) && dateValue.length >= 3) {
+    const [year, month, day] = dateValue;
+    date = new Date(year, month - 1, day);
+  } else if (typeof dateValue === "string") {
+    date = new Date(dateValue);
+  } else if (dateValue instanceof Date) {
+    date = dateValue;
+  } else {
+    return "Not provided";
+  }
+  if (isNaN(date.getTime())) return "Not provided";
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -970,21 +990,21 @@ const ProfilePage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
-                        Date of Birth
-                      </label>
-                      <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
-                        <Calendar className="h-5 w-5 text-blue-700 flex-shrink-0" />
-                        <span className="truncate vietnamese-text">
-                          {formatMemberSince(
-                            getFieldValue(userProfile, "dob", [
-                              "DOB",
-                              "dateOfBirth",
-                            ])
-                          ) || "Not provided"}
-                        </span>
-                      </div>
-                    </div>
+  <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
+    Date of Birth
+  </label>
+  <div className="px-4 py-2.5 bg-gray-50 rounded-lg text-gray-800 flex items-center space-x-3 border border-gray-200">
+    <Calendar className="h-5 w-5 text-blue-700 flex-shrink-0" />
+    <span className="truncate vietnamese-text">
+      {formatDateOfBirth(
+        getFieldValue(userProfile, "dob", [
+          "DOB",
+          "dateOfBirth",
+        ])
+      )}
+    </span>
+  </div>
+</div>
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-600 mb-2 vietnamese-text">
