@@ -2,9 +2,15 @@
 ![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-# Genetix DNA Testing Platform
+# Genetix DNA Testing Platform - Frontend
+
+> **Software Development Project (SWP391)**  
+> FPT University Ho Chi Minh Campus  
+> Class: SE1856 - Group 3
 
 Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ khách hàng đăng ký, quản lý, và theo dõi quá trình xét nghiệm DNA phục vụ các mục đích dân sự và hành chính.
+
+Repository này chứa **frontend application** của dự án, được xây dựng với React + Vite.
 
 ---
 
@@ -13,7 +19,8 @@ Genetix là nền tảng dịch vụ xét nghiệm DNA hiện đại, hỗ trợ
 - **Đăng ký & Đăng nhập:**  
   Hỗ trợ đăng nhập thông thường và Google OAuth, bảo mật thông tin người dùng với xác minh OTP qua email.
 
-- **Đặt lịch xét nghiệm DNA:**  
+- **Đặt lịch xét nghiệm DNA:**
+
   - Xét nghiệm dân sự (không pháp lý) cho mục đích cá nhân, gia đình.
   - Xét nghiệm hành chính (hợp lệ cho giấy tờ, nhập cư, tòa án).
   - Theo dõi trạng thái từng đơn hàng: Awaiting Confirmation → Pending Payment → Booking Confirmed → Awaiting Sample → In Progress → Completed hoặc Cancelled.
@@ -55,29 +62,42 @@ Dự án này sử dụng RESTful API từ Genetix Backend (Spring Boot). Bạn 
 
 [https://github.com/baothanh4/swp391](https://github.com/baothanh4/swp391)
 
-
 ---
 
 ## ⚡ Cài đặt & chạy thử nghiệm
 
 1. **Yêu cầu:**
-   
+
    Node.js >= 18, npm >= 9
 
 2. **Clone dự án:**
+
    ```bash
    git clone https://github.com/SharonNg1029/SWP391.git
    cd SWP391
    ```
 
 3. **Cài đặt dependencies:**
+
    ```bash
    npm install
    ```
 
-4. **Cấu hình endpoint API:**  
+4. **Cấu hình environment variables:**
 
-   Thay đổi địa chỉ của const api trong `src/configs/axios.js` nếu muốn trỏ sang api khác.
+   Sao chép file `.env.example` thành `.env` và cập nhật các giá trị:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Sau đó chỉnh sửa file `.env` với các thông tin thực tế:
+
+   ```env
+   VITE_API_BASE_URL=http://your-api-url:8080/api
+   VITE_API_PROXY_TARGET=http://your-api-url:8080
+   VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
+   ```
 
 5. **Chạy ứng dụng:**
    ```bash
@@ -104,16 +124,19 @@ src/
 
 ## 💡 Một số tài khoản mẫu
 
-- **Admin:**  
+- **Admin:**
+
   - user: `ngannguyen` / pass: `ngannguyen`
 
-- **Manager:**  
+- **Manager:**
+
   - user: `hogiabao` / pass: `bao`
- 
-- **Staff:**  
+
+- **Staff:**
+
   - user: `nganle` / pass: `ngan`
 
-- **Customer:**  
+- **Customer:**
   - user: `xuanloc` / pass: `loc`
 
 > Bạn có thể đăng ký tài khoản mới hoặc thử đăng ký/đăng nhập với Google.
@@ -126,4 +149,18 @@ src/
 
 ---
 
-**© 2025 Genetix DNA Platform**
+## 👥 About the Project
+
+Đây là dự án môn **Software Development Project (SWP391)** - Học kỳ Fall 2024  
+**Trường:** FPT University Ho Chi Minh Campus  
+**Lớp:** SE1856  
+**Nhóm:** Group 3
+
+### Project Structure
+
+- **Frontend Repository (this):** React + Vite application
+- **Backend Repository:** [https://github.com/baothanh4/swp391](https://github.com/baothanh4/swp391)
+
+---
+
+**© 2025 Genetix DNA Platform - FPT University HCM**
